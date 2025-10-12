@@ -82,6 +82,11 @@ InduSpect AI 的智慧能力主要基於以下幾個核心技術概念：
 
 ## 技術棧
 
-*   **前端框架**: React.js with TypeScript
-*   **核心 AI**: Google Gemini API (`gemini-2.5-flash`)
-*   **本機儲存**: 瀏覽器 `localStorage` API
+*   **前端框架**: React.js with TypeScript (目前為網頁原型，直接在前端呼叫 Gemini API)
+*   **核心 AI**: Google Gemini API (`gemini-2.5-flash` 用於圖像分析，`gemini-2.5-pro` 用於報告生成)
+*   **本機儲存**: 瀏覽器 `localStorage` API (用於離線數據持久化)
+
+**未來規劃架構 (詳見 `arch.md`):**
+*   **行動應用程式**: Flutter (iOS/Android)
+*   **後端**: Google Cloud Platform (GCP) 無伺服器架構，包括 Cloud Run 微服務、Firebase Authentication、Cloud Storage、Firestore。
+*   **資料庫**: Firestore (NoSQL) 或 Supabase (PostgreSQL)
