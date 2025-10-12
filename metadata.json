@@ -1,5 +1,7 @@
 {
   "name": "InduSpect - AI 智慧巡檢原型",
   "description": "一個 AI 驅動的智慧巡檢系統原型，使用 Gemini API 分析工業設備的圖像。",
-  "requestFramePermissions": []
+  "requestFramePermissions": [
+    "camera"
+  ]
 }
