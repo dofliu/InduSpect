@@ -27,6 +27,12 @@ const usePersistentState = <T,>(key: string, initialValue: T): [T, React.Dispatc
 
 
 // --- Type Definitions ---
+interface Point { x: number; y: number; }
+interface Line { p1: Point; p2: Point; }
+interface MeasurementLines {
+    ref: Line | null;
+    target: Line | null;
+}
 interface Dimension {
     object_name: string | null;
     value: number | null;
@@ -43,6 +49,7 @@ interface AnalysisResult {
     is_anomaly: boolean;
     summary: string;
     dimensions: Dimension | null;
+    measurementLines?: MeasurementLines | null;
 }
 
 type ChecklistItemStatus = 'pending' | 'capturing' | 'captured' | 'loading' | 'success' | 'error' | 'confirmed';
@@ -50,8 +57,9 @@ type ChecklistItemStatus = 'pending' | 'capturing' | 'captured' | 'loading' | 's
 interface ChecklistItem {
     id: string;
     task: string;
-    dataUrl: string | null; // Storing image as base64 data URL for persistence
+    dataUrl: string | null;
     mimeType: string | null;
+    imageDimensions?: { width: number; height: number; } | null;
     status: ChecklistItemStatus;
     result: AnalysisResult | null;
     error: string | null;
@@ -68,6 +76,26 @@ const dataUrlToGenerativePart = (dataUrl: string, mimeType: string) => {
     };
 };
 
+const processImageFile = (file: File): Promise<{ dataUrl: string; dimensions: { width: number, height: number } }> => {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = (e_reader) => {
+            const dataUrl = e_reader.target!.result as string;
+            const img = new Image();
+            img.onload = () => {
+                resolve({
+                    dataUrl,
+                    dimensions: { width: img.naturalWidth, height: img.naturalHeight }
+                });
+            };
+            img.onerror = (err) => reject(err);
+            img.src = dataUrl;
+        };
+        reader.onerror = (err) => reject(err);
+        reader.readAsDataURL(file);
+    });
+};
+
 const fileToDataUrl = (file: File): Promise<string> => {
     return new Promise((resolve, reject) => {
         const reader = new FileReader();
@@ -76,6 +104,7 @@ const fileToDataUrl = (file: File): Promise<string> => {
         reader.readAsDataURL(file);
     });
 };
+
 
 // --- Child Components ---
 
@@ -120,16 +149,51 @@ const LoadingComponent = ({ text }: { text: string }) => (
     </div>
 );
 
+const ImageWithMeasurementOverlay: React.FC<{
+    src: string;
+    alt: string;
+    lines?: MeasurementLines | null;
+    dimensions?: { width: number, height: number } | null;
+}> = ({ src, alt, lines, dimensions }) => {
+    return (
+        <div className="image-overlay-container">
+            <img src={src} alt={alt} />
+            {lines && dimensions && (
+                <svg
+                    className="measurement-overlay"
+                    viewBox={`0 0 ${dimensions.width} ${dimensions.height}`}
+                >
+                    {lines.ref && (
+                        <line
+                            x1={lines.ref.p1.x} y1={lines.ref.p1.y}
+                            x2={lines.ref.p2.x} y2={lines.ref.p2.y}
+                            stroke="#42a5f5" strokeWidth="40" strokeOpacity="0.9"
+                        />
+                    )}
+                    {lines.target && (
+                        <line
+                            x1={lines.target.p1.x} y1={lines.target.p1.y}
+                            x2={lines.target.p2.x} y2={lines.target.p2.y}
+                            stroke="#d32f2f" strokeWidth="40" strokeOpacity="0.9"
+                        />
+                    )}
+                </svg>
+            )}
+        </div>
+    );
+};
+
+
 const ImageMeasurementTool: React.FC<{
     imageUrl: string;
-    onComplete: (dim: Dimension) => void;
+    onComplete: (dim: Dimension, lines: MeasurementLines) => void;
     onClose: () => void;
 }> = ({ imageUrl, onComplete, onClose }) => {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const [stage, setStage] = useState<'draw_reference' | 'enter_reference' | 'draw_target' | 'done'>('draw_reference');
-    const [lines, setLines] = useState<{ ref: {p1: any, p2: any} | null, target: {p1: any, p2: any} | null }>({ ref: null, target: null });
-    const [startPoint, setStartPoint] = useState<{x: number, y: number} | null>(null);
-    const [mousePos, setMousePos] = useState<{x: number, y: number} | null>(null);
+    const [lines, setLines] = useState<MeasurementLines>({ ref: null, target: null });
+    const [startPoint, setStartPoint] = useState<Point | null>(null);
+    const [mousePos, setMousePos] = useState<Point | null>(null);
     const [refLength, setRefLength] = useState<string>('85.6'); // Default to credit card width in mm
     const [refUnit, setRefUnit] = useState<string>('mm');
 
@@ -178,7 +242,7 @@ const ImageMeasurementTool: React.FC<{
         draw();
     }, [draw]);
 
-    const getCanvasCoords = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    const getCanvasCoords = (e: React.MouseEvent<HTMLCanvasElement>): Point => {
         const canvas = canvasRef.current;
         if (!canvas) return { x: 0, y: 0 };
         const rect = canvas.getBoundingClientRect();
@@ -214,7 +278,7 @@ const ImageMeasurementTool: React.FC<{
         setMousePos(null);
     };
 
-    const calculateDistance = (p1: any, p2: any) => Math.sqrt(Math.pow(p2.x - p1.x, 2) + Math.pow(p2.y - p1.y, 2));
+    const calculateDistance = (p1: Point, p2: Point) => Math.sqrt(Math.pow(p2.x - p1.x, 2) + Math.pow(p2.y - p1.y, 2));
 
     const handleCalculation = () => {
         if (!lines.ref || !lines.target || !refLength) return;
@@ -232,7 +296,7 @@ const ImageMeasurementTool: React.FC<{
             object_name: "手動測量裂縫",
             value: parseFloat(realTargetLength.toFixed(2)),
             unit: refUnit,
-        });
+        }, lines);
     };
 
     const getInstruction = () => {
@@ -286,10 +350,11 @@ const ImageMeasurementTool: React.FC<{
 const InspectionCard: React.FC<{
     item: ChecklistItem,
     onConfirm?: (id: string) => void,
-    onRetry: (id: string, event: React.ChangeEvent<HTMLInputElement>) => void,
+    onSave?: (id: string) => void,
+    onRetry: (id: string, eventOrFile: React.ChangeEvent<HTMLInputElement> | File) => void,
     onUpdateResult: (id: string, result: AnalysisResult) => void,
     isQuickMode?: boolean,
-}> = ({ item, onConfirm, onRetry, onUpdateResult, isQuickMode = false }) => {
+}> = ({ item, onConfirm, onSave, onRetry, onUpdateResult, isQuickMode = false }) => {
     const [isMeasuring, setIsMeasuring] = useState(false);
 
     const handleResultChange = <K extends keyof AnalysisResult>(field: K, value: AnalysisResult[K]) => {
@@ -310,8 +375,10 @@ const InspectionCard: React.FC<{
          handleResultChange('dimensions', newDimension);
     }
     
-    const handleMeasurementComplete = (dim: Dimension) => {
-        handleResultChange('dimensions', dim);
+    const handleMeasurementComplete = (dim: Dimension, lines: MeasurementLines) => {
+        if (!item.result) return;
+        const newResult = { ...item.result, dimensions: dim, measurementLines: lines };
+        onUpdateResult(item.id, newResult);
         setIsMeasuring(false);
     }
 
@@ -403,7 +470,14 @@ const InspectionCard: React.FC<{
            <h3 className="card-header">{item.task}</h3>
            <div className="card-content">
                 <div className="image-container">
-                    {item.dataUrl && <img src={item.dataUrl} alt={`預覽 ${item.task}`} />}
+                    {item.dataUrl && (
+                        <ImageWithMeasurementOverlay 
+                            src={item.dataUrl}
+                            alt={`預覽 ${item.task}`}
+                            lines={item.result?.measurementLines}
+                            dimensions={item.imageDimensions}
+                        />
+                    )}
                     {item.status === 'loading' && <div className="loader" role="status" aria-label="分析加載中"></div>}
                 </div>
                 <div style={{flex: '1 1 60%'}}>
@@ -421,6 +495,9 @@ const InspectionCard: React.FC<{
                         <input type="file" id={`retry-upload-${item.id}`} accept="image/*" capture="environment" onChange={(e) => onRetry(item.id, e)} style={{ display: 'none' }} />
                         <label htmlFor={`retry-upload-${item.id}`} className="button-retry">重新拍攝並分析</label>
                     </>
+                )}
+                 {isQuickMode && onSave && item.status === 'success' && (
+                    <button onClick={() => onSave(item.id)}>儲存此記錄</button>
                 )}
                 {!isQuickMode && onConfirm && (
                     <button onClick={() => onConfirm(item.id)} disabled={item.status !== 'success'}>
@@ -457,7 +534,16 @@ const RecordsTable = ({ records }: { records: ChecklistItem[] }) => {
                             <tr key={record.id}>
                                 <td>{index + 1}</td>
                                 <td>{record.task}</td>
-                                <td>{record.dataUrl && <img src={record.dataUrl} alt={record.task} />}</td>
+                                <td>
+                                    {record.dataUrl && (
+                                        <ImageWithMeasurementOverlay
+                                            src={record.dataUrl}
+                                            alt={record.task}
+                                            lines={record.result?.measurementLines}
+                                            dimensions={record.imageDimensions}
+                                        />
+                                    )}
+                                </td>
                                 <td>{record.result?.equipment_type}</td>
                                 <td>{record.result?.readings.map(r => `${r.label}: ${r.value ?? 'N/A'} ${r.unit ?? ''}`).join(', ') || 'N/A'}</td>
                                 <td>{record.result?.dimensions?.value ? `${record.result.dimensions.object_name}: ${record.result.dimensions.value} ${record.result.dimensions.unit}` : 'N/A'}</td>
@@ -518,13 +604,32 @@ const App = () => {
     const [appState, setAppState] = usePersistentState<AppState>('appState', 'IDLE');
     const [checklist, setChecklist] = usePersistentState<ChecklistItem[]>('checklist', []);
     const [confirmedRecords, setConfirmedRecords] = usePersistentState<ChecklistItem[]>('confirmedRecords', []);
-    const [quickAnalysisItem, setQuickAnalysisItem] = usePersistentState<ChecklistItem | null>('quickAnalysisItem', null);
+    const [quickAnalysisItem, setQuickAnalysisItem] = useState<ChecklistItem | null>(null);
     const [error, setError] = useState<string | null>(null);
     const [report, setReport] = usePersistentState<string | null>('report', null);
     const [reportState, setReportState] = usePersistentState<ReportState>('reportState', 'idle');
     const [reportError, setReportError] = useState<string | null>(null);
     const [isOnline, setIsOnline] = useState(navigator.onLine);
     const uniqueId = useId();
+
+    useEffect(() => {
+        // On initial load, if the app was last in a quick analysis state,
+        // reset it to IDLE. This is because the quickAnalysisItem is not
+        // persisted to avoid localStorage quota errors with large photo dataURLs,
+        // so we can't resume that state after a page reload.
+        const storedStateJSON = window.localStorage.getItem('appState');
+        if (storedStateJSON) {
+            try {
+                const lastState = JSON.parse(storedStateJSON);
+                if (typeof lastState === 'string' && lastState.startsWith('QUICK_ANALYSIS')) {
+                    setAppState('IDLE');
+                }
+            } catch (e) {
+                console.error("Error parsing persisted app state:", e);
+                setAppState('IDLE');
+            }
+        }
+    }, []); // Run only once on component mount
     
     useEffect(() => {
         const handleOnline = () => setIsOnline(true);
@@ -586,6 +691,7 @@ const App = () => {
                 task,
                 dataUrl: null,
                 mimeType: null,
+                imageDimensions: null,
                 status: 'pending',
                 result: null,
                 error: null,
@@ -616,12 +722,13 @@ const App = () => {
         if (!file) return;
 
         try {
-            const dataUrl = await fileToDataUrl(file);
+            const { dataUrl, dimensions } = await processImageFile(file);
             setChecklist(prev => prev.map(item =>
                 item.id === itemId ? {
                     ...item,
                     dataUrl,
                     mimeType: file.type,
+                    imageDimensions: dimensions,
                     status: 'captured'
                 } : item
             ));
@@ -742,25 +849,37 @@ const App = () => {
     }, [checklist, runAnalysis, isOnline, setAppState, setChecklist]);
 
     const handleUpdateResult = (itemId: string, updatedResult: AnalysisResult) => {
-        setChecklist(prev =>
-            prev.map(item =>
-                item.id === itemId && item.result
-                    ? { ...item, result: updatedResult }
-                    : item
-            )
-        );
+        const updateLogic = (item: ChecklistItem) => 
+            item.id === itemId && item.result
+                ? { ...item, result: updatedResult }
+                : item;
+
+        if (appState === 'QUICK_ANALYSIS_REVIEW') {
+             setQuickAnalysisItem(prev => (prev && prev.id === itemId) ? updateLogic(prev) : prev);
+        } else {
+            setChecklist(prev => prev.map(updateLogic));
+        }
     };
+
 
     const handlePhotoRetry = async (itemId: string, event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
         if (!file) return;
 
         try {
-            const dataUrl = await fileToDataUrl(file);
+            const { dataUrl, dimensions } = await processImageFile(file);
             const itemToUpdate = checklist.find(i => i.id === itemId);
             if (!itemToUpdate) return;
             
-            const updatedItem: ChecklistItem = { ...itemToUpdate, dataUrl, mimeType: file.type, status: 'loading', error: null, result: null };
+            const updatedItem: ChecklistItem = { 
+                ...itemToUpdate, 
+                dataUrl, 
+                mimeType: file.type, 
+                imageDimensions: dimensions,
+                status: 'loading', 
+                error: null, 
+                result: null 
+            };
             setChecklist(prev => prev.map(i => i.id === itemId ? updatedItem : i));
             
             if (isOnline) {
@@ -786,12 +905,13 @@ const App = () => {
         if (!file) return;
 
         try {
-            const dataUrl = await fileToDataUrl(file);
+            const { dataUrl, dimensions } = await processImageFile(file);
             const newItem: ChecklistItem = {
                 id: `quick-${Date.now()}`,
                 task: '快速分析',
                 dataUrl,
                 mimeType: file.type,
+                imageDimensions: dimensions,
                 status: 'loading',
                 result: null,
                 error: null,
@@ -819,15 +939,55 @@ const App = () => {
         }
 
     }, [runAnalysis, setAppState, setQuickAnalysisItem]);
+    
+    const handleQuickPhotoRetry = async (itemId: string, event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (!file || !quickAnalysisItem || quickAnalysisItem.id !== itemId) return;
 
-    const handleUpdateQuickResult = (_itemId: string, updatedResult: AnalysisResult) => {
-        setQuickAnalysisItem(prev =>
-            prev ? { ...prev, result: updatedResult } : null
-        );
+        try {
+            const { dataUrl, dimensions } = await processImageFile(file);
+            
+            const updatedItem: ChecklistItem = { 
+                ...quickAnalysisItem, 
+                dataUrl, 
+                mimeType: file.type,
+                imageDimensions: dimensions,
+                status: 'loading', 
+                error: null, 
+                result: null 
+            };
+            setQuickAnalysisItem(updatedItem);
+            setAppState('QUICK_ANALYSIS_ANALYZING');
+            
+            runAnalysis(updatedItem, 
+                (_, result) => {
+                    setQuickAnalysisItem(prev => prev ? { ...prev, status: 'success', result } : null);
+                    setAppState('QUICK_ANALYSIS_REVIEW');
+                },
+                (_, errorMsg) => {
+                    setQuickAnalysisItem(prev => prev ? { ...prev, status: 'error', error: errorMsg } : null);
+                    setAppState('QUICK_ANALYSIS_REVIEW');
+                }
+            );
+            
+        } catch (error) {
+             console.error("Error during quick photo retry:", error);
+             setQuickAnalysisItem(prev => prev ? { ...prev, status: 'error', error: '重試時發生錯誤' } : null);
+             setAppState('QUICK_ANALYSIS_REVIEW');
+        } finally {
+            event.target.value = '';
+        }
     };
 
-    const handleQuickPhotoRetry = async (itemId: string, event: React.ChangeEvent<HTMLInputElement>) => {
-         await handleQuickPhoto(event); // The logic is identical
+    const handleSaveQuickAnalysis = (id: string) => {
+        if (!quickAnalysisItem || quickAnalysisItem.id !== id || quickAnalysisItem.status !== 'success') return;
+
+        const newConfirmedItem = { ...quickAnalysisItem, status: 'confirmed' as ChecklistItemStatus, task: `快速分析 - ${quickAnalysisItem.result?.equipment_type || '未知設備'}` };
+        setConfirmedRecords(prev => [...prev, newConfirmedItem]);
+
+        // Reset for next quick analysis
+        setQuickAnalysisItem(null);
+        setAppState('QUICK_ANALYSIS_CAPTURE');
     };
 
     const handleConfirmOne = (id: string) => {
@@ -987,7 +1147,7 @@ ${JSON.stringify(reportInputData, null, 2)}
                                     key={item.id} 
                                     item={item} 
                                     onConfirm={handleConfirmOne} 
-                                    onRetry={handlePhotoRetry} 
+                                    onRetry={(id, e) => handlePhotoRetry(id, e as React.ChangeEvent<HTMLInputElement>)}
                                     onUpdateResult={handleUpdateResult}
                                 />
                             ))}
@@ -1022,14 +1182,15 @@ ${JSON.stringify(reportInputData, null, 2)}
                             <InspectionCard 
                                 key={quickAnalysisItem.id} 
                                 item={quickAnalysisItem}
-                                onRetry={handleQuickPhotoRetry}
-                                onUpdateResult={handleUpdateQuickResult}
+                                onRetry={(id, e) => handleQuickPhotoRetry(id, e as React.ChangeEvent<HTMLInputElement>)}
+                                onUpdateResult={handleUpdateResult}
+                                onSave={handleSaveQuickAnalysis}
                                 isQuickMode={true}
                             />
                         </div>
                          <div className="actions-bar">
-                            <button onClick={() => setAppState('QUICK_ANALYSIS_CAPTURE')} className="button-primary">分析另一張照片</button>
-                            <button onClick={() => setAppState('IDLE')} className="button-secondary">返回主流程</button>
+                            <button onClick={() => { setQuickAnalysisItem(null); setAppState('QUICK_ANALYSIS_CAPTURE'); }} className="button-primary">分析另一張照片</button>
+                            <button onClick={() => { setQuickAnalysisItem(null); setAppState('IDLE'); }} className="button-secondary">返回主流程</button>
                         </div>
                     </section>
                 );

@@ -395,14 +395,36 @@ input[type="file"] {
     border-radius: 8px;
     position: relative;
     min-height: 250px;
+    overflow: hidden; /* Ensures SVG doesn't overflow rounded corners */
 }
 
-.image-container img {
+/* Image Overlay System */
+.image-overlay-container {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.image-overlay-container img {
     max-width: 100%;
-    max-height: 300px;
+    max-height: 100%;
     object-fit: contain;
     border-radius: 4px;
 }
+
+.measurement-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none; /* Allows clicks to go through to image if needed */
+}
+
+/* End Image Overlay */
 
 .loader {
     border: 5px solid #f3f3f3;
@@ -678,12 +700,17 @@ input[type="file"] {
     background-color: #f9f9f9;
 }
 
-.records-table img {
+.records-table td:nth-child(3) { /* The photo column */
+    width: 80px;
+    height: 80px;
+    padding: 8px;
+}
+.records-table .image-overlay-container {
     width: 60px;
     height: 60px;
-    object-fit: cover;
     border-radius: 4px;
-    vertical-align: middle;
+    overflow: hidden;
+    background-color: #f0f4f8;
 }
 
 .records-table .anomaly {

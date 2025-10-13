@@ -4,16 +4,16 @@
 1. 高層架構圖
 +---------------------------+       +---------------------------+       +-----------------------------+
 |    Presentation Layer     |       |     Business Logic Layer  |       |         Data Layer          |
-|  (Flutter Mobile App)     |       |    (Serverless on GCP)    |       |      (GCP Storage)          |
+|  (Flutter Mobile App)     |       |    (Serverless on GCP)    |       | (GCP Storage & Supabase)    |
 +---------------------------+       +---------------------------+       +-----------------------------+
-| - Firebase Authentication |       | - API Gateway             |       | - Cloud Storage             |
+| - Supabase Auth           |       | - API Gateway             |       | - Cloud Storage             |
 | - Camera Integration      |------>|   - Manages API calls     |<----->|   - Stores images & reports |
 | - Offline Storage (SQLite)|       |                           |       +-----------------------------+
-| - Task Checklist UI       |       | - Cloud Run (Microservices) |     | - Firestore (NoSQL DB)      |
-| - Data Review & Override  |       |   - auth-service          |<----->|   - Stores inspection data  |
-+---------------------------+       |   - task-service          |       |   - User profiles           |
-        /|\                     |   - upload-service        |       +-----------------------------+
-         |                      |   - processing-service    |       | - Vertex AI                 |
+| - Task Checklist UI       |       | - Cloud Run (Microservices) |     | - Supabase (PostgreSQL)     |
+| - Data Review & Override  |       |   - task-service          |<----->|   - Stores inspection data  |
++---------------------------+       |   - upload-service        |       |   - User profiles           |
+        /|\                     |   - processing-service    |       +-----------------------------+
+         |                      |                           |       | - Vertex AI                 |
          | (Secure Upload URL)    |                           |<----->|   - Gemini API access       |
          |                      +---------------------------+       +-----------------------------+
          |                              /|\       |
@@ -29,9 +29,9 @@
 
 核心組件:
 
-使用者認證: 整合 Firebase Authentication SDK，提供電子郵件/密碼及 Google 登入方式。
+使用者認證: 整合 Supabase Auth SDK，提供電子郵件/密碼及 Google 登入方式。
 
-任務管理: 從 Firestore 實時讀取分配的巡檢任務，並以檢查表 (Checklist) 形式呈現。
+任務管理: 從 Supabase 實時讀取分配的巡檢任務，並以檢查表 (Checklist) 形式呈現。
 
 相機功能: 使用 camera 套件，提供穩定的拍照功能，並允許控制閃光燈和對焦。
 
@@ -47,8 +47,6 @@ App 使用此 URL 將圖像檔案直接、安全地從客戶端上傳到 Google 
 技術棧: Python (配合 FastAPI 或 Flask 框架)，容器化後部署於 Cloud Run。
 
 核心服務 (Microservices on Cloud Run):
-
-auth-service: 處理使用者註冊、登入，並核發 JWT 權杖。
 
 inspection-task-service: 提供 CRUD API，用於管理巡檢任務與檢查表。
 
@@ -79,9 +77,9 @@ Eventarc 捕獲此事件，並觸發 processing-service 的一個實例來處理
 
 資料庫:
 
-服務: Firestore (NoSQL)。
+服務: Supabase (PostgreSQL)。
 
-理由: 其靈活的 schemaless 結構非常適合儲存半結構化的 AI 輸出數據，並且能與 Flutter 前端實現無縫的即時數據同步。
+理由: Supabase 整合了 PostgreSQL 的強大功能與即時數據同步能力。其內建的身份驗證、儲存管理和自動生成 API 功能，可大幅簡化後端開發，讓我們能更專注於核心業務邏輯。
 
 用途: 儲存使用者資訊、巡檢任務定義、以及由 AI 分析得出的結構化巡檢結果。
 
