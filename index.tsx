@@ -353,9 +353,11 @@ const InspectionCard: React.FC<{
     onSave?: (id: string) => void,
     onRetry: (id: string, eventOrFile: React.ChangeEvent<HTMLInputElement> | File) => void,
     onUpdateResult: (id: string, result: AnalysisResult) => void,
+    onReanalyze?: (id: string, supplementalPrompt: string) => void,
     isQuickMode?: boolean,
-}> = ({ item, onConfirm, onSave, onRetry, onUpdateResult, isQuickMode = false }) => {
+}> = ({ item, onConfirm, onSave, onRetry, onUpdateResult, onReanalyze, isQuickMode = false }) => {
     const [isMeasuring, setIsMeasuring] = useState(false);
+    const [supplementalPrompt, setSupplementalPrompt] = useState('');
 
     const handleResultChange = <K extends keyof AnalysisResult>(field: K, value: AnalysisResult[K]) => {
         if (!item.result) return;
@@ -431,6 +433,21 @@ const InspectionCard: React.FC<{
                 <label htmlFor={`summary-${item.id}`}>AI 總結</label>
                 <textarea id={`summary-${item.id}`} value={result.summary} onChange={(e) => handleResultChange('summary', e.target.value)} rows={4} />
             </div>
+            {onReanalyze && (
+                <div className="reanalysis-section">
+                    <label htmlFor={`reanalyze-prompt-${item.id}`}>補充提示或說明</label>
+                    <textarea
+                        id={`reanalyze-prompt-${item.id}`}
+                        placeholder="例如：請專注於右下角的閥門，並忽略背景中的其他管道。"
+                        value={supplementalPrompt}
+                        onChange={(e) => setSupplementalPrompt(e.target.value)}
+                        rows={3}
+                    />
+                    <button onClick={() => onReanalyze(item.id, supplementalPrompt)} className="button-secondary">
+                        使用提示重新分析
+                    </button>
+                </div>
+            )}
         </div>
     );
     
@@ -743,7 +760,8 @@ const App = () => {
     const runAnalysis = useCallback(async (
         itemToAnalyze: ChecklistItem,
         onSuccess: (item: ChecklistItem, result: AnalysisResult) => void,
-        onError: (item: ChecklistItem, errorMessage: string) => void
+        onError: (item: ChecklistItem, errorMessage: string) => void,
+        supplementalPrompt?: string
     ) => {
         if (!itemToAnalyze.dataUrl || !itemToAnalyze.mimeType) {
             onError(itemToAnalyze, "圖像數據遺失。");
@@ -754,7 +772,7 @@ const App = () => {
             const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
             const imagePart = dataUrlToGenerativePart(itemToAnalyze.dataUrl, itemToAnalyze.mimeType);
 
-            const prompt = `您是一位專業且謹慎的工業巡檢 AI。您的任務是驗證圖像並進行詳細分析，包括潛在的尺寸測量。
+            const basePrompt = `您是一位專業且謹慎的工業巡檢 AI。您的任務是驗證圖像並進行詳細分析，包括潛在的尺寸測量。
 
 巡檢任務： "${itemToAnalyze.task}"
 
@@ -774,9 +792,15 @@ const App = () => {
     -   檢查圖像中是否存在一個標準尺寸的信用卡 (寬度 85.6mm) 作為參照物。
     -   如果**同時**存在信用卡和一個明顯的、需要測量的異常特徵（如裂縫），請以此信用卡為比例尺，估算該特徵的真實尺寸（單位為 mm）。
     -   如果沒有信用卡或沒有需要測量的特徵，請將 'dimensions' 欄位設為 null。
-5.  **綜合判斷**: 基於以上觀察，判斷是否存在異常，並撰寫一個簡潔的總結。
+5.  **綜合判斷**: 基於以上觀察，判斷是否存在異常，並撰寫一個簡潔的總結。`;
 
-輸出格式：
+            const supplementalInstruction = supplementalPrompt
+                ? `\n\n重要補充說明與重新分析指令：
+使用者對先前的分析結果提供了以下補充說明。請將此說明作為最高優先級，並根據它重新進行完整的思維鏈分析。
+使用者補充說明：“${supplementalPrompt}”`
+                : '';
+
+            const prompt = `${basePrompt}${supplementalInstruction}\n\n輸出格式：
 請務必將您的所有發現以一個單一、最小化、不含 markdown 標記的 JSON 物件格式回傳。JSON 內所有字串的值 (value) 都必須使用繁體中文。JSON 結構必須如下：`;
 
             const responseSchema = {
@@ -1069,6 +1093,51 @@ ${JSON.stringify(reportInputData, null, 2)}
         }
     }, [confirmedRecords, setReport, setReportError, setReportState]);
     
+    const handleReanalyze = useCallback(async (itemId: string, supplementalPrompt: string) => {
+        if (!isOnline) {
+            alert("目前處於離線狀態，請連接網路後再試。");
+            return;
+        }
+        if (!supplementalPrompt.trim()) {
+            alert("請輸入補充說明。");
+            return;
+        }
+
+        const isQuickMode = appState.startsWith('QUICK_ANALYSIS');
+        const itemToAnalyze = isQuickMode ? quickAnalysisItem : checklist.find(i => i.id === itemId);
+
+        if (!itemToAnalyze || itemToAnalyze.id !== itemId) return;
+
+        // Update item status to loading
+        if (isQuickMode) {
+            setQuickAnalysisItem(prev => prev ? { ...prev, status: 'loading' } : null);
+        } else {
+            setChecklist(prev => prev.map(item =>
+                item.id === itemId ? { ...item, status: 'loading' } : item
+            ));
+        }
+        
+        await runAnalysis(
+            itemToAnalyze,
+            (_, result) => { // onSuccess
+                if (isQuickMode) {
+                    setQuickAnalysisItem(prev => prev ? { ...prev, status: 'success', result } : null);
+                } else {
+                    setChecklist(prev => prev.map(i => i.id === itemId ? { ...i, status: 'success', result } : i));
+                }
+            },
+            (_, errorMsg) => { // onError
+                if (isQuickMode) {
+                    setQuickAnalysisItem(prev => prev ? { ...prev, status: 'error', error: errorMsg } : null);
+                } else {
+                    setChecklist(prev => prev.map(i => i.id === itemId ? { ...i, status: 'error', error: errorMsg } : i));
+                }
+            },
+            supplementalPrompt
+        );
+
+    }, [isOnline, appState, quickAnalysisItem, checklist, runAnalysis, setQuickAnalysisItem, setChecklist]);
+
     const itemsToReview = checklist.filter(item => ['loading', 'success', 'error'].includes(item.status));
     const itemsToCapture = checklist.filter(item => ['pending', 'captured'].includes(item.status));
 
@@ -1149,6 +1218,7 @@ ${JSON.stringify(reportInputData, null, 2)}
                                     onConfirm={handleConfirmOne} 
                                     onRetry={(id, e) => handlePhotoRetry(id, e as React.ChangeEvent<HTMLInputElement>)}
                                     onUpdateResult={handleUpdateResult}
+                                    onReanalyze={handleReanalyze}
                                 />
                             ))}
                         </div>
@@ -1185,6 +1255,7 @@ ${JSON.stringify(reportInputData, null, 2)}
                                 onRetry={(id, e) => handleQuickPhotoRetry(id, e as React.ChangeEvent<HTMLInputElement>)}
                                 onUpdateResult={handleUpdateResult}
                                 onSave={handleSaveQuickAnalysis}
+                                onReanalyze={handleReanalyze}
                                 isQuickMode={true}
                             />
                         </div>

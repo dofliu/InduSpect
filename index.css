@@ -609,6 +609,48 @@ input[type="file"] {
 }
 /* End Editable Styles */
 
+/* Re-analysis Section in Inspection Card */
+.reanalysis-section {
+    margin-top: 1rem;
+    padding: 1rem;
+    border: 1px dashed var(--accent-color);
+    border-radius: 4px;
+    background-color: #e3f2fd; /* Light blue background */
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.reanalysis-section label {
+    font-weight: 500;
+    color: var(--primary-color);
+}
+
+.reanalysis-section textarea {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    font-family: var(--font-family);
+    font-size: 1rem;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.reanalysis-section textarea:focus {
+    outline: none;
+    border-color: var(--accent-color);
+    box-shadow: 0 0 0 2px rgba(66, 165, 245, 0.2);
+}
+
+.reanalysis-section button {
+    align-self: flex-end; /* Align button to the right */
+    background-color: var(--accent-color);
+}
+
+.reanalysis-section button:hover {
+    background-color: var(--secondary-color);
+}
+
 .card-actions {
     margin-top: auto;
     padding-top: 1rem;
