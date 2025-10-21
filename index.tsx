@@ -1,3 +1,4 @@
+
 import React, { useState, useCallback, useId, useEffect, useRef } from 'react';
 import ReactDOM from 'react-dom/client';
 import { GoogleGenAI, Type } from "@google/genai";
@@ -630,10 +631,9 @@ const App = () => {
     const uniqueId = useId();
 
     useEffect(() => {
-        // On initial load, if the app was last in a quick analysis state,
-        // reset it to IDLE. This is because the quickAnalysisItem is not
-        // persisted to avoid localStorage quota errors with large photo dataURLs,
-        // so we can't resume that state after a page reload.
+        // On initial load, reset any states that shouldn't persist across sessions.
+        
+        // 1. Reset 'QUICK_ANALYSIS' app states because the photo data isn't persisted.
         const storedStateJSON = window.localStorage.getItem('appState');
         if (storedStateJSON) {
             try {
@@ -644,6 +644,20 @@ const App = () => {
             } catch (e) {
                 console.error("Error parsing persisted app state:", e);
                 setAppState('IDLE');
+            }
+        }
+        
+        // 2. Reset report generation state if it was stuck on 'generating' from a previous session.
+        const storedReportStateJSON = window.localStorage.getItem('reportState');
+        if (storedReportStateJSON) {
+            try {
+                const lastReportState = JSON.parse(storedReportStateJSON);
+                if (lastReportState === 'generating') {
+                    setReportState('idle');
+                }
+            } catch (e) {
+                console.error("Error parsing persisted report state:", e);
+                setReportState('idle');
             }
         }
     }, []); // Run only once on component mount
