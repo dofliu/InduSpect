@@ -1,9 +1,9 @@
 
+
 import React, { useState, useCallback, useId, useEffect, useRef } from 'react';
 import ReactDOM from 'react-dom/client';
 import { GoogleGenAI, Type } from "@google/genai";
 
-//123444
 // --- Custom Hooks ---
 const usePersistentState = <T,>(key: string, initialValue: T): [T, React.Dispatch<React.SetStateAction<T>>] => {
     const [state, setState] = useState<T>(() => {
@@ -244,40 +244,62 @@ const ImageMeasurementTool: React.FC<{
         draw();
     }, [draw]);
 
-    const getCanvasCoords = (e: React.MouseEvent<HTMLCanvasElement>): Point => {
+    const getCanvasCoords = (clientX: number, clientY: number): Point => {
         const canvas = canvasRef.current;
         if (!canvas) return { x: 0, y: 0 };
         const rect = canvas.getBoundingClientRect();
         const scaleX = canvas.width / rect.width;
         const scaleY = canvas.height / rect.height;
         return {
-            x: (e.clientX - rect.left) * scaleX,
-            y: (e.clientY - rect.top) * scaleY,
+            x: (clientX - rect.left) * scaleX,
+            y: (clientY - rect.top) * scaleY,
         };
     };
 
-    const handleMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    const handleInteractionStart = (clientX: number, clientY: number) => {
         if (stage !== 'draw_reference' && stage !== 'draw_target') return;
-        setStartPoint(getCanvasCoords(e));
+        setStartPoint(getCanvasCoords(clientX, clientY));
     };
 
-    const handleMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    const handleInteractionMove = (clientX: number, clientY: number) => {
         if (!startPoint) return;
-        setMousePos(getCanvasCoords(e));
+        setMousePos(getCanvasCoords(clientX, clientY));
     };
 
-    const handleMouseUp = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    const handleInteractionEnd = (clientX: number, clientY: number) => {
         if (!startPoint) return;
-        const endPoint = getCanvasCoords(e);
+        const endPoint = getCanvasCoords(clientX, clientY);
         if (stage === 'draw_reference') {
-            setLines(prev => ({ ...prev, ref: {p1: startPoint, p2: endPoint} }));
+            setLines(prev => ({ ...prev, ref: { p1: startPoint, p2: endPoint } }));
             setStage('enter_reference');
         } else if (stage === 'draw_target') {
-            setLines(prev => ({ ...prev, target: {p1: startPoint, p2: endPoint} }));
+            setLines(prev => ({ ...prev, target: { p1: startPoint, p2: endPoint } }));
             setStage('done');
         }
         setStartPoint(null);
         setMousePos(null);
+    };
+
+    // Mouse Event Handlers
+    const handleMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => handleInteractionStart(e.clientX, e.clientY);
+    const handleMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => handleInteractionMove(e.clientX, e.clientY);
+    const handleMouseUp = (e: React.MouseEvent<HTMLCanvasElement>) => handleInteractionEnd(e.clientX, e.clientY);
+
+    // Touch Event Handlers
+    const handleTouchStart = (e: React.TouchEvent<HTMLCanvasElement>) => {
+        e.preventDefault();
+        const touch = e.touches[0];
+        handleInteractionStart(touch.clientX, touch.clientY);
+    };
+    const handleTouchMove = (e: React.TouchEvent<HTMLCanvasElement>) => {
+        e.preventDefault();
+        const touch = e.touches[0];
+        handleInteractionMove(touch.clientX, touch.clientY);
+    };
+    const handleTouchEnd = (e: React.TouchEvent<HTMLCanvasElement>) => {
+        e.preventDefault();
+        const touch = e.changedTouches[0];
+        handleInteractionEnd(touch.clientX, touch.clientY);
     };
 
     const calculateDistance = (p1: Point, p2: Point) => Math.sqrt(Math.pow(p2.x - p1.x, 2) + Math.pow(p2.y - p1.y, 2));
@@ -330,15 +352,18 @@ const ImageMeasurementTool: React.FC<{
                         onMouseDown={handleMouseDown}
                         onMouseMove={handleMouseMove}
                         onMouseUp={handleMouseUp}
+                        onTouchStart={handleTouchStart}
+                        onTouchMove={handleTouchMove}
+                        onTouchEnd={handleTouchEnd}
                     />
                 </div>
                 <div className="measurement-controls">
                     {stage === 'enter_reference' && (
-                        <>
+                        <div className="reference-input-group">
                             <input type="number" value={refLength} onChange={e => setRefLength(e.target.value)} placeholder="長度" />
                             <input type="text" value={refUnit} onChange={e => setRefUnit(e.target.value)} placeholder="單位" />
                             <button onClick={() => setStage('draw_target')}>確認參考</button>
-                        </>
+                        </div>
                     )}
                     {stage === 'done' && <button onClick={handleCalculation}>完成並儲存</button>}
                     <button onClick={handleReset} className="button-secondary">重設</button>
@@ -740,585 +765,414 @@ const App = () => {
             setQuickAnalysisItem(null);
             setAppState('CAPTURE');
 
-        } catch (e: any) {
+        } catch (e) {
             console.error(e);
-            setError(`無法分析定檢表: ${e.message}`);
+            const errorMessage = e instanceof Error ? e.message : '發生未知錯誤。';
+            setError(`無法處理您的定檢表：${errorMessage} 請檢查您的網路連線、API 金鑰或圖片內容後再試一次。`);
             setAppState('IDLE');
-        } finally {
-             event.target.value = '';
         }
-    }, [uniqueId, setAppState, setChecklist, setConfirmedRecords, setReport, setReportState, setQuickAnalysisItem]);
+    }, [uniqueId, setAppState, setChecklist, setConfirmedRecords, setReport, setReportState]);
+    
+    const analyzeImage = useCallback(async (dataUrl: string, mimeType: string, supplementalPrompt?: string): Promise<AnalysisResult> => {
+        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+        const imagePart = dataUrlToGenerativePart(dataUrl, mimeType);
 
-    const handlePhotoCapture = async (itemId: string, event: React.ChangeEvent<HTMLInputElement>) => {
-        const file = event.target.files?.[0];
-        if (!file) return;
+        const basePrompt = `您是一位專業的工業巡檢 AI，擅長從單張圖像中提取結構化數據。您的任務是準確、客觀地分析提供的設備巡檢點圖像。
 
-        try {
-            const { dataUrl, dimensions } = await processImageFile(file);
-            setChecklist(prev => prev.map(item =>
-                item.id === itemId ? {
-                    ...item,
-                    dataUrl,
-                    mimeType: file.type,
-                    imageDimensions: dimensions,
-                    status: 'captured'
-                } : item
-            ));
-        } catch (error) {
-            console.error("Error converting file to data URL:", error);
-            // Optionally set an error state on the specific item
-        } finally {
-            event.target.value = '';
-        }
-    };
+任務指令 (逐步執行):
+1.  **思維鏈第一步：場景描述。** 請先用一句話簡要描述圖像中的整體場景和主要物體。
+2.  **識別設備類型:** 根據場景，識別圖像中的主要設備類型 (例如：泵、閥門、壓力錶、馬達、配電盤、管道)。
+3.  **讀取儀表/計量器:**
+    *   如果圖像中存在任何形式的儀表 (數位式或指針式) 或計量器，請執行 OCR 或空間推理來讀取其數值和單位。
+    *   如果存在多個讀數，請將它們全部提取出來。
+    *   如果無法讀取、不存在儀表，或儀表被遮擋，請為相應欄位回傳 null。
+4.  **評估設備狀況:**
+    *   仔細評估設備的整體狀況，重點描述任何可見的磨損、生鏽、腐蝕、洩漏、物理損壞、裂縫或連接鬆脫的跡象。
+    *   如果狀況良好，請明確註明「狀況良好」。
+5.  **尋找參照物並測量尺寸:**
+    *   檢查圖像中是否存在一張標準尺寸的信用卡 (寬度 85.6mm) 作為比例尺。
+    *   如果找到信用卡，並且在「狀況評估」中發現了具體的物理特徵 (如裂縫)，請估算該特徵的長度 (單位為 mm)。
+    *   如果沒有找到信用卡或沒有可測量的特徵，請為尺寸相關欄位回傳 null。
+6.  **判斷異常:** 根據您的所有評估 (特別是狀況和讀數)，判斷是否存在需要關注的異常情況。
+7.  **生成總結:** 用一句話總結您的所有發現。
 
-    const runAnalysis = useCallback(async (
-        itemToAnalyze: ChecklistItem,
-        onSuccess: (item: ChecklistItem, result: AnalysisResult) => void,
-        onError: (item: ChecklistItem, errorMessage: string) => void,
-        supplementalPrompt?: string
-    ) => {
-        if (!itemToAnalyze.dataUrl || !itemToAnalyze.mimeType) {
-            onError(itemToAnalyze, "圖像數據遺失。");
-            return;
-        };
+${supplementalPrompt ? `使用者補充提示：\n${supplementalPrompt}\n請在分析時優先考慮此提示。` : ''}
 
-        try {
-            const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-            const imagePart = dataUrlToGenerativePart(itemToAnalyze.dataUrl, itemToAnalyze.mimeType);
-
-            const basePrompt = `您是一位專業且謹慎的工業巡檢 AI。您的任務是驗證圖像並進行詳細分析，包括潛在的尺寸測量。
-
-巡檢任務： "${itemToAnalyze.task}"
-
-第一階段：圖像驗證
-1.  **相關性檢查**：圖像中的主要物體是否與「巡檢任務」相符？ (如果是通用分析，請跳過此步)
-2.  **品質檢查**：圖像是否清晰、光線充足，足以進行準確分析？
-
-第二階段：條件式分析
-- **如果驗證失敗**：請立即停止，並在 'validation_error' 欄位中用繁體中文清楚說明原因。
-- **如果驗證成功**：請繼續進行詳細分析，並遵循以下的「思維鏈」步驟。
-
-思維鏈分析步驟：
-1.  **場景描述與設備識別**: 簡要描述場景，精確識別主要設備類型。
-2.  **數據讀取**: 掃描所有儀表、刻度盤或數字顯示屏，讀取標籤、數值和單位。
-3.  **狀況評估**: 評估設備的物理狀況，尋找任何生鏽、洩漏、裂縫等異常跡象。
-4.  **尺寸測量 (可選)**:
-    -   檢查圖像中是否存在一個標準尺寸的信用卡 (寬度 85.6mm) 作為參照物。
-    -   如果**同時**存在信用卡和一個明顯的、需要測量的異常特徵（如裂縫），請以此信用卡為比例尺，估算該特徵的真實尺寸（單位為 mm）。
-    -   如果沒有信用卡或沒有需要測量的特徵，請將 'dimensions' 欄位設為 null。
-5.  **綜合判斷**: 基於以上觀察，判斷是否存在異常，並撰寫一個簡潔的總結。`;
-
-            const supplementalInstruction = supplementalPrompt
-                ? `\n\n重要補充說明與重新分析指令：
-使用者對先前的分析結果提供了以下補充說明。請將此說明作為最高優先級，並根據它重新進行完整的思維鏈分析。
-使用者補充說明：“${supplementalPrompt}”`
-                : '';
-
-            const prompt = `${basePrompt}${supplementalInstruction}\n\n輸出格式：
-請務必將您的所有發現以一個單一、最小化、不含 markdown 標記的 JSON 物件格式回傳。JSON 內所有字串的值 (value) 都必須使用繁體中文。JSON 結構必須如下：`;
-
-            const responseSchema = {
-                type: Type.OBJECT,
+輸出格式：
+請務必將您的所有發現以一個單一、最小化、不含 markdown 標記的 JSON 物件格式回傳。所有回傳的文字都必須使用繁體中文。JSON 結構必須嚴格遵守以下格式：
+`;
+        const responseSchema = {
+             type: Type.OBJECT,
                 properties: {
-                    validation_passed: { type: Type.BOOLEAN },
-                    validation_error: { type: Type.STRING, nullable: true },
-                    analysis: {
+                    equipment_type: { type: Type.STRING, description: "設備的類型" },
+                    readings: {
+                        type: Type.ARRAY,
+                        description: "從儀表讀取的數值和單位列表",
+                        items: {
+                            type: Type.OBJECT,
+                            properties: {
+                                label: { type: Type.STRING, description: "讀數的標籤 (例如 '壓力', '溫度')" },
+                                value: { type: Type.NUMBER, description: "讀取的數值，如果沒有則為 null" },
+                                unit: { type: Type.STRING, description: "讀數的單位，如果沒有則為 null" }
+                            },
+                             required: ["label", "value", "unit"]
+                        }
+                    },
+                    condition_assessment: { type: Type.STRING, description: "設備狀況的詳細評估" },
+                    is_anomaly: { type: Type.BOOLEAN, description: "是否存在異常" },
+                    summary: { type: Type.STRING, description: "一句話總結" },
+                    dimensions: {
                         type: Type.OBJECT,
-                        nullable: true,
+                        description: "基於參照物（如信用卡）測量的尺寸",
                         properties: {
-                            equipment_type: { type: Type.STRING },
-                            readings: { type: Type.ARRAY, items: { type: Type.OBJECT, properties: { label: { type: Type.STRING }, value: { type: Type.NUMBER, nullable: true }, unit: { type: Type.STRING, nullable: true } }, required: ["label"] }},
-                            condition_assessment: { type: Type.STRING },
-                            is_anomaly: { type: Type.BOOLEAN },
-                            summary: { type: Type.STRING },
-                            dimensions: { type: Type.OBJECT, nullable: true, properties: { object_name: { type: Type.STRING }, value: { type: Type.NUMBER }, unit: { type: Type.STRING } }, required: ["object_name", "value", "unit"] }
+                             object_name: { type: Type.STRING, description: "被測量物體的名稱 (例如 '裂縫')" },
+                             value: { type: Type.NUMBER, description: "測量的長度數值，如果沒有則為 null" },
+                             unit: { type: Type.STRING, description: "測量的單位 (例如 'mm')，如果沒有則為 null" }
                         },
-                        required: ["equipment_type", "readings", "condition_assessment", "is_anomaly", "summary"]
+                        required: ["object_name", "value", "unit"]
                     }
                 },
-                required: ["validation_passed"]
-            };
+                required: ["equipment_type", "readings", "condition_assessment", "is_anomaly", "summary", "dimensions"]
+        };
 
-            const response = await ai.models.generateContent({
-                model: 'gemini-2.5-flash',
-                contents: { parts: [imagePart, { text: prompt }] },
-                config: { responseMimeType: "application/json", responseSchema: responseSchema },
-            });
-            
-            const resultJson = JSON.parse(response.text);
-            
-            if (resultJson.validation_passed && resultJson.analysis) {
-                onSuccess(itemToAnalyze, resultJson.analysis);
-            } else {
-                const errorMessage = resultJson.validation_error || "圖像驗證失敗，但未提供具體原因。";
-                throw new Error(errorMessage);
-            }
+        const response = await ai.models.generateContent({
+            model: 'gemini-2.5-flash',
+            contents: { parts: [imagePart, { text: basePrompt }] },
+            config: {
+                responseMimeType: "application/json",
+                responseSchema: responseSchema,
+            },
+        });
+        
+        return JSON.parse(response.text);
 
-        } catch (e: any) {
-            console.error(e);
-            onError(itemToAnalyze, `分析失敗: ${e.message}`);
-        }
     }, []);
-    
-    const startAnalysis = useCallback(async () => {
-        if (!isOnline) {
-            alert("目前處於離線狀態，請連接網路後再試。");
-            return;
+
+    const handlePhotoCapture = useCallback(async (id: string, eventOrFile: React.ChangeEvent<HTMLInputElement> | File) => {
+        const file = 'target' in eventOrFile ? (eventOrFile.target as HTMLInputElement).files?.[0] : eventOrFile;
+        if (!file) return;
+
+        const updateItemStatus = (itemId: string, status: ChecklistItemStatus, data: Partial<ChecklistItem> = {}) => {
+            const updater = (prevList: ChecklistItem[]) => prevList.map(item =>
+                item.id === itemId ? { ...item, status, ...data } : item
+            );
+            if(appState.startsWith('QUICK_ANALYSIS')) {
+                setQuickAnalysisItem(prev => prev ? updater([prev])[0] : null);
+            } else {
+                setChecklist(updater);
+            }
+        };
+
+        updateItemStatus(id, 'capturing');
+        
+        try {
+            const { dataUrl, dimensions } = await processImageFile(file);
+            updateItemStatus(id, 'captured', { dataUrl, mimeType: file.type, imageDimensions: dimensions });
+        } catch (e) {
+             console.error("Error processing image file:", e);
+             const errorMessage = e instanceof Error ? e.message : '無法處理圖片檔案。';
+             updateItemStatus(id, 'error', { error: errorMessage });
         }
+    }, [appState, setChecklist]);
+
+    const handleBatchAnalysis = useCallback(async () => {
         setAppState('ANALYZING');
         const itemsToAnalyze = checklist.filter(item => item.status === 'captured' && item.dataUrl);
-        
-        const itemIdsToAnalyze = itemsToAnalyze.map(i => i.id);
-        setChecklist(prev => prev.map(item => 
-            itemIdsToAnalyze.includes(item.id) ? { ...item, status: 'loading' } : item
-        ));
-        
-        const analysisPromises = itemsToAnalyze.map(item => runAnalysis(
-            item, 
-            (_, result) => {
-                setChecklist(prev => prev.map(i => i.id === item.id ? { ...i, status: 'success', result } : i));
-            },
-            (_, errorMsg) => {
-                setChecklist(prev => prev.map(i => i.id === item.id ? { ...i, status: 'error', error: errorMsg } : i));
+
+        for (const item of itemsToAnalyze) {
+            setChecklist(prev => prev.map(i => i.id === item.id ? { ...i, status: 'loading' } : i));
+            try {
+                const result = await analyzeImage(item.dataUrl!, item.mimeType!);
+                setChecklist(prev => prev.map(i => i.id === item.id ? { ...i, status: 'success', result, error: null } : i));
+            } catch (e) {
+                console.error(`Error analyzing item ${item.id}:`, e);
+                const errorMessage = e instanceof Error ? e.message : '發生未知分析錯誤。';
+                setChecklist(prev => prev.map(i => i.id === item.id ? { ...i, status: 'error', error: errorMessage } : i));
             }
-        ));
-        await Promise.all(analysisPromises);
+        }
         setAppState('REVIEW');
-    }, [checklist, runAnalysis, isOnline, setAppState, setChecklist]);
-
-    const handleUpdateResult = (itemId: string, updatedResult: AnalysisResult) => {
-        const updateLogic = (item: ChecklistItem) => 
-            item.id === itemId && item.result
-                ? { ...item, result: updatedResult }
-                : item;
-
-        if (appState === 'QUICK_ANALYSIS_REVIEW') {
-             setQuickAnalysisItem(prev => (prev && prev.id === itemId) ? updateLogic(prev) : prev);
-        } else {
-            setChecklist(prev => prev.map(updateLogic));
-        }
-    };
-
-
-    const handlePhotoRetry = async (itemId: string, event: React.ChangeEvent<HTMLInputElement>) => {
-        const file = event.target.files?.[0];
+    }, [checklist, analyzeImage, setChecklist, setAppState]);
+    
+     const handleQuickAnalysis = useCallback(async (eventOrFile: React.ChangeEvent<HTMLInputElement> | File) => {
+        const file = 'target' in eventOrFile ? (eventOrFile.target as HTMLInputElement).files?.[0] : eventOrFile;
         if (!file) return;
 
-        try {
-            const { dataUrl, dimensions } = await processImageFile(file);
-            const itemToUpdate = checklist.find(i => i.id === itemId);
-            if (!itemToUpdate) return;
-            
-            const updatedItem: ChecklistItem = { 
-                ...itemToUpdate, 
-                dataUrl, 
-                mimeType: file.type, 
-                imageDimensions: dimensions,
-                status: 'loading', 
-                error: null, 
-                result: null 
-            };
-            setChecklist(prev => prev.map(i => i.id === itemId ? updatedItem : i));
-            
-            if (isOnline) {
-                runAnalysis(updatedItem, 
-                    (_, result) => setChecklist(prev => prev.map(i => i.id === itemId ? { ...i, status: 'success', result } : i)),
-                    (_, errorMsg) => setChecklist(prev => prev.map(i => i.id === itemId ? { ...i, status: 'error', error: errorMsg } : i))
-                );
-            } else {
-                 setChecklist(prev => prev.map(i => i.id === itemId ? { ...updatedItem, status: 'captured' } : i));
-                 alert("已在離線狀態下更新照片。請在連線後點擊分析。");
-            }
-            
-        } catch (error) {
-             console.error("Error during retry:", error);
-        } finally {
-            event.target.value = '';
-        }
-    };
-    
-    // --- Quick Analysis Mode Handlers ---
-    const handleQuickPhoto = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
-        const file = event.target.files?.[0];
-        if (!file) return;
-
-        try {
-            const { dataUrl, dimensions } = await processImageFile(file);
-            const newItem: ChecklistItem = {
-                id: `quick-${Date.now()}`,
-                task: '快速分析',
-                dataUrl,
-                mimeType: file.type,
-                imageDimensions: dimensions,
-                status: 'loading',
-                result: null,
-                error: null,
-            };
-            setQuickAnalysisItem(newItem);
-            setAppState('QUICK_ANALYSIS_ANALYZING');
-            
-            runAnalysis(newItem,
-                (_, result) => {
-                    setQuickAnalysisItem(prev => prev ? { ...prev, status: 'success', result } : null);
-                    setAppState('QUICK_ANALYSIS_REVIEW');
-                },
-                (_, errorMsg) => {
-                    setQuickAnalysisItem(prev => prev ? { ...prev, status: 'error', error: errorMsg } : null);
-                    setAppState('QUICK_ANALYSIS_REVIEW');
-                }
-            );
-
-        } catch (error) {
-             console.error("Error in quick photo analysis:", error);
-             setQuickAnalysisItem(null);
-             setAppState('QUICK_ANALYSIS_CAPTURE');
-        } finally {
-            event.target.value = '';
-        }
-
-    }, [runAnalysis, setAppState, setQuickAnalysisItem]);
-    
-    const handleQuickPhotoRetry = async (itemId: string, event: React.ChangeEvent<HTMLInputElement>) => {
-        const file = event.target.files?.[0];
-        if (!file || !quickAnalysisItem || quickAnalysisItem.id !== itemId) return;
-
-        try {
-            const { dataUrl, dimensions } = await processImageFile(file);
-            
-            const updatedItem: ChecklistItem = { 
-                ...quickAnalysisItem, 
-                dataUrl, 
-                mimeType: file.type,
-                imageDimensions: dimensions,
-                status: 'loading', 
-                error: null, 
-                result: null 
-            };
-            setQuickAnalysisItem(updatedItem);
-            setAppState('QUICK_ANALYSIS_ANALYZING');
-            
-            runAnalysis(updatedItem, 
-                (_, result) => {
-                    setQuickAnalysisItem(prev => prev ? { ...prev, status: 'success', result } : null);
-                    setAppState('QUICK_ANALYSIS_REVIEW');
-                },
-                (_, errorMsg) => {
-                    setQuickAnalysisItem(prev => prev ? { ...prev, status: 'error', error: errorMsg } : null);
-                    setAppState('QUICK_ANALYSIS_REVIEW');
-                }
-            );
-            
-        } catch (error) {
-             console.error("Error during quick photo retry:", error);
-             setQuickAnalysisItem(prev => prev ? { ...prev, status: 'error', error: '重試時發生錯誤' } : null);
-             setAppState('QUICK_ANALYSIS_REVIEW');
-        } finally {
-            event.target.value = '';
-        }
-    };
-
-    const handleSaveQuickAnalysis = (id: string) => {
-        if (!quickAnalysisItem || quickAnalysisItem.id !== id || quickAnalysisItem.status !== 'success') return;
-
-        const newConfirmedItem = { ...quickAnalysisItem, status: 'confirmed' as ChecklistItemStatus, task: `快速分析 - ${quickAnalysisItem.result?.equipment_type || '未知設備'}` };
-        setConfirmedRecords(prev => [...prev, newConfirmedItem]);
-
-        // Reset for next quick analysis
-        setQuickAnalysisItem(null);
-        setAppState('QUICK_ANALYSIS_CAPTURE');
-    };
-
-    const handleConfirmOne = (id: string) => {
-        const itemToConfirm = checklist.find(item => item.id === id);
-        if (!itemToConfirm || itemToConfirm.status !== 'success') return;
+        const tempId = `${uniqueId}-quick-${Date.now()}`;
+        const newItem: ChecklistItem = {
+            id: tempId,
+            task: `快速分析: ${file.name}`,
+            dataUrl: null, mimeType: null, imageDimensions: null,
+            status: 'capturing', result: null, error: null,
+        };
         
-        const remainingChecklist = checklist.filter(item => item.id !== id);
-        const newConfirmedItem = { ...itemToConfirm, status: 'confirmed' as ChecklistItemStatus };
+        setQuickAnalysisItem(newItem);
+        setAppState('QUICK_ANALYSIS_ANALYZING');
+        
+        try {
+            const { dataUrl, dimensions } = await processImageFile(file);
+            const updatedItem = { ...newItem, dataUrl, mimeType: file.type, imageDimensions: dimensions, status: 'loading' };
+            setQuickAnalysisItem(updatedItem);
 
-        setChecklist(remainingChecklist);
-        setConfirmedRecords(prev => [...prev, newConfirmedItem]);
+            const result = await analyzeImage(dataUrl, file.type);
+            setQuickAnalysisItem({ ...updatedItem, status: 'success', result });
+            setAppState('QUICK_ANALYSIS_REVIEW');
+
+        } catch (e) {
+            console.error("Error during quick analysis:", e);
+            const errorMessage = e instanceof Error ? e.message : '發生未知錯誤。';
+            setQuickAnalysisItem({ ...newItem, status: 'error', error: errorMessage });
+            setAppState('QUICK_ANALYSIS_REVIEW');
+        }
+    }, [uniqueId, analyzeImage, setAppState]);
+
+    const handleReanalyze = useCallback(async (id: string, supplementalPrompt: string) => {
+        const itemToReanalyze = appState.startsWith('QUICK_ANALYSIS')
+            ? quickAnalysisItem
+            : checklist.find(item => item.id === id);
+
+        if (!itemToReanalyze || !itemToReanalyze.dataUrl) return;
+
+        const updateItemStatus = (status: ChecklistItemStatus, data: Partial<ChecklistItem> = {}) => {
+            if (appState.startsWith('QUICK_ANALYSIS')) {
+                setQuickAnalysisItem(prev => prev ? { ...prev, status, ...data } : null);
+            } else {
+                setChecklist(prev => prev.map(i => i.id === id ? { ...i, status, ...data } : i));
+            }
+        };
+
+        updateItemStatus('loading', { error: null });
+
+        try {
+            const result = await analyzeImage(itemToReanalyze.dataUrl, itemToReanalyze.mimeType!, supplementalPrompt);
+            updateItemStatus('success', { result });
+        } catch (e) {
+            console.error(`Error re-analyzing item ${id}:`, e);
+            const errorMessage = e instanceof Error ? e.message : '發生未知再分析錯誤。';
+            updateItemStatus('error', { error: errorMessage });
+        }
+    }, [appState, checklist, quickAnalysisItem, analyzeImage, setChecklist, setQuickAnalysisItem]);
+
+
+    const handleUpdateResult = (id: string, newResult: AnalysisResult) => {
+        if (appState.startsWith('QUICK_ANALYSIS')) {
+             setQuickAnalysisItem(prev => (prev && prev.id === id ? { ...prev, result: newResult } : prev));
+        } else {
+            setChecklist(prev => prev.map(item => item.id === id ? { ...item, result: newResult } : item));
+        }
     };
     
+    const handleConfirmRecord = (id: string) => {
+        const itemToConfirm = checklist.find(item => item.id === id);
+        if (itemToConfirm && itemToConfirm.status === 'success') {
+            setChecklist(prev => prev.map(item => item.id === id ? {...item, status: 'confirmed'} : item));
+            setConfirmedRecords(prev => [...prev, itemToConfirm]);
+        }
+    };
+    
+    const handleSaveQuickRecord = (id: string) => {
+        if (quickAnalysisItem && quickAnalysisItem.id === id && quickAnalysisItem.status === 'success') {
+            setConfirmedRecords(prev => [...prev, quickAnalysisItem]);
+            setQuickAnalysisItem(null); // Clear after saving
+            setAppState('QUICK_ANALYSIS_CAPTURE'); // Ready for another quick analysis
+        }
+    }
+
     const handleConfirmAll = () => {
         const itemsToConfirm = checklist.filter(item => item.status === 'success');
-        if (itemsToConfirm.length === 0) return;
-        
-        const confirmedIds = itemsToConfirm.map(item => item.id);
-        const remainingChecklist = checklist.filter(item => !confirmedIds.includes(item.id));
-        const newConfirmedItems = itemsToConfirm.map(item => ({...item, status: 'confirmed' as ChecklistItemStatus}));
-        
-        setChecklist(remainingChecklist);
-        setConfirmedRecords(prev => [...prev, ...newConfirmedItems]);
+        if (itemsToConfirm.length > 0) {
+            setChecklist(prev => prev.map(item => item.status === 'success' ? {...item, status: 'confirmed'} : item));
+            setConfirmedRecords(prev => [...prev, ...itemsToConfirm]);
+        }
     };
 
     const handleGenerateReport = useCallback(async () => {
-        setReportState('generating');
-        setReport(null);
-        setReportError(null);
-
         if (confirmedRecords.length === 0) {
-            setReportError("沒有已確認的記錄可供生成報告。");
+            setReportError("沒有可供生成報告的已確認記錄。");
             setReportState('error');
             return;
         }
 
+        setReportState('generating');
+        setReportError(null);
+        setReport(null);
+
         try {
             const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-
-            const reportInputData = confirmedRecords.map(item => {
-                const result = item.result;
-                if (!result) return null;
-                const primaryReading = result.readings && result.readings.length > 0 ? result.readings[0] : null;
-                return {
-                    inspection_point: item.task,
-                    equipment_type: result.equipment_type,
-                    reading: primaryReading ? { value: primaryReading.value, unit: primaryReading.unit } : null,
-                    condition_assessment: result.condition_assessment,
-                    is_anomaly: result.is_anomaly
-                };
-            }).filter(Boolean);
+            const recordsData = confirmedRecords.map(r => ({
+                task: r.task,
+                ...r.result
+            }));
 
             const prompt = `您是一位經驗豐富的工廠營運經理 AI 助理。
 
 背景資料：
 以下是一個 JSON 陣列，包含了某次設施巡檢中每個檢查點的數據。每個物件代表一個巡檢點的發現。
-${JSON.stringify(reportInputData, null, 2)}
+${JSON.stringify(recordsData, null, 2)}
 
 任務指令：
-請根據上述數據，生成一份不超過 250 字的高階主管級摘要報告。報告應包含以下三個部分：
-1.  **總體概述**: 簡要總結本次巡檢的整體情況。
-2.  **關鍵問題**: 以點列方式，列出最多 3 個最需要立即關注的異常問題，並明確指出設備位置和具體問題。
-3.  **結論**: 用一句話總結設施的整體維護狀況。
+請根據上述數據，生成一份不超過 300 字的高階主管級摘要報告。報告應包含以下三個部分，並使用 Markdown 格式化：
+1.  **總體概述**: 簡要總結本次巡檢的整體情況，包括檢查了多少項目，以及發現異常的比例。
+2.  **關鍵問題**: 以點列方式，列出所有被標記為 \`"is_anomaly": true\` 的項目。對於每個問題，明確指出設備位置 (task) 和具體問題 (condition\_assessment 或 summary)。如果沒有異常，請註明「本次巡檢未發現顯著異常」。
+3.  **建議措施**: 根據發現的關鍵問題，提出 1-2 條具體的、可操作的後續建議 (例如：「建議維修團隊檢查泵 A-01 的生鏽情況」)。
+4.  **結論**: 用一句話總結設施的整體維護狀況。
 
 報告語氣應正式、專業且簡潔。直接輸出報告內容，不要包含任何額外的開場白或結語。`;
 
             const response = await ai.models.generateContent({
-                model: 'gemini-2.5-flash',
+                model: 'gemini-2.5-pro',
                 contents: prompt,
             });
-
             setReport(response.text);
             setReportState('idle');
-
-        } catch (e: any) {
-            console.error("Report generation failed:", e);
-            setReportError(`報告生成失敗: ${e.message}`);
+        } catch (e) {
+            console.error("Error generating report:", e);
+            const errorMessage = e instanceof Error ? e.message : '發生未知錯誤。';
+            setReportError(`報告生成失敗：${errorMessage}`);
             setReportState('error');
         }
-    }, [confirmedRecords, setReport, setReportError, setReportState]);
+    }, [confirmedRecords]);
     
-    const handleReanalyze = useCallback(async (itemId: string, supplementalPrompt: string) => {
-        if (!isOnline) {
-            alert("目前處於離線狀態，請連接網路後再試。");
-            return;
+    const startNewInspection = () => {
+        // Clear all relevant state but keep confirmed records for viewing until a new checklist is uploaded
+        setAppState('IDLE');
+        setChecklist([]);
+        setError(null);
+        setReport(null);
+        setReportState('idle');
+        setReportError(null);
+        setQuickAnalysisItem(null);
+    };
+    
+    const resetAllData = () => {
+         if (window.confirm("您確定要清除所有巡檢資料嗎？此操作無法復原。")) {
+            window.localStorage.clear();
+            // Reload the page to ensure all state is reset from scratch
+            window.location.reload();
         }
-        if (!supplementalPrompt.trim()) {
-            alert("請輸入補充說明。");
-            return;
-        }
+    }
+    
+    const activeChecklistItems = checklist.filter(item => item.status !== 'confirmed');
+    const allCaptured = checklist.length > 0 && checklist.every(item => item.dataUrl !== null || item.status === 'confirmed');
+    const allAnalyzed = checklist.length > 0 && checklist.every(item => item.status === 'success' || item.status === 'error' || item.status === 'confirmed');
+    const hasSuccessItems = checklist.some(item => item.status === 'success');
+    const hasPendingItems = checklist.some(item => item.status === 'pending' || item.status === 'capturing' || item.status === 'captured');
 
-        const isQuickMode = appState.startsWith('QUICK_ANALYSIS');
-        const itemToAnalyze = isQuickMode ? quickAnalysisItem : checklist.find(i => i.id === itemId);
 
-        if (!itemToAnalyze || itemToAnalyze.id !== itemId) return;
+    return (
+        <>
+        <div className="container">
+            <header>
+                <h1>InduSpect - AI 智慧巡檢原型</h1>
+                <p>工業技術研究院 機械與系統研究所 智慧工廠系統整合技術組</p>
+            </header>
 
-        // Update item status to loading
-        if (isQuickMode) {
-            setQuickAnalysisItem(prev => prev ? { ...prev, status: 'loading' } : null);
-        } else {
-            setChecklist(prev => prev.map(item =>
-                item.id === itemId ? { ...item, status: 'loading' } : item
-            ));
-        }
-        
-        await runAnalysis(
-            itemToAnalyze,
-            (_, result) => { // onSuccess
-                if (isQuickMode) {
-                    setQuickAnalysisItem(prev => prev ? { ...prev, status: 'success', result } : null);
-                } else {
-                    setChecklist(prev => prev.map(i => i.id === itemId ? { ...i, status: 'success', result } : i));
-                }
-            },
-            (_, errorMsg) => { // onError
-                if (isQuickMode) {
-                    setQuickAnalysisItem(prev => prev ? { ...prev, status: 'error', error: errorMsg } : null);
-                } else {
-                    setChecklist(prev => prev.map(i => i.id === itemId ? { ...i, status: 'error', error: errorMsg } : i));
-                }
-            },
-            supplementalPrompt
-        );
-
-    }, [isOnline, appState, quickAnalysisItem, checklist, runAnalysis, setQuickAnalysisItem, setChecklist]);
-
-    const itemsToReview = checklist.filter(item => ['loading', 'success', 'error'].includes(item.status));
-    const itemsToCapture = checklist.filter(item => ['pending', 'captured'].includes(item.status));
-
-    const renderContent = () => {
-        switch (appState) {
-            case 'IDLE':
-                return (
-                    <section className="upload-section" aria-labelledby="upload-heading">
-                        <h2 id="upload-heading">步驟 1: 上傳您的定檢表</h2>
-                        <p>請上傳包含巡檢項目的文件圖片 (PNG, JPG)，AI 將自動為您提取檢查清單。</p>
-                        <input type="file" id="form-upload" aria-label="上傳定檢表" accept="image/png, image/jpeg" onChange={handleFormUpload} />
-                        <label htmlFor="form-upload" className="file-upload-label">選擇定檢表照片</label>
-                        {error && <div className="error-message" style={{marginTop: '1rem'}} role="alert">{error}</div>}
-                        
-                        <div className="upload-section-divider">
-                            <span>或者</span>
+            <Stepper appState={appState} />
+            
+            <main>
+                {appState === 'IDLE' && (
+                    <section className="upload-section">
+                        <h2>步驟 1: 上傳您的定檢表</h2>
+                         <p>請上傳一張包含所有巡檢項目的定檢表照片，AI 將自動為您建立數位檢查清單。</p>
+                        <div className="actions-bar vertical">
+                            <label htmlFor="form-upload" className="file-upload-label">選擇定檢表照片</label>
+                            <input type="file" id="form-upload" accept="image/*" onChange={handleFormUpload} />
+                             <div className="upload-section-divider">或</div>
+                            <button onClick={() => setAppState('QUICK_ANALYSIS_CAPTURE')} className="button-secondary full-width">
+                                試試單張照片快速分析
+                            </button>
                         </div>
-                        
-                        <button onClick={() => setAppState('QUICK_ANALYSIS_CAPTURE')} className="button-secondary full-width">
-                            試試單張照片快速分析
-                        </button>
+                        {error && <div className="error-message" role="alert">{error}</div>}
                     </section>
-                );
-            case 'EXTRACTING':
-                return <LoadingComponent text="正在從文件中提取巡檢項目..." />;
-            case 'CAPTURE':
-                const allPhotosTaken = itemsToCapture.every(item => item.status === 'captured');
-                const activeItemIndex = itemsToCapture.findIndex(item => item.status === 'pending');
-                const currentTask = activeItemIndex !== -1 ? itemsToCapture[activeItemIndex].task : "所有照片已拍攝完畢！";
-                return (
+                )}
+                
+                {appState === 'EXTRACTING' && <LoadingComponent text="正在從您的定檢表中提取巡檢項目..." />}
+
+                {appState === 'CAPTURE' && (
                     <section className="capture-section">
-                        <h3>步驟 2: 拍攝巡檢照片</h3>
-                        <p>下一個項目：<strong>{currentTask}</strong></p>
+                        <h2>步驟 2: 拍攝巡檢照片</h2>
+                        <p>請依照下方清單，依序為每個項目拍攝清晰的照片。您可以在離線狀態下完成所有拍攝。</p>
                         <ul className="checklist">
-                            {itemsToCapture.map((item, index) => (
-                                <li key={item.id} className={`checklist-item ${index === activeItemIndex ? 'active' : ''} ${item.status === 'captured' ? 'completed' : ''}`}>
-                                    <span className="checklist-item-text">{index + 1}. {item.task}</span>
+                            {checklist.map(item => (
+                                <li key={item.id} className={`checklist-item ${item.status === 'captured' ? 'completed' : ''} ${!hasPendingItems && item.status !== 'captured' ? '' : (checklist.find(i => i.status === 'pending' || i.status === 'capturing')?.id === item.id ? 'active' : '')}`}>
+                                    <span className="checklist-item-text">{item.task}</span>
                                     <div className="checklist-item-action">
-                                        {item.dataUrl ? (
-                                             <img src={item.dataUrl} alt={`預覽 ${item.task}`} />
-                                        ) : (
-                                            <>
-                                                <input type="file" id={`photo-upload-${item.id}`} accept="image/*" capture="environment" onChange={(e) => handlePhotoCapture(item.id, e)} disabled={index !== activeItemIndex} />
-                                                <label htmlFor={`photo-upload-${item.id}`} className={`action-button ${index !== activeItemIndex ? 'sr-only' : ''}`} aria-label={`拍攝 ${item.task}`}>拍攝照片</label>
-                                            </>
-                                        )}
+                                        {item.dataUrl && <img src={item.dataUrl} alt={`預覽 ${item.task}`} />}
+                                        <input type="file" id={`capture-${item.id}`} accept="image/*" capture="environment" onChange={(e) => handlePhotoCapture(item.id, e)} style={{ display: 'none' }} />
+                                        <label htmlFor={`capture-${item.id}`} className="action-button">
+                                            {item.dataUrl ? '重新拍攝' : '拍攝照片'}
+                                        </label>
                                     </div>
                                 </li>
                             ))}
                         </ul>
-                         <div className="actions-bar">
-                            <button onClick={startAnalysis} disabled={!allPhotosTaken} className="button-primary">
+                        <div className="actions-bar">
+                            {/* FIX: Removed redundant `appState === 'ANALYZING'` check.
+                                This component only renders when `appState` is 'CAPTURE', so the check was always false. */}
+                             <button onClick={handleBatchAnalysis} disabled={!allCaptured}>
                                 開始分析所有項目
                             </button>
                         </div>
                     </section>
-                );
-            case 'ANALYZING':
-                const analyzedCount = checklist.filter(i => i.status === 'success' || i.status === 'error').length;
-                const totalToAnalyze = checklist.filter(i => i.status === 'loading' || i.status === 'success' || i.status === 'error').length;
-                return <LoadingComponent text={`正在分析照片... (${analyzedCount} / ${totalToAnalyze})`} />;
-            case 'REVIEW':
-                 const unconfirmedSuccessCount = itemsToReview.filter(i => i.status === 'success').length;
-                return (
-                    <section>
-                         <h2>步驟 3: 分析與審核結果</h2>
-                        <p>您可以在這裡審核並修改 AI 的分析結果，然後點擊「確認記錄」將其存檔。</p>
-                        <div className="actions-bar">
-                            <button onClick={handleConfirmAll} disabled={unconfirmedSuccessCount === 0}>
-                                一鍵記錄所有已完成項目 ({unconfirmedSuccessCount})
-                            </button>
-                        </div>
-                        <div className="inspection-grid" role="list">
-                            {itemsToReview.map((item: ChecklistItem) => (
+                )}
+                
+                {appState === 'QUICK_ANALYSIS_CAPTURE' && (
+                    <section className="quick-analysis-section">
+                        <h2>快速分析模式</h2>
+                        <p>無需建立檢查清單，直接上傳單張照片進行即時分析。</p>
+                         <div className="actions-bar vertical">
+                             <label htmlFor="quick-upload-file" className="file-upload-label">從檔案上傳</label>
+                             <input type="file" id="quick-upload-file" accept="image/*" onChange={handleQuickAnalysis} />
+                             
+                             <label htmlFor="quick-upload-camera" className="file-upload-label">立即拍攝</label>
+                             <input type="file" id="quick-upload-camera" accept="image/*" capture="environment" onChange={handleQuickAnalysis} />
+
+                            <div className="upload-section-divider"></div>
+                             
+                             <button onClick={startNewInspection} className="button-secondary full-width">返回主流程</button>
+                         </div>
+                    </section>
+                )}
+                
+                {(appState === 'ANALYZING' || appState === 'QUICK_ANALYSIS_ANALYZING') && <LoadingComponent text="AI 分析中，請稍候..." />}
+
+                {(appState === 'REVIEW' || appState === 'QUICK_ANALYSIS_REVIEW') && (
+                    <section className="review-section">
+                        <h2>步驟 3: 分析與審核結果</h2>
+                        <p>AI 已完成分析。請審核以下結果，您可以在卡片中直接修改任何欄位，並確認記錄。</p>
+                        
+                        {appState === 'REVIEW' && hasSuccessItems && (
+                            <div className="actions-bar">
+                                <button onClick={handleConfirmAll}>一鍵記錄所有已完成項目</button>
+                            </div>
+                        )}
+
+                        <div className="inspection-grid">
+                           {appState === 'QUICK_ANALYSIS_REVIEW' && quickAnalysisItem && (
                                 <InspectionCard 
+                                    item={quickAnalysisItem} 
+                                    onRetry={handleQuickAnalysis}
+                                    onUpdateResult={handleUpdateResult}
+                                    onSave={handleSaveQuickRecord}
+                                    onReanalyze={handleReanalyze}
+                                    isQuickMode={true}
+                                />
+                           )}
+                           {appState === 'REVIEW' && activeChecklistItems.map(item => (
+                               <InspectionCard 
                                     key={item.id} 
                                     item={item} 
-                                    onConfirm={handleConfirmOne} 
-                                    onRetry={(id, e) => handlePhotoRetry(id, e as React.ChangeEvent<HTMLInputElement>)}
+                                    onConfirm={handleConfirmRecord}
+                                    onRetry={handlePhotoCapture}
                                     onUpdateResult={handleUpdateResult}
                                     onReanalyze={handleReanalyze}
-                                />
-                            ))}
-                        </div>
-                    </section>
-                );
-            case 'QUICK_ANALYSIS_CAPTURE':
-                return (
-                     <section className="quick-analysis-section">
-                        <h2>快速分析模式</h2>
-                        <p>請上傳一張照片，或使用相機立即拍攝以進行分析。</p>
-                         <div className="actions-bar vertical">
-                             <input type="file" id="quick-upload" accept="image/*" onChange={handleQuickPhoto} />
-                             <label htmlFor="quick-upload" className="button-primary">從檔案上傳</label>
-                             
-                             <input type="file" id="quick-capture" accept="image/*" capture="environment" onChange={handleQuickPhoto} />
-                             <label htmlFor="quick-capture" className="button-primary">立即拍攝</label>
-
-                             <button onClick={() => setAppState('IDLE')} className="button-secondary">返回主流程</button>
-                        </div>
-                    </section>
-                );
-            case 'QUICK_ANALYSIS_ANALYZING':
-                return <LoadingComponent text="正在分析您的照片..." />;
-            case 'QUICK_ANALYSIS_REVIEW':
-                 if (!quickAnalysisItem) return null;
-                return (
-                    <section>
-                        <h2>快速分析結果</h2>
-                        <p>您可以在下方審核並修改 AI 的分析結果，或使用手動工具進行測量。</p>
-                        <div className="inspection-grid" role="list">
-                            <InspectionCard 
-                                key={quickAnalysisItem.id} 
-                                item={quickAnalysisItem}
-                                onRetry={(id, e) => handleQuickPhotoRetry(id, e as React.ChangeEvent<HTMLInputElement>)}
-                                onUpdateResult={handleUpdateResult}
-                                onSave={handleSaveQuickAnalysis}
-                                onReanalyze={handleReanalyze}
-                                isQuickMode={true}
-                            />
-                        </div>
-                         <div className="actions-bar">
-                            <button onClick={() => { setQuickAnalysisItem(null); setAppState('QUICK_ANALYSIS_CAPTURE'); }} className="button-primary">分析另一張照片</button>
-                            <button onClick={() => { setQuickAnalysisItem(null); setAppState('IDLE'); }} className="button-secondary">返回主流程</button>
-                        </div>
-                    </section>
-                );
-            default:
-                return null;
-        }
-    };
-
-    return (
-        <div className="container" role="main">
-            <header>
-                <h1>InduSpect AI 智慧巡檢</h1>
-                <p>一個更智慧、更引導式的巡檢流程。</p>
-            </header>
-            <Stepper appState={appState} />
-            <main>
-                {renderContent()}
-                {(itemsToCapture.length > 0 && appState === 'REVIEW') && (
-                     <section className="capture-section">
-                        <h3>返回拍攝</h3>
-                         <ul className="checklist">
-                            {itemsToCapture.map((item, index) => (
-                                <li key={item.id} className={`checklist-item ${item.status === 'captured' ? 'completed' : ''}`}>
-                                    <span className="checklist-item-text">{index + 1}. {item.task}</span>
-                                    <div className="checklist-item-action">
-                                        {item.dataUrl ? (
-                                             <img src={item.dataUrl} alt={`預覽 ${item.task}`} />
-                                        ) : (
-                                           '待拍攝'
-                                        )}
-                                    </div>
-                                </li>
-                            ))}
-                        </ul>
-                          <div className="actions-bar">
-                            <button onClick={() => setAppState('CAPTURE')} className="button-secondary">
-                                返回繼續拍攝
-                            </button>
+                               />
+                           ))}
                         </div>
                     </section>
                 )}
+
                 <RecordsTable records={confirmedRecords} />
+                
                 <ReportSection 
                     records={confirmedRecords}
                     report={report}
@@ -1326,14 +1180,28 @@ ${JSON.stringify(reportInputData, null, 2)}
                     reportError={reportError}
                     onGenerate={handleGenerateReport}
                 />
+                
+                 {(appState !== 'IDLE' || confirmedRecords.length > 0) && (
+                    <section className="control-section">
+                        <h2>系統控制</h2>
+                        <div className="actions-bar">
+                             <button onClick={startNewInspection} className="button-secondary">開始新的巡檢</button>
+                             <button onClick={resetAllData} className="button-retry">清除所有資料並重設</button>
+                        </div>
+                    </section>
+                 )}
+
             </main>
+            
             <footer>
-                <p>國立勤益科技大學 智慧自動化工程系 劉瑞弘老師研究團隊(drive by Gemini)</p>
+                <p>&copy; 2025 工業技術研究院 機械與系統研究所 智慧工廠系統整合技術組. All Rights Reserved.</p>
             </footer>
-             <div className={`status-indicator ${isOnline ? 'online' : 'offline'}`} role="status">
-                {isOnline ? '● 線上' : '● 離線'}
-            </div>
+
         </div>
+        <div className={`status-indicator ${isOnline ? 'online' : 'offline'}`} role="status">
+           {isOnline ? '● 線上' : '● 離線'}
+        </div>
+        </>
     );
 };
 

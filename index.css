@@ -1,3 +1,4 @@
+
 @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap');
 
 :root {
@@ -923,6 +924,7 @@ footer {
     padding-top: 1rem;
     margin-top: 1rem;
     border-top: 1px solid var(--border-color);
+    flex-wrap: wrap;
 }
 
 .measurement-controls input {
@@ -940,6 +942,19 @@ footer {
     border: none;
     border-radius: 5px;
     cursor: pointer;
+}
+
+.reference-input-group {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.reference-input-group input[type="number"] {
+    width: 100px;
+}
+.reference-input-group input[type="text"] {
+    width: 80px;
 }
 
 
