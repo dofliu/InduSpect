@@ -99,45 +99,6 @@ class InspectionProvider with ChangeNotifier {
     }
   }
 
-  /// 上傳並分析定檢表照片（舊版本，為兼容性保留）
-  @Deprecated('Use uploadChecklistFromXFile instead')
-  Future<void> uploadChecklist(String imagePath) async {
-    try {
-      setAnalyzing(true);
-      clearError();
-
-      Uint8List imageBytes;
-
-      if (kIsWeb) {
-        throw UnsupportedError('Use uploadChecklistFromXFile on Web platform');
-      } else {
-        // 移動平台：從文件路徑讀取
-        final savedPath = await _imageService.compressAndSaveImage(imagePath);
-        imageBytes = await _imageService.getImageBytes(savedPath);
-      }
-
-      // 呼叫 Gemini API 提取項目
-      final items = await _geminiService.extractChecklistItems(imageBytes);
-
-      // 創建 InspectionItem 列表
-      _inspectionItems = items
-          .map((description) => InspectionItem(
-                id: _uuid.v4(),
-                description: description,
-              ))
-          .toList();
-
-      // 保存到本地存儲
-      await _storageService.saveInspectionItems(_inspectionItems);
-
-      setAnalyzing(false);
-      notifyListeners();
-    } catch (e) {
-      print('Error uploading checklist: $e');
-      setError('定檢表分析失敗：$e');
-      setAnalyzing(false);
-    }
-  }
 
   // ========== 步驟 2: 拍攝巡檢照片 ==========
 
@@ -169,37 +130,6 @@ class InspectionProvider with ChangeNotifier {
     }
   }
 
-  /// 為特定項目添加照片（舊版本，為兼容性保留）
-  @Deprecated('Use addPhotoToItemFromXFile instead')
-  Future<void> addPhotoToItem(String itemId, String imagePath) async {
-    try {
-      String savedPath;
-
-      if (kIsWeb) {
-        throw UnsupportedError('Use addPhotoToItemFromXFile on Web platform');
-      } else {
-        // 移動平台：從文件路徑讀取
-        savedPath = await _imageService.compressAndSaveImage(imagePath);
-      }
-
-      // 更新項目
-      final index = _inspectionItems.indexWhere((item) => item.id == itemId);
-      if (index != -1) {
-        _inspectionItems[index] = _inspectionItems[index].copyWith(
-          photoPath: savedPath,
-          isCompleted: true,
-        );
-
-        // 保存到本地存儲
-        await _storageService.saveInspectionItems(_inspectionItems);
-
-        notifyListeners();
-      }
-    } catch (e) {
-      print('Error adding photo to item: $e');
-      setError('照片保存失敗：$e');
-    }
-  }
 
   /// 分析所有已拍攝的照片
   Future<void> analyzeAllPhotos() async {
@@ -392,45 +322,6 @@ class InspectionProvider with ChangeNotifier {
     }
   }
 
-  /// 快速分析單張照片（舊版本，為兼容性保留）
-  @Deprecated('Use quickAnalyzeFromXFile instead')
-  Future<AnalysisResult?> quickAnalyze(String imagePath) async {
-    try {
-      setAnalyzing(true);
-      clearError();
-
-      _geminiService.init();
-
-      String savedPath;
-      Uint8List imageBytes;
-
-      if (kIsWeb) {
-        throw UnsupportedError('Use quickAnalyzeFromXFile on Web platform');
-      } else {
-        // 移動平台：從文件路徑讀取
-        savedPath = await _imageService.compressAndSaveImage(imagePath);
-        imageBytes = await _imageService.getImageBytes(savedPath);
-      }
-
-      // 生成臨時 ID
-      final tempId = _uuid.v4();
-
-      // 快速分析
-      final result = await _geminiService.quickAnalyze(
-        itemId: tempId,
-        imageBytes: imageBytes,
-        photoPath: savedPath,
-      );
-
-      setAnalyzing(false);
-      return result;
-    } catch (e) {
-      print('Error in quick analysis: $e');
-      setError('快速分析失敗：$e');
-      setAnalyzing(false);
-      return null;
-    }
-  }
 
   /// 保存快速分析結果到記錄
   Future<void> saveQuickAnalysisResult(AnalysisResult result) async {
