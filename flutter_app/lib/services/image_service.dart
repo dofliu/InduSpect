@@ -4,10 +4,10 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:image/image.dart' as img;
 import '../utils/constants.dart';
 
-// 條件導入：只在非 Web 平台導入 dart:io
-import 'dart:io' if (dart.library.html) 'dart:html';
-import 'package:path_provider/path_provider.dart'
-    if (dart.library.html) 'package:path_provider/path_provider.dart';
+// Web 平台不需要這些導入
+// 移動平台通過 if (!kIsWeb) 條件使用
+import 'dart:io' show File, Directory;
+import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as path;
 
 /// 圖片處理服務
@@ -19,33 +19,6 @@ class ImageService {
 
   // Web 平台的內存存儲
   final Map<String, Uint8List> _webImageCache = {};
-
-  /// 壓縮並保存圖片
-  /// Web 平台：保存到內存並返回唯一 ID
-  /// 移動平台：保存到文件系統並返回路徑
-  Future<String> compressAndSaveImage(String sourcePath) async {
-    try {
-      Uint8List bytes;
-
-      // 讀取原始圖片
-      if (kIsWeb) {
-        // Web 平台：sourcePath 實際上是 XFile 的路徑，需要特殊處理
-        // 但由於我們在上層已經處理了，這裡直接返回路徑
-        // 實際上在 Web 上我們應該直接傳遞 bytes
-        throw UnsupportedError(
-            'compressAndSaveImage should not be called with path on Web. Use compressAndSaveImageFromBytes instead.');
-      } else {
-        // 移動平台
-        final file = File(sourcePath);
-        bytes = await file.readAsBytes();
-      }
-
-      return await _processAndSaveImage(bytes);
-    } catch (e) {
-      print('Error compressing and saving image: $e');
-      rethrow;
-    }
-  }
 
   /// 從字節數組壓縮並保存圖片（跨平台）
   Future<String> compressAndSaveImageFromBytes(Uint8List bytes) async {
