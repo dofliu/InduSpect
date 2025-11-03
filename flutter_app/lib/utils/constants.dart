@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 /// 應用常量定義
 class AppConstants {
   // Gemini API 模型名稱
-  static const String geminiFlashModel = 'gemini-2.0-flash-exp';
+  static const String geminiFlashModel = 'gemini-2.5-flash';
   static const String geminiProModel = 'gemini-2.5-pro';
 
   // 本地存儲 keys
