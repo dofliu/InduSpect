@@ -1,5 +1,8 @@
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:uuid/uuid.dart';
+import 'package:image_picker/image_picker.dart';
 import '../models/inspection_item.dart';
 import '../models/inspection_record.dart';
 import '../models/analysis_result.dart';
@@ -58,17 +61,60 @@ class InspectionProvider with ChangeNotifier {
 
   // ========== 步驟 1: 上傳定檢表 ==========
 
-  /// 上傳並分析定檢表照片
+  /// 上傳並分析定檢表照片（從 XFile）
+  Future<void> uploadChecklistFromXFile(XFile imageFile) async {
+    try {
+      setAnalyzing(true);
+      clearError();
+
+      // 讀取圖片字節
+      final imageBytes = await imageFile.readAsBytes();
+
+      // 壓縮並保存圖片（使用字節方法）
+      final savedPath = await _imageService.compressAndSaveImageFromBytes(imageBytes);
+
+      // 獲取壓縮後的字節用於 API
+      final compressedBytes = await _imageService.getImageBytes(savedPath);
+
+      // 呼叫 Gemini API 提取項目
+      final items = await _geminiService.extractChecklistItems(compressedBytes);
+
+      // 創建 InspectionItem 列表
+      _inspectionItems = items
+          .map((description) => InspectionItem(
+                id: _uuid.v4(),
+                description: description,
+              ))
+          .toList();
+
+      // 保存到本地存儲
+      await _storageService.saveInspectionItems(_inspectionItems);
+
+      setAnalyzing(false);
+      notifyListeners();
+    } catch (e) {
+      print('Error uploading checklist: $e');
+      setError('定檢表分析失敗：$e');
+      setAnalyzing(false);
+    }
+  }
+
+  /// 上傳並分析定檢表照片（舊版本，為兼容性保留）
+  @Deprecated('Use uploadChecklistFromXFile instead')
   Future<void> uploadChecklist(String imagePath) async {
     try {
       setAnalyzing(true);
       clearError();
 
-      // 壓縮並保存圖片
-      final savedPath = await _imageService.compressAndSaveImage(imagePath);
+      Uint8List imageBytes;
 
-      // 獲取圖片字節用於 API
-      final imageBytes = await _imageService.getImageBytes(savedPath);
+      if (kIsWeb) {
+        throw UnsupportedError('Use uploadChecklistFromXFile on Web platform');
+      } else {
+        // 移動平台：從文件路徑讀取
+        final savedPath = await _imageService.compressAndSaveImage(imagePath);
+        imageBytes = await _imageService.getImageBytes(savedPath);
+      }
 
       // 呼叫 Gemini API 提取項目
       final items = await _geminiService.extractChecklistItems(imageBytes);
@@ -95,11 +141,46 @@ class InspectionProvider with ChangeNotifier {
 
   // ========== 步驟 2: 拍攝巡檢照片 ==========
 
-  /// 為特定項目添加照片
+  /// 為特定項目添加照片（從 XFile）
+  Future<void> addPhotoToItemFromXFile(String itemId, XFile imageFile) async {
+    try {
+      // 讀取圖片字節
+      final imageBytes = await imageFile.readAsBytes();
+
+      // 壓縮並保存圖片
+      final savedPath = await _imageService.compressAndSaveImageFromBytes(imageBytes);
+
+      // 更新項目
+      final index = _inspectionItems.indexWhere((item) => item.id == itemId);
+      if (index != -1) {
+        _inspectionItems[index] = _inspectionItems[index].copyWith(
+          photoPath: savedPath,
+          isCompleted: true,
+        );
+
+        // 保存到本地存儲
+        await _storageService.saveInspectionItems(_inspectionItems);
+
+        notifyListeners();
+      }
+    } catch (e) {
+      print('Error adding photo to item: $e');
+      setError('照片保存失敗：$e');
+    }
+  }
+
+  /// 為特定項目添加照片（舊版本，為兼容性保留）
+  @Deprecated('Use addPhotoToItemFromXFile instead')
   Future<void> addPhotoToItem(String itemId, String imagePath) async {
     try {
-      // 壓縮並保存圖片
-      final savedPath = await _imageService.compressAndSaveImage(imagePath);
+      String savedPath;
+
+      if (kIsWeb) {
+        throw UnsupportedError('Use addPhotoToItemFromXFile on Web platform');
+      } else {
+        // 移動平台：從文件路徑讀取
+        savedPath = await _imageService.compressAndSaveImage(imagePath);
+      }
 
       // 更新項目
       final index = _inspectionItems.indexWhere((item) => item.id == itemId);
@@ -274,7 +355,45 @@ class InspectionProvider with ChangeNotifier {
 
   // ========== 快速分析模式 ==========
 
-  /// 快速分析單張照片
+  /// 快速分析單張照片（從 XFile）
+  Future<AnalysisResult?> quickAnalyzeFromXFile(XFile imageFile) async {
+    try {
+      setAnalyzing(true);
+      clearError();
+
+      _geminiService.init();
+
+      // 讀取圖片字節
+      final imageBytes = await imageFile.readAsBytes();
+
+      // 壓縮並保存圖片
+      final savedPath = await _imageService.compressAndSaveImageFromBytes(imageBytes);
+
+      // 獲取壓縮後的字節
+      final compressedBytes = await _imageService.getImageBytes(savedPath);
+
+      // 生成臨時 ID
+      final tempId = _uuid.v4();
+
+      // 快速分析
+      final result = await _geminiService.quickAnalyze(
+        itemId: tempId,
+        imageBytes: compressedBytes,
+        photoPath: savedPath,
+      );
+
+      setAnalyzing(false);
+      return result;
+    } catch (e) {
+      print('Error in quick analysis: $e');
+      setError('快速分析失敗：$e');
+      setAnalyzing(false);
+      return null;
+    }
+  }
+
+  /// 快速分析單張照片（舊版本，為兼容性保留）
+  @Deprecated('Use quickAnalyzeFromXFile instead')
   Future<AnalysisResult?> quickAnalyze(String imagePath) async {
     try {
       setAnalyzing(true);
@@ -282,9 +401,16 @@ class InspectionProvider with ChangeNotifier {
 
       _geminiService.init();
 
-      // 壓縮並保存圖片
-      final savedPath = await _imageService.compressAndSaveImage(imagePath);
-      final imageBytes = await _imageService.getImageBytes(savedPath);
+      String savedPath;
+      Uint8List imageBytes;
+
+      if (kIsWeb) {
+        throw UnsupportedError('Use quickAnalyzeFromXFile on Web platform');
+      } else {
+        // 移動平台：從文件路徑讀取
+        savedPath = await _imageService.compressAndSaveImage(imagePath);
+        imageBytes = await _imageService.getImageBytes(savedPath);
+      }
 
       // 生成臨時 ID
       final tempId = _uuid.v4();

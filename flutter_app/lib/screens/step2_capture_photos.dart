@@ -112,7 +112,7 @@ class Step2CapturePhotos extends StatelessWidget {
     );
 
     if (image != null) {
-      await inspection.addPhotoToItem(itemId, image.path);
+      await inspection.addPhotoToItemFromXFile(itemId, image);
     }
   }
 

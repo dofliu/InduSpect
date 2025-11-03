@@ -201,7 +201,7 @@ class _QuickAnalysisScreenState extends State<QuickAnalysisScreen> {
     );
 
     if (image != null) {
-      final result = await inspection.quickAnalyze(image.path);
+      final result = await inspection.quickAnalyzeFromXFile(image);
       if (result != null) {
         setState(() => _currentResult = result);
       }

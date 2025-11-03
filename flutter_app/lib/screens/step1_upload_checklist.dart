@@ -180,7 +180,7 @@ class Step1UploadChecklist extends StatelessWidget {
     );
 
     if (image != null) {
-      await inspection.uploadChecklist(image.path);
+      await inspection.uploadChecklistFromXFile(image);
     }
   }
 
