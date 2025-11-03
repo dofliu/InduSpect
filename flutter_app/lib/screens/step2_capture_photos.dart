@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
@@ -6,6 +5,7 @@ import '../providers/app_state_provider.dart';
 import '../providers/inspection_provider.dart';
 import '../utils/constants.dart';
 import '../widgets/common/loading_widget.dart';
+import '../widgets/common/cross_platform_image.dart';
 
 /// 步驟 2: 拍攝巡檢照片
 class Step2CapturePhotos extends StatelessWidget {
@@ -167,8 +167,8 @@ class _PhotoItemCard extends StatelessWidget {
               padding: const EdgeInsets.all(AppSpacing.sm),
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(8),
-                child: Image.file(
-                  File(item.photoPath!),
+                child: CrossPlatformImage(
+                  imagePath: item.photoPath!,
                   height: 200,
                   width: double.infinity,
                   fit: BoxFit.cover,

@@ -118,6 +118,7 @@ class GeminiService {
 - 如果無儀表讀數，readings 可以是 null 或空物件 {}
 - estimated_size 僅在有參照物且發現可測量異常時提供
 - 信用卡標準尺寸：85.6mm × 53.98mm
+- **重要：所有文字內容（equipment_type、condition_assessment、anomaly_description）必須使用繁體中文**
 ''';
   }
 
@@ -148,6 +149,7 @@ class GeminiService {
 注意事項：
 - 僅回傳純 JSON，不要包含任何其他文字
 - 提供詳細的狀況評估
+- **重要：所有文字內容必須使用繁體中文**
 ''';
   }
 
