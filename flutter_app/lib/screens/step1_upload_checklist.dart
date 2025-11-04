@@ -54,8 +54,8 @@ class Step1UploadChecklist extends StatelessWidget {
             ),
             const SizedBox(height: AppSpacing.xl),
             LoadingButton(
-              text: '選擇定檢表照片',
-              onPressed: () => _pickImage(context, inspection),
+              text: '上傳定檢表照片',
+              onPressed: () => _showImageSourceDialog(context, inspection),
               backgroundColor: AppColors.primary,
             ),
             if (inspection.errorMessage != null) ...[
@@ -171,10 +171,38 @@ class Step1UploadChecklist extends StatelessWidget {
     );
   }
 
-  Future<void> _pickImage(BuildContext context, InspectionProvider inspection) async {
+  Future<void> _showImageSourceDialog(BuildContext context, InspectionProvider inspection) async {
+    final source = await showDialog<ImageSource>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('選擇照片來源'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.camera_alt, color: Colors.blue),
+              title: const Text('拍攝照片'),
+              onTap: () => Navigator.pop(context, ImageSource.camera),
+            ),
+            ListTile(
+              leading: const Icon(Icons.photo_library, color: Colors.green),
+              title: const Text('從圖庫選擇'),
+              onTap: () => Navigator.pop(context, ImageSource.gallery),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    if (source != null) {
+      await _pickImage(context, inspection, source);
+    }
+  }
+
+  Future<void> _pickImage(BuildContext context, InspectionProvider inspection, ImageSource source) async {
     final ImagePicker picker = ImagePicker();
     final XFile? image = await picker.pickImage(
-      source: ImageSource.camera,
+      source: source,
       maxWidth: 1920,
       maxHeight: 1080,
     );

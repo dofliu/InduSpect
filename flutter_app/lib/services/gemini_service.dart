@@ -136,19 +136,18 @@ class GeminiService {
   "readings": {
     "溫度": {"value": 75.5, "unit": "°C"},
     "壓力": {"value": 2.5, "unit": "MPa"},
-    "油位": {"value": 80, "unit": "%"},
-    "其他欄位名稱": {"value": 數值, "unit": "單位"}
+    "油位": {"value": 80, "unit": "%"}
   },
-  "condition_assessment": "string (限制在100字內，清楚描述狀況)",
+  "condition_assessment": "string",
   "is_anomaly": boolean,
   "anomaly_description": "string or null",
-  "estimated_size": "string or null (格式：數值 單位，例如：15.5 mm)"
+  "estimated_size": "string or null"
 }
 
 注意事項：
 - 僅回傳純 JSON，不要包含任何其他文字、markdown 標記或程式碼區塊標記
 - **積極提取所有可見的數值資料**，這對檢測報告非常重要
-- **condition_assessment 限制在100字內**（詳細分析可以稍長於快速分析）
+- condition_assessment 限制在100字內，清楚描述狀況
 - 如果無儀表讀數，readings 可以是 null 或空物件 {}
 - estimated_size 僅在有參照物且發現可測量異常時提供
 - 信用卡標準尺寸：85.6mm × 53.98mm
@@ -177,10 +176,9 @@ class GeminiService {
   "equipment_type": "string",
   "readings": {
     "溫度": {"value": 75.5, "unit": "°C"},
-    "壓力": {"value": 2.5, "unit": "MPa"},
-    "其他數值名稱": {"value": 數值, "unit": "單位"}
+    "壓力": {"value": 2.5, "unit": "MPa"}
   },
-  "condition_assessment": "string (限制在50字內，簡潔描述狀況)",
+  "condition_assessment": "string",
   "is_anomaly": boolean,
   "anomaly_description": "string or null",
   "estimated_size": "string or null"
@@ -188,7 +186,7 @@ class GeminiService {
 
 注意事項：
 - 僅回傳純 JSON，不要包含任何其他文字、markdown 標記或程式碼區塊標記
-- **condition_assessment 必須簡潔，限制在50字內**
+- condition_assessment 必須簡潔，限制在50字內
 - 積極尋找並提取照片中所有數值資料到 readings
 - 如果無儀表讀數，readings 可以是 null 或空物件 {}
 - estimated_size 僅在有參照物且發現可測量異常時提供

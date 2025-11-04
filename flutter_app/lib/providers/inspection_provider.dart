@@ -229,6 +229,9 @@ class InspectionProvider with ChangeNotifier {
       // 保存分析結果
       await _storageService.saveAnalysisResults(_analysisResults);
 
+      // 自動確認所有分析結果並保存為記錄（確保資料不會丟失）
+      await confirmAllResults();
+
       _currentAnalyzingItemId = null;
       setAnalyzing(false);
     } catch (e) {
