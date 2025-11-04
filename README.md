@@ -97,11 +97,73 @@ InduSpect AI 的智慧能力主要基於以下幾個核心技術概念：
 
 ## 技術棧
 
-*   **前端框架**: React.js with TypeScript (目前為網頁原型，直接在前端呼叫 Gemini API)
-*   **核心 AI**: Google Gemini API (`gemini-2.5-flash` 用於圖像分析，`gemini-2.5-pro` 用於報告生成)
-*   **本機儲存**: 瀏覽器 `localStorage` API (用於離線數據持久化)
+### 📱 Flutter 移動應用版本（當前主要開發版本）
 
-**未來規劃架構 (詳見 `arch.md`):**
-*   **行動應用程式**: Flutter (iOS/Android)
-*   **後端**: Google Cloud Platform (GCP) 無伺服器架構，包括 Cloud Run 微服務、Firebase Authentication、Cloud Storage、Firestore。
-*   **資料庫**: Firestore (NoSQL) 或 Supabase (PostgreSQL)
+*   **框架**: Flutter 3.x (iOS/Android 雙平台支援)
+*   **語言**: Dart 3.2+
+*   **核心 AI**: Google Gemini API (`gemini-2.0-flash-exp` 用於圖像分析)
+*   **狀態管理**: Provider 模式
+*   **本地儲存**: SharedPreferences (未來規劃 SQLite)
+*   **圖片處理**: image_picker, camera, image
+
+**專案位置**: `flutter_app/`
+**開發分支**: `claude/convert-to-mobile-app-011CUm7vyz4NEct62sVZPhPG`
+**詳細文檔**: [Flutter App README](flutter_app/README.md)
+**功能規劃**: [ROADMAP.md](ROADMAP.md)
+
+### 🌐 Web 原型版本（已完成，供參考）
+
+*   **前端框架**: React.js with TypeScript
+*   **核心 AI**: Google Gemini API (`gemini-2.5-flash`, `gemini-2.5-pro`)
+*   **本機儲存**: 瀏覽器 `localStorage` API
+
+### 🔮 未來規劃架構 (詳見 `arch.md`)
+
+*   **後端**: Google Cloud Platform (GCP) 無伺服器架構
+  - Cloud Run 微服務
+  - Firebase Authentication / Supabase Auth
+  - Cloud Storage / Supabase Storage
+  - Firestore / Supabase (PostgreSQL)
+*   **團隊協作**: 雲端同步、多裝置支援、權限管理
+*   **企業功能**: 資料加密、稽核日誌、合規性支援
+
+---
+
+## 📱 快速開始 - Flutter 移動版
+
+```bash
+# 1. 進入 Flutter 專案目錄
+cd flutter_app
+
+# 2. 安裝依賴
+flutter pub get
+
+# 3. 配置 API Key
+cp .env.example .env
+# 編輯 .env 添加您的 Gemini API Key
+
+# 4. 運行應用
+flutter run
+
+# 5. 構建發布版本
+flutter build apk --release  # Android
+flutter build ios --release  # iOS (需 macOS)
+```
+
+詳細安裝與配置說明請參考 [Flutter App README](flutter_app/README.md)
+
+---
+
+## 🗺️ 專案文檔導覽
+
+| 文檔 | 說明 |
+|------|------|
+| [README.md](README.md) | 本文件 - 專案總覽與使用手冊 |
+| [flutter_app/README.md](flutter_app/README.md) | Flutter 移動應用技術文檔 |
+| [ROADMAP.md](ROADMAP.md) | **功能規劃藍圖** - 未來發展方向 |
+| [aimodel.md](aimodel.md) | AI 模型整合與 Prompt 工程規範 |
+| [arch.md](arch.md) | 系統架構設計（後端規劃） |
+| [ui.md](ui.md) | UI/UX 設計規範 |
+| [prj.md](prj.md) | 專案管理與開發流程 |
+| [todo.md](todo.md) | 開發與部署路線圖 |
+| [feature_enhancements.md](feature_enhancements.md) | 功能增強策略（準確度優化） |
