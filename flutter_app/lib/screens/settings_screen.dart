@@ -485,66 +485,182 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   void _showAboutDialog(BuildContext context) {
-    showAboutDialog(
+    showDialog(
       context: context,
-      applicationName: 'InduSpect AI',
-      applicationVersion: '1.0.0',
-      applicationIcon: Container(
-        padding: const EdgeInsets.all(8),
-        decoration: BoxDecoration(
-          color: Colors.blue,
-          borderRadius: BorderRadius.circular(12),
+      builder: (context) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                // 應用圖標
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.blue,
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: const Icon(Icons.factory, color: Colors.white, size: 40),
+                ),
+                const SizedBox(height: 16),
+
+                // 應用名稱和版本
+                const Text(
+                  'InduSpect AI',
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                const Text(
+                  '版本 1.0.0 Build 1',
+                  style: TextStyle(fontSize: 12, color: Colors.grey),
+                ),
+                const SizedBox(height: 20),
+
+                // 應用說明
+                const Text(
+                  '工業設備智能檢測系統',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 12),
+                const Text(
+                  '結合 Google Gemini AI 技術，提供快速、準確的設備檢測與異常分析。',
+                  style: TextStyle(fontSize: 14, height: 1.4),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 20),
+
+                const Divider(),
+                const SizedBox(height: 16),
+
+                // 主要功能
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        '主要功能：',
+                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                      ),
+                      const SizedBox(height: 8),
+                      _buildFeatureItem('快速分析模式 - 單張照片即時檢測'),
+                      _buildFeatureItem('詳細分析模式 - 依清單逐項檢測'),
+                      _buildFeatureItem('AI 智能異常識別與評估'),
+                      _buildFeatureItem('檢測記錄管理與報告生成'),
+                      _buildFeatureItem('多模型支援（Flash / Pro）'),
+                    ],
+                  ),
+                ),
+
+                const SizedBox(height: 16),
+
+                // 技術支援
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: const [
+                      Text(
+                        '技術支援：',
+                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                      ),
+                      SizedBox(height: 8),
+                      Text(
+                        '• Google Gemini 2.5 AI',
+                        style: TextStyle(fontSize: 13),
+                      ),
+                      Text(
+                        '• Flutter 跨平台框架',
+                        style: TextStyle(fontSize: 13),
+                      ),
+                    ],
+                  ),
+                ),
+
+                const SizedBox(height: 20),
+                const Divider(),
+                const SizedBox(height: 16),
+
+                // 開發團隊資訊
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.blue[50],
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.blue[100]!),
+                  ),
+                  child: Column(
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.groups, color: Colors.blue[700], size: 20),
+                          const SizedBox(width: 8),
+                          Text(
+                            '開發團隊',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
+                              color: Colors.blue[900],
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        'doflab',
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.blue[800],
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        '劉瑞弘老師研究團隊',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.blue[700],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                const SizedBox(height: 16),
+
+                // 版權資訊
+                Text(
+                  '© 2025 doflab. All rights reserved.',
+                  style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                  textAlign: TextAlign.center,
+                ),
+
+                const SizedBox(height: 20),
+
+                // 關閉按鈕
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () => Navigator.pop(context),
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                    ),
+                    child: const Text('關閉'),
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
-        child: const Icon(Icons.factory, color: Colors.white, size: 32),
       ),
-      children: [
-        const Text(
-          '工業設備智能檢測系統',
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-        ),
-        const SizedBox(height: 16),
-        const Text(
-          '結合 Google Gemini AI 技術，提供快速、準確的設備檢測與異常分析。',
-          style: TextStyle(fontSize: 14),
-        ),
-        const SizedBox(height: 16),
-        const Text(
-          '主要功能：',
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-        ),
-        const SizedBox(height: 8),
-        _buildFeatureItem('快速分析模式 - 單張照片即時檢測'),
-        _buildFeatureItem('詳細分析模式 - 依清單逐項檢測'),
-        _buildFeatureItem('AI 智能異常識別與評估'),
-        _buildFeatureItem('檢測記錄管理與報告生成'),
-        _buildFeatureItem('多模型支援（Flash / Pro）'),
-        const SizedBox(height: 16),
-        const Text(
-          '技術支援：',
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-        ),
-        const SizedBox(height: 8),
-        const Text(
-          '• Google Gemini 2.5 AI',
-          style: TextStyle(fontSize: 13),
-        ),
-        const Text(
-          '• Flutter 跨平台框架',
-          style: TextStyle(fontSize: 13),
-        ),
-        const SizedBox(height: 16),
-        const Divider(),
-        const SizedBox(height: 8),
-        const Text(
-          '© 2025 InduSpect AI',
-          style: TextStyle(fontSize: 12, color: Colors.grey),
-        ),
-        const SizedBox(height: 4),
-        const Text(
-          '版本 1.0.0 Build 1',
-          style: TextStyle(fontSize: 11, color: Colors.grey),
-        ),
-      ],
     );
   }
 
