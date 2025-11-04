@@ -323,26 +323,41 @@ $recordsJson
       final prompt = TextPart(_getQuickAnalysisPrompt());
       final imagePart = DataPart('image/jpeg', imageBytes);
 
+      print('📸 Quick analysis started for item: $itemId');
+
       final response = await _flashModel.generateContent([
         Content.multi([prompt, imagePart])
       ]).timeout(AppConstants.apiTimeout);
 
       final responseText = response.text?.trim() ?? '';
 
+      print('✅ Quick analysis response received');
+      print('📝 Response length: ${responseText.length} characters');
+      print('📄 Response text: $responseText');
+
+      if (responseText.isEmpty) {
+        throw Exception('AI 回應為空，請重試');
+      }
+
       String cleanedText = responseText
           .replaceAll('```json', '')
           .replaceAll('```', '')
           .trim();
 
+      print('🧹 Cleaned text: $cleanedText');
+
       final jsonData = jsonDecode(cleanedText);
+
+      print('✅ JSON parsed successfully');
 
       return AnalysisResult.fromGeminiJson(itemId, photoPath, jsonData);
     } catch (e) {
-      print('Error in quick analysis: $e');
+      print('❌ Error in quick analysis: $e');
+      print('❌ Error type: ${e.runtimeType}');
       return AnalysisResult(
         itemId: itemId,
         photoPath: photoPath,
-        analysisError: e.toString(),
+        analysisError: '快速分析失敗：$e',
         status: AnalysisStatus.error,
       );
     }

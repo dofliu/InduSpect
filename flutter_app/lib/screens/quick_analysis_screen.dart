@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
 import '../providers/app_state_provider.dart';
 import '../providers/inspection_provider.dart';
+import '../models/analysis_result.dart';
 import '../utils/constants.dart';
 import '../widgets/common/loading_widget.dart';
 
@@ -253,8 +254,10 @@ class _QuickAnalysisScreenState extends State<QuickAnalysisScreen> {
     if (image != null) {
       final result = await inspection.quickAnalyzeFromXFile(image);
 
+      if (!mounted) return;
+
       // 檢查是否有錯誤（例如試用次數已用完）
-      if (inspection.errorMessage != null && mounted) {
+      if (inspection.errorMessage != null) {
         showDialog(
           context: context,
           builder: (context) => AlertDialog(
@@ -285,8 +288,33 @@ class _QuickAnalysisScreenState extends State<QuickAnalysisScreen> {
         return;
       }
 
+      // 檢查分析結果是否有錯誤
       if (result != null) {
-        setState(() => _currentResult = result);
+        if (result.status == AnalysisStatus.error || result.analysisError != null) {
+          // 顯示分析錯誤
+          showDialog(
+            context: context,
+            builder: (context) => AlertDialog(
+              title: Row(
+                children: const [
+                  Icon(Icons.error_outline, color: Colors.red),
+                  SizedBox(width: 12),
+                  Text('分析失敗'),
+                ],
+              ),
+              content: Text(result.analysisError ?? '分析過程發生錯誤，請重試'),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('知道了'),
+                ),
+              ],
+            ),
+          );
+        } else {
+          // 正常顯示結果
+          setState(() => _currentResult = result);
+        }
       }
     }
   }
