@@ -264,7 +264,7 @@ class Step1UploadChecklist extends StatelessWidget {
 
     if (confirmed == true && context.mounted) {
       await inspection.clearAllData();
-      _pickImage(context, inspection);
+      _showImageSourceDialog(context, inspection);
     }
   }
 }
