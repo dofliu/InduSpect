@@ -41,7 +41,13 @@ class InduSpectApp extends StatelessWidget {
       providers: [
         ChangeNotifierProvider(create: (_) => SettingsProvider()),
         ChangeNotifierProvider(create: (_) => AppStateProvider()),
-        ChangeNotifierProvider(create: (_) => InspectionProvider()),
+        ChangeNotifierProxyProvider<SettingsProvider, InspectionProvider>(
+          create: (_) => InspectionProvider(),
+          update: (context, settings, inspection) {
+            inspection?.setSettingsProvider(settings);
+            return inspection ?? InspectionProvider();
+          },
+        ),
       ],
       child: MaterialApp(
         title: 'InduSpect AI',

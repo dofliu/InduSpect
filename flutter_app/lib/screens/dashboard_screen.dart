@@ -290,10 +290,8 @@ class DashboardScreen extends StatelessWidget {
                     context,
                     icon: Icons.memory,
                     label: 'AI 模型',
-                    value: selectedModel == 'gemini-2.0-flash-exp'
+                    value: selectedModel == 'gemini-2.5-pro'
                         ? 'Pro'
-                        : selectedModel == 'gemini-1.5-flash-8b'
-                        ? 'Lite'
                         : 'Flash',
                     color: Colors.orange,
                   ),

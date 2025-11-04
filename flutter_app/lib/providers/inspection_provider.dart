@@ -10,6 +10,7 @@ import '../services/storage_service.dart';
 import '../services/gemini_service.dart';
 import '../services/image_service.dart';
 import '../utils/constants.dart';
+import 'settings_provider.dart';
 
 /// 巡檢數據管理
 /// 管理巡檢項目、分析結果和巡檢記錄
@@ -18,6 +19,8 @@ class InspectionProvider with ChangeNotifier {
   final GeminiService _geminiService = GeminiService();
   final ImageService _imageService = ImageService();
   final Uuid _uuid = const Uuid();
+
+  SettingsProvider? _settingsProvider;
 
   List<InspectionItem> _inspectionItems = [];
   Map<String, AnalysisResult> _analysisResults = {};
@@ -46,9 +49,17 @@ class InspectionProvider with ChangeNotifier {
       .where((result) => result.status == AnalysisStatus.completed)
       .length;
 
+  /// 設置 SettingsProvider（用於 API key 和使用限制管理）
+  void setSettingsProvider(SettingsProvider provider) {
+    _settingsProvider = provider;
+  }
+
   /// 初始化（從本地存儲恢復數據）
   Future<void> init() async {
     try {
+      // 先初始化 StorageService
+      await _storageService.init();
+
       _inspectionItems = _storageService.getInspectionItems();
       _analysisResults = _storageService.getAnalysisResults();
       _inspectionRecords = _storageService.getInspectionRecords();
@@ -59,6 +70,35 @@ class InspectionProvider with ChangeNotifier {
     }
   }
 
+  /// 檢查是否可以使用 AI 功能（檢查試用次數）
+  /// 回傳 true 表示可以使用，false 表示試用已到期
+  Future<bool> _checkUsageLimit() async {
+    if (_settingsProvider == null) return true; // 如果沒有設置 provider，允許使用
+
+    if (_settingsProvider!.isTrialExpired) {
+      setError('試用次數已用完，請在設定中輸入您的 API Key');
+      return false;
+    }
+
+    return true;
+  }
+
+  /// 初始化 Gemini 服務（使用設定中的 API key）
+  void _initGeminiService() {
+    if (_settingsProvider?.hasValidApiKey == true) {
+      _geminiService.init(apiKey: _settingsProvider!.customApiKey);
+    } else {
+      _geminiService.init(); // 使用默認的 .env API key
+    }
+  }
+
+  /// 增加使用次數（在成功呼叫 API 後）
+  Future<void> _incrementUsage() async {
+    if (_settingsProvider != null) {
+      await _settingsProvider!.incrementUsageCount();
+    }
+  }
+
   // ========== 步驟 1: 上傳定檢表 ==========
 
   /// 上傳並分析定檢表照片（從 XFile）
@@ -66,6 +106,15 @@ class InspectionProvider with ChangeNotifier {
     try {
       setAnalyzing(true);
       clearError();
+
+      // 檢查使用限制
+      if (!await _checkUsageLimit()) {
+        setAnalyzing(false);
+        return;
+      }
+
+      // 初始化 Gemini 服務
+      _initGeminiService();
 
       // 讀取圖片字節
       final imageBytes = await imageFile.readAsBytes();
@@ -78,6 +127,9 @@ class InspectionProvider with ChangeNotifier {
 
       // 呼叫 Gemini API 提取項目
       final items = await _geminiService.extractChecklistItems(compressedBytes);
+
+      // 增加使用次數
+      await _incrementUsage();
 
       // 創建 InspectionItem 列表
       _inspectionItems = items
@@ -137,8 +189,16 @@ class InspectionProvider with ChangeNotifier {
       setAnalyzing(true);
       clearError();
 
-      _geminiService.init();
+      // 檢查使用限制
+      if (!await _checkUsageLimit()) {
+        setAnalyzing(false);
+        return;
+      }
 
+      // 初始化 Gemini 服務
+      _initGeminiService();
+
+      int analyzedCount = 0;
       for (var item in _inspectionItems) {
         if (item.isCompleted && item.photoPath != null) {
           _currentAnalyzingItemId = item.id;
@@ -157,7 +217,13 @@ class InspectionProvider with ChangeNotifier {
           );
 
           _analysisResults[item.id] = result;
+          analyzedCount++;
         }
+      }
+
+      // 批次增加使用次數（每張照片算一次）
+      for (int i = 0; i < analyzedCount; i++) {
+        await _incrementUsage();
       }
 
       // 保存分析結果
@@ -232,7 +298,18 @@ class InspectionProvider with ChangeNotifier {
   ) async {
     try {
       setAnalyzing(true);
+      clearError();
       _currentAnalyzingItemId = itemId;
+
+      // 檢查使用限制
+      if (!await _checkUsageLimit()) {
+        setAnalyzing(false);
+        _currentAnalyzingItemId = null;
+        return;
+      }
+
+      // 初始化 Gemini 服務
+      _initGeminiService();
 
       final item = _inspectionItems.firstWhere((item) => item.id == itemId);
       final imageBytes = await _imageService.getImageBytes(item.photoPath!);
@@ -244,6 +321,9 @@ class InspectionProvider with ChangeNotifier {
         photoPath: item.photoPath!,
         supplementalPrompt: supplementalPrompt,
       );
+
+      // 增加使用次數
+      await _incrementUsage();
 
       _analysisResults[itemId] = result;
       await _storageService.saveAnalysisResults(_analysisResults);
@@ -266,6 +346,15 @@ class InspectionProvider with ChangeNotifier {
       setAnalyzing(true);
       clearError();
 
+      // 檢查使用限制
+      if (!await _checkUsageLimit()) {
+        setAnalyzing(false);
+        return;
+      }
+
+      // 初始化 Gemini 服務
+      _initGeminiService();
+
       // 將記錄轉換為報告格式
       final recordsForReport =
           _inspectionRecords.map((r) => r.toReportFormat()).toList();
@@ -273,6 +362,9 @@ class InspectionProvider with ChangeNotifier {
 
       // 呼叫 Gemini Pro 生成報告
       _summaryReport = await _geminiService.generateSummaryReport(recordsJson);
+
+      // 增加使用次數
+      await _incrementUsage();
 
       setAnalyzing(false);
       notifyListeners();
@@ -291,7 +383,14 @@ class InspectionProvider with ChangeNotifier {
       setAnalyzing(true);
       clearError();
 
-      _geminiService.init();
+      // 檢查使用限制
+      if (!await _checkUsageLimit()) {
+        setAnalyzing(false);
+        return null;
+      }
+
+      // 初始化 Gemini 服務
+      _initGeminiService();
 
       // 讀取圖片字節
       final imageBytes = await imageFile.readAsBytes();
@@ -311,6 +410,9 @@ class InspectionProvider with ChangeNotifier {
         imageBytes: compressedBytes,
         photoPath: savedPath,
       );
+
+      // 增加使用次數
+      await _incrementUsage();
 
       setAnalyzing(false);
       return result;

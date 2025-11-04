@@ -489,17 +489,80 @@ class _SettingsScreenState extends State<SettingsScreen> {
       context: context,
       applicationName: 'InduSpect AI',
       applicationVersion: '1.0.0',
-      applicationIcon: const FlutterLogo(size: 48),
+      applicationIcon: Container(
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color: Colors.blue,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: const Icon(Icons.factory, color: Colors.white, size: 32),
+      ),
       children: [
-        const Text('工業設備智能檢測系統'),
-        const SizedBox(height: 8),
-        const Text('結合 AI 技術，提供快速、準確的設備檢測分析。'),
+        const Text(
+          '工業設備智能檢測系統',
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+        ),
         const SizedBox(height: 16),
         const Text(
-          '© 2024 InduSpect AI',
+          '結合 Google Gemini AI 技術，提供快速、準確的設備檢測與異常分析。',
+          style: TextStyle(fontSize: 14),
+        ),
+        const SizedBox(height: 16),
+        const Text(
+          '主要功能：',
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+        ),
+        const SizedBox(height: 8),
+        _buildFeatureItem('快速分析模式 - 單張照片即時檢測'),
+        _buildFeatureItem('詳細分析模式 - 依清單逐項檢測'),
+        _buildFeatureItem('AI 智能異常識別與評估'),
+        _buildFeatureItem('檢測記錄管理與報告生成'),
+        _buildFeatureItem('多模型支援（Flash / Pro）'),
+        const SizedBox(height: 16),
+        const Text(
+          '技術支援：',
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+        ),
+        const SizedBox(height: 8),
+        const Text(
+          '• Google Gemini 2.5 AI',
+          style: TextStyle(fontSize: 13),
+        ),
+        const Text(
+          '• Flutter 跨平台框架',
+          style: TextStyle(fontSize: 13),
+        ),
+        const SizedBox(height: 16),
+        const Divider(),
+        const SizedBox(height: 8),
+        const Text(
+          '© 2025 InduSpect AI',
           style: TextStyle(fontSize: 12, color: Colors.grey),
         ),
+        const SizedBox(height: 4),
+        const Text(
+          '版本 1.0.0 Build 1',
+          style: TextStyle(fontSize: 11, color: Colors.grey),
+        ),
       ],
+    );
+  }
+
+  Widget _buildFeatureItem(String text) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 8, bottom: 4),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text('• ', style: TextStyle(fontSize: 13, color: Colors.blue)),
+          Expanded(
+            child: Text(
+              text,
+              style: const TextStyle(fontSize: 13),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

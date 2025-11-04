@@ -208,8 +208,7 @@ class _QuickAnalysisScreenState extends State<QuickAnalysisScreen> {
     }
   }
 
-  Future<void> _exitQuickMode(BuildContext context) async {
-    final appState = context.read<AppStateProvider>();
-    await appState.exitQuickAnalysisMode();
+  void _exitQuickMode(BuildContext context) {
+    Navigator.pop(context);
   }
 }

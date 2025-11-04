@@ -88,12 +88,10 @@ class SettingsProvider with ChangeNotifier {
 
   String getModelDisplayName(String model) {
     switch (model) {
-      case 'gemini-2.0-flash-exp':
-        return 'Gemini 2.0 Pro (實驗版)';
       case 'gemini-2.5-flash':
         return 'Gemini 2.5 Flash (標準)';
-      case 'gemini-1.5-flash-8b':
-        return 'Gemini 1.5 Flash-8B (精簡版)';
+      case 'gemini-2.5-pro':
+        return 'Gemini 2.5 Pro (進階)';
       default:
         return model;
     }
@@ -101,12 +99,10 @@ class SettingsProvider with ChangeNotifier {
 
   String getModelDescription(String model) {
     switch (model) {
-      case 'gemini-2.0-flash-exp':
-        return '最強效能，適合複雜分析\n費用：較高';
       case 'gemini-2.5-flash':
-        return '平衡效能與成本\n費用：中等（推薦）';
-      case 'gemini-1.5-flash-8b':
-        return '快速回應，基礎分析\n費用：較低';
+        return '快速回應，平衡效能與成本\n費用：標準（推薦）';
+      case 'gemini-2.5-pro':
+        return '最強分析能力，適合複雜檢測\n費用：較高';
       default:
         return '';
     }
@@ -118,22 +114,15 @@ class SettingsProvider with ChangeNotifier {
         'id': 'gemini-2.5-flash',
         'name': 'Gemini 2.5 Flash',
         'badge': '推薦',
-        'description': '平衡效能與成本，適合大多數場景',
-        'cost': '中等',
+        'description': '快速回應，平衡效能與成本',
+        'cost': '標準',
       },
       {
-        'id': 'gemini-2.0-flash-exp',
-        'name': 'Gemini 2.0 Pro',
-        'badge': '實驗版',
+        'id': 'gemini-2.5-pro',
+        'name': 'Gemini 2.5 Pro',
+        'badge': '進階',
         'description': '最強分析能力，適合複雜設備檢測',
         'cost': '較高',
-      },
-      {
-        'id': 'gemini-1.5-flash-8b',
-        'name': 'Gemini 1.5 Flash-8B',
-        'badge': '經濟',
-        'description': '快速回應，適合簡單檢測',
-        'cost': '較低',
       },
     ];
   }
