@@ -15,22 +15,28 @@ class GeminiService {
   late final GenerativeModel _flashModel;
   late final GenerativeModel _proModel;
   bool _initialized = false;
+  String? _currentApiKey;
 
   /// 初始化 Gemini 服務
-  void init() {
-    if (_initialized) return;
+  /// [apiKey] 如果提供，使用此 API key；否則從 .env 讀取
+  void init({String? apiKey}) {
+    final effectiveApiKey = apiKey ?? dotenv.env['GEMINI_API_KEY'];
 
-    final apiKey = dotenv.env['GEMINI_API_KEY'];
-    if (apiKey == null || apiKey.isEmpty) {
+    if (effectiveApiKey == null || effectiveApiKey.isEmpty) {
       throw Exception(
-        'GEMINI_API_KEY not found. Please add it to .env file.',
+        'GEMINI_API_KEY not found. Please provide API key or add it to .env file.',
       );
     }
+
+    // 如果 API key 變更，重新初始化
+    if (_initialized && _currentApiKey == effectiveApiKey) return;
+
+    _currentApiKey = effectiveApiKey;
 
     // Flash 模型：用於圖像分析（快速、成本低）
     _flashModel = GenerativeModel(
       model: AppConstants.geminiFlashModel,
-      apiKey: apiKey,
+      apiKey: effectiveApiKey,
       generationConfig: GenerationConfig(
         temperature: 0.2, // 較低溫度，更穩定的輸出
         topP: 0.8,
@@ -42,7 +48,7 @@ class GeminiService {
     // Pro 模型：用於報告生成（高複雜度推理）
     _proModel = GenerativeModel(
       model: AppConstants.geminiProModel,
-      apiKey: apiKey,
+      apiKey: effectiveApiKey,
       generationConfig: GenerationConfig(
         temperature: 0.4, // 略高溫度，更有創意
         topP: 0.9,
@@ -52,6 +58,20 @@ class GeminiService {
     );
 
     _initialized = true;
+  }
+
+  /// 動態創建模型（支援不同的模型選擇）
+  GenerativeModel _createModel(String modelName, String apiKey) {
+    return GenerativeModel(
+      model: modelName,
+      apiKey: apiKey,
+      generationConfig: GenerationConfig(
+        temperature: 0.2,
+        topP: 0.8,
+        topK: 40,
+        maxOutputTokens: 2048,
+      ),
+    );
   }
 
   // ========== Prompt 範本 ==========
