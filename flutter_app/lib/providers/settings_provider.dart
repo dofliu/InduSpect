@@ -10,6 +10,7 @@ class SettingsProvider with ChangeNotifier {
   String? _customApiKey;
   String _selectedModel = 'gemini-2.5-flash'; // 預設模型
   int _usageCount = 0;
+  bool _isInitialized = false;
 
   String? get customApiKey => _customApiKey;
   String get selectedModel => _selectedModel;
@@ -17,9 +18,17 @@ class SettingsProvider with ChangeNotifier {
   bool get hasValidApiKey => _customApiKey != null && _customApiKey!.isNotEmpty;
   bool get isTrialExpired => !hasValidApiKey && _usageCount >= _freeTrialLimit;
   int get remainingTrials => hasValidApiKey ? -1 : (_freeTrialLimit - _usageCount).clamp(0, _freeTrialLimit);
+  bool get isInitialized => _isInitialized;
 
   SettingsProvider() {
     _loadSettings();
+  }
+
+  /// 初始化設定（確保資料已載入）
+  Future<void> init() async {
+    if (_isInitialized) return;
+    await _loadSettings();
+    _isInitialized = true;
   }
 
   Future<void> _loadSettings() async {

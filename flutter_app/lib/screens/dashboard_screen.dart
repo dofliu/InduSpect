@@ -2,15 +2,66 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/inspection_provider.dart';
 import '../providers/settings_provider.dart';
+import '../providers/app_state_provider.dart';
 import '../screens/home_screen.dart';
 import 'quick_analysis_screen.dart';
 import 'history_screen.dart';
 
-class DashboardScreen extends StatelessWidget {
+class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
 
   @override
+  State<DashboardScreen> createState() => _DashboardScreenState();
+}
+
+class _DashboardScreenState extends State<DashboardScreen> {
+  bool _isInitialized = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _initializeApp();
+  }
+
+  Future<void> _initializeApp() async {
+    final appState = context.read<AppStateProvider>();
+    final inspection = context.read<InspectionProvider>();
+    final settings = context.read<SettingsProvider>();
+
+    await Future.wait([
+      appState.init(),
+      inspection.init(),
+      settings.init(),
+    ]);
+
+    if (mounted) {
+      setState(() {
+        _isInitialized = true;
+      });
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    // 顯示載入畫面直到初始化完成
+    if (!_isInitialized) {
+      return Scaffold(
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const CircularProgressIndicator(),
+              const SizedBox(height: 16),
+              Text(
+                '正在初始化...',
+                style: Theme.of(context).textTheme.bodyLarge,
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
     final settings = Provider.of<SettingsProvider>(context);
     final inspection = Provider.of<InspectionProvider>(context);
 
