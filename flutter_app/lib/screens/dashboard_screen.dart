@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/inspection_provider.dart';
 import '../providers/settings_provider.dart';
-import 'step1_upload_checklist.dart';
+import '../screens/home_screen.dart';
 import 'quick_analysis_screen.dart';
 import 'history_screen.dart';
 
@@ -173,7 +173,7 @@ class DashboardScreen extends StatelessWidget {
                 onTap: () => Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => const Step1UploadChecklistScreen(),
+                    builder: (context) => const HomeScreen(),
                   ),
                 ),
               ),
@@ -414,8 +414,10 @@ class DashboardScreen extends StatelessWidget {
                   style: const TextStyle(fontWeight: FontWeight.w500),
                 ),
                 subtitle: Text(
-                  '${record.checklistItems.length} 個檢測項目',
+                  record.itemDescription,
                   style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
                 trailing: const Icon(Icons.chevron_right),
                 onTap: () {
