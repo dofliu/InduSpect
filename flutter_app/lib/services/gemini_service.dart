@@ -113,10 +113,20 @@ class GeminiService {
 
 任務指令：
 1. 識別圖像中的主要設備類型 (例如：泵、閥門、壓力錶、馬達、管路、電氣設備等)。
-2. 如果存在任何形式的儀表或計量器，請執行 OCR 以讀取其數值和單位。支持多個儀表讀數。
+
+2. **重要：仔細識別並提取所有數值類資料到 readings 物件**，包括：
+   - 儀表讀數（溫度、壓力、速度、流量、電流、電壓、頻率等）
+   - 物理測量值（尺寸、距離、厚度、角度等）
+   - 狀態指標（百分比、計數、時間、週期等）
+   - 每個數值必須獨立記錄，格式：{"欄位名稱": {"value": 數值, "unit": "單位"}}
+   - 即使定檢表中沒有特別要求，只要照片中有數值，都應該提取
+
 3. 仔細評估設備的整體狀況，重點描述任何磨損、生鏽、腐蝕、洩漏、裂縫或物理損壞的跡象。如果狀況良好，請註明「狀況良好」。
+
 4. 根據您的評估，判斷是否存在需要關注的異常情況（is_anomaly: true/false）。
+
 5. 如果發現異常，請詳細描述異常的特徵、位置和嚴重程度。
+
 6. 如果圖像中包含信用卡或其他已知尺寸的參照物，並且存在需要測量的異常（如裂縫、凹陷），請嘗試估算異常特徵的真實尺寸。
 
 輸出格式：
@@ -124,10 +134,12 @@ class GeminiService {
 {
   "equipment_type": "string",
   "readings": {
-    "儀表名稱1": {"value": 123.4, "unit": "單位"},
-    "儀表名稱2": {"value": 56.7, "unit": "單位"}
+    "溫度": {"value": 75.5, "unit": "°C"},
+    "壓力": {"value": 2.5, "unit": "MPa"},
+    "油位": {"value": 80, "unit": "%"},
+    "其他欄位名稱": {"value": 數值, "unit": "單位"}
   },
-  "condition_assessment": "string",
+  "condition_assessment": "string (限制在100字內，清楚描述狀況)",
   "is_anomaly": boolean,
   "anomaly_description": "string or null",
   "estimated_size": "string or null (格式：數值 單位，例如：15.5 mm)"
@@ -135,6 +147,8 @@ class GeminiService {
 
 注意事項：
 - 僅回傳純 JSON，不要包含任何其他文字、markdown 標記或程式碼區塊標記
+- **積極提取所有可見的數值資料**，這對檢測報告非常重要
+- **condition_assessment 限制在100字內**（詳細分析可以稍長於快速分析）
 - 如果無儀表讀數，readings 可以是 null 或空物件 {}
 - estimated_size 僅在有參照物且發現可測量異常時提供
 - 信用卡標準尺寸：85.6mm × 53.98mm
@@ -149,7 +163,11 @@ class GeminiService {
 
 任務指令：
 1. 識別圖像中的主要設備或場景類型。
-2. 讀取所有可見的儀表數值。
+2. **重要：仔細識別並提取所有數值類資料**，包括：
+   - 儀表讀數（溫度、壓力、速度、電流、電壓等）
+   - 物理測量值（尺寸、距離、角度等）
+   - 狀態指標（百分比、次數、時間等）
+   - 將每個數值獨立記錄在 readings 中
 3. 評估設備狀況，識別任何異常。
 4. 如果有參照物，估算異常尺寸。
 
@@ -158,17 +176,23 @@ class GeminiService {
 {
   "equipment_type": "string",
   "readings": {
-    "儀表名稱": {"value": 數值, "unit": "單位"}
+    "溫度": {"value": 75.5, "unit": "°C"},
+    "壓力": {"value": 2.5, "unit": "MPa"},
+    "其他數值名稱": {"value": 數值, "unit": "單位"}
   },
-  "condition_assessment": "string",
+  "condition_assessment": "string (限制在50字內，簡潔描述狀況)",
   "is_anomaly": boolean,
   "anomaly_description": "string or null",
   "estimated_size": "string or null"
 }
 
 注意事項：
-- 僅回傳純 JSON，不要包含任何其他文字
-- 提供詳細的狀況評估
+- 僅回傳純 JSON，不要包含任何其他文字、markdown 標記或程式碼區塊標記
+- **condition_assessment 必須簡潔，限制在50字內**
+- 積極尋找並提取照片中所有數值資料到 readings
+- 如果無儀表讀數，readings 可以是 null 或空物件 {}
+- estimated_size 僅在有參照物且發現可測量異常時提供
+- 信用卡標準尺寸：85.6mm × 53.98mm
 - **重要：所有文字內容必須使用繁體中文**
 ''';
   }

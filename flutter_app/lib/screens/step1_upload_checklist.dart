@@ -181,6 +181,37 @@ class Step1UploadChecklist extends StatelessWidget {
 
     if (image != null) {
       await inspection.uploadChecklistFromXFile(image);
+
+      // 檢查是否有錯誤（例如試用次數已用完）
+      if (inspection.errorMessage != null && context.mounted) {
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: Row(
+              children: const [
+                Icon(Icons.warning_amber_rounded, color: Colors.orange),
+                SizedBox(width: 12),
+                Text('提示'),
+              ],
+            ),
+            content: Text(inspection.errorMessage!),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('稍後再說'),
+              ),
+              ElevatedButton.icon(
+                onPressed: () {
+                  Navigator.pop(context); // 關閉對話框
+                  Navigator.pushNamed(context, '/settings'); // 前往設定頁面
+                },
+                icon: const Icon(Icons.settings),
+                label: const Text('前往設定'),
+              ),
+            ],
+          ),
+        );
+      }
     }
   }
 

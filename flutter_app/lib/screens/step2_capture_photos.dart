@@ -123,8 +123,39 @@ class Step2CapturePhotos extends StatelessWidget {
   ) async {
     await inspection.analyzeAllPhotos();
 
-    if (context.mounted && inspection.errorMessage == null) {
-      await appState.nextStep();
+    if (context.mounted) {
+      if (inspection.errorMessage != null) {
+        // 顯示錯誤提示（例如試用次數已用完）
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: Row(
+              children: const [
+                Icon(Icons.warning_amber_rounded, color: Colors.orange),
+                SizedBox(width: 12),
+                Text('提示'),
+              ],
+            ),
+            content: Text(inspection.errorMessage!),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('稍後再說'),
+              ),
+              ElevatedButton.icon(
+                onPressed: () {
+                  Navigator.pop(context); // 關閉對話框
+                  Navigator.pushNamed(context, '/settings'); // 前往設定頁面
+                },
+                icon: const Icon(Icons.settings),
+                label: const Text('前往設定'),
+              ),
+            ],
+          ),
+        );
+      } else {
+        await appState.nextStep();
+      }
     }
   }
 }

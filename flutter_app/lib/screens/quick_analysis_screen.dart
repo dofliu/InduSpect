@@ -106,6 +106,8 @@ class _QuickAnalysisScreenState extends State<QuickAnalysisScreen> {
         children: [
           const Text('分析結果', style: AppTextStyles.heading2),
           const SizedBox(height: AppSpacing.md),
+
+          // 基本資訊卡片
           Card(
             child: Padding(
               padding: const EdgeInsets.all(AppSpacing.md),
@@ -129,6 +131,54 @@ class _QuickAnalysisScreenState extends State<QuickAnalysisScreen> {
               ),
             ),
           ),
+
+          // 數值資料卡片
+          if (_currentResult.readings != null && _currentResult.readings!.isNotEmpty)
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SizedBox(height: AppSpacing.md),
+                const Text('檢測數值', style: AppTextStyles.heading3),
+                const SizedBox(height: AppSpacing.sm),
+                Card(
+                  color: Colors.blue[50],
+                  child: Padding(
+                    padding: const EdgeInsets.all(AppSpacing.md),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: _currentResult.readings!.entries.map((entry) {
+                        final reading = entry.value as Map<String, dynamic>;
+                        final value = reading['value'];
+                        final unit = reading['unit'] ?? '';
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 4),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                entry.key,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w500,
+                                  fontSize: 14,
+                                ),
+                              ),
+                              Text(
+                                '$value $unit',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.blue[900],
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           const SizedBox(height: AppSpacing.lg),
           Row(
             children: [
@@ -202,6 +252,39 @@ class _QuickAnalysisScreenState extends State<QuickAnalysisScreen> {
 
     if (image != null) {
       final result = await inspection.quickAnalyzeFromXFile(image);
+
+      // 檢查是否有錯誤（例如試用次數已用完）
+      if (inspection.errorMessage != null && mounted) {
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: Row(
+              children: const [
+                Icon(Icons.warning_amber_rounded, color: Colors.orange),
+                SizedBox(width: 12),
+                Text('提示'),
+              ],
+            ),
+            content: Text(inspection.errorMessage!),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('稍後再說'),
+              ),
+              ElevatedButton.icon(
+                onPressed: () {
+                  Navigator.pop(context); // 關閉對話框
+                  Navigator.pushNamed(context, '/settings'); // 前往設定頁面
+                },
+                icon: const Icon(Icons.settings),
+                label: const Text('前往設定'),
+              ),
+            ],
+          ),
+        );
+        return;
+      }
+
       if (result != null) {
         setState(() => _currentResult = result);
       }

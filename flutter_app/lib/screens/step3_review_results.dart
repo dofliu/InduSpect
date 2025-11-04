@@ -163,6 +163,61 @@ class _ResultCard extends StatelessWidget {
             ),
             if (result.anomalyDescription != null)
               _buildInfoRow('異常描述', result.anomalyDescription!),
+
+            // 檢測數值區塊
+            if (result.readings != null && result.readings!.isNotEmpty) ...[
+              const SizedBox(height: AppSpacing.md),
+              const Divider(),
+              const SizedBox(height: AppSpacing.sm),
+              const Text(
+                '檢測數值',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.blue,
+                ),
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.blue[50],
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.blue[200]!),
+                ),
+                child: Column(
+                  children: result.readings!.entries.map<Widget>((entry) {
+                    final reading = entry.value as Map<String, dynamic>;
+                    final value = reading['value'];
+                    final unit = reading['unit'] ?? '';
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 4),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            entry.key,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w500,
+                              fontSize: 13,
+                            ),
+                          ),
+                          Text(
+                            '$value $unit',
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.blue[900],
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  }).toList(),
+                ),
+              ),
+            ],
+
             // 確認按鈕
             const SizedBox(height: AppSpacing.md),
             SizedBox(
