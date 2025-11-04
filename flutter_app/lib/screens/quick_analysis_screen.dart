@@ -147,7 +147,7 @@ class _QuickAnalysisScreenState extends State<QuickAnalysisScreen> {
                     padding: const EdgeInsets.all(AppSpacing.md),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
-                      children: _currentResult.readings!.entries.map((entry) {
+                      children: _currentResult.readings!.entries.map<Widget>((entry) {
                         final reading = entry.value as Map<String, dynamic>;
                         final value = reading['value'];
                         final unit = reading['unit'] ?? '';
