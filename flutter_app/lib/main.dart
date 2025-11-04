@@ -5,7 +5,11 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 import 'providers/inspection_provider.dart';
 import 'providers/app_state_provider.dart';
-import 'screens/home_screen.dart';
+import 'providers/settings_provider.dart';
+import 'screens/dashboard_screen.dart';
+import 'screens/settings_screen.dart';
+import 'screens/guide_screen.dart';
+import 'screens/history_screen.dart';
 import 'utils/constants.dart';
 
 void main() async {
@@ -35,6 +39,7 @@ class InduSpectApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
+        ChangeNotifierProvider(create: (_) => SettingsProvider()),
         ChangeNotifierProvider(create: (_) => AppStateProvider()),
         ChangeNotifierProvider(create: (_) => InspectionProvider()),
       ],
@@ -69,7 +74,12 @@ class InduSpectApp extends StatelessWidget {
             ),
           ),
         ),
-        home: const HomeScreen(),
+        home: const DashboardScreen(),
+        routes: {
+          '/settings': (context) => const SettingsScreen(),
+          '/guide': (context) => const GuideScreen(),
+          '/history': (context) => const HistoryScreen(),
+        },
       ),
     );
   }
