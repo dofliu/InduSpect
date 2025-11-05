@@ -347,7 +347,7 @@ class _TemplateSelectionScreenState extends State<TemplateSelectionScreen> {
             label,
             style: TextStyle(
               fontSize: 11,
-              color: color[700],
+              color: color,
             ),
           ),
         ],
