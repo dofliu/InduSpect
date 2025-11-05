@@ -70,6 +70,7 @@ flutter:
   # 資源文件
   assets:
     - assets/images/
+    - assets/templates/
     - .env
 
   # 如果需要自定義字體，可以在這裡添加

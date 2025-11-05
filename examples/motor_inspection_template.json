@@ -1,0 +1,476 @@
+{
+  "template_id": "TEMP-MOTOR-001",
+  "template_name": "電機設備定期檢查表",
+  "template_version": "1.0",
+  "category": "電機設備",
+  "created_at": "2025-11-04T10:00:00Z",
+  "updated_at": "2025-11-04T10:00:00Z",
+
+  "metadata": {
+    "company": "範例公司",
+    "department": "設備維護部",
+    "inspection_cycle_days": 30,
+    "estimated_duration_minutes": 20,
+    "required_tools": ["溫度計", "噪音計", "相機"],
+    "safety_notes": "⚠️ 檢查前務必確認設備已停機並上鎖標示"
+  },
+
+  "sections": [
+    {
+      "section_id": "basic_info",
+      "section_title": "基本資訊",
+      "section_order": 1,
+      "description": "請填寫設備基本資料與本次檢測資訊",
+      "fields": [
+        {
+          "field_id": "equipment_code",
+          "field_type": "text",
+          "label": "設備編號",
+          "placeholder": "例如：MTR-A-001",
+          "required": true,
+          "ai_fillable": false,
+          "max_length": 50,
+          "validation": {
+            "pattern": "^[A-Z0-9-]+$",
+            "error_message": "請使用大寫英文字母、數字和連字號"
+          }
+        },
+        {
+          "field_id": "equipment_name",
+          "field_type": "text",
+          "label": "設備名稱",
+          "placeholder": "例如：冷卻水泵浦馬達",
+          "required": true,
+          "ai_fillable": false,
+          "max_length": 100
+        },
+        {
+          "field_id": "equipment_location",
+          "field_type": "text",
+          "label": "設備位置",
+          "placeholder": "例如：1F 機房 A 區",
+          "required": true,
+          "ai_fillable": false,
+          "max_length": 100
+        },
+        {
+          "field_id": "equipment_power",
+          "field_type": "text",
+          "label": "額定功率",
+          "placeholder": "例如：15 kW",
+          "required": false,
+          "ai_fillable": true,
+          "max_length": 50
+        },
+        {
+          "field_id": "inspection_date",
+          "field_type": "datetime",
+          "label": "檢測日期時間",
+          "required": true,
+          "ai_fillable": false,
+          "default_value": "now",
+          "format": "YYYY-MM-DD HH:mm"
+        },
+        {
+          "field_id": "inspector_name",
+          "field_type": "text",
+          "label": "檢測人員",
+          "placeholder": "請輸入姓名",
+          "required": true,
+          "ai_fillable": false,
+          "max_length": 50
+        },
+        {
+          "field_id": "weather_condition",
+          "field_type": "dropdown",
+          "label": "天氣狀況",
+          "required": false,
+          "ai_fillable": false,
+          "options": [
+            {"value": "sunny", "label": "晴天"},
+            {"value": "cloudy", "label": "陰天"},
+            {"value": "rainy", "label": "雨天"}
+          ]
+        }
+      ]
+    },
+
+    {
+      "section_id": "visual_inspection",
+      "section_title": "外觀檢查",
+      "section_order": 2,
+      "description": "檢查設備外觀是否有異常",
+      "fields": [
+        {
+          "field_id": "overall_photo",
+          "field_type": "photo",
+          "label": "設備整體外觀照片",
+          "required": true,
+          "ai_analyze": true,
+          "ai_analysis_prompt": "分析此電機設備的整體狀況，識別設備類型、外觀是否有明顯損傷、鏽蝕或異物",
+          "max_size_mb": 10,
+          "min_resolution": {"width": 800, "height": 600}
+        },
+        {
+          "field_id": "appearance_condition",
+          "field_type": "radio",
+          "label": "外觀狀況",
+          "required": true,
+          "ai_fillable": true,
+          "ai_source_field": "overall_photo",
+          "options": [
+            {"value": "excellent", "label": "優良（無明顯損傷）"},
+            {"value": "good", "label": "良好（輕微磨損）"},
+            {"value": "fair", "label": "尚可（有鏽蝕或污損）"},
+            {"value": "poor", "label": "不良（嚴重損傷）"}
+          ],
+          "default_value": "good"
+        },
+        {
+          "field_id": "paint_condition",
+          "field_type": "radio",
+          "label": "塗裝狀況",
+          "required": true,
+          "ai_fillable": true,
+          "options": [
+            {"value": "intact", "label": "完整"},
+            {"value": "peeling", "label": "局部剝落"},
+            {"value": "severe_peeling", "label": "大面積剝落"}
+          ]
+        },
+        {
+          "field_id": "rust_condition",
+          "field_type": "radio",
+          "label": "鏽蝕狀況",
+          "required": true,
+          "ai_fillable": true,
+          "options": [
+            {"value": "none", "label": "無鏽蝕"},
+            {"value": "minor", "label": "輕微鏽蝕"},
+            {"value": "moderate", "label": "中度鏽蝕"},
+            {"value": "severe", "label": "嚴重鏽蝕"}
+          ]
+        },
+        {
+          "field_id": "abnormal_found",
+          "field_type": "checkbox",
+          "label": "發現異常（可複選）",
+          "required": false,
+          "ai_fillable": true,
+          "options": [
+            {"value": "crack", "label": "裂縫"},
+            {"value": "deformation", "label": "變形"},
+            {"value": "loose_bolts", "label": "螺栓鬆動"},
+            {"value": "oil_leak", "label": "漏油"},
+            {"value": "dust_accumulation", "label": "積塵過多"},
+            {"value": "other", "label": "其他異常"}
+          ]
+        },
+        {
+          "field_id": "abnormal_description",
+          "field_type": "textarea",
+          "label": "異常詳細描述",
+          "placeholder": "請詳細描述發現的異常情況、位置與嚴重程度...",
+          "required": false,
+          "ai_fillable": true,
+          "max_length": 500,
+          "rows": 4,
+          "conditional": {
+            "show_when": {
+              "field": "abnormal_found",
+              "operator": "not_empty"
+            }
+          }
+        },
+        {
+          "field_id": "abnormal_photo",
+          "field_type": "photo_multiple",
+          "label": "異常部位照片",
+          "required": false,
+          "ai_analyze": true,
+          "min_count": 1,
+          "max_count": 5,
+          "conditional": {
+            "show_when": {
+              "field": "abnormal_found",
+              "operator": "not_empty"
+            }
+          }
+        }
+      ]
+    },
+
+    {
+      "section_id": "operation_check",
+      "section_title": "運轉檢查",
+      "section_order": 3,
+      "description": "檢查設備運轉狀態與各項參數",
+      "fields": [
+        {
+          "field_id": "operation_status",
+          "field_type": "radio",
+          "label": "運轉狀態",
+          "required": true,
+          "ai_fillable": false,
+          "options": [
+            {"value": "running", "label": "運轉中"},
+            {"value": "standby", "label": "待機中"},
+            {"value": "stopped", "label": "停機"},
+            {"value": "maintenance", "label": "維修中"}
+          ]
+        },
+        {
+          "field_id": "temperature_photo",
+          "field_type": "photo",
+          "label": "溫度計讀數照片",
+          "required": false,
+          "ai_analyze": true,
+          "ai_analysis_prompt": "識別溫度計的讀數，提取數值與單位",
+          "conditional": {
+            "show_when": {
+              "field": "operation_status",
+              "operator": "equals",
+              "value": "running"
+            }
+          }
+        },
+        {
+          "field_id": "motor_temperature",
+          "field_type": "number",
+          "label": "馬達表面溫度",
+          "unit": "°C",
+          "required": false,
+          "ai_fillable": true,
+          "ai_source_field": "temperature_photo",
+          "validation": {
+            "min": 0,
+            "max": 150,
+            "decimal_places": 1
+          },
+          "warning_threshold": {
+            "min": 20,
+            "max": 80,
+            "message": "⚠️ 溫度超出正常範圍（20-80°C），請注意檢查！"
+          },
+          "conditional": {
+            "show_when": {
+              "field": "operation_status",
+              "operator": "equals",
+              "value": "running"
+            }
+          }
+        },
+        {
+          "field_id": "vibration_level",
+          "field_type": "radio",
+          "label": "震動程度",
+          "required": false,
+          "ai_fillable": false,
+          "options": [
+            {"value": "normal", "label": "正常（幾乎無震動）"},
+            {"value": "slight", "label": "輕微震動"},
+            {"value": "moderate", "label": "中等震動"},
+            {"value": "severe", "label": "嚴重震動"}
+          ],
+          "conditional": {
+            "show_when": {
+              "field": "operation_status",
+              "operator": "equals",
+              "value": "running"
+            }
+          }
+        },
+        {
+          "field_id": "noise_level",
+          "field_type": "radio",
+          "label": "噪音程度",
+          "required": false,
+          "ai_fillable": false,
+          "options": [
+            {"value": "normal", "label": "正常運轉聲"},
+            {"value": "slight_noise", "label": "輕微異音"},
+            {"value": "abnormal_noise", "label": "明顯異音"}
+          ],
+          "conditional": {
+            "show_when": {
+              "field": "operation_status",
+              "operator": "equals",
+              "value": "running"
+            }
+          }
+        },
+        {
+          "field_id": "current_meter_photo",
+          "field_type": "photo",
+          "label": "電流錶讀數照片",
+          "required": false,
+          "ai_analyze": true,
+          "ai_analysis_prompt": "識別電流錶的讀數，提取數值與單位（安培 A）",
+          "conditional": {
+            "show_when": {
+              "field": "operation_status",
+              "operator": "equals",
+              "value": "running"
+            }
+          }
+        },
+        {
+          "field_id": "current_reading",
+          "field_type": "number",
+          "label": "電流讀數",
+          "unit": "A",
+          "required": false,
+          "ai_fillable": true,
+          "ai_source_field": "current_meter_photo",
+          "validation": {
+            "min": 0,
+            "max": 500,
+            "decimal_places": 2
+          },
+          "conditional": {
+            "show_when": {
+              "field": "operation_status",
+              "operator": "equals",
+              "value": "running"
+            }
+          }
+        }
+      ]
+    },
+
+    {
+      "section_id": "lubrication_check",
+      "section_title": "潤滑檢查",
+      "section_order": 4,
+      "description": "檢查潤滑狀況",
+      "fields": [
+        {
+          "field_id": "oil_level_photo",
+          "field_type": "photo",
+          "label": "油位計照片",
+          "required": false,
+          "ai_analyze": true,
+          "ai_analysis_prompt": "識別油位計的位置，判斷油位是否在正常範圍"
+        },
+        {
+          "field_id": "oil_level",
+          "field_type": "radio",
+          "label": "油位狀況",
+          "required": true,
+          "ai_fillable": true,
+          "ai_source_field": "oil_level_photo",
+          "options": [
+            {"value": "normal", "label": "正常"},
+            {"value": "low", "label": "偏低（需補充）"},
+            {"value": "high", "label": "過高"},
+            {"value": "not_visible", "label": "無法確認"}
+          ]
+        },
+        {
+          "field_id": "oil_condition",
+          "field_type": "radio",
+          "label": "油質狀況",
+          "required": true,
+          "ai_fillable": false,
+          "options": [
+            {"value": "clean", "label": "乾淨透明"},
+            {"value": "slightly_dirty", "label": "輕微混濁"},
+            {"value": "dirty", "label": "髒污（需更換）"}
+          ]
+        },
+        {
+          "field_id": "last_lubrication_date",
+          "field_type": "date",
+          "label": "上次加油日期",
+          "required": false,
+          "ai_fillable": false,
+          "format": "YYYY-MM-DD"
+        }
+      ]
+    },
+
+    {
+      "section_id": "overall_assessment",
+      "section_title": "綜合評估",
+      "section_order": 5,
+      "description": "綜合評估設備狀況",
+      "fields": [
+        {
+          "field_id": "overall_condition",
+          "field_type": "radio",
+          "label": "設備整體狀況",
+          "required": true,
+          "ai_fillable": false,
+          "options": [
+            {"value": "excellent", "label": "優良（可正常使用）"},
+            {"value": "good", "label": "良好（需持續觀察）"},
+            {"value": "fair", "label": "尚可（建議近期維修）"},
+            {"value": "poor", "label": "不良（需立即維修）"}
+          ]
+        },
+        {
+          "field_id": "maintenance_required",
+          "field_type": "radio",
+          "label": "是否需要維修",
+          "required": true,
+          "ai_fillable": false,
+          "options": [
+            {"value": "no", "label": "否"},
+            {"value": "routine", "label": "是（例行維護）"},
+            {"value": "urgent", "label": "是（緊急維修）"}
+          ]
+        },
+        {
+          "field_id": "maintenance_items",
+          "field_type": "textarea",
+          "label": "建議維修項目",
+          "placeholder": "請列出建議的維修或保養項目...",
+          "required": false,
+          "ai_fillable": false,
+          "max_length": 500,
+          "rows": 4,
+          "conditional": {
+            "show_when": {
+              "field": "maintenance_required",
+              "operator": "not_equals",
+              "value": "no"
+            }
+          }
+        },
+        {
+          "field_id": "estimated_repair_time",
+          "field_type": "text",
+          "label": "預估維修時間",
+          "placeholder": "例如：2 小時",
+          "required": false,
+          "ai_fillable": false,
+          "max_length": 50,
+          "conditional": {
+            "show_when": {
+              "field": "maintenance_required",
+              "operator": "not_equals",
+              "value": "no"
+            }
+          }
+        },
+        {
+          "field_id": "additional_notes",
+          "field_type": "textarea",
+          "label": "備註說明",
+          "placeholder": "其他需要記錄的事項...",
+          "required": false,
+          "ai_fillable": false,
+          "max_length": 500,
+          "rows": 3
+        },
+        {
+          "field_id": "inspector_signature",
+          "field_type": "signature",
+          "label": "檢測人員簽名",
+          "required": true,
+          "save_as_image": true
+        }
+      ]
+    }
+  ]
+}
