@@ -60,12 +60,14 @@ class _TemplateFillingScreenState extends State<TemplateFillingScreen> {
     }
   }
 
-  TemplateSection get _currentSection {
+  TemplateSection? get _currentSection {
+    if (_currentSectionIndex >= widget.template.sections.length) return null;
     return widget.template.sections[_currentSectionIndex];
   }
 
   List<TemplateField> get _visibleFields {
-    return _currentSection.getVisibleFields(_filledData);
+    if (_currentSection == null) return [];
+    return _currentSection!.getVisibleFields(_filledData);
   }
 
   TemplateField? get _currentField {
@@ -136,6 +138,11 @@ class _TemplateFillingScreenState extends State<TemplateFillingScreen> {
   }
 
   Widget _buildProgressBar() {
+    // 在完成畫面時不顯示進度條
+    if (_currentSection == null) {
+      return const SizedBox.shrink();
+    }
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -156,7 +163,7 @@ class _TemplateFillingScreenState extends State<TemplateFillingScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                '${_currentSection.sectionTitle}',
+                _currentSection!.sectionTitle,
                 style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
@@ -537,6 +544,12 @@ class _TemplateFillingScreenState extends State<TemplateFillingScreen> {
         });
         return;
       }
+    }
+
+    // 如果已經沒有下一項，直接完成
+    if (!_hasNext()) {
+      _complete();
+      return;
     }
 
     setState(() {
