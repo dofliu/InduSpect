@@ -18,6 +18,17 @@
 - **問題**: 缺少模板選擇畫面的入口
 - **狀態**: ✅ 已修復 - 添加「模板檢測」按鈕
 
+### 3. Color 類型索引錯誤
+- **檔案**: `lib/screens/template_selection_screen.dart:350`
+- **問題**: 嘗試對 Color 類型使用 `color[700]` 索引操作
+- **狀態**: ✅ 已修復 - 改為直接使用 color 參數
+
+### 4. 完成畫面空白問題
+- **檔案**: `lib/screens/template_filling_screen.dart`
+- **問題**: 完成所有欄位後畫面變空白，無響應
+- **原因**: 進度條組件嘗試存取 `_currentSection.sectionTitle`，但完成時 `_currentSection` 為 null
+- **狀態**: ✅ 已修復 - 在 `_buildProgressBar()` 中添加 null 檢查，完成時隱藏進度條
+
 ---
 
 ## 📋 檔案完整性檢查
