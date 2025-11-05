@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:uuid/uuid.dart';
 import '../models/inspection_template.dart';
 import '../models/template_field.dart';
 import '../utils/constants.dart';

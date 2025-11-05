@@ -6,6 +6,7 @@ import '../providers/app_state_provider.dart';
 import '../screens/home_screen.dart';
 import 'quick_analysis_screen.dart';
 import 'history_screen.dart';
+import 'template_selection_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -217,19 +218,33 @@ class _DashboardScreenState extends State<DashboardScreen> {
             Expanded(
               child: _buildActionCard(
                 context,
-                icon: Icons.checklist,
-                title: '詳細分析',
-                subtitle: '依清單逐項檢測',
+                icon: Icons.assignment,
+                title: '模板檢測',
+                subtitle: '使用定檢表模板',
                 color: Colors.green,
                 onTap: () => Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => const HomeScreen(),
+                    builder: (context) => const TemplateSelectionScreen(),
                   ),
                 ),
               ),
             ),
           ],
+        ),
+        const SizedBox(height: 12),
+        _buildActionCard(
+          context,
+          icon: Icons.checklist,
+          title: '舊版詳細分析',
+          subtitle: '傳統四步驟檢測流程',
+          color: Colors.orange,
+          onTap: () => Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const HomeScreen(),
+            ),
+          ),
         ),
       ],
     );
