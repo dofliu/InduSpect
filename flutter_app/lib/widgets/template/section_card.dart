@@ -17,6 +17,7 @@ class SectionCard extends StatefulWidget {
   final Function(String fieldId, dynamic value) onFieldChanged;
   final Future<void> Function(String fieldId, Map<String, dynamic> aiResults) onAIAnalysis;
   final bool initiallyExpanded;
+  final String? recordId;
 
   const SectionCard({
     Key? key,
@@ -25,6 +26,7 @@ class SectionCard extends StatefulWidget {
     required this.onFieldChanged,
     required this.onAIAnalysis,
     this.initiallyExpanded = false,
+    this.recordId,
   }) : super(key: key);
 
   @override
@@ -322,6 +324,7 @@ class _SectionCardState extends State<SectionCard> {
           value: value,
           onChanged: handleChange,
           onAIAnalysis: widget.onAIAnalysis,
+          recordId: widget.recordId,
         );
 
       case FieldType.textarea:

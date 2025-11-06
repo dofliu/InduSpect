@@ -356,6 +356,7 @@ class _TemplateFillingScreenState extends State<TemplateFillingScreen> {
                     onFieldChanged: _handleFieldChanged,
                     onAIAnalysis: _handleAIAnalysis,
                     initiallyExpanded: index == 0, // 第一個區段預設展開
+                    recordId: _currentRecord.recordId,
                   );
                 },
               ),

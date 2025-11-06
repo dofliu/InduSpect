@@ -10,6 +10,8 @@ import 'screens/dashboard_screen.dart';
 import 'screens/settings_screen.dart';
 import 'screens/guide_screen.dart';
 import 'screens/history_screen.dart';
+import 'services/connectivity_service.dart';
+import 'services/photo_sync_service.dart';
 import 'utils/constants.dart';
 
 void main() async {
@@ -28,6 +30,13 @@ void main() async {
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
   ]);
+
+  // 初始化連接和同步服務
+  final connectivityService = ConnectivityService();
+  await connectivityService.initialize();
+
+  final photoSyncService = PhotoSyncService();
+  await photoSyncService.initialize();
 
   runApp(const InduSpectApp());
 }

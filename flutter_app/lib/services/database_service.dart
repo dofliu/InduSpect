@@ -2,6 +2,7 @@ import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 import 'package:flutter/foundation.dart';
 import '../models/template_inspection_record.dart';
+import '../models/photo_sync_task.dart';
 
 class DatabaseService {
   static final DatabaseService _instance = DatabaseService._internal();
@@ -22,7 +23,7 @@ class DatabaseService {
 
     return await openDatabase(
       path,
-      version: 1,
+      version: 2,
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
     );
@@ -59,10 +60,58 @@ class DatabaseService {
     await db.execute('''
       CREATE INDEX idx_created_at ON template_inspection_records(created_at)
     ''');
+
+    // Photo sync tasks table
+    await db.execute('''
+      CREATE TABLE photo_sync_tasks (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        task_id TEXT UNIQUE NOT NULL,
+        record_id TEXT NOT NULL,
+        field_id TEXT NOT NULL,
+        photo_path TEXT NOT NULL,
+        status TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL,
+        error_message TEXT,
+        ai_result TEXT
+      )
+    ''');
+
+    await db.execute('''
+      CREATE INDEX idx_sync_status ON photo_sync_tasks(status)
+    ''');
+    await db.execute('''
+      CREATE INDEX idx_sync_record_id ON photo_sync_tasks(record_id)
+    ''');
   }
 
   Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
     debugPrint('Upgrading database from version $oldVersion to $newVersion');
+
+    // Add photo_sync_tasks table for version 2
+    if (oldVersion < 2) {
+      await db.execute('''
+        CREATE TABLE photo_sync_tasks (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          task_id TEXT UNIQUE NOT NULL,
+          record_id TEXT NOT NULL,
+          field_id TEXT NOT NULL,
+          photo_path TEXT NOT NULL,
+          status TEXT NOT NULL,
+          created_at TEXT NOT NULL,
+          updated_at TEXT NOT NULL,
+          error_message TEXT,
+          ai_result TEXT
+        )
+      ''');
+
+      await db.execute('''
+        CREATE INDEX idx_sync_status ON photo_sync_tasks(status)
+      ''');
+      await db.execute('''
+        CREATE INDEX idx_sync_record_id ON photo_sync_tasks(record_id)
+      ''');
+    }
   }
 
   Future<int> saveRecord(TemplateInspectionRecord record) async {
@@ -290,5 +339,144 @@ class DatabaseService {
     final db = await database;
     await db.close();
     _database = null;
+  }
+
+  // ==================== Photo Sync Task Operations ====================
+
+  Future<int> saveSyncTask(PhotoSyncTask task) async {
+    final db = await database;
+    final map = task.toMap();
+
+    if (task.id != null) {
+      await db.update(
+        'photo_sync_tasks',
+        map,
+        where: 'id = ?',
+        whereArgs: [task.id],
+      );
+      return int.parse(task.id!);
+    } else {
+      return await db.insert(
+        'photo_sync_tasks',
+        map,
+        conflictAlgorithm: ConflictAlgorithm.replace,
+      );
+    }
+  }
+
+  Future<PhotoSyncTask?> getSyncTaskById(String taskId) async {
+    final db = await database;
+    final results = await db.query(
+      'photo_sync_tasks',
+      where: 'task_id = ?',
+      whereArgs: [taskId],
+      limit: 1,
+    );
+
+    if (results.isEmpty) return null;
+    return PhotoSyncTask.fromMap(results.first);
+  }
+
+  Future<List<PhotoSyncTask>> getSyncTasksByStatus(SyncStatus status) async {
+    final db = await database;
+    final results = await db.query(
+      'photo_sync_tasks',
+      where: 'status = ?',
+      whereArgs: [status.toString().split('.').last],
+      orderBy: 'created_at ASC',
+    );
+
+    return results.map((map) => PhotoSyncTask.fromMap(map)).toList();
+  }
+
+  Future<List<PhotoSyncTask>> getPendingSyncTasks() async {
+    return await getSyncTasksByStatus(SyncStatus.pending);
+  }
+
+  Future<List<PhotoSyncTask>> getFailedSyncTasks() async {
+    return await getSyncTasksByStatus(SyncStatus.failed);
+  }
+
+  Future<List<PhotoSyncTask>> getSyncTasksByRecordId(String recordId) async {
+    final db = await database;
+    final results = await db.query(
+      'photo_sync_tasks',
+      where: 'record_id = ?',
+      whereArgs: [recordId],
+      orderBy: 'created_at DESC',
+    );
+
+    return results.map((map) => PhotoSyncTask.fromMap(map)).toList();
+  }
+
+  Future<void> updateSyncTaskStatus({
+    required String taskId,
+    required SyncStatus status,
+    String? errorMessage,
+    Map<String, dynamic>? aiResult,
+  }) async {
+    final db = await database;
+    final updateData = {
+      'status': status.toString().split('.').last,
+      'updated_at': DateTime.now().toIso8601String(),
+    };
+
+    if (errorMessage != null) {
+      updateData['error_message'] = errorMessage;
+    }
+
+    if (aiResult != null) {
+      updateData['ai_result'] = aiResult.toString();
+    }
+
+    await db.update(
+      'photo_sync_tasks',
+      updateData,
+      where: 'task_id = ?',
+      whereArgs: [taskId],
+    );
+  }
+
+  Future<int> deleteSyncTask(String taskId) async {
+    final db = await database;
+    return await db.delete(
+      'photo_sync_tasks',
+      where: 'task_id = ?',
+      whereArgs: [taskId],
+    );
+  }
+
+  Future<int> deleteCompletedSyncTasks() async {
+    final db = await database;
+    return await db.delete(
+      'photo_sync_tasks',
+      where: 'status = ?',
+      whereArgs: [SyncStatus.completed.toString().split('.').last],
+    );
+  }
+
+  Future<int> getSyncTaskCount({SyncStatus? status}) async {
+    final db = await database;
+
+    String whereClause = '';
+    List<dynamic> whereArgs = [];
+
+    if (status != null) {
+      whereClause = 'status = ?';
+      whereArgs.add(status.toString().split('.').last);
+    }
+
+    final result = await db.rawQuery(
+      'SELECT COUNT(*) as count FROM photo_sync_tasks' +
+      (whereClause.isEmpty ? '' : ' WHERE $whereClause'),
+      whereArgs.isEmpty ? null : whereArgs,
+    );
+
+    return Sqflite.firstIntValue(result) ?? 0;
+  }
+
+  Future<void> clearAllSyncTasks() async {
+    final db = await database;
+    await db.delete('photo_sync_tasks');
   }
 }

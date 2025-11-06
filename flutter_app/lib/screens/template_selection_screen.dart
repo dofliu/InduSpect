@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/inspection_template.dart';
+import '../models/template_inspection_record.dart';
 import '../services/template_service.dart';
+import '../services/database_service.dart';
 import '../utils/constants.dart';
 import 'template_filling_screen.dart';
 
@@ -15,7 +17,9 @@ class TemplateSelectionScreen extends StatefulWidget {
 
 class _TemplateSelectionScreenState extends State<TemplateSelectionScreen> {
   final TemplateService _templateService = TemplateService();
+  final DatabaseService _databaseService = DatabaseService();
   List<InspectionTemplate> _templates = [];
+  Map<String, TemplateInspectionRecord> _latestRecords = {}; // templateId -> latest record
   bool _isLoading = true;
   String _searchQuery = '';
   String? _selectedCategory;
@@ -33,9 +37,19 @@ class _TemplateSelectionScreenState extends State<TemplateSelectionScreen> {
       await _templateService.init();
       final templates = await _templateService.getAllTemplates();
 
+      // Load latest record for each template
+      final latestRecords = <String, TemplateInspectionRecord>{};
+      for (final template in templates) {
+        final record = await _databaseService.getLatestRecordByTemplate(template.templateId);
+        if (record != null) {
+          latestRecords[template.templateId] = record;
+        }
+      }
+
       if (mounted) {
         setState(() {
           _templates = templates;
+          _latestRecords = latestRecords;
           _isLoading = false;
         });
       }
@@ -44,7 +58,7 @@ class _TemplateSelectionScreenState extends State<TemplateSelectionScreen> {
       if (mounted) {
         setState(() => _isLoading = false);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('載入模板失敗：$e')),
+          SnackBar(content: Text('Failed to load templates: $e')),
         );
       }
     }
@@ -392,13 +406,125 @@ class _TemplateSelectionScreenState extends State<TemplateSelectionScreen> {
     );
   }
 
-  void _startInspection(InspectionTemplate template) {
+  Future<void> _startInspection(InspectionTemplate template) async {
+    // Check if there's a previous record for this template
+    final previousRecord = _latestRecords[template.templateId];
+
+    if (previousRecord != null) {
+      // Ask if user wants to copy previous data
+      final shouldCopy = await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Found Previous Inspection'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('Would you like to copy data from your previous inspection?'),
+              const SizedBox(height: 16),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.blue[50],
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        const Icon(Icons.access_time, size: 16, color: Colors.grey),
+                        const SizedBox(width: 8),
+                        Text(
+                          _formatDateTime(previousRecord.updatedAt),
+                          style: const TextStyle(fontSize: 13),
+                        ),
+                      ],
+                    ),
+                    if (previousRecord.equipmentCode != null) ...[
+                      const SizedBox(height: 8),
+                      Text(
+                        'Equipment: ${previousRecord.equipmentCode}',
+                        style: const TextStyle(fontSize: 13),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              const SizedBox(height: 12),
+              const Text(
+                'This will copy all filled data as a starting point.',
+                style: TextStyle(fontSize: 12, color: Colors.grey),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Start Fresh'),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('Copy Previous'),
+            ),
+          ],
+        ),
+      );
+
+      if (!mounted) return;
+
+      if (shouldCopy == true) {
+        // Copy previous data but create a new record
+        final copiedRecord = TemplateInspectionRecord(
+          recordId: DateTime.now().millisecondsSinceEpoch.toString(),
+          templateId: template.templateId,
+          templateName: template.templateName,
+          status: RecordStatus.draft,
+          filledData: Map<String, dynamic>.from(previousRecord.filledData),
+          createdAt: DateTime.now(),
+          updatedAt: DateTime.now(),
+          equipmentCode: previousRecord.equipmentCode,
+          equipmentName: previousRecord.equipmentName,
+          customerName: previousRecord.customerName,
+        );
+
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => TemplateFillingScreen(
+              template: template,
+              existingRecord: copiedRecord,
+            ),
+          ),
+        );
+        return;
+      }
+    }
+
+    // Start fresh inspection
     Navigator.push(
       context,
       MaterialPageRoute(
         builder: (context) => TemplateFillingScreen(template: template),
       ),
     );
+  }
+
+  String _formatDateTime(DateTime dateTime) {
+    final now = DateTime.now();
+    final difference = now.difference(dateTime);
+
+    if (difference.inMinutes < 1) {
+      return 'Just now';
+    } else if (difference.inHours < 1) {
+      return '${difference.inMinutes} minutes ago';
+    } else if (difference.inDays < 1) {
+      return '${difference.inHours} hours ago';
+    } else if (difference.inDays < 7) {
+      return '${difference.inDays} days ago';
+    } else {
+      return '${dateTime.year}/${dateTime.month}/${dateTime.day}';
+    }
   }
 
   void _showImportDialog() {
