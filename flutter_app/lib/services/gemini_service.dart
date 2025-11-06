@@ -295,8 +295,8 @@ $recordsJson
           final candidate = response.candidates!.first;
           if (candidate.content.parts != null && candidate.content.parts!.isNotEmpty) {
             for (final part in candidate.content.parts!) {
-              if (part.text != null) {
-                responseText += part.text!;
+              if (part is TextPart && part.text != null) {
+                responseText += part.text;
               }
             }
           }
@@ -426,8 +426,8 @@ $recordsJson
           final candidate = response.candidates!.first;
           if (candidate.content.parts != null && candidate.content.parts!.isNotEmpty) {
             for (final part in candidate.content.parts!) {
-              if (part.text != null) {
-                responseText += part.text!;
+              if (part is TextPart && part.text != null) {
+                responseText += part.text;
               }
             }
           }
@@ -482,8 +482,8 @@ $supplementalPrompt
           final candidate = response.candidates!.first;
           if (candidate.content.parts != null && candidate.content.parts!.isNotEmpty) {
             for (final part in candidate.content.parts!) {
-              if (part.text != null) {
-                responseText += part.text!;
+              if (part is TextPart && part.text != null) {
+                responseText += part.text;
               }
             }
           }
