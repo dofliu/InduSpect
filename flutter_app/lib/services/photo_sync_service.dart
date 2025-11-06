@@ -164,11 +164,13 @@ class PhotoSyncService {
       // Convert AnalysisResult to Map for storage
       final aiResultMap = {
         'status': analysisResult.status.toString(),
-        'condition': analysisResult.condition,
-        'severity': analysisResult.severity,
-        'description': analysisResult.description,
-        'suggestions': analysisResult.suggestions,
-        'measuredValues': analysisResult.measuredValues,
+        'equipmentType': analysisResult.equipmentType,
+        'readings': analysisResult.readings,
+        'conditionAssessment': analysisResult.conditionAssessment,
+        'isAnomaly': analysisResult.isAnomaly,
+        'anomalyDescription': analysisResult.anomalyDescription,
+        'measuredSize': analysisResult.measuredSize,
+        'aiEstimatedSize': analysisResult.aiEstimatedSize,
         'analysisError': analysisResult.analysisError,
       };
 
