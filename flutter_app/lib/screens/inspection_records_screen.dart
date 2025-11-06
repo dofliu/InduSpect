@@ -5,7 +5,6 @@ import '../services/template_service.dart';
 import '../models/inspection_template.dart';
 import 'template_filling_screen.dart';
 
-/// ¢,hkb
 class InspectionRecordsScreen extends StatefulWidget {
   const InspectionRecordsScreen({Key? key}) : super(key: key);
 
@@ -41,7 +40,7 @@ class _InspectionRecordsScreenState extends State<InspectionRecordsScreen> {
         _isLoading = false;
       });
     } catch (e) {
-      debugPrint('	e1W: $e');
+      debugPrint('Failed to load records: $e');
       setState(() {
         _isLoading = false;
       });
@@ -49,14 +48,13 @@ class _InspectionRecordsScreenState extends State<InspectionRecordsScreen> {
   }
 
   Future<void> _continueEditing(TemplateInspectionRecord record) async {
-    // 	e!
     final template = await _templateService.getTemplateById(record.templateId);
 
     if (template == null) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('~0…Ñ!'),
+            content: Text('Template not found'),
             backgroundColor: Colors.red,
           ),
         );
@@ -65,7 +63,6 @@ class _InspectionRecordsScreenState extends State<InspectionRecordsScreen> {
     }
 
     if (mounted) {
-      // *0kÎkb
       await Navigator.push(
         context,
         MaterialPageRoute(
@@ -76,7 +73,6 @@ class _InspectionRecordsScreenState extends State<InspectionRecordsScreen> {
         ),
       );
 
-      // ‘ﬁåÕ∞	e
       _loadRecords();
     }
   }
@@ -85,19 +81,19 @@ class _InspectionRecordsScreenState extends State<InspectionRecordsScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('∫ç*d'),
-        content: Text('∫öÅ*dd¢,Œ\n\n${record.templateName}'),
+        title: const Text('Confirm Delete'),
+        content: Text('Delete this inspection record?\n\n${record.templateName}'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('÷à'),
+            child: const Text('Cancel'),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.red,
             ),
-            child: const Text('*d'),
+            child: const Text('Delete'),
           ),
         ],
       ),
@@ -110,14 +106,14 @@ class _InspectionRecordsScreenState extends State<InspectionRecordsScreen> {
 
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Ú*d')),
+            const SnackBar(content: Text('Record deleted')),
           );
         }
       } catch (e) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('*d1W: $e'),
+              content: Text('Delete failed: $e'),
               backgroundColor: Colors.red,
             ),
           );
@@ -130,12 +126,11 @@ class _InspectionRecordsScreenState extends State<InspectionRecordsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('¢,'),
+        title: const Text('Inspection Records'),
         actions: [
-          // Èx	
           PopupMenuButton<RecordStatus?>(
             icon: const Icon(Icons.filter_list),
-            tooltip: 'Èx',
+            tooltip: 'Filter',
             onSelected: (status) {
               setState(() {
                 _filterStatus = status;
@@ -145,15 +140,15 @@ class _InspectionRecordsScreenState extends State<InspectionRecordsScreen> {
             itemBuilder: (context) => [
               const PopupMenuItem(
                 value: null,
-                child: Text('hË'),
+                child: Text('All'),
               ),
               const PopupMenuItem(
                 value: RecordStatus.draft,
-                child: Text('I?'),
+                child: Text('Drafts'),
               ),
               const PopupMenuItem(
                 value: RecordStatus.completed,
-                child: Text('Úå'),
+                child: Text('Completed'),
               ),
             ],
           ),
@@ -187,7 +182,7 @@ class _InspectionRecordsScreenState extends State<InspectionRecordsScreen> {
           ),
           const SizedBox(height: 16),
           Text(
-            _filterStatus == null ? 'Ñí	¢,' : '~0&ùˆÑ',
+            _filterStatus == null ? 'No records yet' : 'No matching records',
             style: TextStyle(
               fontSize: 18,
               color: Colors.grey[600],
@@ -195,7 +190,7 @@ class _InspectionRecordsScreenState extends State<InspectionRecordsScreen> {
           ),
           const SizedBox(height: 8),
           Text(
-            'ãÀ∞Ñ¢,Ü˙À',
+            'Start a new inspection to create records',
             style: TextStyle(
               fontSize: 14,
               color: Colors.grey[500],
@@ -220,18 +215,14 @@ class _InspectionRecordsScreenState extends State<InspectionRecordsScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // L
               Row(
                 children: [
-                  // ¿K:
                   Icon(
                     isCompleted ? Icons.check_circle : Icons.edit_note,
                     color: isCompleted ? Colors.green : Colors.orange,
                     size: 24,
                   ),
                   const SizedBox(width: 12),
-
-                  // !1
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -245,7 +236,7 @@ class _InspectionRecordsScreenState extends State<InspectionRecordsScreen> {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          isDraft ? 'I?' : 'Úå',
+                          isDraft ? 'Draft' : 'Completed',
                           style: TextStyle(
                             fontSize: 12,
                             color: isDraft ? Colors.orange : Colors.green,
@@ -255,8 +246,6 @@ class _InspectionRecordsScreenState extends State<InspectionRecordsScreen> {
                       ],
                     ),
                   ),
-
-                  // *d	
                   IconButton(
                     icon: const Icon(Icons.delete_outline),
                     color: Colors.grey,
@@ -264,11 +253,7 @@ class _InspectionRecordsScreenState extends State<InspectionRecordsScreen> {
                   ),
                 ],
               ),
-
               const SizedBox(height: 12),
-
-              // -ô«
-
               if (record.equipmentCode != null || record.equipmentName != null) ...[
                 Row(
                   children: [
@@ -290,9 +275,6 @@ class _InspectionRecordsScreenState extends State<InspectionRecordsScreen> {
                 ),
                 const SizedBox(height: 8),
               ],
-
-              // Bì«
-
               Row(
                 children: [
                   const Icon(Icons.access_time, size: 16, color: Colors.grey),
@@ -306,8 +288,6 @@ class _InspectionRecordsScreenState extends State<InspectionRecordsScreen> {
                   ),
                 ],
               ),
-
-              // ’\	
               const SizedBox(height: 12),
               Row(
                 children: [
@@ -315,7 +295,7 @@ class _InspectionRecordsScreenState extends State<InspectionRecordsScreen> {
                     child: OutlinedButton.icon(
                       onPressed: () => _continueEditing(record),
                       icon: Icon(isDraft ? Icons.edit : Icons.visibility),
-                      label: Text(isDraft ? '|åË/' : 'Âs≈'),
+                      label: Text(isDraft ? 'Continue Editing' : 'View Details'),
                     ),
                   ),
                 ],
@@ -332,13 +312,13 @@ class _InspectionRecordsScreenState extends State<InspectionRecordsScreen> {
     final difference = now.difference(dateTime);
 
     if (difference.inMinutes < 1) {
-      return '[[';
+      return 'Just now';
     } else if (difference.inHours < 1) {
-      return '${difference.inMinutes} M';
+      return '${difference.inMinutes} minutes ago';
     } else if (difference.inDays < 1) {
-      return '${difference.inHours} BM';
+      return '${difference.inHours} hours ago';
     } else if (difference.inDays < 7) {
-      return '${difference.inDays} )M';
+      return '${difference.inDays} days ago';
     } else {
       return '${dateTime.year}/${dateTime.month}/${dateTime.day}';
     }

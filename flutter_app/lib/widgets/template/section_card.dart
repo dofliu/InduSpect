@@ -11,13 +11,11 @@ import '../field_inputs/photo_field_input.dart';
 import '../field_inputs/textarea_field_input.dart';
 import '../field_inputs/signature_field_input.dart';
 
-/// @µaGDˆ
-/// ÔUã/6o:@µgÑ@	M
 class SectionCard extends StatefulWidget {
   final TemplateSection section;
   final Map<String, dynamic> filledData;
   final Function(String fieldId, dynamic value) onFieldChanged;
-  final Function(String fieldId, Map<String, dynamic> aiResults) onAIAnalysis;
+  final Future<void> Function(String fieldId, Map<String, dynamic> aiResults) onAIAnalysis;
   final bool initiallyExpanded;
 
   const SectionCard({
@@ -66,7 +64,6 @@ class _SectionCardState extends State<SectionCard> {
       ),
       child: Column(
         children: [
-          // @µL
           InkWell(
             onTap: () {
               setState(() {
@@ -78,15 +75,12 @@ class _SectionCardState extends State<SectionCard> {
               padding: const EdgeInsets.all(16),
               child: Row(
                 children: [
-                  // å¿K:
                   Icon(
                     isCompleted ? Icons.check_circle : Icons.radio_button_unchecked,
                     color: isCompleted ? Colors.green : Colors.grey,
                     size: 28,
                   ),
                   const SizedBox(width: 12),
-
-                  // L2¶
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -101,8 +95,8 @@ class _SectionCardState extends State<SectionCard> {
                         const SizedBox(height: 4),
                         Text(
                           requiredFields.isEmpty
-                              ? '${visibleFields.length} M!≈k	'
-                              : '$filledRequiredCount / ${requiredFields.length} ≈kÚå',
+                              ? '${visibleFields.length} fields (none required)'
+                              : '$filledRequiredCount / ${requiredFields.length} required completed',
                           style: TextStyle(
                             fontSize: 13,
                             color: Colors.grey[600],
@@ -111,8 +105,6 @@ class _SectionCardState extends State<SectionCard> {
                       ],
                     ),
                   ),
-
-                  // Uã/6:
                   Icon(
                     _isExpanded ? Icons.expand_less : Icons.expand_more,
                     size: 28,
@@ -121,8 +113,6 @@ class _SectionCardState extends State<SectionCard> {
               ),
             ),
           ),
-
-          // MhUãBo:	
           if (_isExpanded) ...[
             const Divider(height: 1),
             Padding(
@@ -149,7 +139,6 @@ class _SectionCardState extends State<SectionCard> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Md
           Row(
             children: [
               Expanded(
@@ -172,7 +161,7 @@ class _SectionCardState extends State<SectionCard> {
                     borderRadius: BorderRadius.circular(4),
                   ),
                   child: Text(
-                    '≈k',
+                    'Required',
                     style: TextStyle(
                       fontSize: 11,
                       color: Colors.red[700],
@@ -182,14 +171,8 @@ class _SectionCardState extends State<SectionCard> {
                 ),
             ],
           ),
-
           const SizedBox(height: 8),
-
-          // M8eDˆ
           _buildFieldInputWidget(field, value),
-
-          // WI/§
-o
           if (error != null) ...[
             const SizedBox(height: 8),
             Container(
@@ -212,9 +195,6 @@ o
               ),
             ),
           ],
-
-          // fJ
-o
           if (warning != null) ...[
             const SizedBox(height: 8),
             Container(
@@ -237,8 +217,6 @@ o
               ),
             ),
           ],
-
-          // AI ©–:
           if (field.aiFillable) ...[
             const SizedBox(height: 8),
             Container(
@@ -255,8 +233,8 @@ o
                     child: Text(
                       field.fieldType == FieldType.photo ||
                               field.fieldType == FieldType.photoMultiple
-                          ? 'AI Í’êgG&ke¯‹M'
-                          : 'AI ÔT©kÎdM',
+                          ? 'AI will analyze photo and auto-fill fields'
+                          : 'AI can help fill this field',
                       style: TextStyle(
                         fontSize: 11,
                         color: Colors.blue[700],
@@ -276,7 +254,6 @@ o
     void handleChange(dynamic newValue) {
       widget.onFieldChanged(field.fieldId, newValue);
 
-      // WI
       setState(() {
         final error = field.validate(newValue);
         if (error != null) {
@@ -285,7 +262,6 @@ o
           _validationErrors.remove(field.fieldId);
         }
 
-        // ¢ÂfJ
         final warning = field.checkWarning(newValue);
         if (warning != null) {
           _warnings[field.fieldId] = warning;
@@ -369,7 +345,7 @@ o
             color: Colors.grey[200],
             borderRadius: BorderRadius.circular(6),
           ),
-          child: Text('dM^ã*Ê\${field.fieldType}'),
+          child: Text('Field type not implemented: ${field.fieldType}'),
         );
     }
   }
