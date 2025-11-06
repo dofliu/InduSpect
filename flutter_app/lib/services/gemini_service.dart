@@ -360,8 +360,8 @@ $recordsJson
           if (candidate.content.parts != null && candidate.content.parts!.isNotEmpty) {
             // 提取所有文本部分
             for (final part in candidate.content.parts!) {
-              if (part.text != null) {
-                responseText += part.text!;
+              if (part is TextPart && part.text != null) {
+                responseText += part.text;
               }
             }
           }
