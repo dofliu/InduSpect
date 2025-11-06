@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
 import 'package:uuid/uuid.dart';
 import '../models/photo_sync_task.dart';
@@ -150,22 +151,36 @@ class PhotoSyncService {
         throw Exception('Photo file not found: ${task.photoPath}');
       }
 
-      // Perform AI analysis
-      final aiResult = await _geminiService.analyzeInspectionPhoto(task.photoPath);
+      // Read image bytes
+      final imageBytes = await photoFile.readAsBytes();
 
-      if (aiResult == null || aiResult.isEmpty) {
-        throw Exception('AI analysis returned no results');
-      }
+      // Perform AI analysis using quickAnalyze
+      final analysisResult = await _geminiService.quickAnalyze(
+        itemId: task.fieldId,
+        imageBytes: imageBytes,
+        photoPath: task.photoPath,
+      );
+
+      // Convert AnalysisResult to Map for storage
+      final aiResultMap = {
+        'status': analysisResult.status.toString(),
+        'condition': analysisResult.condition,
+        'severity': analysisResult.severity,
+        'description': analysisResult.description,
+        'suggestions': analysisResult.suggestions,
+        'measuredValues': analysisResult.measuredValues,
+        'analysisError': analysisResult.analysisError,
+      };
 
       // Update task as completed with AI result
       await _databaseService.updateSyncTaskStatus(
         taskId: task.taskId,
         status: SyncStatus.completed,
-        aiResult: aiResult,
+        aiResult: aiResultMap,
       );
 
       // Update the inspection record with AI results
-      await _updateRecordWithAIResults(task.recordId, task.fieldId, aiResult);
+      await _updateRecordWithAIResults(task.recordId, task.fieldId, aiResultMap);
 
       debugPrint('Task completed successfully: ${task.taskId}');
     } catch (e) {
