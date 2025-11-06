@@ -288,7 +288,27 @@ $recordsJson
         Content.multi([prompt, imagePart])
       ]).timeout(AppConstants.apiTimeout);
 
-      final responseText = response.text?.trim() ?? '';
+      // 安全地提取回應文本
+      String responseText = '';
+      try {
+        if (response.candidates != null && response.candidates!.isNotEmpty) {
+          final candidate = response.candidates!.first;
+          if (candidate.content.parts != null && candidate.content.parts!.isNotEmpty) {
+            for (final part in candidate.content.parts!) {
+              if (part.text != null) {
+                responseText += part.text!;
+              }
+            }
+          }
+        }
+        if (responseText.isEmpty) {
+          responseText = response.text?.trim() ?? '';
+        }
+      } catch (e) {
+        print('⚠️ Error extracting response text: $e');
+        throw Exception('AI 回應格式異常，請重試');
+      }
+
       print('Analysis response: $responseText');
 
       // 清理響應文本
@@ -329,9 +349,34 @@ $recordsJson
         Content.multi([prompt, imagePart])
       ]).timeout(AppConstants.apiTimeout);
 
-      final responseText = response.text?.trim() ?? '';
-
       print('✅ Quick analysis response received');
+
+      // 安全地提取回應文本
+      String responseText = '';
+      try {
+        // 檢查是否有候選回應
+        if (response.candidates != null && response.candidates!.isNotEmpty) {
+          final candidate = response.candidates!.first;
+          if (candidate.content.parts != null && candidate.content.parts!.isNotEmpty) {
+            // 提取所有文本部分
+            for (final part in candidate.content.parts!) {
+              if (part.text != null) {
+                responseText += part.text!;
+              }
+            }
+          }
+        }
+
+        // 如果沒有從 candidates 獲取到文本，嘗試使用 response.text
+        if (responseText.isEmpty) {
+          responseText = response.text?.trim() ?? '';
+        }
+      } catch (e) {
+        print('⚠️ Error extracting response text: $e');
+        // 如果提取失敗，返回錯誤
+        throw Exception('AI 回應格式異常，請重試');
+      }
+
       print('📝 Response length: ${responseText.length} characters');
       print('📄 Response text: $responseText');
 
@@ -374,7 +419,28 @@ $recordsJson
         Content.text(prompt.text)
       ]).timeout(AppConstants.apiTimeout);
 
-      return response.text?.trim() ?? '無法生成報告';
+      // 安全地提取回應文本
+      String responseText = '';
+      try {
+        if (response.candidates != null && response.candidates!.isNotEmpty) {
+          final candidate = response.candidates!.first;
+          if (candidate.content.parts != null && candidate.content.parts!.isNotEmpty) {
+            for (final part in candidate.content.parts!) {
+              if (part.text != null) {
+                responseText += part.text!;
+              }
+            }
+          }
+        }
+        if (responseText.isEmpty) {
+          responseText = response.text?.trim() ?? '';
+        }
+      } catch (e) {
+        print('⚠️ Error extracting response text: $e');
+        return '無法生成報告：回應格式異常';
+      }
+
+      return responseText.trim().isEmpty ? '無法生成報告' : responseText.trim();
     } catch (e) {
       print('Error generating summary report: $e');
       return '報告生成失敗：$e';
@@ -409,7 +475,26 @@ $supplementalPrompt
         Content.multi([prompt, imagePart])
       ]).timeout(AppConstants.apiTimeout);
 
-      final responseText = response.text?.trim() ?? '';
+      // 安全地提取回應文本
+      String responseText = '';
+      try {
+        if (response.candidates != null && response.candidates!.isNotEmpty) {
+          final candidate = response.candidates!.first;
+          if (candidate.content.parts != null && candidate.content.parts!.isNotEmpty) {
+            for (final part in candidate.content.parts!) {
+              if (part.text != null) {
+                responseText += part.text!;
+              }
+            }
+          }
+        }
+        if (responseText.isEmpty) {
+          responseText = response.text?.trim() ?? '';
+        }
+      } catch (e) {
+        print('⚠️ Error extracting response text: $e');
+        throw Exception('AI 回應格式異常，請重試');
+      }
 
       String cleanedText = responseText
           .replaceAll('```json', '')
