@@ -1,21 +1,16 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:uuid/uuid.dart';
 import '../models/inspection_template.dart';
-import '../models/template_field.dart';
+import '../models/template_inspection_record.dart';
+import '../services/database_service.dart';
 import '../utils/constants.dart';
-import '../widgets/field_inputs/text_field_input.dart';
-import '../widgets/field_inputs/number_field_input.dart';
-import '../widgets/field_inputs/radio_field_input.dart';
-import '../widgets/field_inputs/checkbox_field_input.dart';
-import '../widgets/field_inputs/dropdown_field_input.dart';
-import '../widgets/field_inputs/datetime_field_input.dart';
-import '../widgets/field_inputs/photo_field_input.dart';
-import '../widgets/field_inputs/textarea_field_input.dart';
-import '../widgets/field_inputs/signature_field_input.dart';
+import '../widgets/template/section_card.dart';
 
-/// 引導式模板填寫畫面
+/// 模板填寫畫面（分區段顯示版本）
 class TemplateFillingScreen extends StatefulWidget {
   final InspectionTemplate template;
-  final TemplateFillingRecord? existingRecord; // 恢復已存在的填寫記錄
+  final TemplateInspectionRecord? existingRecord; // 恢復已存在的檢測記錄
 
   const TemplateFillingScreen({
     Key? key,
@@ -28,24 +23,50 @@ class TemplateFillingScreen extends StatefulWidget {
 }
 
 class _TemplateFillingScreenState extends State<TemplateFillingScreen> {
-  late int _currentSectionIndex;
-  late int _currentFieldIndex;
   late Map<String, dynamic> _filledData;
-  final Map<String, String> _validationErrors = {};
-  final Map<String, String> _warnings = {};
-  bool _showValidationErrors = false;
+  late TemplateInspectionRecord _currentRecord;
+  final DatabaseService _databaseService = DatabaseService();
+  Timer? _autoSaveTimer;
+  bool _isSaving = false;
+  DateTime? _lastSaved;
 
   @override
   void initState() {
     super.initState();
-    _currentSectionIndex = 0;
-    _currentFieldIndex = 0;
-    _filledData = widget.existingRecord?.filledData ?? {};
-
-    // 初始化預設值
+    _initializeRecord();
     _initializeDefaultValues();
+    _startAutoSave();
   }
 
+  @override
+  void dispose() {
+    _autoSaveTimer?.cancel();
+    super.dispose();
+  }
+
+  /// 初始化檢測記錄
+  void _initializeRecord() {
+    if (widget.existingRecord != null) {
+      // 恢復現有記錄
+      _currentRecord = widget.existingRecord!;
+      _filledData = Map<String, dynamic>.from(_currentRecord.filledData);
+    } else {
+      // 創建新記錄
+      final now = DateTime.now();
+      _currentRecord = TemplateInspectionRecord(
+        recordId: const Uuid().v4(),
+        templateId: widget.template.templateId,
+        templateName: widget.template.templateName,
+        status: RecordStatus.draft,
+        filledData: {},
+        createdAt: now,
+        updatedAt: now,
+      );
+      _filledData = {};
+    }
+  }
+
+  /// 初始化預設值
   void _initializeDefaultValues() {
     for (final section in widget.template.sections) {
       for (final field in section.fields) {
@@ -60,89 +81,295 @@ class _TemplateFillingScreenState extends State<TemplateFillingScreen> {
     }
   }
 
-  TemplateSection? get _currentSection {
-    if (_currentSectionIndex >= widget.template.sections.length) return null;
-    return widget.template.sections[_currentSectionIndex];
+  /// 開始自動儲存（每30秒）
+  void _startAutoSave() {
+    _autoSaveTimer = Timer.periodic(const Duration(seconds: 30), (_) {
+      _saveDraft(showMessage: false);
+    });
   }
 
-  List<TemplateField> get _visibleFields {
-    if (_currentSection == null) return [];
-    return _currentSection!.getVisibleFields(_filledData);
+  /// 欄位值變更處理
+  void _handleFieldChanged(String fieldId, dynamic value) {
+    setState(() {
+      _filledData[fieldId] = value;
+
+      // 更新記錄中的設備資訊（方便搜尋）
+      if (fieldId == 'equipment_code') {
+        _currentRecord = _currentRecord.copyWith(equipmentCode: value?.toString());
+      } else if (fieldId == 'equipment_name') {
+        _currentRecord = _currentRecord.copyWith(equipmentName: value?.toString());
+      } else if (fieldId == 'customer_name') {
+        _currentRecord = _currentRecord.copyWith(customerName: value?.toString());
+      }
+    });
   }
 
-  TemplateField? get _currentField {
-    if (_currentFieldIndex >= _visibleFields.length) return null;
-    return _visibleFields[_currentFieldIndex];
-  }
+  /// AI 分析處理
+  Future<void> _handleAIAnalysis(String fieldId, Map<String, dynamic> aiResults) async {
+    setState(() {
+      aiResults.forEach((key, value) {
+        if (value != null) {
+          _filledData[key] = value;
+        }
+      });
+    });
 
-  int get _totalVisibleFields {
-    return widget.template.sections
-        .expand((section) => section.getVisibleFields(_filledData))
-        .length;
-  }
-
-  int get _currentGlobalFieldIndex {
-    int count = 0;
-    for (int i = 0; i < _currentSectionIndex; i++) {
-      count += widget.template.sections[i].getVisibleFields(_filledData).length;
+    // 顯示成功提示
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Row(
+            children: [
+              Icon(Icons.check_circle, color: Colors.white),
+              SizedBox(width: 8),
+              Text('AI 分析完成，已自動填入相關欄位'),
+            ],
+          ),
+          backgroundColor: Colors.green,
+        ),
+      );
     }
-    count += _currentFieldIndex;
-    return count;
   }
 
-  double get _progress {
-    if (_totalVisibleFields == 0) return 0.0;
-    return (_currentGlobalFieldIndex + 1) / _totalVisibleFields;
+  /// 儲存草稿
+  Future<void> _saveDraft({bool showMessage = true}) async {
+    if (_isSaving) return;
+
+    setState(() {
+      _isSaving = true;
+    });
+
+    try {
+      // 更新記錄
+      final updatedRecord = _currentRecord.copyWith(
+        filledData: Map<String, dynamic>.from(_filledData),
+        updatedAt: DateTime.now(),
+        status: RecordStatus.draft,
+      );
+
+      // 儲存到資料庫
+      final id = await _databaseService.saveRecord(updatedRecord);
+
+      // 更新當前記錄（包含資料庫 ID）
+      if (_currentRecord.id == null) {
+        _currentRecord = updatedRecord.copyWith(id: id.toString());
+      } else {
+        _currentRecord = updatedRecord;
+      }
+
+      setState(() {
+        _lastSaved = DateTime.now();
+      });
+
+      if (showMessage && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('草稿已儲存'),
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+    } catch (e) {
+      debugPrint('儲存草稿失敗: $e');
+      if (showMessage && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('儲存失敗: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      setState(() {
+        _isSaving = false;
+      });
+    }
+  }
+
+  /// 完成並儲存
+  Future<void> _completeAndSave() async {
+    // 驗證所有必填欄位
+    final errors = widget.template.validateAll(_filledData);
+
+    if (errors.isNotEmpty) {
+      // 顯示錯誤對話框
+      final proceed = await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('填寫未完成'),
+          content: Text('還有 ${errors.length} 個必填欄位未填寫\n\n是否要繼續儲存為草稿？'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('取消'),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('儲存草稿'),
+            ),
+          ],
+        ),
+      );
+
+      if (proceed == true) {
+        await _saveDraft(showMessage: true);
+      }
+      return;
+    }
+
+    // 所有必填欄位已填寫，標記為完成
+    setState(() {
+      _isSaving = true;
+    });
+
+    try {
+      final completedRecord = _currentRecord.copyWith(
+        filledData: Map<String, dynamic>.from(_filledData),
+        updatedAt: DateTime.now(),
+        status: RecordStatus.completed,
+        hasValidationErrors: false,
+      );
+
+      await _databaseService.saveRecord(completedRecord);
+
+      if (mounted) {
+        // 顯示成功訊息並返回
+        await showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (context) => AlertDialog(
+            title: const Row(
+              children: [
+                Icon(Icons.check_circle, color: Colors.green, size: 32),
+                SizedBox(width: 12),
+                Text('檢測完成！'),
+              ],
+            ),
+            content: const Text('檢測記錄已儲存\n您可以在檢測記錄列表中查看'),
+            actions: [
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.pop(context); // 關閉對話框
+                  Navigator.pop(context); // 返回上一頁
+                },
+                child: const Text('確定'),
+              ),
+            ],
+          ),
+        );
+      }
+    } catch (e) {
+      debugPrint('儲存檢測記錄失敗: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('儲存失敗: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      setState(() {
+        _isSaving = false;
+      });
+    }
+  }
+
+  /// 返回確認
+  Future<bool> _onWillPop() async {
+    // 自動儲存草稿
+    await _saveDraft(showMessage: false);
+
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('確認離開'),
+        content: const Text('您的填寫進度已自動儲存為草稿'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('繼續填寫'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('離開'),
+          ),
+        ],
+      ),
+    );
+
+    return result ?? false;
   }
 
   @override
   Widget build(BuildContext context) {
+    final totalFields = widget.template.getAllFields().length;
+    final completionPercentage = _currentRecord.getCompletionPercentage(totalFields);
+
     return WillPopScope(
       onWillPop: _onWillPop,
       child: Scaffold(
         appBar: AppBar(
-          title: Text(widget.template.templateName),
+          title: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(widget.template.templateName),
+              if (_lastSaved != null)
+                Text(
+                  '上次儲存: ${_lastSaved!.hour}:${_lastSaved!.minute.toString().padLeft(2, '0')}',
+                  style: const TextStyle(fontSize: 12),
+                ),
+            ],
+          ),
           actions: [
-            // 儲存草稿
+            // 儲存草稿按鈕
             IconButton(
-              icon: const Icon(Icons.save),
-              onPressed: _saveDraft,
+              icon: _isSaving
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                      ),
+                    )
+                  : const Icon(Icons.save),
+              onPressed: _isSaving ? null : () => _saveDraft(showMessage: true),
               tooltip: '儲存草稿',
-            ),
-            // 查看總覽
-            IconButton(
-              icon: const Icon(Icons.list),
-              onPressed: _showOverview,
-              tooltip: '查看總覽',
             ),
           ],
         ),
         body: Column(
           children: [
-            // 進度條
-            _buildProgressBar(),
+            // 整體進度條
+            _buildOverallProgressBar(completionPercentage),
 
-            // 主要內容
+            // 區段列表
             Expanded(
-              child: _currentField == null
-                  ? _buildCompletionView()
-                  : _buildFieldInput(),
+              child: ListView.builder(
+                itemCount: widget.template.sections.length,
+                itemBuilder: (context, index) {
+                  final section = widget.template.sections[index];
+                  return SectionCard(
+                    section: section,
+                    filledData: _filledData,
+                    onFieldChanged: _handleFieldChanged,
+                    onAIAnalysis: _handleAIAnalysis,
+                    initiallyExpanded: index == 0, // 第一個區段預設展開
+                  );
+                },
+              ),
             ),
 
-            // 導航按鈕
-            _buildNavigationBar(),
+            // 底部操作列
+            _buildBottomActionBar(),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildProgressBar() {
-    // 在完成畫面時不顯示進度條
-    if (_currentSection == null) {
-      return const SizedBox.shrink();
-    }
-
+  Widget _buildOverallProgressBar(double percentage) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -158,50 +385,36 @@ class _TemplateFillingScreenState extends State<TemplateFillingScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // 進度文字
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                _currentSection!.sectionTitle,
-                style: const TextStyle(
+              const Text(
+                '整體進度',
+                style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
                 ),
               ),
               Text(
-                '${_currentGlobalFieldIndex + 1} / $_totalVisibleFields',
+                '${percentage.toStringAsFixed(0)}% 完成',
                 style: TextStyle(
                   fontSize: 14,
                   color: Colors.grey[600],
+                  fontWeight: FontWeight.w500,
                 ),
               ),
             ],
           ),
-
           const SizedBox(height: 8),
-
-          // 進度條
           ClipRRect(
             borderRadius: BorderRadius.circular(8),
             child: LinearProgressIndicator(
-              value: _progress,
-              minHeight: 8,
+              value: percentage / 100,
+              minHeight: 10,
               backgroundColor: Colors.grey[200],
               valueColor: AlwaysStoppedAnimation<Color>(
-                AppColors.primary,
+                percentage >= 100 ? Colors.green : AppColors.primary,
               ),
-            ),
-          ),
-
-          const SizedBox(height: 4),
-
-          // 完成百分比
-          Text(
-            '${(_progress * 100).toStringAsFixed(0)}% 完成',
-            style: TextStyle(
-              fontSize: 12,
-              color: Colors.grey[600],
             ),
           ),
         ],
@@ -209,263 +422,7 @@ class _TemplateFillingScreenState extends State<TemplateFillingScreen> {
     );
   }
 
-  Widget _buildFieldInput() {
-    final field = _currentField!;
-
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // 欄位標籤
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  field.label,
-                  style: const TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-              if (field.required)
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 2,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.red[50],
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                  child: Text(
-                    '必填',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.red[700],
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-            ],
-          ),
-
-          const SizedBox(height: 20),
-
-          // 欄位輸入組件
-          _buildFieldInputWidget(field),
-
-          // 驗證錯誤訊息
-          if (_showValidationErrors && _validationErrors.containsKey(field.fieldId)) ...[
-            const SizedBox(height: 12),
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Colors.red[50],
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Row(
-                children: [
-                  const Icon(Icons.error, color: Colors.red, size: 20),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      _validationErrors[field.fieldId]!,
-                      style: const TextStyle(color: Colors.red),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-
-          // 警告訊息
-          if (_warnings.containsKey(field.fieldId)) ...[
-            const SizedBox(height: 12),
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Colors.orange[50],
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Row(
-                children: [
-                  const Icon(Icons.warning, color: Colors.orange, size: 20),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      _warnings[field.fieldId]!,
-                      style: const TextStyle(color: Colors.orange),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-
-          // AI 輔助提示
-          if (field.aiFillable) ...[
-            const SizedBox(height: 16),
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Colors.blue[50],
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Row(
-                children: [
-                  const Icon(Icons.auto_awesome, color: Colors.blue, size: 20),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      field.fieldType == FieldType.photo ||
-                              field.fieldType == FieldType.photoMultiple
-                          ? 'AI 會自動分析照片並填入相關欄位'
-                          : 'AI 可協助填寫此欄位',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.blue[700],
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-
-  Widget _buildFieldInputWidget(TemplateField field) {
-    final value = _filledData[field.fieldId];
-
-    switch (field.fieldType) {
-      case FieldType.text:
-        return TextFieldInput(
-          field: field,
-          value: value,
-          onChanged: (newValue) => _updateField(field.fieldId, newValue),
-        );
-
-      case FieldType.number:
-        return NumberFieldInput(
-          field: field,
-          value: value,
-          onChanged: (newValue) => _updateField(field.fieldId, newValue),
-        );
-
-      case FieldType.radio:
-        return RadioFieldInput(
-          field: field,
-          value: value,
-          onChanged: (newValue) => _updateField(field.fieldId, newValue),
-        );
-
-      case FieldType.checkbox:
-        return CheckboxFieldInput(
-          field: field,
-          value: value,
-          onChanged: (newValue) => _updateField(field.fieldId, newValue),
-        );
-
-      case FieldType.dropdown:
-        return DropdownFieldInput(
-          field: field,
-          value: value,
-          onChanged: (newValue) => _updateField(field.fieldId, newValue),
-        );
-
-      case FieldType.datetime:
-      case FieldType.date:
-        return DateTimeFieldInput(
-          field: field,
-          value: value,
-          onChanged: (newValue) => _updateField(field.fieldId, newValue),
-        );
-
-      case FieldType.photo:
-      case FieldType.photoMultiple:
-        return PhotoFieldInput(
-          field: field,
-          value: value,
-          onChanged: (newValue) => _updateField(field.fieldId, newValue),
-          onAIAnalysis: _handleAIAnalysis,
-        );
-
-      case FieldType.textarea:
-        return TextAreaFieldInput(
-          field: field,
-          value: value,
-          onChanged: (newValue) => _updateField(field.fieldId, newValue),
-        );
-
-      case FieldType.signature:
-        return SignatureFieldInput(
-          field: field,
-          value: value,
-          onChanged: (newValue) => _updateField(field.fieldId, newValue),
-        );
-
-      default:
-        return Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Colors.grey[200],
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Text('此欄位類型尚未實作：${field.fieldType}'),
-        );
-    }
-  }
-
-  void _updateField(String fieldId, dynamic value) {
-    setState(() {
-      _filledData[fieldId] = value;
-
-      // 清除該欄位的驗證錯誤
-      _validationErrors.remove(fieldId);
-
-      // 檢查警告
-      final field = widget.template.getFieldById(fieldId);
-      if (field != null) {
-        final warning = field.checkWarning(value);
-        if (warning != null) {
-          _warnings[fieldId] = warning;
-        } else {
-          _warnings.remove(fieldId);
-        }
-      }
-    });
-  }
-
-  Future<void> _handleAIAnalysis(String fieldId, Map<String, dynamic> aiResults) async {
-    // AI 分析完成後，自動填入相關欄位
-    setState(() {
-      aiResults.forEach((key, value) {
-        if (value != null) {
-          _filledData[key] = value;
-        }
-      });
-    });
-
-    // 顯示成功提示
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Row(
-          children: const [
-            Icon(Icons.check_circle, color: Colors.white),
-            SizedBox(width: 8),
-            Text('AI 分析完成，已自動填入相關欄位'),
-          ],
-        ),
-        backgroundColor: Colors.green,
-      ),
-    );
-  }
-
-  Widget _buildNavigationBar() {
+  Widget _buildBottomActionBar() {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -480,279 +437,33 @@ class _TemplateFillingScreenState extends State<TemplateFillingScreen> {
       ),
       child: Row(
         children: [
-          // 上一項按鈕
-          if (_hasPrevious())
-            Expanded(
-              child: OutlinedButton.icon(
-                onPressed: _goToPrevious,
-                icon: const Icon(Icons.arrow_back),
-                label: const Text('上一項'),
-                style: OutlinedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                ),
-              ),
-            ),
-
-          if (_hasPrevious()) const SizedBox(width: 12),
-
-          // 下一項 / 完成按鈕
+          // 儲存草稿按鈕
           Expanded(
+            child: OutlinedButton.icon(
+              onPressed: _isSaving ? null : () => _saveDraft(showMessage: true),
+              icon: const Icon(Icons.save_outlined),
+              label: const Text('儲存草稿'),
+              style: OutlinedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(vertical: 14),
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          // 完成按鈕
+          Expanded(
+            flex: 2,
             child: ElevatedButton.icon(
-              onPressed: _hasNext() ? _goToNext : _complete,
-              icon: Icon(_hasNext() ? Icons.arrow_forward : Icons.check),
-              label: Text(_hasNext() ? '下一項' : '完成填寫'),
+              onPressed: _isSaving ? null : _completeAndSave,
+              icon: const Icon(Icons.check_circle),
+              label: const Text('完成檢測'),
               style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 12),
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                backgroundColor: Colors.green,
               ),
             ),
           ),
         ],
       ),
     );
-  }
-
-  bool _hasPrevious() {
-    return _currentSectionIndex > 0 || _currentFieldIndex > 0;
-  }
-
-  bool _hasNext() {
-    return _currentFieldIndex < _visibleFields.length - 1 ||
-        _currentSectionIndex < widget.template.sections.length - 1;
-  }
-
-  void _goToPrevious() {
-    setState(() {
-      if (_currentFieldIndex > 0) {
-        _currentFieldIndex--;
-      } else if (_currentSectionIndex > 0) {
-        _currentSectionIndex--;
-        _currentFieldIndex = widget.template.sections[_currentSectionIndex]
-            .getVisibleFields(_filledData)
-            .length - 1;
-      }
-    });
-  }
-
-  void _goToNext() {
-    // 驗證當前欄位
-    if (_currentField != null) {
-      final error = _currentField!.validate(_filledData[_currentField!.fieldId]);
-      if (error != null) {
-        setState(() {
-          _validationErrors[_currentField!.fieldId] = error;
-          _showValidationErrors = true;
-        });
-        return;
-      }
-    }
-
-    // 如果已經沒有下一項，直接完成
-    if (!_hasNext()) {
-      _complete();
-      return;
-    }
-
-    setState(() {
-      _showValidationErrors = false;
-
-      if (_currentFieldIndex < _visibleFields.length - 1) {
-        _currentFieldIndex++;
-      } else if (_currentSectionIndex < widget.template.sections.length - 1) {
-        _currentSectionIndex++;
-        _currentFieldIndex = 0;
-      }
-    });
-  }
-
-  Widget _buildCompletionView() {
-    final allErrors = widget.template.validateAll(_filledData);
-    final isComplete = allErrors.isEmpty;
-
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              isComplete ? Icons.check_circle : Icons.warning,
-              size: 80,
-              color: isComplete ? Colors.green : Colors.orange,
-            ),
-            const SizedBox(height: 24),
-            Text(
-              isComplete ? '✅ 所有欄位填寫完成！' : '⚠️ 還有必填欄位未填寫',
-              style: const TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              isComplete
-                  ? '您可以儲存此檢測記錄或生成 PDF 報告'
-                  : '還有 ${allErrors.length} 個必填欄位需要填寫',
-              style: TextStyle(
-                fontSize: 16,
-                color: Colors.grey[600],
-              ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 32),
-            if (!isComplete) ...[
-              ElevatedButton(
-                onPressed: _goToFirstError,
-                child: const Text('前往未填寫的欄位'),
-              ),
-              const SizedBox(height: 16),
-            ],
-            if (isComplete) ...[
-              ElevatedButton.icon(
-                onPressed: _saveRecord,
-                icon: const Icon(Icons.save),
-                label: const Text('儲存檢測記錄'),
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 32,
-                    vertical: 16,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              OutlinedButton.icon(
-                onPressed: _generatePDF,
-                icon: const Icon(Icons.picture_as_pdf),
-                label: const Text('生成 PDF 報告'),
-                style: OutlinedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 32,
-                    vertical: 16,
-                  ),
-                ),
-              ),
-            ],
-          ],
-        ),
-      ),
-    );
-  }
-
-  void _goToFirstError() {
-    final allErrors = widget.template.validateAll(_filledData);
-    if (allErrors.isEmpty) return;
-
-    final firstErrorFieldId = allErrors.keys.first;
-    final field = widget.template.getFieldById(firstErrorFieldId);
-    if (field == null) return;
-
-    // 找到該欄位所在的區段
-    for (int sectionIdx = 0; sectionIdx < widget.template.sections.length; sectionIdx++) {
-      final section = widget.template.sections[sectionIdx];
-      final visibleFields = section.getVisibleFields(_filledData);
-      final fieldIdx = visibleFields.indexWhere((f) => f.fieldId == firstErrorFieldId);
-
-      if (fieldIdx != -1) {
-        setState(() {
-          _currentSectionIndex = sectionIdx;
-          _currentFieldIndex = fieldIdx;
-          _showValidationErrors = true;
-        });
-        break;
-      }
-    }
-  }
-
-  Future<void> _complete() async {
-    final allErrors = widget.template.validateAll(_filledData);
-
-    if (allErrors.isNotEmpty) {
-      // 顯示未完成提示
-      showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: const Text('填寫未完成'),
-          content: Text('還有 ${allErrors.length} 個必填欄位未填寫，是否要繼續？'),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context);
-                _goToFirstError();
-              },
-              child: const Text('前往填寫'),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.pop(context);
-                _showCompletionScreen();
-              },
-              child: const Text('稍後填寫'),
-            ),
-          ],
-        ),
-      );
-    } else {
-      _showCompletionScreen();
-    }
-  }
-
-  void _showCompletionScreen() {
-    setState(() {
-      _currentSectionIndex = widget.template.sections.length;
-      _currentFieldIndex = 0;
-    });
-  }
-
-  Future<void> _saveDraft() async {
-    // TODO: 實作儲存草稿功能
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('草稿已儲存')),
-    );
-  }
-
-  void _showOverview() {
-    // TODO: 實作總覽畫面
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('總覽功能開發中...')),
-    );
-  }
-
-  Future<void> _saveRecord() async {
-    // TODO: 實作儲存檢測記錄
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('檢測記錄已儲存')),
-    );
-  }
-
-  Future<void> _generatePDF() async {
-    // TODO: 實作 PDF 生成
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('PDF 生成功能開發中...')),
-    );
-  }
-
-  Future<bool> _onWillPop() async {
-    // 確認是否要離開
-    final result = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('確認離開'),
-        content: const Text('您的填寫進度將會保存為草稿，確定要離開嗎？'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('取消'),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              await _saveDraft();
-              Navigator.pop(context, true);
-            },
-            child: const Text('儲存並離開'),
-          ),
-        ],
-      ),
-    );
-
-    return result ?? false;
   }
 }

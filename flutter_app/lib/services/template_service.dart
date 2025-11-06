@@ -186,6 +186,11 @@ class TemplateService {
     return await loadTemplateFromLocal(templateId);
   }
 
+  /// 根據 ID 取得模板（別名方法）
+  Future<InspectionTemplate?> getTemplateById(String templateId) async {
+    return await getTemplate(templateId);
+  }
+
   /// 根據類別取得模板列表
   Future<List<InspectionTemplate>> getTemplatesByCategory(String category) async {
     final allTemplates = await getAllTemplates();
