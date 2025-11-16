@@ -35,6 +35,7 @@
   - 圖片處理與壓縮（支援 JPEG/PNG）
   - 自動資料儲存機制（分析完成立即保存）
   - 完整錯誤處理與調試日誌
+  - Cloud Run API 整合（登入、任務、照片上傳、AI 結果輪詢）
 
 - **狀態管理** 🔄
   - Provider 模式（AppStateProvider + InspectionProvider + SettingsProvider）
@@ -96,6 +97,15 @@
 2. 創建 API Key
 3. 添加到 `.env` 文件
 
+若要啟用 Cloud Run API，還需設定以下端點（若共用同一入口，僅需 `CLOUD_RUN_BASE_URL`）：
+
+```env
+CLOUD_RUN_BASE_URL=https://api-your-service.run.app
+CLOUD_RUN_AUTH_URL=
+CLOUD_RUN_TASK_URL=
+CLOUD_RUN_UPLOAD_URL=
+```
+
 ## 🚀 快速開始
 
 ### 1. 安裝 Flutter
@@ -128,8 +138,9 @@ flutter pub get
 # 複製環境變量範例文件
 cp .env.example .env
 
-# 編輯 .env 文件，添加您的 Gemini API Key
+# 編輯 .env 文件，添加您的 Gemini API Key 與 Cloud Run 端點
 # GEMINI_API_KEY=your_api_key_here
+# CLOUD_RUN_BASE_URL=https://api-your-service.run.app
 ```
 
 ### 5. 運行應用
@@ -160,6 +171,22 @@ flutter build appbundle --release
 # iOS (需要 macOS 和 Xcode)
 flutter build ios --release
 ```
+
+## 🔐 Cloud Run 任務流程
+
+1. **登入**：在步驟 1 輸入派工帳號與密碼，App 會透過 Cloud Run Auth 服務取得 access token 並安全儲存。
+2. **任務載入**：登入後自動呼叫 Task 服務同步派發的巡檢工作與檢查表，並快取於本地，支援離線復原。
+3. **拍攝與上傳**：步驟 2 會在每次拍照後先將影像寫入本地，接著向 Upload 服務索取簽章 URL，若無網路則排入背景佇列等待重試。
+4. **AI 結果**：上傳成功後，App 會輪詢 Processing 服務取得 AI 結果；超時或多次失敗時會自動啟動 Gemini 後備分析。
+5. **審核與報告**：所有 AI 結果都保存在裝置，於步驟 3 審核、步驟 4 生成報告時才會送交雲端保存。
+
+## 🧪 端對端測試
+
+請參考 [`docs/manual_e2e_test.md`](docs/manual_e2e_test.md) 了解完整的手動測試腳本，涵蓋：
+- 離線快取與重啟復原
+- 待上傳佇列與重試邏輯
+- Gemini 錯誤回退
+- 檢測記錄與報告生成驗證
 
 ## 📁 項目結構
 

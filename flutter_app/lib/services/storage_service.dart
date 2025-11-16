@@ -3,6 +3,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../models/inspection_item.dart';
 import '../models/inspection_record.dart';
 import '../models/analysis_result.dart';
+import '../models/auth_tokens.dart';
+import '../models/inspection_job.dart';
+import '../models/pending_upload_task.dart';
 import '../utils/constants.dart';
 
 /// 本地存儲服務
@@ -170,6 +173,87 @@ class StorageService {
     }
   }
 
+  // ========== 認證與任務相關 ==========
+
+  Future<void> saveAuthTokens(AuthTokens tokens) async {
+    await prefs.setString(
+      AppConstants.keyAuthTokens,
+      jsonEncode(tokens.toJson()),
+    );
+  }
+
+  AuthTokens? getAuthTokens() {
+    final jsonStr = prefs.getString(AppConstants.keyAuthTokens);
+    if (jsonStr == null) return null;
+    try {
+      return AuthTokens.fromJson(jsonDecode(jsonStr) as Map<String, dynamic>);
+    } catch (e) {
+      print('Error parsing auth tokens: $e');
+      return null;
+    }
+  }
+
+  Future<void> clearAuthTokens() async {
+    await prefs.remove(AppConstants.keyAuthTokens);
+  }
+
+  Future<void> saveAssignedJobs(List<InspectionJob> jobs) async {
+    final jsonList = jobs.map((job) => job.toJson()).toList();
+    await prefs.setString(
+      AppConstants.keyAssignedJobs,
+      jsonEncode(jsonList),
+    );
+  }
+
+  List<InspectionJob> getAssignedJobs() {
+    final jsonStr = prefs.getString(AppConstants.keyAssignedJobs);
+    if (jsonStr == null || jsonStr.isEmpty) return [];
+    try {
+      final List<dynamic> jsonList = jsonDecode(jsonStr);
+      return jsonList
+          .map((json) => InspectionJob.fromJson(json as Map<String, dynamic>))
+          .toList();
+    } catch (e) {
+      print('Error parsing assigned jobs: $e');
+      return [];
+    }
+  }
+
+  Future<void> saveSelectedJobId(String? jobId) async {
+    if (jobId == null) {
+      await prefs.remove(AppConstants.keySelectedJobId);
+    } else {
+      await prefs.setString(AppConstants.keySelectedJobId, jobId);
+    }
+  }
+
+  String? getSelectedJobId() {
+    return prefs.getString(AppConstants.keySelectedJobId);
+  }
+
+  Future<void> savePendingUploadTasks(List<PendingUploadTask> tasks) async {
+    final jsonList = tasks.map((task) => task.toJson()).toList();
+    await prefs.setString(
+      AppConstants.keyPendingUploads,
+      jsonEncode(jsonList),
+    );
+  }
+
+  List<PendingUploadTask> getPendingUploadTasks() {
+    final jsonStr = prefs.getString(AppConstants.keyPendingUploads);
+    if (jsonStr == null || jsonStr.isEmpty) return [];
+    try {
+      final List<dynamic> jsonList = jsonDecode(jsonStr);
+      return jsonList
+          .map((json) =>
+              PendingUploadTask.fromJson(json as Map<String, dynamic>))
+          .toList();
+    } catch (e) {
+      print('Error parsing pending uploads: $e');
+      return [];
+    }
+  }
+
   // ========== 重置所有數據 ==========
 
   /// 清除所有數據（重置應用）
@@ -179,6 +263,10 @@ class StorageService {
     await clearAnalysisResults();
     await prefs.remove(AppConstants.keyCurrentStep);
     await prefs.remove(AppConstants.keyAppState);
+    await prefs.remove(AppConstants.keyAuthTokens);
+    await prefs.remove(AppConstants.keyAssignedJobs);
+    await prefs.remove(AppConstants.keySelectedJobId);
+    await prefs.remove(AppConstants.keyPendingUploads);
     return true;
   }
 

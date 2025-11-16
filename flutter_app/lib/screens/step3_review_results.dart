@@ -13,6 +13,7 @@ class Step3ReviewResults extends StatelessWidget {
     return Consumer2<AppStateProvider, InspectionProvider>(
       builder: (context, appState, inspection, child) {
         final pendingCount = inspection.pendingReviewCount;
+        final hasPendingUploads = inspection.hasPendingUploads;
 
         if (inspection.analysisResults.isEmpty) {
           return _buildEmptyState(context, appState);
@@ -32,6 +33,13 @@ class Step3ReviewResults extends StatelessWidget {
                       children: [
                         const Text('待審核結果', style: AppTextStyles.heading3),
                         Text('$pendingCount 個項目', style: AppTextStyles.caption),
+                        if (hasPendingUploads)
+                          Text(
+                            '仍有 ${inspection.pendingUploadTasks.length} 張照片待同步',
+                            style: AppTextStyles.caption.copyWith(
+                              color: AppColors.warning,
+                            ),
+                          ),
                       ],
                     ),
                   ),

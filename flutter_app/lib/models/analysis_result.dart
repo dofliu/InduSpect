@@ -48,6 +48,41 @@ class AnalysisResult {
     );
   }
 
+  factory AnalysisResult.fromCloudRunJson(
+    String itemId,
+    String photoPath,
+    Map<String, dynamic> json,
+  ) {
+    final normalized = json.containsKey('result')
+        ? Map<String, dynamic>.from(json['result'] as Map)
+        : json;
+    final readings = normalized['readings'];
+    return AnalysisResult(
+      itemId: itemId,
+      photoPath: photoPath,
+      equipmentType:
+          (normalized['equipment_type'] ?? normalized['equipmentType'])
+              as String?,
+      readings: readings is Map<String, dynamic>
+          ? Map<String, dynamic>.from(readings)
+          : null,
+      conditionAssessment: (normalized['condition_assessment'] ??
+              normalized['conditionAssessment'])
+          as String?,
+      isAnomaly:
+          normalized['is_anomaly'] as bool? ?? normalized['isAnomaly'] as bool?,
+      anomalyDescription: (normalized['anomaly_description'] ??
+              normalized['anomalyDescription'])
+          as String?,
+      measuredSize: (normalized['measured_size'] ?? normalized['measuredSize'])
+          as String?,
+      aiEstimatedSize: (normalized['estimated_size'] ??
+              normalized['estimatedSize'])
+          as String?,
+      status: AnalysisStatus.completed,
+    );
+  }
+
   /// 從本地存儲的 JSON 創建實例
   factory AnalysisResult.fromJson(Map<String, dynamic> json) {
     return AnalysisResult(

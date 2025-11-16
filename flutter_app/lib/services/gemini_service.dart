@@ -514,4 +514,21 @@ $supplementalPrompt
       );
     }
   }
+
+  Future<AnalysisResult> fallbackAnalyzeFromBytes({
+    required String itemId,
+    required String itemDescription,
+    required Uint8List imageBytes,
+    required String photoPath,
+  }) async {
+    if (!_initialized) {
+      init();
+    }
+    return analyzeInspectionPhoto(
+      itemId: itemId,
+      itemDescription: itemDescription,
+      imageBytes: imageBytes,
+      photoPath: photoPath,
+    );
+  }
 }
