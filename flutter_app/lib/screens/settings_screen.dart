@@ -573,7 +573,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       ),
                       SizedBox(height: 8),
                       Text(
-                        '• Google Gemini 2.5 AI',
+                        '• Google Gemini 3 AI',
                         style: TextStyle(fontSize: 13),
                       ),
                       Text(

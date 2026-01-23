@@ -379,7 +379,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     context,
                     icon: Icons.memory,
                     label: 'AI 模型',
-                    value: selectedModel == 'gemini-2.5-pro'
+                    value: selectedModel == 'gemini-3-pro-preview'
                         ? 'Pro'
                         : 'Flash',
                     color: Colors.orange,

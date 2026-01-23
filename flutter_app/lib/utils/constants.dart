@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 
 /// 應用常量定義
 class AppConstants {
-  // Gemini API 模型名稱
-  static const String geminiFlashModel = 'gemini-2.5-flash';
-  static const String geminiProModel = 'gemini-2.5-pro';
+  // Gemini API 模型名稱 (2026-01 更新至 3.0)
+  static const String geminiFlashModel = 'gemini-3-flash-preview';
+  static const String geminiProModel = 'gemini-3-pro-preview';
 
   // 本地存儲 keys
   static const String keyInspectionItems = 'inspection_items';

@@ -8,7 +8,7 @@ class SettingsProvider with ChangeNotifier {
   static const int _freeTrialLimit = 5;
 
   String? _customApiKey;
-  String _selectedModel = 'gemini-2.5-flash'; // 預設模型
+  String _selectedModel = 'gemini-3-flash-preview'; // 預設模型 (2026-01 更新)
   int _usageCount = 0;
   bool _isInitialized = false;
 
@@ -34,7 +34,7 @@ class SettingsProvider with ChangeNotifier {
   Future<void> _loadSettings() async {
     final prefs = await SharedPreferences.getInstance();
     _customApiKey = prefs.getString(_apiKeyKey);
-    _selectedModel = prefs.getString(_selectedModelKey) ?? 'gemini-2.5-flash';
+    _selectedModel = prefs.getString(_selectedModelKey) ?? 'gemini-3-flash-preview';
     _usageCount = prefs.getInt(_usageCountKey) ?? 0;
     notifyListeners();
   }
@@ -97,10 +97,10 @@ class SettingsProvider with ChangeNotifier {
 
   String getModelDisplayName(String model) {
     switch (model) {
-      case 'gemini-2.5-flash':
-        return 'Gemini 2.5 Flash (標準)';
-      case 'gemini-2.5-pro':
-        return 'Gemini 2.5 Pro (進階)';
+      case 'gemini-3-flash-preview':
+        return 'Gemini 3 Flash (標準)';
+      case 'gemini-3-pro-preview':
+        return 'Gemini 3 Pro (進階)';
       default:
         return model;
     }
@@ -108,10 +108,10 @@ class SettingsProvider with ChangeNotifier {
 
   String getModelDescription(String model) {
     switch (model) {
-      case 'gemini-2.5-flash':
-        return '快速回應，平衡效能與成本\n費用：標準（推薦）';
-      case 'gemini-2.5-pro':
-        return '最強分析能力，適合複雜檢測\n費用：較高';
+      case 'gemini-3-flash-preview':
+        return '快速回應，平衡效能與成本\n費用：\$0.50/\$3 (輸入/輸出)';
+      case 'gemini-3-pro-preview':
+        return '最強分析能力，適合複雜檢測\n費用：\$2/\$12 (輸入/輸出)';
       default:
         return '';
     }
@@ -120,19 +120,20 @@ class SettingsProvider with ChangeNotifier {
   List<Map<String, String>> getAvailableModels() {
     return [
       {
-        'id': 'gemini-2.5-flash',
-        'name': 'Gemini 2.5 Flash',
+        'id': 'gemini-3-flash-preview',
+        'name': 'Gemini 3 Flash',
         'badge': '推薦',
         'description': '快速回應，平衡效能與成本',
-        'cost': '標準',
+        'cost': '\$0.50/\$3',
       },
       {
-        'id': 'gemini-2.5-pro',
-        'name': 'Gemini 2.5 Pro',
+        'id': 'gemini-3-pro-preview',
+        'name': 'Gemini 3 Pro',
         'badge': '進階',
         'description': '最強分析能力，適合複雜設備檢測',
-        'cost': '較高',
+        'cost': '\$2/\$12',
       },
     ];
   }
 }
+

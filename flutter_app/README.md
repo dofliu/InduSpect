@@ -30,7 +30,7 @@
   - **步驟 4**: 檢測記錄自動儲存，支援報告生成
 
 - **核心服務層** ⚙️
-  - Gemini AI 圖像分析服務（gemini-2.0-flash-exp）
+  - Gemini AI 圖像分析服務（gemini-3-flash-preview）
   - 本地持久化存儲（SharedPreferences）
   - 圖片處理與壓縮（支援 JPEG/PNG）
   - 自動資料儲存機制（分析完成立即保存）
@@ -92,6 +92,7 @@
 ### API 密鑰
 
 需要 Google Gemini API Key，獲取方式：
+
 1. 訪問 [Google AI Studio](https://ai.google.dev/)
 2. 創建 API Key
 3. 添加到 `.env` 文件
@@ -204,10 +205,11 @@ flutter_app/
 
 使用 Google Gemini API 進行圖像分析，遵循 `aimodel.md` 中定義的 Prompt 工程策略：
 
-- **gemini-2.0-flash-exp**: 用於快速圖像分析
-- **gemini-2.5-pro**: 用於高質量報告生成
+- **gemini-3-flash-preview**: 用於快速圖像分析
+- **gemini-3-pro-preview**: 用於高質量報告生成
 
 示例：
+
 ```dart
 final result = await GeminiService().analyzeInspectionPhoto(
   itemId: item.id,
@@ -295,6 +297,7 @@ flutter test --coverage
    - 確認應用目錄可寫
 
 4. **依賴安裝失敗**
+
    ```bash
    flutter clean
    flutter pub get
