@@ -1,0 +1,165 @@
+import 'dart:convert';
+import 'package:flutter/foundation.dart';
+
+enum RecordStatus {
+  draft,
+  completed,
+  synced,
+}
+
+class TemplateInspectionRecord {
+  final String? id;
+  final String recordId;
+  final String templateId;
+  final String templateName;
+  final RecordStatus status;
+  final Map<String, dynamic> filledData;
+  final DateTime createdAt;
+  final DateTime updatedAt;
+  final String? equipmentCode;
+  final String? equipmentName;
+  final String? customerName;
+  final List<String> photosPendingUpload;
+  final bool hasValidationErrors;
+
+  TemplateInspectionRecord({
+    this.id,
+    required this.recordId,
+    required this.templateId,
+    required this.templateName,
+    required this.status,
+    required this.filledData,
+    required this.createdAt,
+    required this.updatedAt,
+    this.equipmentCode,
+    this.equipmentName,
+    this.customerName,
+    this.photosPendingUpload = const [],
+    this.hasValidationErrors = false,
+  });
+
+  factory TemplateInspectionRecord.fromMap(Map<String, dynamic> map) {
+    return TemplateInspectionRecord(
+      id: map['id']?.toString(),
+      recordId: map['record_id'] as String,
+      templateId: map['template_id'] as String,
+      templateName: map['template_name'] as String,
+      status: RecordStatus.values.firstWhere(
+        (e) => e.toString() == 'RecordStatus.${map['status']}',
+        orElse: () => RecordStatus.draft,
+      ),
+      filledData: _decodeJson(map['filled_data']),
+      createdAt: DateTime.parse(map['created_at'] as String),
+      updatedAt: DateTime.parse(map['updated_at'] as String),
+      equipmentCode: map['equipment_code'] as String?,
+      equipmentName: map['equipment_name'] as String?,
+      customerName: map['customer_name'] as String?,
+      photosPendingUpload: _decodeList(map['photos_pending_upload']),
+      hasValidationErrors: (map['has_validation_errors'] as int?) == 1,
+    );
+  }
+
+  Map<String, dynamic> toMap() {
+    return {
+      if (id != null) 'id': id,
+      'record_id': recordId,
+      'template_id': templateId,
+      'template_name': templateName,
+      'status': status.toString().split('.').last,
+      'filled_data': _encodeJson(filledData),
+      'created_at': createdAt.toIso8601String(),
+      'updated_at': updatedAt.toIso8601String(),
+      'equipment_code': equipmentCode,
+      'equipment_name': equipmentName,
+      'customer_name': customerName,
+      'photos_pending_upload': _encodeList(photosPendingUpload),
+      'has_validation_errors': hasValidationErrors ? 1 : 0,
+    };
+  }
+
+  TemplateInspectionRecord copyWith({
+    String? id,
+    String? recordId,
+    String? templateId,
+    String? templateName,
+    RecordStatus? status,
+    Map<String, dynamic>? filledData,
+    DateTime? createdAt,
+    DateTime? updatedAt,
+    String? equipmentCode,
+    String? equipmentName,
+    String? customerName,
+    List<String>? photosPendingUpload,
+    bool? hasValidationErrors,
+  }) {
+    return TemplateInspectionRecord(
+      id: id ?? this.id,
+      recordId: recordId ?? this.recordId,
+      templateId: templateId ?? this.templateId,
+      templateName: templateName ?? this.templateName,
+      status: status ?? this.status,
+      filledData: filledData ?? Map<String, dynamic>.from(this.filledData),
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      equipmentCode: equipmentCode ?? this.equipmentCode,
+      equipmentName: equipmentName ?? this.equipmentName,
+      customerName: customerName ?? this.customerName,
+      photosPendingUpload: photosPendingUpload ?? List<String>.from(this.photosPendingUpload),
+      hasValidationErrors: hasValidationErrors ?? this.hasValidationErrors,
+    );
+  }
+
+  static String _encodeJson(Map<String, dynamic> data) {
+    try {
+      return json.encode(data);
+    } catch (e) {
+      debugPrint('Error encoding JSON: $e');
+      return '{}';
+    }
+  }
+
+  static Map<String, dynamic> _decodeJson(dynamic data) {
+    if (data == null) return {};
+    if (data is Map<String, dynamic>) return data;
+    if (data is String) {
+      try {
+        final decoded = json.decode(data);
+        if (decoded is Map<String, dynamic>) return decoded;
+        return {};
+      } catch (e) {
+        debugPrint('Error decoding JSON: $e');
+        return {};
+      }
+    }
+    return {};
+  }
+
+  static String _encodeList(List<String> list) {
+    return list.join('|||');
+  }
+
+  static List<String> _decodeList(dynamic data) {
+    if (data == null || data == '') return [];
+    if (data is String) {
+      return data.split('|||').where((s) => s.isNotEmpty).toList();
+    }
+    return [];
+  }
+
+  double getCompletionPercentage(int totalFields) {
+    if (totalFields == 0) return 0.0;
+    final filledCount = filledData.values.where((v) =>
+      v != null && (v is! String || v.isNotEmpty)
+    ).length;
+    return (filledCount / totalFields * 100).clamp(0.0, 100.0);
+  }
+
+  bool get isDraft => status == RecordStatus.draft;
+  bool get isCompleted => status == RecordStatus.completed;
+  bool get needsSync => photosPendingUpload.isNotEmpty || status != RecordStatus.synced;
+
+  @override
+  String toString() {
+    return 'TemplateInspectionRecord(id: $id, recordId: $recordId, template: $templateName, status: $status)';
+  }
+}
