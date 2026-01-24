@@ -26,7 +26,7 @@ dependencies:
   camera: ^0.10.5+9
 
   # AI 服務 - Google Generative AI
-  google_generative_ai: ^0.2.2
+  google_generative_ai: ^0.4.6
 
   # 網路請求
   dio: ^5.4.0

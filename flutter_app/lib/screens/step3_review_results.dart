@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../providers/app_state_provider.dart';
 import '../providers/inspection_provider.dart';
 import '../utils/constants.dart';
+import '../widgets/ai_suggestions_widget.dart';
 
 /// 步驟 3: 審核分析結果
 class Step3ReviewResults extends StatelessWidget {
@@ -217,6 +218,14 @@ class _ResultCard extends StatelessWidget {
                 ),
               ),
             ],
+
+            // AI 智能建議
+            if (result.equipmentType != null)
+              AiSuggestionsWidget(
+                equipmentType: result.equipmentType ?? '',
+                anomalyDescription: result.anomalyDescription ?? '',
+                conditionAssessment: result.conditionAssessment,
+              ),
 
             // 確認按鈕
             const SizedBox(height: AppSpacing.md),

@@ -12,8 +12,8 @@ class GeminiService {
   factory GeminiService() => _instance;
   GeminiService._internal();
 
-  late final GenerativeModel _flashModel;
-  late final GenerativeModel _proModel;
+  late GenerativeModel _flashModel;
+  late GenerativeModel _proModel;
   bool _initialized = false;
   String? _currentApiKey;
 
@@ -43,6 +43,7 @@ class GeminiService {
         topK: 40,
         maxOutputTokens: 2048,
       ),
+      requestOptions: const RequestOptions(apiVersion: 'v1beta'),
     );
 
     // Pro 模型：用於報告生成（高複雜度推理）
@@ -55,6 +56,7 @@ class GeminiService {
         topK: 50,
         maxOutputTokens: 4096,
       ),
+      requestOptions: const RequestOptions(apiVersion: 'v1beta'),
     );
 
     _initialized = true;
@@ -71,7 +73,49 @@ class GeminiService {
         topK: 40,
         maxOutputTokens: 2048,
       ),
+      requestOptions: const RequestOptions(apiVersion: 'v1beta'),
     );
+  }
+
+  /// 提取 JSON 內容（處理混合回應）
+  String _extractJson(String responseText) {
+    responseText = responseText.trim();
+    
+    // 嘗試找到第一個 { 或 [
+    final firstBrace = responseText.indexOf('{');
+    final firstBracket = responseText.indexOf('[');
+    
+    int start = -1;
+    if (firstBrace != -1 && firstBracket != -1) {
+      start = firstBrace < firstBracket ? firstBrace : firstBracket;
+    } else if (firstBrace != -1) {
+      start = firstBrace;
+    } else if (firstBracket != -1) {
+      start = firstBracket;
+    }
+
+    // 嘗試找到最後一個 } 或 ]
+    final lastBrace = responseText.lastIndexOf('}');
+    final lastBracket = responseText.lastIndexOf(']');
+    
+    int end = -1;
+    if (lastBrace != -1 && lastBracket != -1) {
+      end = lastBrace > lastBracket ? lastBrace : lastBracket;
+    } else if (lastBrace != -1) {
+      end = lastBrace;
+    } else if (lastBracket != -1) {
+      end = lastBracket;
+    }
+
+    if (start != -1 && end != -1 && end > start) {
+      return responseText.substring(start, end + 1);
+    }
+
+    // 如果找不到，退回原本的清理邏輯
+    return responseText
+        .replaceAll('```json', '')
+        .replaceAll('```', '')
+        .trim();
   }
 
   // ========== Prompt 範本 ==========
@@ -252,11 +296,8 @@ $recordsJson
       final responseText = response.text?.trim() ?? '';
       print('Checklist extraction response: $responseText');
 
-      // 清理響應文本（移除可能的 markdown 標記）
-      String cleanedText = responseText
-          .replaceAll('```json', '')
-          .replaceAll('```', '')
-          .trim();
+      // 清理響應文本（使用增強的提取邏輯）
+      String cleanedText = _extractJson(responseText);
 
       final jsonData = jsonDecode(cleanedText);
 
@@ -312,10 +353,7 @@ $recordsJson
       print('Analysis response: $responseText');
 
       // 清理響應文本
-      String cleanedText = responseText
-          .replaceAll('```json', '')
-          .replaceAll('```', '')
-          .trim();
+      String cleanedText = _extractJson(responseText);
 
       final jsonData = jsonDecode(cleanedText);
 
@@ -384,10 +422,7 @@ $recordsJson
         throw Exception('AI 回應為空，請重試');
       }
 
-      String cleanedText = responseText
-          .replaceAll('```json', '')
-          .replaceAll('```', '')
-          .trim();
+      String cleanedText = _extractJson(responseText);
 
       print('🧹 Cleaned text: $cleanedText');
 
@@ -496,10 +531,7 @@ $supplementalPrompt
         throw Exception('AI 回應格式異常，請重試');
       }
 
-      String cleanedText = responseText
-          .replaceAll('```json', '')
-          .replaceAll('```', '')
-          .trim();
+      String cleanedText = _extractJson(responseText);
 
       final jsonData = jsonDecode(cleanedText);
 
