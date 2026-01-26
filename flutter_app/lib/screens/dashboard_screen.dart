@@ -259,12 +259,20 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 title: '舊版分析',
                 subtitle: '四步驟流程',
                 color: Colors.orange,
-                onTap: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const HomeScreen(),
-                  ),
-                ),
+                onTap: () async {
+                  // 確保退出快速分析模式
+                  final appState = Provider.of<AppStateProvider>(context, listen: false);
+                  await appState.exitQuickAnalysisMode();
+                  
+                  if (context.mounted) {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const HomeScreen(),
+                      ),
+                    );
+                  }
+                },
               ),
             ),
           ],
@@ -500,12 +508,42 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   '檢測記錄 ${records.length - index}',
                   style: const TextStyle(fontWeight: FontWeight.w500),
                 ),
-                subtitle: Text(
-                  record.itemDescription,
-                  style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
+                subtitle: _isQuickAnalysis(record)
+                      ? Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 6, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: Colors.blue[50],
+                                borderRadius: BorderRadius.circular(4),
+                                border: Border.all(color: Colors.blue[200]!),
+                              ),
+                              child: const Text(
+                                '快速分析',
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  color: Colors.blue,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              record.itemDescription,
+                              style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
+                        )
+                      : Text(
+                          record.itemDescription,
+                          style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
                 trailing: const Icon(Icons.chevron_right),
                 onTap: () {
                   Navigator.push(
@@ -521,5 +559,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
         ],
       ),
     );
+  }
+
+  bool _isQuickAnalysis(var record) {
+    return record.itemDescription == record.equipmentType || 
+           record.itemDescription == '快速分析項目';
   }
 }

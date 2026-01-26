@@ -1,172 +1,48 @@
 import 'package:flutter/material.dart';
-import '../models/template_inspection_record.dart';
-import '../services/database_service.dart';
-import '../services/template_service.dart';
-import '../models/inspection_template.dart';
-import 'template_filling_screen.dart';
+import 'package:provider/provider.dart';
+import '../providers/inspection_provider.dart';
+import '../models/inspection_record.dart';
+import '../utils/constants.dart';
 
-class InspectionRecordsScreen extends StatefulWidget {
+import 'package:intl/intl.dart';
+
+class InspectionRecordsScreen extends StatelessWidget {
   const InspectionRecordsScreen({Key? key}) : super(key: key);
-
-  @override
-  State<InspectionRecordsScreen> createState() => _InspectionRecordsScreenState();
-}
-
-class _InspectionRecordsScreenState extends State<InspectionRecordsScreen> {
-  final DatabaseService _databaseService = DatabaseService();
-  final TemplateService _templateService = TemplateService();
-  List<TemplateInspectionRecord> _records = [];
-  bool _isLoading = true;
-  RecordStatus? _filterStatus;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadRecords();
-  }
-
-  Future<void> _loadRecords() async {
-    setState(() {
-      _isLoading = true;
-    });
-
-    try {
-      final records = await _databaseService.getAllRecords(
-        status: _filterStatus,
-      );
-
-      setState(() {
-        _records = records;
-        _isLoading = false;
-      });
-    } catch (e) {
-      debugPrint('Failed to load records: $e');
-      setState(() {
-        _isLoading = false;
-      });
-    }
-  }
-
-  Future<void> _continueEditing(TemplateInspectionRecord record) async {
-    final template = await _templateService.getTemplateById(record.templateId);
-
-    if (template == null) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Template not found'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-      return;
-    }
-
-    if (mounted) {
-      await Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => TemplateFillingScreen(
-            template: template,
-            existingRecord: record,
-          ),
-        ),
-      );
-
-      _loadRecords();
-    }
-  }
-
-  Future<void> _deleteRecord(TemplateInspectionRecord record) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Confirm Delete'),
-        content: Text('Delete this inspection record?\n\n${record.templateName}'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(context, true),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-            ),
-            child: const Text('Delete'),
-          ),
-        ],
-      ),
-    );
-
-    if (confirmed == true && record.id != null) {
-      try {
-        await _databaseService.deleteRecord(record.id!);
-        _loadRecords();
-
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Record deleted')),
-          );
-        }
-      } catch (e) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Delete failed: $e'),
-              backgroundColor: Colors.red,
-            ),
-          );
-        }
-      }
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Inspection Records'),
+        title: const Text('歷史檢測記錄'),
         actions: [
-          PopupMenuButton<RecordStatus?>(
-            icon: const Icon(Icons.filter_list),
-            tooltip: 'Filter',
-            onSelected: (status) {
-              setState(() {
-                _filterStatus = status;
-              });
-              _loadRecords();
-            },
-            itemBuilder: (context) => [
-              const PopupMenuItem(
-                value: null,
-                child: Text('All'),
-              ),
-              const PopupMenuItem(
-                value: RecordStatus.draft,
-                child: Text('Drafts'),
-              ),
-              const PopupMenuItem(
-                value: RecordStatus.completed,
-                child: Text('Completed'),
-              ),
-            ],
+          IconButton(
+            icon: const Icon(Icons.delete_outline),
+            tooltip: '清除所有記錄',
+            onPressed: () => _showClearAllDialog(context),
           ),
         ],
       ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : _records.isEmpty
-              ? _buildEmptyState()
-              : RefreshIndicator(
-                  onRefresh: _loadRecords,
-                  child: ListView.builder(
-                    itemCount: _records.length,
-                    itemBuilder: (context, index) {
-                      return _buildRecordCard(_records[index]);
-                    },
-                  ),
-                ),
+      body: Consumer<InspectionProvider>(
+        builder: (context, inspection, child) {
+          final records = inspection.inspectionRecords;
+
+          if (records.isEmpty) {
+            return _buildEmptyState();
+          }
+
+          // 按時間倒序排列
+          final sortedRecords = List<InspectionRecord>.from(records)
+            ..sort((a, b) => b.timestamp.compareTo(a.timestamp));
+
+          return ListView.builder(
+            itemCount: sortedRecords.length,
+            padding: const EdgeInsets.all(AppSpacing.md),
+            itemBuilder: (context, index) {
+              return _buildRecordCard(context, sortedRecords[index]);
+            },
+          );
+        },
+      ),
     );
   }
 
@@ -176,13 +52,13 @@ class _InspectionRecordsScreenState extends State<InspectionRecordsScreen> {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(
-            Icons.assignment_outlined,
+            Icons.history,
             size: 80,
             color: Colors.grey[400],
           ),
           const SizedBox(height: 16),
           Text(
-            _filterStatus == null ? 'No records yet' : 'No matching records',
+            '暫無歷史記錄',
             style: TextStyle(
               fontSize: 18,
               color: Colors.grey[600],
@@ -190,7 +66,7 @@ class _InspectionRecordsScreenState extends State<InspectionRecordsScreen> {
           ),
           const SizedBox(height: 8),
           Text(
-            'Start a new inspection to create records',
+            '完成巡檢並確認後，記錄將顯示於此',
             style: TextStyle(
               fontSize: 14,
               color: Colors.grey[500],
@@ -201,126 +77,149 @@ class _InspectionRecordsScreenState extends State<InspectionRecordsScreen> {
     );
   }
 
-  Widget _buildRecordCard(TemplateInspectionRecord record) {
-    final isCompleted = record.status == RecordStatus.completed;
-    final isDraft = record.status == RecordStatus.draft;
-
+  Widget _buildRecordCard(BuildContext context, InspectionRecord record) {
+    final dateFormat = DateFormat('yyyy/MM/dd HH:mm');
+    
     return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: InkWell(
-        onTap: () => _continueEditing(record),
-        borderRadius: BorderRadius.circular(4),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Icon(
-                    isCompleted ? Icons.check_circle : Icons.edit_note,
-                    color: isCompleted ? Colors.green : Colors.orange,
-                    size: 24,
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          record.templateName,
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          isDraft ? 'Draft' : 'Completed',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: isDraft ? Colors.orange : Colors.green,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.delete_outline),
-                    color: Colors.grey,
-                    onPressed: () => _deleteRecord(record),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              if (record.equipmentCode != null || record.equipmentName != null) ...[
-                Row(
-                  children: [
-                    const Icon(Icons.precision_manufacturing, size: 16, color: Colors.grey),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        [
-                          if (record.equipmentCode != null) record.equipmentCode,
-                          if (record.equipmentName != null) record.equipmentName,
-                        ].join(' - '),
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Colors.grey[700],
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-              ],
-              Row(
-                children: [
-                  const Icon(Icons.access_time, size: 16, color: Colors.grey),
-                  const SizedBox(width: 8),
-                  Text(
-                    _formatDateTime(record.updatedAt),
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.grey[600],
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: () => _continueEditing(record),
-                      icon: Icon(isDraft ? Icons.edit : Icons.visibility),
-                      label: Text(isDraft ? 'Continue Editing' : 'View Details'),
-                    ),
-                  ),
-                ],
-              ),
-            ],
+      margin: const EdgeInsets.only(bottom: AppSpacing.md),
+      child: ExpansionTile(
+        leading: CircleAvatar(
+          backgroundColor: record.isAnomaly ? AppColors.error : AppColors.success,
+          child: Icon(
+            record.isAnomaly ? Icons.warning_amber : Icons.check,
+            color: Colors.white,
           ),
         ),
+        title: Text(
+          record.equipmentType,
+          style: const TextStyle(fontWeight: FontWeight.bold),
+        ),
+        subtitle: Text(dateFormat.format(record.timestamp)),
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildInfoRow('檢查項目', record.itemDescription),
+                const SizedBox(height: 8),
+                _buildInfoRow('狀況評估', record.conditionAssessment),
+                const SizedBox(height: 8),
+                if (record.isAnomaly) ...[
+                  _buildInfoRow('異常描述', record.anomalyDescription ?? '無詳細描述', 
+                    valueColor: AppColors.error),
+                  const SizedBox(height: 8),
+                ],
+                if (record.readings != null && record.readings!.isNotEmpty) ...[
+                  const Text('儀表讀數:', style: TextStyle(fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 4),
+                  ...record.readings!.entries.map((e) {
+                     final val = e.value as Map<String, dynamic>;
+                     return Padding(
+                       padding: const EdgeInsets.only(left: 12, bottom: 2),
+                       child: Text('${e.key}: ${val['value']} ${val['unit'] ?? ''}'),
+                     );
+                  }).toList(),
+                  const SizedBox(height: 8),
+                ],
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: TextButton.icon(
+                    icon: const Icon(Icons.delete, size: 16),
+                    label: const Text('刪除此記錄'),
+                    style: TextButton.styleFrom(foregroundColor: Colors.red),
+                    onPressed: () => _deleteRecord(context, record),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
 
-  String _formatDateTime(DateTime dateTime) {
-    final now = DateTime.now();
-    final difference = now.difference(dateTime);
+  Widget _buildInfoRow(String label, String value, {Color? valueColor}) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SizedBox(
+          width: 80,
+          child: Text(
+            label,
+            style: const TextStyle(
+              fontWeight: FontWeight.bold,
+              color: Colors.grey,
+            ),
+          ),
+        ),
+        Expanded(
+          child: Text(
+            value,
+            style: TextStyle(color: valueColor),
+          ),
+        ),
+      ],
+    );
+  }
 
-    if (difference.inMinutes < 1) {
-      return 'Just now';
-    } else if (difference.inHours < 1) {
-      return '${difference.inMinutes} minutes ago';
-    } else if (difference.inDays < 1) {
-      return '${difference.inHours} hours ago';
-    } else if (difference.inDays < 7) {
-      return '${difference.inDays} days ago';
-    } else {
-      return '${dateTime.year}/${dateTime.month}/${dateTime.day}';
+  Future<void> _deleteRecord(BuildContext context, InspectionRecord record) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('刪除記錄'),
+        content: const Text('確定要刪除這條記錄嗎？此操作無法復原。'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('取消'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('刪除'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true && context.mounted) {
+      await context.read<InspectionProvider>().deleteRecord(record.id);
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('記錄已刪除')),
+        );
+      }
+    }
+  }
+
+  Future<void> _showClearAllDialog(BuildContext context) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('清除所有記錄'),
+        content: const Text('確定要清空所有歷史記錄嗎？此操作無法復原。'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('取消'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            child: const Text('確認清除'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true && context.mounted) {
+      await context.read<InspectionProvider>().clearAllData();
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('所有記錄已清除')),
+        );
+      }
     }
   }
 }

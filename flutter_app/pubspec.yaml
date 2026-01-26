@@ -26,7 +26,7 @@ dependencies:
   camera: ^0.10.5+9
 
   # AI 服務 - Google Generative AI
-  google_generative_ai: ^0.2.2
+  google_generative_ai: ^0.4.6
 
   # 網路請求
   dio: ^5.4.0
@@ -44,6 +44,7 @@ dependencies:
   uuid: ^4.3.3
   intl: ^0.19.0
   path: ^1.8.3
+  file_picker: ^6.1.1
 
   # 環境變量
   flutter_dotenv: ^5.1.0
