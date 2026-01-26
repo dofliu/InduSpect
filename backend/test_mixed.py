@@ -2,7 +2,14 @@
 from google import genai
 import math
 
-API_KEY = "AIzaSyAZRAq9ExG9HBVFhI7CB_hb9TvcO-L2KyQ"
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
+API_KEY = os.getenv("GEMINI_API_KEY")
+if not API_KEY:
+    raise ValueError("GEMINI_API_KEY not found in .env file")
 
 def cosine_similarity(a, b):
     dot_product = sum(x * y for x, y in zip(a, b))
