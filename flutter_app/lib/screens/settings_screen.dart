@@ -3,6 +3,8 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../providers/settings_provider.dart';
 
+import '../screens/rag_management_screen.dart';
+
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
 
@@ -54,6 +56,28 @@ class _SettingsScreenState extends State<SettingsScreen> {
             title: 'AI 模型選擇',
             children: [
               _buildModelSelectionCard(context, settings),
+            ],
+          ),
+
+          const Divider(),
+
+          // 進階管理區塊
+          _buildSection(
+            context,
+            title: '進階管理',
+            children: [
+              ListTile(
+                leading: const Icon(Icons.storage, color: Colors.blueGrey),
+                title: const Text('知識庫管理'),
+                subtitle: const Text('瀏覽與管理 RAG 資料庫內容'),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const RagManagementScreen(),
+                  ),
+                ),
+              ),
             ],
           ),
 

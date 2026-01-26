@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:dio/dio.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:file_picker/file_picker.dart';
 import '../models/rag_models.dart';
 import 'connectivity_service.dart';
 
@@ -143,6 +144,39 @@ class BackendApiService {
     }
   }
 
+  /// 取得所有知識庫項目
+  Future<List<Map<String, dynamic>>> getAllItems({int skip = 0, int limit = 100}) async {
+    if (!await _connectivity.checkConnection()) return [];
+
+    try {
+      final response = await _dio.get(
+        '/api/rag/items',
+        queryParameters: {'skip': skip, 'limit': limit},
+      );
+      
+      if (response.data is List) {
+        return List<Map<String, dynamic>>.from(response.data);
+      }
+      return [];
+    } catch (e) {
+      print('Error getting items: $e');
+      return [];
+    }
+  }
+
+  /// 刪除知識庫項目
+  Future<bool> deleteItem(String itemId) async {
+    if (!await _connectivity.checkConnection()) return false;
+
+    try {
+      final response = await _dio.delete('/api/rag/items/$itemId');
+      return response.data['success'] == true;
+    } catch (e) {
+      print('Error deleting item: $e');
+      return false;
+    }
+  }
+
   // ============ 離線佇列管理 ============
 
   /// 加入待處理佇列
@@ -171,8 +205,58 @@ class BackendApiService {
     return items.where((e) => e.status == PendingRagItemStatus.pending).length;
   }
 
+
+
+  /// 上傳維修手冊
+  Future<Map<String, dynamic>> uploadDocument(PlatformFile file) async {
+    if (!await _connectivity.checkConnection()) {
+      return {'success': false, 'error': 'offline'};
+    }
+
+    try {
+      MultipartFile multipartFile;
+      
+      // 根據平台選擇讀取方式
+      if (file.path != null) {
+        // Mobile / Desktop
+        multipartFile = await MultipartFile.fromFile(file.path!, filename: file.name);
+      } else if (file.bytes != null) {
+        // Web
+        multipartFile = MultipartFile.fromBytes(file.bytes!, filename: file.name);
+      } else {
+        return {'success': false, 'error': '無法讀取檔案內容'};
+      }
+
+      final formData = FormData.fromMap({
+        'file': multipartFile,
+      });
+
+      print('📄 Uploading file: ${file.name}');
+
+      final response = await _dio.post(
+        '/api/rag/upload',
+        data: formData,
+        onSendProgress: (count, total) {
+          // 可以通知進度，但這裡先簡單 log
+          if (total > 0) {
+            print('Upload progress: ${(count / total * 100).toStringAsFixed(0)}%');
+          }
+        },
+      );
+
+      return response.data;
+    } catch (e) {
+      print('❌ Upload error: $e');
+      if (e is DioException) {
+         return {'success': false, 'error': e.message};
+      }
+      return {'success': false, 'error': e.toString()};
+    }
+  }
+
   /// 同步所有待處理項目
   Future<int> syncPendingItems() async {
+
     if (!await _connectivity.checkConnection()) return 0;
 
     final items = await getPendingItems();
