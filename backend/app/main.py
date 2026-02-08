@@ -6,7 +6,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import settings
-from app.api import rag, templates, reports
+from app.api import rag, templates, reports, auto_fill
 
 from contextlib import asynccontextmanager
 from app.db.database import init_db, close_db
@@ -42,6 +42,7 @@ app.add_middleware(
 app.include_router(rag.router, prefix="/api/rag", tags=["RAG 查詢"])
 app.include_router(templates.router, prefix="/api/templates", tags=["模板管理"])
 app.include_router(reports.router, prefix="/api/reports", tags=["報告生成"])
+app.include_router(auto_fill.router, prefix="/api/auto-fill", tags=["自動回填"])
 
 
 @app.get("/")
