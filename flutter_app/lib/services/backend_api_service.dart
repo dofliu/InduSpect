@@ -312,6 +312,126 @@ class BackendApiService {
     ));
   }
 
+  // ============ 自動回填 API ============
+
+  /// 分析定檢文件結構（Excel/Word）
+  /// 回傳 Field Position Map
+  Future<Map<String, dynamic>> analyzeFileStructure(PlatformFile file) async {
+    if (!await _connectivity.checkConnection()) {
+      return {'success': false, 'error': 'offline'};
+    }
+
+    try {
+      MultipartFile multipartFile;
+      if (file.path != null) {
+        multipartFile = await MultipartFile.fromFile(file.path!, filename: file.name);
+      } else if (file.bytes != null) {
+        multipartFile = MultipartFile.fromBytes(file.bytes!, filename: file.name);
+      } else {
+        return {'success': false, 'error': '無法讀取檔案內容'};
+      }
+
+      final formData = FormData.fromMap({'file': multipartFile});
+
+      final response = await _dio.post(
+        '/api/auto-fill/analyze-structure',
+        data: formData,
+      );
+
+      return Map<String, dynamic>.from(response.data);
+    } catch (e) {
+      if (e is DioException) {
+        return {'success': false, 'error': e.message};
+      }
+      return {'success': false, 'error': e.toString()};
+    }
+  }
+
+  /// AI 自動映射檢查結果到表格欄位
+  Future<Map<String, dynamic>> mapFieldsWithAI({
+    required List<Map<String, dynamic>> fieldMap,
+    required List<Map<String, dynamic>> inspectionResults,
+  }) async {
+    if (!await _connectivity.checkConnection()) {
+      return {'success': false, 'error': 'offline'};
+    }
+
+    try {
+      final response = await _dio.post('/api/auto-fill/map-fields', data: {
+        'field_map': fieldMap,
+        'inspection_results': inspectionResults,
+      });
+
+      return Map<String, dynamic>.from(response.data);
+    } catch (e) {
+      if (e is DioException) {
+        return {'success': false, 'error': e.message};
+      }
+      return {'success': false, 'error': e.toString()};
+    }
+  }
+
+  /// 預覽自動回填結果
+  Future<Map<String, dynamic>> previewAutoFill({
+    required List<Map<String, dynamic>> fieldMap,
+    required List<Map<String, dynamic>> fillValues,
+  }) async {
+    if (!await _connectivity.checkConnection()) {
+      return {'success': false, 'error': 'offline'};
+    }
+
+    try {
+      final response = await _dio.post('/api/auto-fill/preview', data: {
+        'field_map': fieldMap,
+        'fill_values': fillValues,
+      });
+
+      return Map<String, dynamic>.from(response.data);
+    } catch (e) {
+      if (e is DioException) {
+        return {'success': false, 'error': e.message};
+      }
+      return {'success': false, 'error': e.toString()};
+    }
+  }
+
+  /// 執行自動回填，回傳填好的文件 bytes
+  Future<List<int>?> executeAutoFill({
+    required PlatformFile file,
+    required List<Map<String, dynamic>> fieldMap,
+    required List<Map<String, dynamic>> fillValues,
+  }) async {
+    if (!await _connectivity.checkConnection()) return null;
+
+    try {
+      MultipartFile multipartFile;
+      if (file.path != null) {
+        multipartFile = await MultipartFile.fromFile(file.path!, filename: file.name);
+      } else if (file.bytes != null) {
+        multipartFile = MultipartFile.fromBytes(file.bytes!, filename: file.name);
+      } else {
+        return null;
+      }
+
+      final formData = FormData.fromMap({
+        'file': multipartFile,
+        'field_map_json': jsonEncode(fieldMap),
+        'fill_values_json': jsonEncode(fillValues),
+      });
+
+      final response = await _dio.post(
+        '/api/auto-fill/execute',
+        data: formData,
+        options: Options(responseType: ResponseType.bytes),
+      );
+
+      return response.data;
+    } catch (e) {
+      print('Auto-fill execute error: $e');
+      return null;
+    }
+  }
+
   /// 健康檢查
   Future<bool> healthCheck() async {
     try {
