@@ -8,7 +8,7 @@
 4. POST /execute            — 執行回填，回傳填好的文件
 """
 
-from fastapi import APIRouter, HTTPException, UploadFile, File
+from fastapi import APIRouter, HTTPException, UploadFile, File, Form
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from typing import Optional
@@ -224,8 +224,8 @@ async def preview_auto_fill(request: PreviewRequest):
 @router.post("/execute")
 async def execute_auto_fill(
     file: UploadFile = File(...),
-    field_map_json: str = "",
-    fill_values_json: str = "",
+    field_map_json: str = Form(""),
+    fill_values_json: str = Form(""),
 ):
     """
     執行自動回填
