@@ -8,6 +8,7 @@ import 'quick_analysis_screen.dart';
 import 'history_screen.dart';
 import 'template_selection_screen.dart';
 import 'inspection_records_screen.dart';
+import 'auto_fill_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -255,6 +256,40 @@ class _DashboardScreenState extends State<DashboardScreen> {
             Expanded(
               child: _buildActionCard(
                 context,
+                icon: Icons.auto_fix_high,
+                title: '自動回填',
+                subtitle: '回填定檢表格',
+                color: Colors.teal,
+                onTap: () {
+                  final inspection = Provider.of<InspectionProvider>(context, listen: false);
+                  final results = inspection.inspectionRecords
+                      .map((r) => <String, dynamic>{
+                            'equipment_name': r.equipmentType,
+                            'equipment_type': r.equipmentType,
+                            'condition_assessment': r.conditionAssessment,
+                            'is_anomaly': r.isAnomaly,
+                            'anomaly_description': r.anomalyDescription,
+                            'extracted_values': r.readings,
+                            'notes': r.itemDescription,
+                          })
+                      .toList();
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => AutoFillScreen(inspectionResults: results),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            Expanded(
+              child: _buildActionCard(
+                context,
                 icon: Icons.checklist,
                 title: '舊版分析',
                 subtitle: '四步驟流程',
@@ -263,7 +298,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   // 確保退出快速分析模式
                   final appState = Provider.of<AppStateProvider>(context, listen: false);
                   await appState.exitQuickAnalysisMode();
-                  
+
                   if (context.mounted) {
                     Navigator.push(
                       context,
@@ -275,6 +310,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 },
               ),
             ),
+            const SizedBox(width: 12),
+            const Expanded(child: SizedBox()),
           ],
         ),
       ],
