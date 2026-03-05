@@ -1,10 +1,9 @@
-import 'dart:io';
 import 'dart:typed_data';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:share_plus/share_plus.dart';
 import '../services/backend_api_service.dart';
+import '../services/file_save_service.dart';
 import '../utils/constants.dart';
 
 /// 自動回填畫面
@@ -549,6 +548,7 @@ class _AutoFillScreenState extends State<AutoFillScreen> {
     final result = await FilePicker.platform.pickFiles(
       type: FileType.custom,
       allowedExtensions: ['xlsx', 'docx'],
+      withData: kIsWeb, // Web 平台需要讀取 bytes
     );
 
     if (result == null || result.files.isEmpty) return;
@@ -669,16 +669,12 @@ class _AutoFillScreenState extends State<AutoFillScreen> {
         return;
       }
 
-      // 儲存到本地並分享
-      final dir = await getTemporaryDirectory();
-      final outputPath = '${dir.path}/filled_${_fileName}';
-      final file = File(outputPath);
-      await file.writeAsBytes(filledBytes);
+      final outputFileName = 'filled_${_fileName}';
 
-      // 分享文件
-      await Share.shareXFiles(
-        [XFile(outputPath)],
-        subject: '已回填的定檢表格',
+      // 使用跨平台的文件儲存服務
+      await FileSaveService.saveAndShare(
+        bytes: Uint8List.fromList(filledBytes),
+        fileName: outputFileName,
       );
 
       setState(() {
