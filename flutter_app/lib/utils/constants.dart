@@ -11,6 +11,10 @@ class AppConstants {
   static const String keyInspectionRecords = 'inspection_records';
   static const String keyCurrentStep = 'current_step';
   static const String keyAppState = 'app_state';
+  static const String keyAuthTokens = 'auth_tokens';
+  static const String keyAssignedJobs = 'assigned_jobs';
+  static const String keySelectedJobId = 'selected_job_id';
+  static const String keyPendingUploads = 'pending_uploads';
 
   // 圖片壓縮設置
   static const int maxImageWidth = 1920;

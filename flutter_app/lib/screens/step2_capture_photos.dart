@@ -15,9 +15,13 @@ class Step2CapturePhotos extends StatelessWidget {
   Widget build(BuildContext context) {
     return Consumer2<AppStateProvider, InspectionProvider>(
       builder: (context, appState, inspection, child) {
+        if (inspection.selectedJob == null) {
+          return _buildNoJobSelected();
+        }
+
         if (inspection.isAnalyzing) {
           return LoadingWidget(
-            message: '正在分析照片...\n${inspection.currentAnalyzingItemId != null ? "處理中..." : ""}',
+            message: '正在同步/分析照片...',
           );
         }
 
@@ -31,28 +35,40 @@ class Step2CapturePhotos extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(AppSpacing.md),
               color: AppColors.backgroundLight,
-              child: Row(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          '拍攝進度',
-                          style: AppTextStyles.heading3,
-                        ),
-                        const SizedBox(height: AppSpacing.xs),
-                        Text(
-                          '$completedCount / $totalCount 已完成',
-                          style: AppTextStyles.caption,
-                        ),
-                      ],
-                    ),
+                  Text(
+                    inspection.selectedJob?.title ?? '當前巡檢',
+                    style: AppTextStyles.heading3,
                   ),
-                  CircularProgressIndicator(
-                    value: totalCount > 0 ? completedCount / totalCount : 0,
-                    backgroundColor: Colors.grey[300],
-                    valueColor: const AlwaysStoppedAnimation<Color>(AppColors.success),
+                  const SizedBox(height: AppSpacing.xs),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              '$completedCount / $totalCount 已完成',
+                              style: AppTextStyles.caption,
+                            ),
+                            if (inspection.hasPendingUploads)
+                              Text(
+                                '${inspection.pendingUploadTasks.length} 張照片待同步',
+                                style: AppTextStyles.caption.copyWith(
+                                  color: AppColors.warning,
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+                      CircularProgressIndicator(
+                        value: totalCount > 0 ? completedCount / totalCount : 0,
+                        backgroundColor: Colors.grey[300],
+                        valueColor: const AlwaysStoppedAnimation<Color>(AppColors.success),
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -67,6 +83,9 @@ class Step2CapturePhotos extends StatelessWidget {
                   return _PhotoItemCard(
                     item: item,
                     index: index,
+                    isPendingUpload:
+                        inspection.pendingUploadItemIds.contains(item.id),
+                    pendingError: inspection.getPendingUploadError(item.id),
                     onCapture: () => _capturePhoto(context, inspection, item.id),
                   );
                 },
@@ -87,14 +106,39 @@ class Step2CapturePhotos extends StatelessWidget {
                   ],
                 ),
                 child: LoadingButton(
-                  text: '開始分析所有項目',
+                  text: inspection.hasPendingUploads
+                      ? '同步 ${inspection.pendingUploadTasks.length} 張照片'
+                      : '開始分析所有項目',
                   onPressed: () => _analyzeAll(context, appState, inspection),
-                  backgroundColor: AppColors.success,
+                  backgroundColor:
+                      inspection.hasPendingUploads ? AppColors.info : AppColors.success,
                 ),
               ),
           ],
         );
       },
+    );
+  }
+
+  Widget _buildNoJobSelected() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.lg),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.assignment, size: 80, color: AppColors.primary),
+            const SizedBox(height: AppSpacing.md),
+            const Text('請先在步驟 1 選擇巡檢任務', style: AppTextStyles.heading3),
+            const SizedBox(height: AppSpacing.sm),
+            Text(
+              '回到上一步登入並選擇任務後，即可開始拍攝巡檢照片。',
+              textAlign: TextAlign.center,
+              style: AppTextStyles.body2.copyWith(color: Colors.grey[600]),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -189,11 +233,15 @@ class _PhotoItemCard extends StatelessWidget {
   final dynamic item;
   final int index;
   final VoidCallback onCapture;
+  final bool isPendingUpload;
+  final String? pendingError;
 
   const _PhotoItemCard({
     required this.item,
     required this.index,
     required this.onCapture,
+    required this.isPendingUpload,
+    required this.pendingError,
   });
 
   @override
@@ -246,6 +294,35 @@ class _PhotoItemCard extends StatelessWidget {
               ),
             ),
           ),
+          if (isPendingUpload || pendingError != null)
+            Padding(
+              padding: const EdgeInsets.only(
+                left: AppSpacing.sm,
+                right: AppSpacing.sm,
+                bottom: AppSpacing.sm,
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    isPendingUpload ? Icons.cloud_upload : Icons.error_outline,
+                    color: isPendingUpload ? AppColors.warning : AppColors.error,
+                    size: 18,
+                  ),
+                  const SizedBox(width: AppSpacing.xs),
+                  Expanded(
+                    child: Text(
+                      pendingError ?? '等待網路連線後自動上傳',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: isPendingUpload
+                            ? AppColors.warning
+                            : AppColors.error,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
         ],
       ),
     );
