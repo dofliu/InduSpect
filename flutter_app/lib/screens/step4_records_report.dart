@@ -6,6 +6,8 @@ import '../providers/inspection_provider.dart';
 import '../utils/constants.dart';
 import '../widgets/common/loading_widget.dart';
 
+import '../widgets/ai_suggestions_widget.dart';
+
 /// 步驟 4: 查看記錄與生成報告
 class Step4RecordsReport extends StatelessWidget {
   const Step4RecordsReport({super.key});
@@ -168,6 +170,17 @@ class _RecordCard extends StatelessWidget {
                   _buildInfoRow('異常描述', record.anomalyDescription!),
                 if (record.measuredSize != null)
                   _buildInfoRow('測量尺寸', record.measuredSize!),
+                if (record.measuredSize != null)
+                  _buildInfoRow('測量尺寸', record.measuredSize!),
+                
+                // AI 智能建議
+                if (record.equipmentType != '未知')
+                  AiSuggestionsWidget(
+                    equipmentType: record.equipmentType,
+                    anomalyDescription: record.anomalyDescription ?? '無異常描述',
+                    conditionAssessment: record.conditionAssessment,
+                  ),
+
                 const SizedBox(height: AppSpacing.sm),
                 TextButton.icon(
                   onPressed: onDelete,

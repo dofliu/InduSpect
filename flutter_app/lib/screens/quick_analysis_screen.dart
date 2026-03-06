@@ -6,6 +6,7 @@ import '../providers/inspection_provider.dart';
 import '../models/analysis_result.dart';
 import '../utils/constants.dart';
 import '../widgets/common/loading_widget.dart';
+import '../widgets/ai_suggestions_widget.dart';
 
 /// 快速分析模式頁面
 class QuickAnalysisScreen extends StatefulWidget {
@@ -180,6 +181,18 @@ class _QuickAnalysisScreenState extends State<QuickAnalysisScreen> {
                 ),
               ],
             ),
+
+          
+          const SizedBox(height: AppSpacing.lg),
+          const Text('💡 AI 智能建議', style: AppTextStyles.heading3),
+          const SizedBox(height: AppSpacing.sm),
+          // 直接使用 AiSuggestionsWidget，它會自動處理 RAG 查詢
+          AiSuggestionsWidget(
+            equipmentType: _currentResult.equipmentType ?? '未知設備',
+            anomalyDescription: _currentResult.anomalyDescription ?? '無異常描述',
+            conditionAssessment: _currentResult.conditionAssessment,
+          ),
+
           const SizedBox(height: AppSpacing.lg),
           Row(
             children: [

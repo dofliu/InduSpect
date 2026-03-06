@@ -225,7 +225,7 @@ class DatabaseService {
 ```typescript
 import { GoogleGenAI } from "@google/genai";
 const genai = new GoogleGenAI(apiKey);
-const model = genai.getGenerativeModel({ model: "gemini-2.5-flash" });
+const model = genai.getGenerativeModel({ model: "gemini-3-flash-preview" });
 ```
 
 **Flutter 實現：**
@@ -237,7 +237,7 @@ class GeminiService {
 
   GeminiService(String apiKey) {
     model = GenerativeModel(
-      model: 'gemini-2.5-flash',
+      model: 'gemini-3-flash-preview',
       apiKey: apiKey,
     );
   }

@@ -101,7 +101,7 @@ InduSpect AI 的智慧能力主要基於以下幾個核心技術概念：
 
 *   **框架**: Flutter 3.x (iOS/Android 雙平台支援)
 *   **語言**: Dart 3.2+
-*   **核心 AI**: Google Gemini API (`gemini-2.0-flash-exp` 用於圖像分析)
+*   **核心 AI**: Google Gemini API (`gemini-3-flash-preview` 用於圖像分析, `gemini-3.1-pro-preview` 用於報告生成)
 *   **狀態管理**: Provider 模式
 *   **本地儲存**: SharedPreferences (未來規劃 SQLite)
 *   **圖片處理**: image_picker, camera, image
@@ -114,7 +114,7 @@ InduSpect AI 的智慧能力主要基於以下幾個核心技術概念：
 ### 🌐 Web 原型版本（已完成，供參考）
 
 *   **前端框架**: React.js with TypeScript
-*   **核心 AI**: Google Gemini API (`gemini-2.5-flash`, `gemini-2.5-pro`)
+*   **核心 AI**: Google Gemini API (`gemini-3-flash-preview`, `gemini-3.1-pro-preview`)
 *   **本機儲存**: 瀏覽器 `localStorage` API
 
 ### 🔮 未來規劃架構 (詳見 `arch.md`)

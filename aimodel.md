@@ -2,20 +2,20 @@ AI 模型整合規格
 本文件為 AI 開發人員提供整合 Gemini 模型的具體技術指南，包括模型選擇、API 介面和提示工程策略。
 
 1. 模型選擇與路由邏輯
-系統採用混合式 AI 策略，根據任務的複雜度和流量，在 gemini-2.5-flash 和 gemini-2.5-pro 之間進行智慧路由，以平衡成本與效能。
+系統採用混合式 AI 策略，根據任務的複雜度和流量，在 gemini-3-flash-preview 和 gemini-3.1-pro-preview 之間進行智慧路由，以平衡成本與效能。
 
-gemini-2.5-flash: 作為系統的主力分析引擎。處理所有單張圖像的分析任務，因其速度快、成本效益高，非常適合高流量的逐點分析。
+gemini-3-flash-preview: 作為系統的主力分析引擎。處理所有單張圖像的分析任務，因其速度快、成本效益高，非常適合高流量的逐點分析。
 
-gemini-2.5-pro: 作為系統的首席推理引擎。僅用於處理低流量、高複雜度的任務，即生成最終的巡檢摘要報告。
+gemini-3.1-pro-preview: 作為系統的首席推理引擎。僅用於處理低流量、高複雜度的任務，即生成最終的巡檢摘要報告。
 
 路由邏輯 (在 processing-service 中實現):
 
-圖像分析請求: 當 processing-service 被新上傳的圖像觸發時，固定呼叫 gemini-2.5-flash 模型。
+圖像分析請求: 當 processing-service 被新上傳的圖像觸發時，固定呼叫 gemini-3-flash-preview 模型。
 
 報告生成請求: 當使用者在 App 中提交完成的巡檢工作時，前端會呼叫一個特定的 API 端點。該端點的後端邏輯會：
 a. 從 Firestore 收集該次巡檢工作所有點的 JSON 分析結果。
 b. 將所有結果匯總。
-c. 固定呼叫 gemini-2.5-pro 模型來生成摘要報告。
+c. 固定呼叫 gemini-3.1-pro-preview 模型來生成摘要報告。
 
 2. API 介面定義 (processing-service)
 端點: POST /analyze-image (由 Eventarc 觸發)
@@ -32,7 +32,7 @@ c. 固定呼叫 gemini-2.5-pro 模型來生成摘要報告。
 
 根據圖像元數據 (例如，所屬的巡檢點類型) 選擇合適的提示範本。
 
-呼叫 Vertex AI 的 gemini-2.5-flash API。
+呼叫 Vertex AI 的 gemini-3-flash-preview API。
 
 驗證回傳的 JSON 是否符合預期格式。
 
@@ -92,7 +92,7 @@ c. 固定呼叫 gemini-2.5-pro 模型來生成摘要報告。
 }
 
 3.3 範本三：高階主管摘要報告生成
-此提示用於呼叫 gemini-2.5-pro。
+此提示用於呼叫 gemini-3.1-pro-preview。
 
 您是一位經驗豐富的工廠營運經理 AI 助理。
 

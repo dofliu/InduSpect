@@ -87,4 +87,4 @@ AI 模型服務:
 
 服務: Vertex AI。
 
-用途: 提供對 gemini-2.5-pro 和 gemini-2.5-flash 模型的企業級、安全的 API 存取端點。processing-service 將透過 Vertex AI SDK 與 Gemini 模型進行互動。
+用途: 提供對 gemini-3.1-pro-preview 和 gemini-3-flash-preview 模型的企業級、安全的 API 存取端點。processing-service 將透過 Vertex AI SDK 與 Gemini 模型進行互動。

@@ -11,7 +11,7 @@
 
 建置一套基於 Google Cloud 的可擴展、事件驅動的無伺服器後端。
 
-整合 Gemini AI 模型 (gemini-2.5-pro 與 gemini-2.5-flash) 實現以下功能：
+整合 Gemini AI 模型 (gemini-3.1-pro-preview 與 gemini-3-flash-preview) 實現以下功能：
 
 從圖像中自動識別工業設備。
 

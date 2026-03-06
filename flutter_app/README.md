@@ -58,6 +58,12 @@
   - 自動儲存機制（避免資料遺失）
   - 支援照片重新上傳
 
+- **RAG 知識庫管理** 📚
+  - **知識庫瀏覽**: 查看已入庫的維修知識
+  - **各項操作**: 支援刪除過期或錯誤資料
+  - **手冊自動匯入**: 上傳 PDF/文字檔，AI 自動分析並擴充知識庫
+  - **API 整合**: 支援查看知識來源 (巡檢/文件/手動)
+
 ### 🚧 規劃中功能
 
 詳見 [ROADMAP.md](../ROADMAP.md)
@@ -231,10 +237,11 @@ flutter_app/
 
 使用 Google Gemini API 進行圖像分析，遵循 `aimodel.md` 中定義的 Prompt 工程策略：
 
-- **gemini-2.0-flash-exp**: 用於快速圖像分析
-- **gemini-2.5-pro**: 用於高質量報告生成
+- **gemini-3-flash-preview**: 用於快速圖像分析
+- **gemini-3.1-pro-preview**: 用於高質量報告生成
 
 示例：
+
 ```dart
 final result = await GeminiService().analyzeInspectionPhoto(
   itemId: item.id,
@@ -322,6 +329,7 @@ flutter test --coverage
    - 確認應用目錄可寫
 
 4. **依賴安裝失敗**
+
    ```bash
    flutter clean
    flutter pub get
