@@ -9,6 +9,7 @@ import 'history_screen.dart';
 import 'template_selection_screen.dart';
 import 'inspection_records_screen.dart';
 import 'auto_fill_screen.dart';
+import 'form_inspection_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -199,6 +200,21 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ),
         ),
         const SizedBox(height: 12),
+        // 主要功能：表單檢測（上傳→拍照→AI→回填）
+        _buildActionCard(
+          context,
+          icon: Icons.auto_fix_high,
+          title: '表單檢測（推薦）',
+          subtitle: '上傳定檢表 → 拍照 → AI 分析 → 自動回填',
+          color: Colors.teal,
+          onTap: () => Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const FormInspectionScreen(),
+            ),
+          ),
+        ),
+        const SizedBox(height: 12),
         Row(
           children: [
             Expanded(
@@ -256,27 +272,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
             Expanded(
               child: _buildActionCard(
                 context,
-                icon: Icons.auto_fix_high,
+                icon: Icons.description,
                 title: '自動回填',
                 subtitle: '回填定檢表格',
                 color: Colors.teal,
                 onTap: () {
-                  final inspection = Provider.of<InspectionProvider>(context, listen: false);
-                  final results = inspection.inspectionRecords
-                      .map((r) => <String, dynamic>{
-                            'equipment_name': r.equipmentType,
-                            'equipment_type': r.equipmentType,
-                            'condition_assessment': r.conditionAssessment,
-                            'is_anomaly': r.isAnomaly,
-                            'anomaly_description': r.anomalyDescription,
-                            'extracted_values': r.readings,
-                            'notes': r.itemDescription,
-                          })
-                      .toList();
+                  // 使用新的整合流程
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => AutoFillScreen(inspectionResults: results),
+                      builder: (context) => const FormInspectionScreen(),
                     ),
                   );
                 },
