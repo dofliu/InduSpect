@@ -43,6 +43,10 @@ dependencies:
   # 分享/匯出
   share_plus: ^7.2.1
 
+  # 文件解析
+  excel: ^4.0.6
+  archive: ^3.6.1
+
   # 工具
   uuid: ^4.3.3
   intl: ^0.19.0

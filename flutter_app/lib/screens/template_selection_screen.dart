@@ -1,4 +1,6 @@
 import 'dart:convert';
+import 'dart:io';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:file_picker/file_picker.dart';
@@ -7,6 +9,7 @@ import '../models/template_inspection_record.dart';
 import '../services/template_service.dart';
 import '../services/database_service.dart';
 import '../services/backend_api_service.dart';
+import '../services/local_template_creator.dart';
 import '../utils/constants.dart';
 import 'template_filling_screen.dart';
 
@@ -766,24 +769,67 @@ class _TemplateSelectionScreenState extends State<TemplateSelectionScreen> {
       ),
     );
 
+    final categoryText = categoryController.text.trim().isEmpty
+        ? '一般設備'
+        : categoryController.text.trim();
+    final companyText = companyController.text.trim();
+    final departmentText = departmentController.text.trim();
+
     try {
-      // Step 4: 呼叫後端 API
-      final api = BackendApiService();
-      final response = await api.createTemplateFromFile(
-        file: file,
-        templateName: templateName,
-        category: categoryController.text.trim().isEmpty
-            ? '一般設備'
-            : categoryController.text.trim(),
-        company: companyController.text.trim(),
-        department: departmentController.text.trim(),
-      );
+      Map<String, dynamic> response;
+
+      // 先嘗試後端 API
+      try {
+        final api = BackendApiService();
+        response = await api.createTemplateFromFile(
+          file: file,
+          templateName: templateName,
+          category: categoryText,
+          company: companyText,
+          department: departmentText,
+        );
+      } catch (_) {
+        // 後端連線失敗，使用本地建立
+        response = {'success': false, 'error': 'backend_unavailable'};
+      }
+
+      // 如果後端失敗，使用本地離線建立
+      if (response['success'] != true) {
+        print('⚡ 後端不可用，使用本地離線模板建立');
+
+        final bytes = file.bytes ?? (file.path != null
+            ? await _readFileBytes(file.path!)
+            : null);
+
+        if (bytes == null) {
+          if (mounted) Navigator.pop(context);
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('無法讀取檔案內容'),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
+          return;
+        }
+
+        final localCreator = LocalTemplateCreator();
+        response = await localCreator.createTemplateFromBytes(
+          bytes: bytes,
+          fileName: file.name,
+          templateName: templateName,
+          category: categoryText,
+          company: companyText,
+          department: departmentText,
+        );
+      }
 
       // 關閉進度對話框
       if (mounted) Navigator.pop(context);
 
       if (response['success'] == true && response['template'] != null) {
-        // Step 5: 將 AI 產生的模板儲存到本地
+        // 將模板儲存到本地
         final templateJson = json.encode(response['template']);
         await _templateService.loadTemplateFromJson(templateJson);
         await _loadTemplates();
@@ -791,11 +837,13 @@ class _TemplateSelectionScreenState extends State<TemplateSelectionScreen> {
         if (mounted) {
           final sectionCount = response['section_count'] ?? 0;
           final fieldCount = response['field_count'] ?? 0;
+          final isLocal = response['created_locally'] == true;
 
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
-                '模板建立成功！$sectionCount 個區段、$fieldCount 個欄位',
+                '模板建立成功！$sectionCount 個區段、$fieldCount 個欄位'
+                '${isLocal ? '（離線建立）' : ''}',
               ),
               backgroundColor: Colors.green,
               duration: const Duration(seconds: 3),
@@ -912,6 +960,17 @@ class _TemplateSelectionScreenState extends State<TemplateSelectionScreen> {
           );
         }
       }
+    }
+  }
+
+  /// 從檔案路徑讀取 bytes
+  Future<Uint8List?> _readFileBytes(String path) async {
+    try {
+      final file = File(path);
+      return await file.readAsBytes();
+    } catch (e) {
+      print('讀取檔案失敗: $e');
+      return null;
     }
   }
 }
