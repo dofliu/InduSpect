@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:uuid/uuid.dart';
@@ -113,6 +114,10 @@ class _FormInspectionScreenState extends State<FormInspectionScreen> {
 
   // 所有填寫的資料 (fieldId -> value)
   final Map<String, dynamic> _filledData = {};
+
+  // AI 摘要報告
+  String? _summaryReport;
+  bool _isGeneratingReport = false;
 
   // 服務
   final ImagePicker _imagePicker = ImagePicker();
@@ -552,6 +557,52 @@ class _FormInspectionScreenState extends State<FormInspectionScreen> {
       bytes: Uint8List.fromList(jsonBytes),
       fileName: outputName,
     );
+  }
+
+  // ========== AI 摘要報告 ==========
+
+  /// 產生 AI 總結報告
+  Future<void> _generateSummaryReport() async {
+    if (_geminiService == null) {
+      setState(() {
+        _summaryReport = '⚠️ AI 服務未初始化，無法產生摘要報告。';
+      });
+      return;
+    }
+
+    setState(() {
+      _isGeneratingReport = true;
+    });
+
+    try {
+      // 將檢測結果轉為 JSON 供 AI 分析
+      final recordsData = _inspectionItems
+          .where((item) => item.isCompleted)
+          .map((item) => {
+                'item_description': item.label,
+                'field_type': item.fieldType,
+                'value': _filledData[item.fieldId],
+                'equipment_type': item.aiResult?['equipment_type'] ?? '',
+                'condition_assessment': item.aiResult?['condition_assessment'] ?? item.manualValue ?? '',
+                'is_anomaly': item.aiResult?['is_anomaly'] ?? false,
+                'anomaly_description': item.aiResult?['anomaly_description'] ?? '',
+                'readings': item.aiResult?['readings'] ?? {},
+              })
+          .toList();
+
+      final recordsJson = const JsonEncoder.withIndent('  ').convert(recordsData);
+      final report = await _geminiService!.generateSummaryReport(recordsJson);
+
+      setState(() {
+        _summaryReport = report;
+        _isGeneratingReport = false;
+      });
+    } catch (e) {
+      setState(() {
+        _summaryReport = '報告生成失敗：$e';
+        _isGeneratingReport = false;
+      });
+    }
   }
 
   // ========== UI 工具方法 ==========
@@ -1230,40 +1281,199 @@ class _FormInspectionScreenState extends State<FormInspectionScreen> {
   // ========== Step 4 UI: 完成 ==========
 
   Widget _buildDoneView() {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(Icons.check_circle, size: 80, color: Colors.green),
-            const SizedBox(height: 24),
-            const Text(
-              '檢測完成！',
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+    final completed = _inspectionItems.where((i) => i.isCompleted).toList();
+    final anomalyCount = completed.where((i) => i.aiResult?['is_anomaly'] == true).length;
+    final normalCount = completed.length - anomalyCount;
+
+    return Column(
+      children: [
+        // 統計卡片
+        Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Colors.green[400]!, Colors.teal[400]!],
             ),
-            const SizedBox(height: 8),
-            Text(
-              '已完成 $_completedCount 個項目的檢測',
-              style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+          ),
+          child: Column(
+            children: [
+              const Icon(Icons.check_circle, size: 48, color: Colors.white),
+              const SizedBox(height: 8),
+              const Text('檢測完成！',
+                  style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white)),
+              const SizedBox(height: 4),
+              Text('表單已儲存',
+                  style: TextStyle(fontSize: 14, color: Colors.white.withOpacity(0.9))),
+              const SizedBox(height: 16),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  _buildDoneStat('總計', '${completed.length}', Colors.white),
+                  _buildDoneStat('正常', '$normalCount', Colors.lightGreenAccent),
+                  _buildDoneStat('異常', '$anomalyCount',
+                      anomalyCount > 0 ? Colors.redAccent[100]! : Colors.white),
+                ],
+              ),
+            ],
+          ),
+        ),
+
+        // AI 摘要報告區域
+        Expanded(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // 產生報告按鈕
+                if (_summaryReport == null && !_isGeneratingReport)
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      onPressed: _generateSummaryReport,
+                      icon: const Icon(Icons.auto_awesome, color: Colors.amber),
+                      label: const Text('產生 AI 總結報告'),
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        side: const BorderSide(color: Colors.amber, width: 1.5),
+                      ),
+                    ),
+                  ),
+
+                // 正在產生報告
+                if (_isGeneratingReport)
+                  const Center(
+                    child: Padding(
+                      padding: EdgeInsets.all(32),
+                      child: Column(
+                        children: [
+                          CircularProgressIndicator(),
+                          SizedBox(height: 16),
+                          Text('AI 正在分析並產生總結報告...'),
+                        ],
+                      ),
+                    ),
+                  ),
+
+                // 報告內容
+                if (_summaryReport != null) ...[
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Row(
+                        children: [
+                          const Icon(Icons.auto_awesome, color: Colors.amber, size: 20),
+                          const SizedBox(width: 8),
+                          const Text('AI 總結報告',
+                              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                        ],
+                      ),
+                      Row(
+                        children: [
+                          IconButton(
+                            icon: const Icon(Icons.copy, size: 20),
+                            tooltip: '複製報告',
+                            onPressed: () {
+                              Clipboard.setData(ClipboardData(text: _summaryReport!));
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text('報告已複製到剪貼簿')),
+                              );
+                            },
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.refresh, size: 20),
+                            tooltip: '重新產生',
+                            onPressed: () {
+                              setState(() => _summaryReport = null);
+                              _generateSummaryReport();
+                            },
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.grey[50],
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.grey[200]!),
+                    ),
+                    child: SelectableText(
+                      _summaryReport!,
+                      style: const TextStyle(fontSize: 14, height: 1.6),
+                    ),
+                  ),
+                ],
+
+                const SizedBox(height: 24),
+
+                // 異常項目快速一覽
+                if (anomalyCount > 0) ...[
+                  const Text('⚠️ 異常項目',
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.red)),
+                  const SizedBox(height: 8),
+                  ...completed
+                      .where((i) => i.aiResult?['is_anomaly'] == true)
+                      .map((item) => Card(
+                            color: Colors.red[50],
+                            margin: const EdgeInsets.only(bottom: 8),
+                            child: ListTile(
+                              leading: const Icon(Icons.warning, color: Colors.red),
+                              title: Text(item.label,
+                                  style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
+                              subtitle: Text(
+                                item.aiResult?['anomaly_description'] ?? item.displayValue ?? '',
+                                style: const TextStyle(fontSize: 12),
+                              ),
+                            ),
+                          )),
+                  const SizedBox(height: 16),
+                ],
+              ],
             ),
-            const SizedBox(height: 8),
-            Text(
-              '表單已儲存',
-              style: TextStyle(fontSize: 14, color: Colors.grey[500]),
-            ),
-            const SizedBox(height: 32),
-            ElevatedButton.icon(
+          ),
+        ),
+
+        // 底部操作列
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.05),
+                blurRadius: 4,
+                offset: const Offset(0, -2),
+              ),
+            ],
+          ),
+          child: SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
               onPressed: () => Navigator.pop(context),
               icon: const Icon(Icons.done),
               label: const Text('返回主頁'),
               style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 14),
+                padding: const EdgeInsets.symmetric(vertical: 14),
               ),
             ),
-          ],
+          ),
         ),
-      ),
+      ],
+    );
+  }
+
+  Widget _buildDoneStat(String label, String value, Color color) {
+    return Column(
+      children: [
+        Text(value,
+            style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: color)),
+        Text(label,
+            style: TextStyle(fontSize: 12, color: color.withOpacity(0.9))),
+      ],
     );
   }
 }

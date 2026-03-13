@@ -3,12 +3,10 @@ import 'package:provider/provider.dart';
 import '../providers/inspection_provider.dart';
 import '../providers/settings_provider.dart';
 import '../providers/app_state_provider.dart';
-import '../screens/home_screen.dart';
 import 'quick_analysis_screen.dart';
 import 'history_screen.dart';
 import 'template_selection_screen.dart';
 import 'inspection_records_screen.dart';
-import 'auto_fill_screen.dart';
 import 'form_inspection_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
@@ -266,53 +264,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     builder: (context) => const InspectionRecordsScreen(),
                   ),
                 ),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _buildActionCard(
-                context,
-                icon: Icons.description,
-                title: '自動回填',
-                subtitle: '回填定檢表格',
-                color: Colors.teal,
-                onTap: () {
-                  // 使用新的整合流程
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const FormInspectionScreen(),
-                    ),
-                  );
-                },
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 12),
-        Row(
-          children: [
-            Expanded(
-              child: _buildActionCard(
-                context,
-                icon: Icons.checklist,
-                title: '舊版分析',
-                subtitle: '四步驟流程',
-                color: Colors.orange,
-                onTap: () async {
-                  // 確保退出快速分析模式
-                  final appState = Provider.of<AppStateProvider>(context, listen: false);
-                  await appState.exitQuickAnalysisMode();
-
-                  if (context.mounted) {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const HomeScreen(),
-                      ),
-                    );
-                  }
-                },
               ),
             ),
             const SizedBox(width: 12),
