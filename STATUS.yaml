@@ -1,17 +1,19 @@
 name: InduSpect AI
 name_zh: 智慧工業巡檢系統
 category: industrial_ai
-progress: 75
+progress: 80
 status: active
-last_updated: "2026-04-10"
-next_milestone: "Experiment Module 1-3 execution"
+last_updated: "2026-04-12"
+next_milestone: "實機端到端測試：上傳表單 → 拍照 → AI → 匯出 → 分享"
 technologies:
   - Flutter
   - Dart
   - Gemini AI
+  - SQLite
+  - GPS (geolocator + geocoding)
 outputs:
   - paper
   - app
-description: "Flutter mobile app for AI-powered industrial equipment inspection with offline-first architecture"
-description_zh: "利用多模態 AI 和 Flutter 行動應用，實現工業設備的智慧巡檢。支援離線拍攝、AI 圖像分析、人在迴路審核和自動報告生成，提高巡檢效率與準確性。"
-key_metrics: "10 core features, 7-module experiment plan"
+description: "Flutter mobile app for AI-powered industrial inspection with offline-first architecture, form auto-fill pipeline, and GPS-tagged history"
+description_zh: "利用多模態 AI 和 Flutter 行動應用，實現工業設備的智慧巡檢。核心功能為完整檢測 pipeline（表單上傳 → 引導拍照 → AI 分析 → 自動回填 → 摘要報告 → 離線分享）及 GPS 定位歷史紀錄。"
+key_metrics: "2 core features, 46 unit tests, 6 open issues"
