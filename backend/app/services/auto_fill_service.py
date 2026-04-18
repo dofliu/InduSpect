@@ -2,39 +2,31 @@
 自動回填服務 — 執行回填、預覽、報告產生
 
 職責：
-- 執行 Excel/Word 自動回填（保留原始格式）
+- 執行 Excel/Word 自動回填（委派給 autofill_core 引擎）
 - 預覽回填結果
 - 舊版報告產生相容
 """
 
 import io
-import re
-import copy
-import json
 import logging
-from typing import Optional
-from datetime import datetime
 
 import google.generativeai as genai
 from openpyxl import load_workbook
-from openpyxl.cell.cell import MergedCell
-from openpyxl.utils import get_column_letter, column_index_from_string
 from docx import Document
 
 from app.config import settings
-from app.services.form_utils import (
-    convert_value, replace_paragraph_text_preserve_format,
-    guess_field_type,
-)
+from app.autofill_core import ExcelAutoFillEngine, WordAutoFillEngine
 
 logger = logging.getLogger(__name__)
 
 
 class AutoFillService:
-    """自動回填服務"""
+    """自動回填服務 — 薄層包裝，將執行委派給 autofill_core。"""
 
     def __init__(self):
         genai.configure(api_key=settings.gemini_api_key)
+        self._excel_engine = ExcelAutoFillEngine()
+        self._word_engine = WordAutoFillEngine()
 
     # ================================================================
     # 自動回填引擎
@@ -47,222 +39,27 @@ class AutoFillService:
         field_map: list[dict],
         fill_values: list[dict],
     ) -> bytes:
-        """
-        執行自動回填：將值寫入原始文件的指定位置
+        """執行自動回填：將值寫入原始文件的指定位置。
 
         Args:
-            file_content: 原始文件內容
-            file_name: 文件名稱（判斷格式用）
+            file_content: 原始文件 bytes
+            file_name: 用於判斷格式（xlsx/docx）
             field_map: 欄位位置地圖（含 value_location）
-            fill_values: 要填入的值列表
-                [{"field_id": "...", "value": "..."}, ...]
+            fill_values: [{"field_id": "...", "value": "..."}, ...]
 
         Returns:
             回填後的文件 bytes
         """
         file_type = file_name.split('.')[-1].lower()
 
-        # 建立 field_id -> value 的查找表
         value_lookup = {fv["field_id"]: fv["value"] for fv in fill_values}
-
-        # 建立 field_id -> field_map entry 的查找表
         field_lookup = {f["field_id"]: f for f in field_map}
 
         if file_type == 'xlsx':
-            return await self._auto_fill_excel(
-                file_content, field_lookup, value_lookup
-            )
-        elif file_type == 'docx':
-            return await self._auto_fill_word(
-                file_content, field_lookup, value_lookup
-            )
-        else:
-            raise ValueError(f"不支援的檔案格式: {file_type}")
-
-    async def _auto_fill_excel(
-        self,
-        file_content: bytes,
-        field_lookup: dict,
-        value_lookup: dict,
-    ) -> bytes:
-        """
-        回填 Excel 檔案
-
-        保留原始格式（字體、邊框、合併儲存格、樣式等）
-        """
-        wb = load_workbook(io.BytesIO(file_content))
-
-        for field_id, value in value_lookup.items():
-            field = field_lookup.get(field_id)
-            if not field:
-                continue
-
-            val_loc = field.get("value_location")
-            if not val_loc:
-                # 沒有找到值儲存格，嘗試寫入標籤儲存格
-                label_loc = field.get("label_location", {})
-                sheet_name = label_loc.get("sheet")
-                cell_coord = label_loc.get("cell")
-                if sheet_name and cell_coord and sheet_name in wb.sheetnames:
-                    ws = wb[sheet_name]
-                    target = ws[cell_coord]
-                    if isinstance(target, MergedCell):
-                        resolved = self._resolve_merged_cell(ws, cell_coord)
-                        if resolved:
-                            ws[resolved] = value
-                    else:
-                        ws[cell_coord] = value
-                continue
-
-            sheet_name = val_loc.get("sheet")
-            cell_coord = val_loc.get("cell")
-
-            if not sheet_name or not cell_coord:
-                continue
-
-            if sheet_name not in wb.sheetnames:
-                logger.warning(f"Sheet '{sheet_name}' not found, skipping field {field_id}")
-                continue
-
-            ws = wb[sheet_name]
-
-            # 根據欄位類型轉換值
-            typed_value = convert_value(value, field.get("field_type", "text"))
-
-            # 處理合併儲存格：找到 merge range 的左上角 cell
-            target_cell = ws[cell_coord]
-            if isinstance(target_cell, MergedCell):
-                # 該格在合併區域內但不是左上角，找到對應的左上角
-                resolved = self._resolve_merged_cell(ws, cell_coord)
-                if resolved:
-                    target_cell = ws[resolved]
-                    logger.info(f"MergedCell {cell_coord} → 左上角 {resolved}")
-                else:
-                    logger.warning(f"無法解析合併格 {cell_coord}，跳過")
-                    continue
-
-            # 複製原始格式資訊
-            original_font = copy.copy(target_cell.font) if target_cell.font else None
-            original_alignment = copy.copy(target_cell.alignment) if target_cell.alignment else None
-            original_number_format = target_cell.number_format
-
-            target_cell.value = typed_value
-
-            # 還原格式
-            if original_font:
-                target_cell.font = original_font
-            if original_alignment:
-                target_cell.alignment = original_alignment
-            if original_number_format:
-                target_cell.number_format = original_number_format
-
-        # 輸出為 bytes
-        output = io.BytesIO()
-        wb.save(output)
-        output.seek(0)
-        return output.read()
-
-    @staticmethod
-    def _resolve_merged_cell(ws, cell_coord: str) -> Optional[str]:
-        """
-        找到合併儲存格的左上角座標。
-
-        openpyxl 中 MergedCell 不能直接寫入 .value，
-        必須寫入 merge range 的左上角才會生效。
-        """
-        from openpyxl.utils import coordinate_to_tuple
-        try:
-            row, col = coordinate_to_tuple(cell_coord)
-        except Exception:
-            return None
-
-        for merge_range in ws.merged_cells.ranges:
-            if cell_coord in merge_range or (
-                merge_range.min_row <= row <= merge_range.max_row and
-                merge_range.min_col <= col <= merge_range.max_col
-            ):
-                top_left = f"{get_column_letter(merge_range.min_col)}{merge_range.min_row}"
-                return top_left
-
-        return None
-
-    async def _auto_fill_word(
-        self,
-        file_content: bytes,
-        field_lookup: dict,
-        value_lookup: dict,
-    ) -> bytes:
-        """
-        回填 Word 檔案
-
-        保留原始格式（字體、段落樣式等）
-        """
-        doc = Document(io.BytesIO(file_content))
-
-        for field_id, value in value_lookup.items():
-            field = field_lookup.get(field_id)
-            if not field:
-                continue
-
-            val_loc = field.get("value_location")
-            if not val_loc:
-                continue
-
-            loc_type = val_loc.get("type")
-
-            if loc_type == "paragraph":
-                para_idx = val_loc.get("paragraph_index")
-                if para_idx is not None and para_idx < len(doc.paragraphs):
-                    para = doc.paragraphs[para_idx]
-                    replace_pattern = val_loc.get("replace_pattern", "after_colon")
-
-                    if replace_pattern == "after_colon":
-                        # 替換冒號/：後面的內容
-                        text = para.text
-                        for sep in ['：', ':']:
-                            if sep in text:
-                                prefix = text.split(sep)[0] + sep
-                                replace_paragraph_text_preserve_format(
-                                    para, f"{prefix} {value}"
-                                )
-                                break
-                    else:
-                        # 替換佔位符
-                        replace_paragraph_text_preserve_format(para, value)
-
-            elif loc_type == "table":
-                table_idx = val_loc.get("table_index")
-                row_idx = val_loc.get("row_index")
-                cell_idx = val_loc.get("cell_index")
-
-                # 向後相容：舊版 field_map 的 table_index 可能為 None，
-                # 用 label_location 的 table_index 作為 fallback
-                if table_idx is None:
-                    label_loc = field.get("label_location", {})
-                    table_idx = label_loc.get("table_index")
-
-                if (table_idx is not None and
-                        table_idx < len(doc.tables) and
-                        row_idx is not None and
-                        cell_idx is not None):
-                    table = doc.tables[table_idx]
-                    if row_idx < len(table.rows):
-                        row = table.rows[row_idx]
-                        if cell_idx < len(row.cells):
-                            cell = row.cells[cell_idx]
-                            # 保留格式寫入
-                            if cell.paragraphs:
-                                replace_paragraph_text_preserve_format(
-                                    cell.paragraphs[0], str(value)
-                                )
-                            else:
-                                cell.text = str(value)
-
-        # 輸出為 bytes
-        output = io.BytesIO()
-        doc.save(output)
-        output.seek(0)
-        return output.read()
+            return await self._excel_engine.fill(file_content, field_lookup, value_lookup)
+        if file_type == 'docx':
+            return await self._word_engine.fill(file_content, field_lookup, value_lookup)
+        raise ValueError(f"不支援的檔案格式: {file_type}")
 
     # ================================================================
     # 預覽回填
@@ -271,11 +68,11 @@ class AutoFillService:
     async def preview_fill(
         self,
         template: dict,
-        inspection_data: dict
+        inspection_data: dict,
     ) -> dict:
         """預覽填入結果（舊版 API 相容）"""
-        field_values = {}
-        warnings = []
+        field_values: dict[str, str] = {}
+        warnings: list[str] = []
 
         for field in template.get("fields", []):
             mapping = field.get("mapping")
@@ -301,15 +98,11 @@ class AutoFillService:
         field_map: list[dict],
         fill_values: list[dict],
     ) -> dict:
-        """
-        預覽自動回填結果（新版 API）
-
-        回傳每個欄位即將填入的值以及信心度標記
-        """
+        """預覽自動回填結果（新版 API）— 回傳每欄位預計值與信心度。"""
         value_lookup = {fv["field_id"]: fv for fv in fill_values}
 
-        preview_items = []
-        warnings = []
+        preview_items: list[dict] = []
+        warnings: list[str] = []
 
         for field in field_map:
             fid = field["field_id"]
@@ -353,18 +146,15 @@ class AutoFillService:
         report_id: str,
         template: dict,
         inspection_data: dict,
-        output_format: str = "xlsx"
+        output_format: str = "xlsx",
     ) -> str:
         """產生報告，回傳 output_path"""
         try:
             if template["file_type"] == "xlsx":
-                output_path = await self._fill_excel(template, inspection_data, report_id)
-            elif template["file_type"] == "docx":
-                output_path = await self._fill_word(template, inspection_data, report_id)
-            else:
-                raise ValueError(f"Unsupported template type: {template['file_type']}")
-
-            return output_path
+                return await self._fill_excel(template, inspection_data, report_id)
+            if template["file_type"] == "docx":
+                return await self._fill_word(template, inspection_data, report_id)
+            raise ValueError(f"Unsupported template type: {template['file_type']}")
 
         except Exception as e:
             logger.error(f"Generate report failed: {e}")
@@ -374,31 +164,26 @@ class AutoFillService:
         self,
         template: dict,
         inspection_data: dict,
-        report_id: str
+        report_id: str,
     ) -> str:
-        """填入 Excel 模板"""
         wb = load_workbook(io.BytesIO(template["file_content"]))
         ws = wb.active
 
         for field in template["fields"]:
             mapping = field.get("mapping")
             if mapping and mapping in inspection_data:
-                value = inspection_data[mapping]
-                location = field["location"]
-                ws[location] = value
+                ws[field["location"]] = inspection_data[mapping]
 
         output_path = f"/tmp/report_{report_id}.xlsx"
         wb.save(output_path)
-
         return output_path
 
     async def _fill_word(
         self,
         template: dict,
         inspection_data: dict,
-        report_id: str
+        report_id: str,
     ) -> str:
-        """填入 Word 模板"""
         doc = Document(io.BytesIO(template["file_content"]))
 
         for para in doc.paragraphs:
@@ -412,5 +197,4 @@ class AutoFillService:
 
         output_path = f"/tmp/report_{report_id}.docx"
         doc.save(output_path)
-
         return output_path
