@@ -73,6 +73,12 @@ jobs:
       - name: Install Flutter dependencies
         run: flutter pub get
 
+      # pubspec.yaml 將 .env 宣告為 asset，但 .env 被 gitignore（合理：含 GEMINI_API_KEY）。
+      # CI 環境沒有此檔會導致 "Failed to build asset bundle"。建立空 .env 作為 placeholder
+      # 讓 asset bundle 建立成功；測試本身不依賴真實 API key。
+      - name: Create empty .env placeholder for asset bundle
+        run: touch .env
+
       # analyze 初版設為 advisory：lint 議題不該阻擋 PR。
       # 待 routine 逐步清理後再改為 fatal。
       - name: Static analysis (advisory)

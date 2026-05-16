@@ -18,7 +18,8 @@
 **測試狀態**：
 - Backend：未在本地執行 pytest（routine agent 環境無 Python 虛擬環境）
 - Flutter：未在本地執行（同上）
-- CI workflow 本身：第一次跑 50 過 / 1 fail（`test_auto_judge_service` 為 async，需 `pytest-asyncio` 的 auto mode）。已 follow-up commit 加 `--asyncio-mode=auto` 修正
+- CI workflow 第 1 次：50 過 / 1 fail（async test 需 pytest-asyncio auto mode）→ 已加 `--asyncio-mode=auto`
+- CI workflow 第 2 次：backend ✅ pass (32s)；flutter ❌ fail（pubspec 宣告 .env 為 asset 但 CI 無此檔）→ 已加 `touch .env` step
 
 **未推送/未合併**：
 - 分支：`claude/weekly-2026-05-16-ci-workflow`
