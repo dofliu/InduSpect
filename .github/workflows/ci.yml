@@ -48,7 +48,8 @@ jobs:
           pytest tests/test_auto_fill.py \
                  tests/test_sprint2_photo_naming.py \
                  tests/test_sprint3_standards.py \
-                 -v --tb=short
+                 -v --tb=short \
+                 --asyncio-mode=auto
 
   flutter-checks:
     name: Flutter (analyze + test)

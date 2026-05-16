@@ -18,7 +18,7 @@
 **測試狀態**：
 - Backend：未在本地執行 pytest（routine agent 環境無 Python 虛擬環境）
 - Flutter：未在本地執行（同上）
-- CI workflow 本身：將在 PR 上首次跑，作為自我驗證
+- CI workflow 本身：第一次跑 50 過 / 1 fail（`test_auto_judge_service` 為 async，需 `pytest-asyncio` 的 auto mode）。已 follow-up commit 加 `--asyncio-mode=auto` 修正
 
 **未推送/未合併**：
 - 分支：`claude/weekly-2026-05-16-ci-workflow`
