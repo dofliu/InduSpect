@@ -1,0 +1,87 @@
+name: CI
+
+# 工業可用化第一步的工程紀律基礎建設：每個 PR 自動跑 backend 單元測試 + Flutter 靜態分析/測試。
+# 由 weekly routine agent 於 2026-05-16 首次建立。後續可逐步收緊（加 flutter analyze fatal、加更多 backend 測試檔）。
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+# 允許同一 PR 後續 push 取消前次跑到一半的 workflow，節省 minutes。
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend-tests:
+    name: Backend (pytest)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: backend/requirements.txt
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest pytest-asyncio
+
+      # 只跑「明確 pytest 相容」的測試檔。
+      # 其他 sprint test 為 __main__-style script，未來 routine 可逐步改造成 pytest function。
+      # GEMINI_API_KEY 用假值（這些測試不會打真實 API）。
+      - name: Run pytest (auto_fill + standards + photo naming)
+        env:
+          GEMINI_API_KEY: ci-fake-key
+        run: |
+          pytest tests/test_auto_fill.py \
+                 tests/test_sprint2_photo_naming.py \
+                 tests/test_sprint3_standards.py \
+                 -v --tb=short
+
+  flutter-checks:
+    name: Flutter (analyze + test)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: flutter_app
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter (stable)
+        uses: subosito/flutter-action@v2
+        with:
+          channel: "stable"
+          cache: true
+
+      - name: Show Flutter version
+        run: flutter --version
+
+      - name: Install Flutter dependencies
+        run: flutter pub get
+
+      # analyze 初版設為 advisory：lint 議題不該阻擋 PR。
+      # 待 routine 逐步清理後再改為 fatal。
+      - name: Static analysis (advisory)
+        continue-on-error: true
+        run: flutter analyze --no-fatal-infos
+
+      - name: Unit tests
+        run: |
+          flutter test \
+            test/form_inspection_record_test.dart \
+            test/database_service_test.dart \
+            test/inspection_item_state_test.dart \
+            test/photo_service_test.dart
