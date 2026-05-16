@@ -20,6 +20,7 @@
 - Flutter：未在本地執行（同上）
 - CI workflow 第 1 次：50 過 / 1 fail（async test 需 pytest-asyncio auto mode）→ 已加 `--asyncio-mode=auto`
 - CI workflow 第 2 次：backend ✅ pass (32s)；flutter ❌ fail（pubspec 宣告 .env 為 asset 但 CI 無此檔）→ 已加 `touch .env` step
+- CI workflow 第 3 次（最終）：**全綠** — Backend pass 27s / Flutter pass 2m47s / GitGuardian pass
 
 **未推送/未合併**：
 - 分支：`claude/weekly-2026-05-16-ci-workflow`
