@@ -1,7 +1,7 @@
 name: InduSpect AI
 name_zh: 智慧工業巡檢系統
 category: industrial_ai
-progress: 86
+progress: 87
 status: active
 last_updated: "2026-05-16"
 next_milestone: "實機端到端測試：上傳表單 → 拍照 → AI → 匯出 → 分享（基礎 CI 已建立）"
@@ -16,4 +16,4 @@ outputs:
   - app
 description: "Flutter mobile app for AI-powered industrial inspection with offline-first architecture, form auto-fill pipeline, and GPS-tagged history"
 description_zh: "利用多模態 AI 和 Flutter 行動應用，實現工業設備的智慧巡檢。核心功能為完整檢測 pipeline（表單上傳 → 引導拍照 → AI 分析 → 自動回填 → 摘要報告 → 離線分享）及 GPS 定位歷史紀錄。"
-key_metrics: "2 core features, 46 Flutter unit tests, backend pytest in CI (auto_fill 43 + sprint3 standards 4 + sprint2 photo-naming 3), 0 open issues"
+key_metrics: "2 core features, 46 Flutter unit tests, backend pytest in CI (auto_fill 43 + sprint3 standards 5 + sprint2 photo-naming 3 + judgment_service 14), 0 open issues"
