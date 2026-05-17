@@ -50,11 +50,11 @@ def test_database_coverage():
     results = TestResults()
     db = InspectionStandardsDB()
 
-    # Test 1: 總項目數 >= 35
+    # Test 1: 總項目數 >= 50（routine Session #6 由 35 拉高至 50）
     stats = db.get_stats()
     results.check(
-        stats["total"] >= 35,
-        f"總標準數 >= 35",
+        stats["total"] >= 50,
+        f"總標準數 >= 50",
         f"實際: {stats['total']}"
     )
 
@@ -66,27 +66,27 @@ def test_database_coverage():
         f"實際: {len(elec)}"
     )
 
-    # Test 3: 消防 >= 10
+    # Test 3: 消防 >= 13（Session #5 擴充後從 10 拉高至 13，留 2 條 buffer）
     fire = db.get_by_category("fire")
     results.check(
-        len(fire) >= 10,
-        f"消防標準 >= 10",
+        len(fire) >= 13,
+        f"消防標準 >= 13",
         f"實際: {len(fire)}"
     )
 
-    # Test 4: 機械 >= 10
+    # Test 4: 機械 >= 13（Session #4 擴充後從 10 拉高至 13）
     mech = db.get_by_category("mechanical")
     results.check(
-        len(mech) >= 10,
-        f"機械標準 >= 10",
+        len(mech) >= 13,
+        f"機械標準 >= 13",
         f"實際: {len(mech)}"
     )
 
-    # Test 5: 壓力容器
+    # Test 5: 壓力容器 >= 10（Session #3 擴充後從 3 拉高至 10）
     pres = db.get_by_category("pressure")
     results.check(
-        len(pres) >= 3,
-        f"壓力容器標準 >= 3",
+        len(pres) >= 10,
+        f"壓力容器標準 >= 10",
         f"實際: {len(pres)}"
     )
 
