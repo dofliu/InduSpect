@@ -62,16 +62,10 @@
 3. **擴充** `backend/app/data/inspection_standards.py`：新增壓力容器/管線檢查的 5-10 條標準（純資料新增，零風險）
 4. **整理** `flutter_app/lib/screens/` 的 step1-step4 是否仍被使用 vs `form_inspection_screen.dart`，若已被取代則文件化或標記 deprecated（須先確認，可能觸發 §6 架構決策 → 建議只先寫 [NEEDS HUMAN] note 而不動）
 
-**[NEEDS HUMAN]**：
-1. **本地 main 與 origin/main 不同步**：本地 STATUS.yaml 有 working copy 修改（progress 80→85），但 origin/main 已是 85（且 `last_updated: 2026-04-16`）。本次 routine 已 `git restore STATUS.yaml` 捨棄本地較舊的暫存改動，然後 `git pull --ff-only origin main` 對齊 origin。若該本地暫存改動原本有特殊意圖，請告知。
-2. **未追蹤檔案**（已保留，未動）：
-   - `Gemini_Generated_Image_8pi4a28pi4a28pi4.png`
-   - `poster_1776268800455.png`
-   - `test_forms/InduSpect 自動表單回填系統實作詳解.pdf`
-   - `test_forms/InduSpect 表單自動回填測試報告.pdf`
-   - `test_forms/InduSpect 表單自動回填測試報告2.pdf`
-   建議：若是參考文件 → 移到 `docs/`；若不需 → 加入 `.gitignore`。請劉老師裁示。
-3. **CI workflow 中 Gemini API key 處理**：CI 中不應有真實 key。已將 backend test 設定為「不需 key 即可跑的 unit test 子集」。若劉老師希望未來啟用整合測試，需在 GitHub Settings → Secrets 加入 `GEMINI_API_KEY`，但這部分留給人類決策（觸發 §6）。
+**[NEEDS HUMAN]**（Session #7 已收結，保留紀錄以利追溯）：
+1. ~~**本地 main 與 origin/main 不同步**~~ — Session #1 當下已 `git restore` + `git pull --ff-only` 處理完畢。劉老師後續未提出此暫存改動有特殊意圖，視同已解決。
+2. ~~**未追蹤檔案**~~ — Session #7 解決：5 個 PNG/PDF 全部移到 `_local_archive/`（已加進 .gitignore），檔案保留在工作目錄但不入版控。
+3. **CI workflow 中 Gemini API key 處理** — Session #7 確認劉老師立場：產品本身用使用者個人 API key（透過 .env），CI 目前的測試集為純邏輯測試不需打 Gemini API，繼續用假值 `ci-fake-key` 即可。**現況不需要 GitHub Secret，未來如需啟用整合測試再評估。**
 
 ---
 
