@@ -5,6 +5,37 @@
 
 ---
 
+## 2026-05-16 — Session #2（CI baseline + judgment_service 直接測試覆蓋）
+
+**本週做了**：依 Session #1 的「下一步建議 #2」，新增 `backend/tests/test_judgment_service.py`（14 個 pytest function-style 測試，含 async）並加進 CI workflow 的 pytest 清單。覆蓋 JudgmentService 的 `auto_judge` 與 `batch_auto_judge` 直接 API（之前只有透過 FormFillService 間接測試）。
+
+**改動檔案**：
+- `backend/tests/test_judgment_service.py`（新建，14 tests）
+- `.github/workflows/ci.yml`（新增 test_judgment_service.py 進 pytest 指令）
+- `STATUS.yaml`（progress 86→87、key_metrics 補上 judgment_service 14 tests）
+- `docs/handover/session-handover.md`（本檔追加 Session #2 區塊）
+
+**測試覆蓋面**：
+- `auto_judge` 各 pass_condition：gte（絕緣電阻）/ lte（接地電阻、馬達溫度）/ range（滅火器壓力上下限）
+- 多類別：electrical / fire / mechanical
+- 邊界：unknown field、unit fallback、batch 空清單、batch 順序保留、回傳 dict contract（必含欄位）
+- 全部 async 透過 CI `--asyncio-mode=auto` 跑
+
+**未推送/未合併**：
+- 分支：`claude/weekly-2026-05-16-judgment-tests`
+- PR：將於本次 session 開出（連結待補）
+
+**下一步建議**（下次 routine 可挑）：
+1. **若本 PR CI 過** → 把 sprint test 系列（`test_e2e_inspection.py` / `test_real_form_validation.py` / `test_sprint1_photo_tasks.py` 等）逐步從 `__main__` script 改造為 pytest function-style，再加進 CI（一次處理一兩個檔，避免改動爆量）
+2. **擴充** `inspection_standards.py`：新增壓力容器/管線 5-10 條（純資料、零風險、會自動被 test_sprint3_standards.py 的 `test_database_coverage` 驗證）
+3. **flutter analyze 收緊**：CI 已穩定數輪後，將 `continue-on-error: true` 移除，讓 lint 議題真正阻擋 PR
+4. **整理** `flutter_app/lib/screens/` step1-step4 vs `form_inspection_screen.dart` 的重複（先寫 [NEEDS HUMAN] note 不動程式碼）
+
+**[NEEDS HUMAN]**：
+- （上輪 Session #1 留下的 3 項仍待裁示：未追蹤檔案位置、Gemini API key 整合測試的 secret 設定）
+
+---
+
 ## 2026-05-16 — Session #1（首次執行）
 
 **本週做了**：建立 weekly routine SOP（`docs/routines/weekly-progress.md`）、新增 GitHub Actions CI workflow（Backend pytest + Flutter analyze/test）作為工業可用化的工程紀律基礎建設。

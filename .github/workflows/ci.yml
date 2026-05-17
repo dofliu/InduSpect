@@ -48,6 +48,7 @@ jobs:
           pytest tests/test_auto_fill.py \
                  tests/test_sprint2_photo_naming.py \
                  tests/test_sprint3_standards.py \
+                 tests/test_judgment_service.py \
                  -v --tb=short \
                  --asyncio-mode=auto
 
