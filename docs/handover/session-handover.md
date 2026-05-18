@@ -5,6 +5,45 @@
 
 ---
 
+## 2026-05-16 — Session #6（測試門檻收緊 + 文件對齊 housekeeping）
+
+**本週做了**：在 Sessions #2-#5 的 3 個 PR（#32 #34 #35）全部 merge 後做收尾整理。
+
+**改動**：
+- `backend/tests/test_sprint3_standards.py`：拉高 `test_database_coverage` 門檻反映現況
+  - 總數 ≥35 → **≥50**（main 為 56）
+  - 消防 ≥10 → **≥13**（main 為 15）
+  - 機械 ≥10 → **≥13**（main 為 15）
+  - 壓力 ≥3 → **≥10**（main 為 11）
+  - 電氣維持 ≥15（無變化）
+- `backend/app/data/inspection_standards.py`：修正過時的章節 comment（消防 10→15、機械 10→15、壓力 5→11）
+- `STATUS.yaml`：progress 87→89、`key_metrics` 重整為「2 core features, 46 Flutter tests, 65 backend pytest in CI, 56 regulation standards」
+- `docs/handover/session-handover.md`：本檔本次更新（含 Session #3/#4/#5 rollup）
+
+**測試**：CI 應全綠（threshold buffer 設計上留 2-6 條餘裕避免邊界 flaky）。
+
+---
+
+## 2026-05-16 — Sessions #3 / #4 / #5（標準資料庫四大類擴充 rollup）
+
+**為什麼合併紀錄**：3 輪 routine 均為「純資料 append + 自動驗證」的同一模式，個別 commit 訊息已足，handover 用 rollup 表保留總覽即可。
+
+| 輪 | PR | 動作 | 改動 |
+|---|---|---|---|
+| #3 | [#33](https://github.com/dofliu/InduSpect/pull/33) | 壓力/管線 +6 條 | 5 → 11 |
+| #4 | [#34](https://github.com/dofliu/InduSpect/pull/34) | 機械類 +5 條 | 10 → 15 |
+| #5 | [#35](https://github.com/dofliu/InduSpect/pull/35) | 消防類 +5 條 | 10 → 15 |
+
+**累積結果**：資料庫從 40 條增至 **56 條（+40%）**，四大類別均衡覆蓋（electrical/fire/mechanical 各 15，pressure 11）。所有新增條目皆引用台灣現行法規或 IEEE/NEMA/CNS/API 國際標準。
+
+**下一步建議**（給後續 routine）：
+1. **馴化 `test_e2e_inspection.py`** → 改造為 pytest function-style 加進 CI（單檔但測試本體複雜）
+2. **修復 `TestResults.check` 模式的隱形 bug**：目前 sprint test 用 `results.check(condition, ...)` 而非 `assert`，當條件不成立 pytest 仍視為 PASS（只有 stdout 出現 ❌）。需要把 sprint test 系列改為 `assert ...` 才能讓 CI 真正阻擋退化
+3. **新增 `judgment_service.batch_process` 的單元測試**：目前只有 e2e 透過 FormFillService 測試該路徑
+4. **`flutter analyze` 收緊**：CI 已穩定，可將 `continue-on-error: true` 移除
+
+---
+
 ## 2026-05-16 — Session #2（CI baseline + judgment_service 直接測試覆蓋）
 
 **本週做了**：依 Session #1 的「下一步建議 #2」，新增 `backend/tests/test_judgment_service.py`（14 個 pytest function-style 測試，含 async）並加進 CI workflow 的 pytest 清單。覆蓋 JudgmentService 的 `auto_judge` 與 `batch_auto_judge` 直接 API（之前只有透過 FormFillService 間接測試）。
