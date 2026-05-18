@@ -49,6 +49,7 @@ jobs:
                  tests/test_sprint2_photo_naming.py \
                  tests/test_sprint3_standards.py \
                  tests/test_judgment_service.py \
+                 tests/test_judgment_service_batch.py \
                  -v --tb=short \
                  --asyncio-mode=auto
 
