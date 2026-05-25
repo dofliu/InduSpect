@@ -231,6 +231,19 @@ flutter build apk --debug
 
 ## 變更紀錄
 
+### 2026-05-25
+
+- **fix(judgment)**: 修正自動定檢「標準判定」單位數量級誤判 — 判定前先把 AI 讀數換算成法規標準單位。
+  - 原本 `500 kΩ` 直接拿去與 `≥1.0 MΩ` 比較（`500 ≥ 1.0` → 誤判合格），實際 `0.5 MΩ` 應為**不合格**；`0.05 A`(=50 mA) 對 `≤30 mA` 也曾誤判。屬安全相關 bug。
+  - 新增 `normalize_unit()`（℃/°C、Mohm/MΩ、kgf/cm² 等變體正規化）與 `convert_value()`（電阻/電流/電壓/壓力/溫度/時間/長度/速度 同維度換算）於 `backend/app/data/inspection_standards.py`。
+  - `auto_judge` 回傳新增 `converted_value` / `converted_unit`，供前端透明顯示「原始讀數 → 換算值」。
+- **fix(judgment)**: 修正標準匹配假陽性 — 不相干欄位（如「不存在項目」）只要設備類型相同就被硬湊到某條標準而產生假判定。改為**必須有欄位名稱相關性**（inspection_item 或 keyword 命中）才列為候選，單位/設備類型僅作加分。
+- **feat(api)**: 新增輕量端點 `POST /api/auto-fill/judge-readings` — App 在批次 AI 分析後可直接送讀數做標準判定（不需 field_map / 歷史資料），回傳 judgments + warnings + summary。
+- **feat(flutter)**: `BackendApiService.judgeReadings()` client 方法，離線時降級回傳 `error=offline`。
+- **test**: 新增 `backend/tests/test_unit_conversion_judgment.py`（25 tests），覆蓋單位正規化、同維度換算、換算後判定、維度不相容防呆、匹配相關性。後端全套 **143 pytest 全綠**。
+
+> 待辦（需 Flutter SDK 環境驗證）：將 `judgeReadings()` 串入 `form_inspection_screen.dart` 的 `_mapAIResultToField`／預覽步驟，使量測欄位自動帶出合格/不合格/警告與法規依據；離線時標記「待判定」。本次未動核心畫面（無法在此環境編譯驗證 Flutter）。
+
 ### 2026-04-17
 
 - **feat(#27)**: 新增「一鍵自動檢測」模式 — 引導拍照 → 批次 AI 分析 → 自動進入預覽

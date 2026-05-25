@@ -491,6 +491,36 @@ class BackendApiService {
     }
   }
 
+  /// 標準判定：將 AI 辨識到的數值讀數送後端依法規標準自動判定合格/不合格
+  ///
+  /// 用於「一鍵自動檢測」批次分析後，對量測類欄位進行標準化判定。
+  /// 後端會在判定前自動換算單位（例：500 kΩ → 0.5 MΩ）以避免誤判。
+  /// 離線時回傳 success=false / error=offline，呼叫端應降級為「待判定」。
+  ///
+  /// [readings] 每筆格式：{'field_name': '絕緣電阻 R相', 'value': 52.3, 'unit': 'MΩ'}
+  Future<Map<String, dynamic>> judgeReadings({
+    required List<Map<String, dynamic>> readings,
+    String equipmentType = '',
+  }) async {
+    if (!await _connectivity.checkConnection()) {
+      return {'success': false, 'error': 'offline'};
+    }
+
+    try {
+      final response = await _dio.post('/api/auto-fill/judge-readings', data: {
+        'readings': readings,
+        'equipment_type': equipmentType,
+      });
+
+      return Map<String, dynamic>.from(response.data);
+    } catch (e) {
+      if (e is DioException) {
+        return {'success': false, 'error': e.message};
+      }
+      return {'success': false, 'error': e.toString()};
+    }
+  }
+
   /// 健康檢查
   Future<bool> healthCheck() async {
     try {
