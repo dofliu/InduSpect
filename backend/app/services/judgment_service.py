@@ -1,6 +1,6 @@
 import logging
 
-from app.data.inspection_standards import InspectionStandardsDB
+from app.data.inspection_standards import InspectionStandardsDB, normalize_unit
 
 logger = logging.getLogger(__name__)
 
@@ -55,22 +55,37 @@ class JudgmentService:
                 "regulation": "",
                 "confidence": 0.0,
                 "standard_id": None,
+                "converted_value": None,
+                "converted_unit": None,
             }
 
+        # 判定前先把讀數換算成標準單位，避免單位數量級不一致造成誤判
+        # （例：500 kΩ = 0.5 MΩ 應為不合格，若不換算會誤判為合格）
+        std_unit = standard.get("unit", "")
+        value_for_judge = measured_value
+        converted = False
+        if unit and std_unit:
+            cv, ok = self._standards_db.convert_value(measured_value, unit, std_unit)
+            if ok and cv is not None:
+                value_for_judge = cv
+                converted = normalize_unit(unit) != normalize_unit(std_unit)
+
         # 執行判定
-        result = self._standards_db.judge_value(standard, measured_value)
+        result = self._standards_db.judge_value(standard, value_for_judge)
 
         confidence = 0.98 if result["judgment"] in ("pass", "fail") else 0.7
 
         return {
             "field_name": field_name,
             "measured_value": measured_value,
-            "unit": unit or standard.get("unit", ""),
+            "unit": unit or std_unit,
             "judgment": result["judgment"],
             "standard_text": result["standard_text"],
             "regulation": result["regulation"],
             "confidence": confidence,
             "standard_id": standard["standard_id"],
+            "converted_value": value_for_judge if converted else None,
+            "converted_unit": std_unit if converted else None,
         }
 
     async def batch_auto_judge(

@@ -549,6 +549,9 @@ class JudgmentResult(BaseModel):
     regulation: str = ""
     confidence: float = 0.0
     standard_id: Optional[str] = None
+    # 讀數單位與標準單位不一致時，換算成標準單位後的數值（用於前端透明顯示）
+    converted_value: Optional[float] = None
+    converted_unit: Optional[str] = None
 
 
 class PreviousValueItem(BaseModel):
@@ -763,4 +766,74 @@ async def batch_process(request: BatchProcessRequest):
 
     except Exception as e:
         logger.error(f"Batch process failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ============ 輕量級讀數判定（App 自動定檢用） ============
+
+class JudgeReadingsRequest(BaseModel):
+    """讀數判定請求 — 行動 App 在 AI 辨識後直接送出讀數做標準判定"""
+    readings: list[ReadingItem]
+    equipment_type: str = ""
+
+
+class JudgeReadingsResponse(BaseModel):
+    """讀數判定回應"""
+    success: bool
+    judgments: list[JudgmentResult]
+    warnings: list[str]
+    summary: dict
+
+
+@router.post("/judge-readings", response_model=JudgeReadingsResponse)
+async def judge_readings(request: JudgeReadingsRequest):
+    """
+    輕量級讀數判定 — 不需 field_map / 歷史資料
+
+    行動 App 在「一鍵自動檢測」批次 AI 分析後，把抽取到的數值讀數送進來，
+    依 56 條法規標準自動判定合格/不合格/警告（判定前自動換算單位）。
+    比 /one-stop-process 輕量，適合 App 在拍照分析流程中即時呼叫。
+    """
+    try:
+        form_service = FormFillService()
+
+        readings_for_judge = [
+            {"field_name": r.field_name, "value": r.value, "unit": r.unit}
+            for r in request.readings
+        ]
+
+        judgments = await form_service.batch_auto_judge(
+            readings=readings_for_judge,
+            equipment_type=request.equipment_type,
+        )
+
+        warnings = []
+        for j in judgments:
+            if j["judgment"] == "fail":
+                warnings.append(
+                    f"不合格: {j['field_name']} = {j['measured_value']}{j.get('unit', '')}，"
+                    f"標準: {j.get('standard_text', '')}"
+                )
+            elif j["judgment"] == "warning":
+                warnings.append(
+                    f"警告: {j['field_name']} = {j['measured_value']}{j.get('unit', '')} 接近不合格"
+                )
+
+        summary = {
+            "total_readings": len(judgments),
+            "pass_count": sum(1 for j in judgments if j["judgment"] == "pass"),
+            "fail_count": sum(1 for j in judgments if j["judgment"] == "fail"),
+            "warning_count": sum(1 for j in judgments if j["judgment"] == "warning"),
+            "unknown_count": sum(1 for j in judgments if j["judgment"] == "unknown"),
+        }
+
+        return {
+            "success": True,
+            "judgments": judgments,
+            "warnings": warnings,
+            "summary": summary,
+        }
+
+    except Exception as e:
+        logger.error(f"Judge readings failed: {e}")
         raise HTTPException(status_code=500, detail=str(e))

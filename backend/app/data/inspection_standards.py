@@ -780,6 +780,132 @@ ALL_STANDARDS = (
 )
 
 
+# ============ 單位正規化與換算 ============
+#
+# AI 從照片抽取的讀數，單位寫法常與標準不一致（例如 kΩ vs MΩ、℃ vs °C、
+# Mohm vs MΩ）。若直接拿原始數值與標準閾值比較，會造成嚴重的誤判
+# （例如 500 kΩ = 0.5 MΩ 應為不合格，卻因 500 ≥ 1.0 被判合格）。
+# 以下提供單位正規化與同維度換算，於判定前先把讀數轉成標準單位。
+
+# 變體寫法 → 標準寫法（區分大小寫，優先比對）
+_UNIT_ALIASES = {
+    "℃": "°C", "C": "°C",
+    "℉": "°F", "F": "°F",
+    "Mohm": "MΩ", "MOhm": "MΩ", "MΩ": "MΩ",
+    "kohm": "kΩ", "kOhm": "kΩ", "Kohm": "kΩ",
+    "Gohm": "GΩ", "GOhm": "GΩ",
+    "ohm": "Ω", "Ohm": "Ω", "OHM": "Ω",
+    "uΩ": "μΩ", "uohm": "μΩ",
+    "uA": "μA", "uV": "μV", "um": "μm",
+    "kgf/cm2": "kgf/cm²", "kg/cm²": "kgf/cm²", "kg/cm2": "kgf/cm²",
+    "cd/m2": "cd/m²", "m3/h": "m³/h", "m3/min": "CMM",
+}
+
+# 不分大小寫的變體（小寫鍵）
+_UNIT_ALIASES_CI = {
+    "degc": "°C", "°c": "°C", "oc": "°C", "deg c": "°C",
+    "degf": "°F", "°f": "°F", "of": "°F", "deg f": "°F",
+}
+
+# 同維度換算：單位 → (維度, 對基準單位的倍率)
+# value_in_base = value * factor
+_CONVERSION_FACTORS = {
+    # 電阻，基準 Ω
+    "Ω": ("resistance", 1.0),
+    "mΩ": ("resistance", 1e-3),
+    "μΩ": ("resistance", 1e-6),
+    "kΩ": ("resistance", 1e3),
+    "MΩ": ("resistance", 1e6),
+    "GΩ": ("resistance", 1e9),
+    # 電流，基準 A
+    "A": ("current", 1.0),
+    "mA": ("current", 1e-3),
+    "μA": ("current", 1e-6),
+    "kA": ("current", 1e3),
+    # 電壓，基準 V
+    "V": ("voltage", 1.0),
+    "mV": ("voltage", 1e-3),
+    "kV": ("voltage", 1e3),
+    # 壓力，基準 kPa
+    "Pa": ("pressure", 1e-3),
+    "kPa": ("pressure", 1.0),
+    "MPa": ("pressure", 1e3),
+    "bar": ("pressure", 100.0),
+    "mbar": ("pressure", 0.1),
+    "kgf/cm²": ("pressure", 98.0665),
+    "psi": ("pressure", 6.894757),
+    "atm": ("pressure", 101.325),
+    # 時間，基準 s
+    "s": ("time", 1.0),
+    "ms": ("time", 1e-3),
+    "min": ("time", 60.0),
+    "h": ("time", 3600.0),
+    # 長度，基準 mm
+    "mm": ("length", 1.0),
+    "cm": ("length", 10.0),
+    "m": ("length", 1000.0),
+    "μm": ("length", 1e-3),
+    "km": ("length", 1e6),
+    # 速度，基準 mm/s
+    "mm/s": ("velocity", 1.0),
+    "cm/s": ("velocity", 10.0),
+    "m/s": ("velocity", 1000.0),
+}
+
+
+def normalize_unit(unit: str) -> str:
+    """將單位變體寫法正規化為標準寫法。無對應者原樣回傳（去空白）。"""
+    if unit is None:
+        return ""
+    u = unit.strip()
+    if not u:
+        return ""
+    if u in _UNIT_ALIASES:
+        return _UNIT_ALIASES[u]
+    lowered = u.lower()
+    if lowered in _UNIT_ALIASES_CI:
+        return _UNIT_ALIASES_CI[lowered]
+    return u
+
+
+def convert_value(value, from_unit: str, to_unit: str):
+    """
+    將 value 由 from_unit 換算為 to_unit。
+
+    回傳 (converted_value, ok)：
+    - ok=True 表示成功換算（含兩單位相同的情形）
+    - ok=False 表示無法換算（單位空白、非數值、或維度不相容）
+    """
+    fu = normalize_unit(from_unit)
+    tu = normalize_unit(to_unit)
+    if not fu or not tu:
+        return (None, False)
+
+    try:
+        v = float(value)
+    except (ValueError, TypeError):
+        return (None, False)
+
+    if fu == tu:
+        return (v, True)
+
+    # 溫度為仿射換算，需特別處理
+    if fu in ("°C", "°F") and tu in ("°C", "°F"):
+        if fu == "°F" and tu == "°C":
+            return ((v - 32.0) * 5.0 / 9.0, True)
+        if fu == "°C" and tu == "°F":
+            return (v * 9.0 / 5.0 + 32.0, True)
+        return (v, True)
+
+    a = _CONVERSION_FACTORS.get(fu)
+    b = _CONVERSION_FACTORS.get(tu)
+    if a and b and a[0] == b[0]:
+        base = v * a[1]
+        return (base / b[1], True)
+
+    return (None, False)
+
+
 class InspectionStandardsDB:
     """定檢標準值資料庫查詢引擎"""
 
@@ -801,6 +927,10 @@ class InspectionStandardsDB:
                 return s
         return None
 
+    def convert_value(self, value, from_unit: str, to_unit: str):
+        """將讀數由 from_unit 換算為 to_unit。回傳 (converted_value, ok)。"""
+        return convert_value(value, from_unit, to_unit)
+
     def find_matching_standard(
         self,
         field_name: str,
@@ -811,28 +941,30 @@ class InspectionStandardsDB:
         根據欄位名稱、單位、設備類型 模糊匹配最佳標準
 
         匹配邏輯:
-        1. 先嘗試精確匹配 inspection_item
-        2. 再嘗試 keywords 模糊匹配
-        3. 如果有單位，優先匹配單位一致的
-        4. 如果有設備類型，優先匹配設備類型一致的
+        1. 必須先有「欄位名稱」相關性（inspection_item 或 keyword 命中）才列為候選，
+           避免不相干欄位僅因設備類型/單位相同就被硬湊到某條標準而產生假判定。
+        2. 單位、設備類型僅作為加分（tie-break），不能單獨成為候選。
         """
         candidates = []
         field_lower = field_name.lower().strip()
 
         for std in self.standards:
-            score = 0
-
-            # 精確匹配項目名稱
+            # 欄位名稱相關性（必要條件）
+            name_score = 0
             if std["inspection_item"] in field_name or field_name in std["inspection_item"]:
-                score += 10
-
-            # 關鍵字匹配
+                name_score += 10
             for kw in std.get("keywords", []):
                 if kw.lower() in field_lower:
-                    score += 3
+                    name_score += 3
 
-            # 單位匹配加分
-            if unit and std["unit"] and unit.strip() == std["unit"].strip():
+            # 名稱完全不相關者不列入候選
+            if name_score == 0:
+                continue
+
+            score = name_score
+
+            # 單位匹配加分（正規化後比對，使 Mohm/℃ 等變體也能匹配）
+            if unit and std["unit"] and normalize_unit(unit) == normalize_unit(std["unit"]):
                 score += 5
 
             # 設備類型匹配加分
@@ -842,8 +974,7 @@ class InspectionStandardsDB:
                 elif std.get("equipment_type", "") in equipment_type:
                     score += 3
 
-            if score > 0:
-                candidates.append((score, std))
+            candidates.append((score, std))
 
         if not candidates:
             return None
