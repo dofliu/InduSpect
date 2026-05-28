@@ -32,12 +32,13 @@
 ```bash
 flutter test test/form_inspection_record_test.dart test/database_service_test.dart test/inspection_item_state_test.dart test/photo_service_test.dart
 ```
-目前 46 tests，全部通過。DB 測試使用 `sqflite_common_ffi` in-memory。
+目前 59 tests，全部通過（`inspection_item_state_test.dart` 含法規標準判定 verdict 測試）。DB 測試使用 `sqflite_common_ffi` in-memory。後端 150 pytest 全綠。
 
 ## 已知問題追蹤
 - GitHub Issues #14-#19 已全數修復並關閉（2026-04-16）
 - GitHub Issues #27-#28 自動化 AI 定檢功能增強（2026-04-17）
 - 自動定檢標準判定單位換算修正（2026-05-25）：修正 kΩ/MΩ 單位數量級誤判與匹配假陽性，新增 `judge-readings` 端點。詳見 `flutter_app/DEVELOPMENT.md` 變更紀錄
+- 自動 AI 定檢標準判定串接（2026-05-28）：`judge-readings` 串入 `form_inspection_screen.dart`，量測欄位 AI 辨識後自動帶出合格/不合格/警告與法規依據，離線標記「待判定」。詳見 `flutter_app/DEVELOPMENT.md` 變更紀錄
 
 ## 既有 error（已修復）
 - ~~`measurement.dart`: `sqrt` 未 import `dart:math`~~ → 已修復
