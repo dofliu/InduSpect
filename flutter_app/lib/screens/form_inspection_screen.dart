@@ -66,6 +66,11 @@ class InspectionItemState {
   String? manualValue;
   bool isCompleted;
   bool isAnalyzing;
+  // 法規標準判定結果（後端 judge-readings 回傳）：
+  // {judgment: pass/fail/warning/unknown, standard_text, regulation, converted_value, converted_unit, ...}
+  Map<String, dynamic>? standardJudgment;
+  // 離線或判定失敗時標記為「待判定」，恢復網路後可重新判定
+  bool standardJudgmentPending;
   // 每個項目持有自己的 controller，避免 build 時重建導致游標跳位
   late final TextEditingController manualController;
 
@@ -79,6 +84,8 @@ class InspectionItemState {
     this.manualValue,
     this.isCompleted = false,
     this.isAnalyzing = false,
+    this.standardJudgment,
+    this.standardJudgmentPending = false,
   }) {
     manualController = TextEditingController(text: manualValue ?? '');
   }
@@ -96,8 +103,48 @@ class InspectionItemState {
     return manualValue;
   }
 
+  /// 法規標準的判定碼（pass/fail/warning/unknown），無判定時回傳 null
+  String? get judgmentCode {
+    final code = standardJudgment?['judgment'] as String?;
+    if (code == null || code == 'unknown') return null;
+    return code;
+  }
+
+  /// 法規依據文字（標準 + 法規名稱），供前端透明顯示判定來源
+  String? get standardBasis {
+    if (standardJudgment == null) return null;
+    final std = (standardJudgment!['standard_text'] as String?)?.trim() ?? '';
+    if (std.isEmpty) return null;
+    final reg = (standardJudgment!['regulation'] as String?)?.trim() ?? '';
+    return reg.isEmpty ? '標準 $std' : '標準 $std（$reg）';
+  }
+
+  /// 單位換算說明（原始讀數 → 換算成標準單位），無換算時回傳 null
+  String? get conversionNote {
+    final cv = standardJudgment?['converted_value'];
+    if (cv == null) return null;
+    final cu = standardJudgment?['converted_unit'] ?? '';
+    final mv = standardJudgment?['measured_value'];
+    final mu = standardJudgment?['unit'] ?? '';
+    return '換算: $mv$mu → $cv$cu';
+  }
+
   /// 取得此項目的判定結果
+  ///
+  /// 量測欄位若已取得法規標準判定，以標準判定為準（合格/不合格/警告）；
+  /// 離線待判定時顯示「待判定」；否則落回 AI 異常判定或手動填寫狀態。
   String get verdict {
+    switch (judgmentCode) {
+      case 'pass':
+        return '合格';
+      case 'fail':
+        return '不合格';
+      case 'warning':
+        return '警告';
+    }
+    if (standardJudgmentPending) {
+      return '待判定';
+    }
     if (aiResult != null) {
       return (aiResult!['is_anomaly'] == true) ? '不合格' : '合格';
     }
@@ -105,6 +152,21 @@ class InspectionItemState {
       return '已填寫';
     }
     return '未檢測';
+  }
+}
+
+/// 依判定結果回傳對應顏色（不合格紅、警告橘、待判定灰、其餘綠）
+Color verdictColor(String verdict) {
+  switch (verdict) {
+    case '不合格':
+      return Colors.red;
+    case '警告':
+      return Colors.orange;
+    case '待判定':
+    case '未檢測':
+      return Colors.grey;
+    default:
+      return Colors.green;
   }
 }
 
@@ -147,9 +209,13 @@ class _FormInspectionScreenState extends State<FormInspectionScreen> {
   // 服務
   final ImagePicker _imagePicker = ImagePicker();
   GeminiService? _geminiService;
+  final BackendApiService _backendApi = BackendApiService();
 
   bool _isLoading = false;
   String? _errorMessage;
+
+  // 法規標準判定進行中
+  bool _isJudging = false;
 
   // 批次分析進度追蹤
   bool _isBatchAnalyzing = false;
@@ -452,6 +518,9 @@ class _FormInspectionScreenState extends State<FormInspectionScreen> {
     if (mounted) {
       setState(() => _isBatchAnalyzing = false);
     }
+
+    // 批次分析完成後，對量測欄位執行法規標準判定（自動帶出合格/不合格/警告）
+    await _runStandardJudgment();
   }
 
   /// 一鍵自動檢測：引導拍照 → 批次 AI 分析 → 自動進入預覽
@@ -537,6 +606,7 @@ class _FormInspectionScreenState extends State<FormInspectionScreen> {
     });
 
     await _runAIAnalysis(item, imageBytes, image.path);
+    if (item.isCompleted) await _runStandardJudgment(onlyItem: item);
   }
 
   /// 從相簿選取照片
@@ -561,6 +631,7 @@ class _FormInspectionScreenState extends State<FormInspectionScreen> {
     });
 
     await _runAIAnalysis(item, imageBytes, image.path);
+    if (item.isCompleted) await _runStandardJudgment(onlyItem: item);
   }
 
   /// 執行 AI 分析並更新項目狀態
@@ -720,6 +791,118 @@ class _FormInspectionScreenState extends State<FormInspectionScreen> {
     return null;
   }
 
+  /// 從項目的 AI 結果中萃取可供法規判定的數值讀數
+  ///
+  /// 回傳 {'value': double, 'unit': String}；若無數值讀數則回傳 null。
+  Map<String, dynamic>? _extractNumericReading(InspectionItemState item) {
+    final result = item.aiResult;
+    if (result == null) return null;
+    final readings = result['readings'];
+    if (readings is! Map || readings.isEmpty) return null;
+
+    final best = _findBestReadingMatch(
+      item.label,
+      Map<String, dynamic>.from(readings),
+    );
+    if (best == null) return null;
+
+    final num? value = _toNum(best['value']);
+    if (value == null) return null;
+
+    return {'value': value.toDouble(), 'unit': (best['unit'] ?? '').toString()};
+  }
+
+  /// 寬鬆數值轉換：接受 num 或可解析的字串（去除非數字字元）
+  num? _toNum(dynamic raw) {
+    if (raw == null) return null;
+    if (raw is num) return raw;
+    final str = raw.toString();
+    final parsed = num.tryParse(str);
+    if (parsed != null) return parsed;
+    // 字串可能夾帶單位（例："52.3 MΩ"），抽取第一個數字
+    final match = RegExp(r'-?\d+(\.\d+)?').firstMatch(str);
+    if (match != null) return num.tryParse(match.group(0)!);
+    return null;
+  }
+
+  /// 法規標準判定：將量測類項目的 AI 讀數送後端依法規標準自動判定
+  ///
+  /// 用於「一鍵自動檢測」批次分析後與單項分析後，為量測欄位帶出
+  /// 合格/不合格/警告與法規依據（後端判定前會自動換算單位）。
+  /// 離線或失敗時，相關項目標記為「待判定」（standardJudgmentPending）。
+  ///
+  /// [onlyItem] 不為 null 時僅判定該項目，否則判定所有含數值讀數的項目。
+  Future<void> _runStandardJudgment({InspectionItemState? onlyItem}) async {
+    final source = onlyItem != null ? [onlyItem] : _inspectionItems;
+
+    final readings = <Map<String, dynamic>>[];
+    final targets = <InspectionItemState>[];
+    String equipmentType = '';
+
+    for (final item in source) {
+      if (item.aiResult == null) continue;
+      if (equipmentType.isEmpty) {
+        final et = item.aiResult!['equipment_type'] as String?;
+        if (et != null && et.isNotEmpty) equipmentType = et;
+      }
+      final reading = _extractNumericReading(item);
+      if (reading == null) continue;
+      readings.add({
+        'field_name': item.label,
+        'value': reading['value'],
+        'unit': reading['unit'],
+      });
+      targets.add(item);
+    }
+
+    if (readings.isEmpty) return;
+
+    if (mounted) setState(() => _isJudging = true);
+    try {
+      final result = await _backendApi.judgeReadings(
+        readings: readings,
+        equipmentType: equipmentType,
+      );
+
+      if (result['success'] == true && result['judgments'] is List) {
+        final judgments = (result['judgments'] as List)
+            .map((e) => Map<String, dynamic>.from(e as Map))
+            .toList();
+        // 後端保證 judgments 與輸入 readings 同序
+        for (int i = 0; i < targets.length && i < judgments.length; i++) {
+          targets[i].standardJudgment = judgments[i];
+          targets[i].standardJudgmentPending = false;
+        }
+        _saveDraft();
+      } else {
+        // 離線或失敗 → 標記待判定（保留既有 AI 判定作為暫時結果）
+        for (final item in targets) {
+          if (item.standardJudgment == null) {
+            item.standardJudgmentPending = true;
+          }
+        }
+        if (mounted && result['error'] == 'offline') {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('目前離線，量測項目標記為「待判定」，恢復網路後可重新判定'),
+              backgroundColor: Colors.orange,
+              duration: Duration(seconds: 3),
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      debugPrint('標準判定失敗: $e');
+      for (final item in targets) {
+        if (item.standardJudgment == null) {
+          item.standardJudgmentPending = true;
+        }
+      }
+    } finally {
+      if (mounted) setState(() => _isJudging = false);
+    }
+  }
+
   /// 手動填寫欄位值
   void _setManualValue(int index, String value) {
     setState(() {
@@ -860,6 +1043,8 @@ class _FormInspectionScreenState extends State<FormInspectionScreen> {
           'label': item.label,
           'value': _filledData[item.fieldId],
           'verdict': item.verdict,
+          'standard_judgment': item.standardJudgment,
+          'standard_basis': item.standardBasis,
           'has_photo': item.photoPath != null,
           'ai_result': item.aiResult,
         };
@@ -909,6 +1094,8 @@ class _FormInspectionScreenState extends State<FormInspectionScreen> {
                 'is_anomaly': item.aiResult?['is_anomaly'] ?? false,
                 'anomaly_description': item.aiResult?['anomaly_description'] ?? '',
                 'readings': item.aiResult?['readings'] ?? {},
+                'verdict': item.verdict,
+                'standard_basis': item.standardBasis ?? '',
               })
           .toList();
 
@@ -1076,6 +1263,17 @@ class _FormInspectionScreenState extends State<FormInspectionScreen> {
               ),
             ),
           ],
+        ),
+      );
+    }
+
+    // 預覽步驟：重新執行法規標準判定（離線恢復後可用）
+    if (_currentStep == FormInspectionStep.preview) {
+      actions.add(
+        IconButton(
+          tooltip: '重新依法規判定',
+          icon: const Icon(Icons.rule),
+          onPressed: _isJudging ? null : () => _runStandardJudgment(),
         ),
       );
     }
@@ -1374,9 +1572,15 @@ class _FormInspectionScreenState extends State<FormInspectionScreen> {
       statusColor = Colors.blue;
       statusIcon = Icons.hourglass_top;
     } else if (item.isCompleted) {
-      final isAnomaly = item.aiResult?['is_anomaly'] == true;
-      statusColor = isAnomaly ? Colors.red : Colors.green;
-      statusIcon = isAnomaly ? Icons.warning : Icons.check_circle;
+      final v = item.verdict;
+      statusColor = verdictColor(v);
+      statusIcon = v == '不合格'
+          ? Icons.error
+          : v == '警告'
+              ? Icons.warning_amber
+              : v == '待判定'
+                  ? Icons.hourglass_empty
+                  : Icons.check_circle;
     } else {
       statusColor = Colors.grey;
       statusIcon = Icons.circle_outlined;
@@ -1453,13 +1657,13 @@ class _FormInspectionScreenState extends State<FormInspectionScreen> {
             // AI 分析結果
             if (item.aiResult != null) ...[
               const SizedBox(height: 8),
-              Container(
+              Builder(builder: (context) {
+              final vColor = verdictColor(item.verdict);
+              return Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: (item.aiResult!['is_anomaly'] == true)
-                      ? Colors.red[50]
-                      : Colors.green[50],
+                  color: vColor.withOpacity(0.08),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Column(
@@ -1475,9 +1679,7 @@ class _FormInspectionScreenState extends State<FormInspectionScreen> {
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                           decoration: BoxDecoration(
-                            color: (item.aiResult!['is_anomaly'] == true)
-                                ? Colors.red
-                                : Colors.green,
+                            color: vColor,
                             borderRadius: BorderRadius.circular(10),
                           ),
                           child: Text(
@@ -1492,6 +1694,26 @@ class _FormInspectionScreenState extends State<FormInspectionScreen> {
                       item.displayValue ?? '',
                       style: const TextStyle(fontSize: 13),
                     ),
+                    // 法規標準依據（量測欄位判定來源）
+                    if (item.standardBasis != null) ...[
+                      const SizedBox(height: 4),
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Icon(Icons.gavel, size: 13, color: vColor),
+                          const SizedBox(width: 4),
+                          Expanded(
+                            child: Text(
+                              item.conversionNote != null
+                                  ? '${item.standardBasis}\n${item.conversionNote}'
+                                  : item.standardBasis!,
+                              style: TextStyle(
+                                  fontSize: 11, color: Colors.grey[700]),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
                     // 顯示讀數
                     if (item.aiResult!['readings'] != null &&
                         (item.aiResult!['readings'] as Map).isNotEmpty) ...[
@@ -1506,7 +1728,8 @@ class _FormInspectionScreenState extends State<FormInspectionScreen> {
                     ],
                   ],
                 ),
-              ),
+              );
+            }),
             ],
 
             // 手動填寫 (手動模式或作為 AI 補充)
@@ -1628,7 +1851,10 @@ class _FormInspectionScreenState extends State<FormInspectionScreen> {
   Widget _buildPreviewView() {
     final completed = _inspectionItems.where((i) => i.isCompleted).toList();
     final incomplete = _inspectionItems.where((i) => !i.isCompleted).toList();
-    final anomalyCount = completed.where((i) => i.aiResult?['is_anomaly'] == true).length;
+    // 依法規標準判定（含 AI 異常）統計不合格 / 警告數量
+    final failCount = completed.where((i) => i.verdict == '不合格').length;
+    final warningCount = completed.where((i) => i.verdict == '警告').length;
+    final pendingCount = completed.where((i) => i.verdict == '待判定').length;
 
     return Column(
       children: [
@@ -1641,10 +1867,46 @@ class _FormInspectionScreenState extends State<FormInspectionScreen> {
             children: [
               _buildStat('已完成', '${completed.length}', Colors.green),
               _buildStat('未完成', '${incomplete.length}', Colors.grey),
-              _buildStat('異常', '$anomalyCount', Colors.red),
+              _buildStat('不合格', '$failCount', Colors.red),
+              _buildStat('警告', '$warningCount', Colors.orange),
             ],
           ),
         ),
+
+        // 標準判定進行中 / 待判定提示
+        if (_isJudging)
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 16),
+            color: Colors.teal[50],
+            child: Row(
+              children: const [
+                SizedBox(
+                  width: 14,
+                  height: 14,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
+                SizedBox(width: 8),
+                Text('依法規標準判定中…', style: TextStyle(fontSize: 12)),
+              ],
+            ),
+          )
+        else if (pendingCount > 0)
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 16),
+            color: Colors.orange[50],
+            child: Row(
+              children: [
+                const Icon(Icons.cloud_off, size: 14, color: Colors.orange),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text('$pendingCount 項待判定（離線），可點右上重新判定',
+                      style: const TextStyle(fontSize: 12)),
+                ),
+              ],
+            ),
+          ),
 
         // 結果列表
         Expanded(
@@ -1653,31 +1915,37 @@ class _FormInspectionScreenState extends State<FormInspectionScreen> {
             itemCount: _inspectionItems.length,
             itemBuilder: (context, index) {
               final item = _inspectionItems[index];
+              final v = item.verdict;
+              final color = verdictColor(v);
+              final subtitleLines = <String>[item.displayValue ?? '未填寫'];
+              if (item.standardBasis != null) subtitleLines.add(item.standardBasis!);
+              if (item.conversionNote != null) subtitleLines.add(item.conversionNote!);
               return ListTile(
                 leading: Icon(
                   item.isCompleted
-                      ? (item.aiResult?['is_anomaly'] == true
-                          ? Icons.warning
-                          : Icons.check_circle)
+                      ? (v == '不合格'
+                          ? Icons.error
+                          : v == '警告'
+                              ? Icons.warning_amber
+                              : v == '待判定'
+                                  ? Icons.hourglass_empty
+                                  : Icons.check_circle)
                       : Icons.circle_outlined,
-                  color: item.isCompleted
-                      ? (item.aiResult?['is_anomaly'] == true
-                          ? Colors.red
-                          : Colors.green)
-                      : Colors.grey,
+                  color: item.isCompleted ? color : Colors.grey,
                 ),
                 title: Text(item.label, style: const TextStyle(fontSize: 14)),
                 subtitle: Text(
-                  item.displayValue ?? '未填寫',
+                  subtitleLines.join('\n'),
                   style: TextStyle(
                     fontSize: 12,
                     color: item.isCompleted ? Colors.black54 : Colors.grey,
                   ),
                 ),
+                isThreeLine: subtitleLines.length > 1,
                 trailing: item.isCompleted
-                    ? Text(item.verdict,
+                    ? Text(v,
                         style: TextStyle(
-                          color: item.verdict == '不合格' ? Colors.red : Colors.green,
+                          color: color,
                           fontWeight: FontWeight.bold,
                           fontSize: 12,
                         ))
@@ -1757,7 +2025,11 @@ class _FormInspectionScreenState extends State<FormInspectionScreen> {
     }
 
     final completed = _inspectionItems.where((i) => i.isCompleted).toList();
-    final anomalyCount = completed.where((i) => i.aiResult?['is_anomaly'] == true).length;
+    // 異常 = 法規判定不合格/警告，或 AI 判定異常（量測欄位以標準判定為準）
+    final problemItems = completed
+        .where((i) => i.verdict == '不合格' || i.verdict == '警告')
+        .toList();
+    final anomalyCount = problemItems.length;
     final normalCount = completed.length - anomalyCount;
 
     return Column(
@@ -1870,26 +2142,36 @@ class _FormInspectionScreenState extends State<FormInspectionScreen> {
 
                 const SizedBox(height: 24),
 
-                // 異常項目快速一覽
+                // 異常項目快速一覽（含法規不合格/警告）
                 if (anomalyCount > 0) ...[
-                  const Text('⚠️ 異常項目',
+                  const Text('⚠️ 異常 / 不合格項目',
                       style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.red)),
                   const SizedBox(height: 8),
-                  ...completed
-                      .where((i) => i.aiResult?['is_anomaly'] == true)
-                      .map((item) => Card(
-                            color: Colors.red[50],
-                            margin: const EdgeInsets.only(bottom: 8),
-                            child: ListTile(
-                              leading: const Icon(Icons.warning, color: Colors.red),
-                              title: Text(item.label,
-                                  style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
-                              subtitle: Text(
-                                item.aiResult?['anomaly_description'] ?? item.displayValue ?? '',
-                                style: const TextStyle(fontSize: 12),
-                              ),
-                            ),
-                          )),
+                  ...problemItems.map((item) {
+                    final vColor = verdictColor(item.verdict);
+                    final detail = item.standardBasis ??
+                        item.aiResult?['anomaly_description'] ??
+                        item.displayValue ??
+                        '';
+                    return Card(
+                      color: vColor.withOpacity(0.08),
+                      margin: const EdgeInsets.only(bottom: 8),
+                      child: ListTile(
+                        leading: Icon(Icons.warning, color: vColor),
+                        title: Text(item.label,
+                            style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
+                        subtitle: Text(
+                          '$detail',
+                          style: const TextStyle(fontSize: 12),
+                        ),
+                        trailing: Text(item.verdict,
+                            style: TextStyle(
+                                color: vColor,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 12)),
+                      ),
+                    );
+                  }),
                   const SizedBox(height: 16),
                 ],
               ],

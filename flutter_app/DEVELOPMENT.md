@@ -231,6 +231,19 @@ flutter build apk --debug
 
 ## 變更紀錄
 
+### 2026-05-28
+
+- **feat(flutter)**: 完成自動 AI 定檢「標準判定」串接 — 將後端 `judge-readings` 接入 `form_inspection_screen.dart`，使量測欄位在 AI 辨識後自動帶出**合格 / 不合格 / 警告**與法規依據。完成里程碑「將標準判定串入自動回填」。
+  - `InspectionItemState` 新增 `standardJudgment` / `standardJudgmentPending`，並新增 `judgmentCode`、`standardBasis`、`conversionNote` getters。
+  - `verdict` 判定優先序調整：**量測欄位以法規標準判定為準**（pass→合格、fail→不合格、warning→警告），`unknown` 落回 AI 異常判定；離線時顯示「待判定」。
+  - 新增 `_runStandardJudgment()`：批次分析後（`_launchGuidedCapture`）一次判定所有含數值讀數的項目；單張拍照分析後（`_captureAndAnalyze` / `_pickFromGallery`）僅判定該項。後端保證 judgments 與輸入 readings 同序，前端以索引回填。
+  - 新增 `_extractNumericReading()` / `_toNum()`：從 AI `readings` 中萃取最匹配欄位的數值（容錯解析夾帶單位的字串）。
+  - 離線降級：`judgeReadings` 回傳 `error=offline` 時相關項目標記「待判定」，預覽頁出現提示並可由右上角「重新依法規判定」按鈕重試。
+  - UI：預覽統計改為「不合格 / 警告」計數；逐項卡、預覽列表、完成頁的圖示與顏色改用統一的 `verdictColor()`（不合格紅、警告橘、待判定灰、合格綠），並顯示「標準 …（法規）」與單位換算說明。
+  - 匯出 JSON 摘要與 AI 報告資料新增 `standard_judgment` / `standard_basis` / `verdict` 欄位，使法規判定成為可留存的稽核依據。
+- **test(flutter)**: `inspection_item_state_test.dart` 新增 13 個測試（標準判定優先序、unknown 落回、離線待判定、`standardBasis`/`conversionNote`、`verdictColor`）。
+- **test(backend)**: 新增 `tests/test_judge_readings_endpoint.py`（7 tests，FastAPI TestClient）鎖定 `judge-readings` 端點合約（頂層鍵、judgments 同序、分類、summary 計數、kΩ→MΩ 換算）。後端全套由 143 → **150 pytest 全綠**。
+
 ### 2026-05-25
 
 - **fix(judgment)**: 修正自動定檢「標準判定」單位數量級誤判 — 判定前先把 AI 讀數換算成法規標準單位。
@@ -242,7 +255,7 @@ flutter build apk --debug
 - **feat(flutter)**: `BackendApiService.judgeReadings()` client 方法，離線時降級回傳 `error=offline`。
 - **test**: 新增 `backend/tests/test_unit_conversion_judgment.py`（25 tests），覆蓋單位正規化、同維度換算、換算後判定、維度不相容防呆、匹配相關性。後端全套 **143 pytest 全綠**。
 
-> 待辦（需 Flutter SDK 環境驗證）：將 `judgeReadings()` 串入 `form_inspection_screen.dart` 的 `_mapAIResultToField`／預覽步驟，使量測欄位自動帶出合格/不合格/警告與法規依據；離線時標記「待判定」。本次未動核心畫面（無法在此環境編譯驗證 Flutter）。
+> ~~待辦（需 Flutter SDK 環境驗證）：將 `judgeReadings()` 串入 `form_inspection_screen.dart`，使量測欄位自動帶出合格/不合格/警告與法規依據；離線時標記「待判定」。~~ → **已於 2026-05-28 完成**（見上方變更紀錄）。註：本環境無 Flutter SDK，前端改動以靜態審查 + 既有測試樣式驗證，待實機 `flutter analyze` / `flutter test` 最終確認。
 
 ### 2026-04-17
 
