@@ -1,69 +1,40 @@
 # InduSpect AI 專案開發規範
 
+> **單一事實來源（SSOT）**：本專案的開發紅線、慣例、關鍵檔案以根目錄
+> [`CLAUDE.md`](../CLAUDE.md) 為準；後續工作方向見 [`ROADMAP.md`](../ROADMAP.md)。
+> 本檔僅保留快速摘要，避免與 CLAUDE.md 重複/分歧。
+
 ## 專案概述
 
-InduSpect AI 是一個智慧工業巡檢系統，使用 Flutter 開發行動應用，結合 Google Gemini AI 進行多模態分析。
+工業設備智慧巡檢系統：**Flutter 行動 App + FastAPI 後端 + Google Gemini AI**。
+聚焦兩大核心功能：完整檢測 Pipeline、歷史紀錄（詳見 `CLAUDE.md`）。
 
 ## 技術棧
 
-- **前端**: Flutter 3.x (Dart 3.2+)
-- **AI 模型**: Google Gemini API (gemini-3-flash-preview / gemini-3.1-pro-preview)
-- **狀態管理**: Provider
-- **本地儲存**: SharedPreferences / SQLite
-- **後端規劃**: Supabase / Firebase + GCP
+- **前端**：Flutter 3.x（Dart 3.2+）、Provider 狀態管理、SQLite（sqflite）離線優先
+- **後端**：FastAPI（Python 3.11）—— 表單回填、法規標準判定（`judge-readings`）
+- **AI**：Google Gemini（圖像分析 + 摘要報告）
 
-## 開發規範
+## 開發規範（摘要）
 
-### 程式碼風格
+- 程式碼：Dart 官方風格 + `analysis_options.yaml` lint；camelCase / PascalCase；私有前綴 `_`。
+- 路徑操作一律用 `package:path`，不手動 split；日期用 ISO8601；繁體中文註解、技術術語保留英文。
+- AI 呼叫使用結構化 JSON 輸出 + 思維鏈引導（實際 prompt 見 `flutter_app/lib/services/gemini_service.dart`）。
+- 離線優先：先存本地 SQLite，連線後背景同步，UI 顯示同步狀態。
+- DB schema 變更必須附 migration 並處理既有使用者升級路徑。
 
-- 遵循 Dart 官方風格指南
-- 使用 `analysis_options.yaml` 中定義的 lint 規則
-- 類別、方法需加上文檔註釋
-- 變數命名使用 camelCase，類別使用 PascalCase
-
-### 檔案結構
+## 檔案結構
 
 ```
-lib/
-├── models/          # 資料模型
-├── services/        # API 和業務邏輯服務
-├── screens/         # 頁面 UI
-├── widgets/         # 可重用元件
-├── providers/       # 狀態管理
-└── utils/           # 工具函式
+flutter_app/lib/{models,services,screens,widgets,providers,utils}/
+backend/app/{api,services,data,db}/
 ```
 
-### AI Prompt 規範
+## 分支與測試
 
-- 所有 Gemini API 呼叫須使用結構化 JSON 輸出
-- 遵循 `aimodel.md` 中定義的 prompt 模板
-- 加入思維鏈 (Chain-of-Thought) 引導
-
-### 離線優先架構
-
-- 所有操作先存本地 SQLite
-- 網路恢復後背景同步
-- UI 需顯示同步狀態
+- 分支：`main` 穩定版；`claude/*` AI 輔助開發分支；功能開發開 feature 分支。
+- 測試：前端 `flutter test`、後端 `pytest tests/ --asyncio-mode=auto`；提交前確保通過，CI 會自動驗證。
 
 ## 文件導覽
 
-| 文件 | 用途 |
-|------|------|
-| `README.md` | 專案說明與使用手冊 |
-| `ROADMAP.md` | 功能規劃藍圖 |
-| `todo.md` | 開發路線圖 |
-| `aimodel.md` | AI 模型整合規範 |
-| `arch.md` | 系統架構設計 |
-| `TEMPLATE_SYSTEM_SPEC.md` | 模板系統技術規格 |
-
-## 分支策略
-
-- `main`: 穩定版本
-- `claude/*`: AI 輔助開發分支
-- 功能開發請建立 feature 分支
-
-## 測試規範
-
-- 單元測試放在 `test/` 目錄
-- 執行測試: `flutter test`
-- 提交前確保所有測試通過
+詳見根目錄 [`README.md`](../README.md) 的「文件導覽」表。已完成的歷史計畫與隱藏功能規格存於 [`docs/archive/`](../docs/archive/)。

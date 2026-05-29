@@ -5,6 +5,32 @@
 
 ---
 
+## 2026-05-29 — 指派任務（自動定檢法規判定串接 + 文件大整理）
+
+> 非 weekly routine，是劉老師指派的開發 + 文件重整。
+
+**做了什麼**：
+1. **功能**：將後端 `judge-readings` 串入 `form_inspection_screen.dart`，量測欄位 AI 辨識後自動帶出合格/不合格/警告 + 法規依據（含單位換算），離線標記「待判定」。後端 143→**150 pytest**、前端 +13 verdict 測試（共 59）。→ PR #42、Issue #41（已關閉）。
+2. **文件大整理**：
+   - **刪除**（git 可還原）過時/矛盾的舊願景文件：`prj.md / arch.md / aimodel.md / database.md / ui.md / todo.md / feature_enhancements.md`（描述 Supabase/GCP/登入任務，非實際 2-核心-功能產品）；已完成的歷史報告 `FLUTTER_MIGRATION_PLAN.md / REFACTORING_PLAN.md / COMPILE_CHECK_REPORT.md`；舊 `ROADMAP.md`（改寫為前瞻版）；後端誤入版控的 `test_*_result.txt / test_result.txt / test_autofill_report.txt`。
+   - **歸檔** `docs/archive/`：`DEVELOPMENT_PLAN.md`、`TEMPLATE_SYSTEM_SPEC.md`、`CLOUD_RUN_ASSESSMENT.md`。
+   - **搬移** 舊 React 原型 8 檔 → `legacy/web-prototype/`（附凍結說明）。
+   - **改寫/更新**：`README.md`（對齊現況）、新 `ROADMAP.md`（大目標 G1-G6 + Issue 任務表）、`.agent/rules.md`（瘦身指向 CLAUDE.md）、本 routine SOP（修掉 Windows 路徑與 `gh` CLI → 改 GitHub MCP；`DEVELOPMENT_PLAN` 參照改 `ROADMAP`）、`backend/.gitignore`（擋測試輸出）。
+
+**測試**：後端 150 pytest 全綠（本地以最小依賴 + `--asyncio-mode=auto` 驗證）。前端無 SDK，靜態審查。
+
+**未合併**：分支 `claude/happy-goodall-Dnryh`、PR #42（draft，含功能 + 文件整理）。
+
+**下一步建議**（給後續 routine / 劉老師）：
+- 見新的 `ROADMAP.md`「近期可執行任務」表；標 ✅ 者 routine 可自動承接。
+- 最高優先 G1 實機端到端驗證需劉老師在實機跑 `flutter analyze`/`flutter test` + 完整流程。
+
+**[NEEDS HUMAN]**：
+- 確認 PR #42 後 merge（內含程式 + 文件整理，範圍較大）。
+- `legacy/web-prototype/` 若確定不留可整個刪除（git 仍可還原）。
+
+---
+
 ## 2026-05-16 — Session #6（測試門檻收緊 + 文件對齊 housekeeping）
 
 **本週做了**：在 Sessions #2-#5 的 3 個 PR（#32 #34 #35）全部 merge 後做收尾整理。

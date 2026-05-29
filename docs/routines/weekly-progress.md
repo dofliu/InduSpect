@@ -1,9 +1,11 @@
 # Weekly Progress Routine — InduSpect AI
 
-> **適用對象**：Weekly maintenance agent（`/loop` / `/advance` 自動執行）
+> **適用對象**：Weekly maintenance agent（Claude Code on the web + `/loop` 自動執行）
 > **目的**：每週推進專案一步，朝「工業現場可用」目標前進，但不取代人類判斷
-> **建立日期**：2026-05-16
+> **建立日期**：2026-05-16 ｜ **最後更新**：2026-05-29
 > **維護者**：劉瑞弘老師（NCUT 智慧自動化工程系）
+>
+> ⚙️ **執行環境**：本 routine 跑在 **Claude Code on the web** 的臨時容器中——repo 每次重新 clone、容器用後即焚，**任何成果必須 commit + push 才會保留**。GitHub 操作一律用 **GitHub MCP 工具**（`mcp__github__*`），**沒有 `gh` CLI**。
 
 ---
 
@@ -24,20 +26,22 @@
 
 ### 1.1 環境健檢
 ```bash
-cd D:/Project_CodingSimulation/researchTopic/induSpectApp/InduSpect
-git fetch --all --prune
+# 工作目錄即 repo 根（容器已自動 clone），不要假設任何本機絕對路徑
+git fetch origin
 git status
 git log --oneline -10
 git log --oneline main..origin/main      # 落後幾個 commit
-gh pr list --state open --limit 10
-gh issue list --state open --limit 20
 ```
+GitHub 狀態改用 **GitHub MCP 工具**查詢（無 `gh` CLI）：
+- 開啟中的 PR：`mcp__github__list_pull_requests`（state=open）
+- 開啟中的 Issues：`mcp__github__list_issues`（state=OPEN）。**可自動承接的任務以標題前綴 `[routine-ok]` 標示**（`weekly-routine-ok` label 尚未建立；若日後建立可改用 labels 過濾）。
 
-### 1.2 必讀四份核心文件
+### 1.2 必讀核心文件
 1. **`STATUS.yaml`**（origin/main 版本，不是本地暫存）— 抓 progress / next_milestone / key_metrics
 2. **`CLAUDE.md`** — 專案紅線、慣例、關鍵檔案
-3. **`DEVELOPMENT_PLAN.md`** — Sprint 1-6 任務看板（進行中的目標）
+3. **`ROADMAP.md`** — 後續工作大目標 + 近期可執行任務表
 4. **`docs/handover/session-handover.md`** — 上一次留下的待續事項 / NEEDS HUMAN notes
+5. （選讀）`flutter_app/DEVELOPMENT.md` 變更紀錄、`docs/archive/` 已完成的歷史計畫
 
 ### 1.3 git 異常處理
 | 情況 | 動作 |
@@ -54,8 +58,8 @@ gh issue list --state open --limit 20
 
 ### 2.1 來源優先序
 1. `docs/handover/session-handover.md` 中的「下一步建議」
-2. GitHub Issues（label: `weekly-routine-ok`）
-3. `DEVELOPMENT_PLAN.md` 中未完成的 Sub-task（按 Sprint 順序）
+2. GitHub Issues（標題前綴 `[routine-ok]`）
+3. `ROADMAP.md`「近期可執行任務」表中標 ✅（routine 可自動做）的項目
 4. 既有測試/型別/lint 失敗的小修
 5. 文件補完（README、API 文件、註解）
 
@@ -148,11 +152,10 @@ Co-Authored-By: Claude (weekly-routine) <noreply@anthropic.com>
 ### 4.4 push & PR
 ```bash
 git push -u origin claude/weekly-YYYY-MM-DD-<slug>
-gh pr create \
-  --base main \
-  --title "<type>: <description>" \
-  --body "<see template>"
 ```
+然後用 **GitHub MCP** 開 **draft PR**（無 `gh` CLI）：
+`mcp__github__create_pull_request`（owner=`dofliu`, repo=`InduSpect`, base=`main`, head=分支, `draft=true`, title/body 見下）。
+若任務對應某 Issue，body 加 `Closes #<n>`。
 
 **PR body 模板**：
 ```markdown
@@ -257,7 +260,7 @@ gh pr create \
 
 每週 routine 應該朝以下方向之一推一格：
 1. **可靠性**：擴充測試、修 edge case、加錯誤處理
-2. **完整性**：補 DEVELOPMENT_PLAN 中未完成的 Sub-task
+2. **完整性**：補 `ROADMAP.md` 大目標下未完成的近期任務
 3. **工程紀律**：CI、lint、型別、文件
 4. **資料豐富度**：擴充 `inspection_standards`、預設範本
 5. **可觀測性**：log、指標、健檢端點

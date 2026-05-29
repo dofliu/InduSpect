@@ -53,3 +53,8 @@ htmlcov/
 # Temp files
 /tmp/
 *.tmp
+
+# 開發期生成的測試輸出（請勿入版控；正式測試在 tests/）
+test_result.txt
+test_autofill_report.txt
+test_*_result.txt
