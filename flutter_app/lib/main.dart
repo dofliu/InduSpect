@@ -10,6 +10,7 @@ import 'screens/dashboard_screen.dart';
 import 'screens/settings_screen.dart';
 import 'screens/guide_screen.dart';
 import 'screens/unified_history_screen.dart';
+import 'screens/spatial_mapping_screen.dart';
 import 'services/connectivity_service.dart';
 import 'services/photo_sync_service.dart';
 import 'services/share_queue_service.dart';
@@ -98,6 +99,7 @@ class InduSpectApp extends StatelessWidget {
           '/settings': (context) => const SettingsScreen(),
           '/guide': (context) => const GuideScreen(),
           '/history': (context) => const UnifiedHistoryScreen(),
+          '/spatial_mapping': (context) => const SpatialMappingScreen(),
         },
       ),
     );

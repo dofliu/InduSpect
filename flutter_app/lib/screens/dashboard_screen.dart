@@ -216,6 +216,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ),
         ),
         const SizedBox(height: 12),
+        // 3D 空間建模與巡檢
+        _buildActionCard(
+          context,
+          icon: Icons.view_in_ar,
+          title: '3D 空間建模與巡檢',
+          subtitle: 'Android 手機掃描 → 3D 點雲空間建立與標籤釘選',
+          color: Colors.cyan,
+          onTap: () => Navigator.pushNamed(context, '/spatial_mapping'),
+        ),
+        const SizedBox(height: 12),
         // 歷史紀錄
         _buildActionCard(
           context,

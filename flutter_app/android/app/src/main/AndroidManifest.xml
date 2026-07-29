@@ -1,9 +1,10 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.induspect.flutter_app">
 
-    <!-- 相機權限 -->
+    <!-- 相機與 AR 權限 -->
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-feature android:name="android.hardware.camera" android:required="false" />
+    <uses-feature android:name="android.hardware.camera.ar" android:required="false" />
 
     <!-- 存儲權限 -->
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
@@ -46,6 +47,9 @@
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
+
+        <!-- ARCore meta-data -->
+        <meta-data android:name="com.google.ar.core" android:value="optional" />
 
         <!-- Don't delete the meta-data below.
              This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->
