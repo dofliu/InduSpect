@@ -1,5 +1,4 @@
 import 'dart:typed_data';
-import 'package:flutter/foundation.dart' show kIsWeb;
 
 // 條件導入：Web 用 html，Mobile 用 io + share_plus
 import 'file_save_service_stub.dart'

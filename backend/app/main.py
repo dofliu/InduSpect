@@ -3,8 +3,10 @@ InduSpect AI Backend - FastAPI 入口
 """
 
 import logging
+import math
 
 from fastapi import FastAPI, Request
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
@@ -71,6 +73,30 @@ async def api_key_guard(request: Request, call_next):
     ):
         return JSONResponse(status_code=401, content={"detail": "無效或缺少 API Key"})
     return await call_next(request)
+
+
+def _json_safe(obj):
+    """遞迴淨化為可 JSON 序列化的結構（NaN/inf/例外物件 → 字串）。"""
+    if obj is None or isinstance(obj, (str, int, bool)):
+        return obj
+    if isinstance(obj, float):
+        return obj if math.isfinite(obj) else str(obj)
+    if isinstance(obj, dict):
+        return {str(k): _json_safe(v) for k, v in obj.items()}
+    if isinstance(obj, (list, tuple)):
+        return [_json_safe(v) for v in obj]
+    return str(obj)
+
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    """422 回應淨化（Issue #47）
+
+    FastAPI 預設 handler 會把違規的原始輸入 echo 回 errors[].input；
+    當輸入含 NaN/inf 時該 422 本身無法 JSON 序列化 → 反而變成 500。
+    此處遞迴淨化後回傳，確保任何異常輸入都得到結構一致的 422。
+    """
+    return JSONResponse(status_code=422, content={"detail": _json_safe(exc.errors())})
 
 
 # 註冊路由

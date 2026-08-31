@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../services/backend_api_service.dart';
 import '../services/user_defaults_service.dart';
 import '../services/photo_service.dart';
 import 'guided_capture_screen.dart';
@@ -22,7 +21,6 @@ class OneStopInspectionScreen extends StatefulWidget {
 }
 
 class _OneStopInspectionScreenState extends State<OneStopInspectionScreen> {
-  final BackendApiService _api = BackendApiService();
   final UserDefaultsService _defaults = UserDefaultsService();
   final PageController _pageController = PageController();
 
@@ -53,8 +51,6 @@ class _OneStopInspectionScreenState extends State<OneStopInspectionScreen> {
   Map<String, dynamic> _summary = {};
   bool _isProcessing = false;
 
-  // Step 4: 預覽
-  List<Map<String, dynamic>> _previewItems = [];
 
   // Step 5: 完成
   bool _isExporting = false;

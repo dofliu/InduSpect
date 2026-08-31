@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
-import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:file_picker/file_picker.dart';
@@ -13,7 +12,6 @@ import 'package:uuid/uuid.dart';
 import 'package:path_provider/path_provider.dart';
 import '../models/inspection_template.dart';
 import '../models/template_field.dart';
-import '../models/analysis_result.dart';
 import '../models/form_inspection_record.dart';
 import '../services/gemini_service.dart';
 import '../services/local_template_creator.dart';
@@ -177,17 +175,14 @@ class _FormInspectionScreenState extends State<FormInspectionScreen> {
 
   // 上傳的原始檔案
   PlatformFile? _uploadedFile;
-  Uint8List? _uploadedFileBytes;
   String? _fileName;
 
   // 分析出的結構
   Map<String, dynamic>? _templateJson;
   InspectionTemplate? _template;
-  List<Map<String, dynamic>> _fieldMap = [];
 
   // 檢測項目狀態
   List<InspectionItemState> _inspectionItems = [];
-  int _currentItemIndex = 0;
 
   // 所有填寫的資料 (fieldId -> value)
   final Map<String, dynamic> _filledData = {};
@@ -273,7 +268,6 @@ class _FormInspectionScreenState extends State<FormInspectionScreen> {
 
     setState(() {
       _uploadedFile = file;
-      _uploadedFileBytes = bytes;
       _fileName = file.name;
       _isLoading = true;
       _errorMessage = null;
@@ -358,8 +352,6 @@ class _FormInspectionScreenState extends State<FormInspectionScreen> {
         ));
       }
     }
-
-    _currentItemIndex = 0;
   }
 
   // ========== GPS & 持久化 ==========

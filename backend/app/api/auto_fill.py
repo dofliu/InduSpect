@@ -10,7 +10,7 @@
 
 from fastapi import APIRouter, HTTPException, UploadFile, File, Form
 from fastapi.responses import StreamingResponse
-from pydantic import BaseModel
+from pydantic import BaseModel, Field, field_validator
 from typing import Optional
 import logging
 import io
@@ -515,10 +515,23 @@ async def execute_auto_fill(
 # ============ Sprint 4: One-Stop Inspection Workflow ============
 
 class ReadingItem(BaseModel):
-    """單筆量測讀數"""
-    field_name: str
-    value: float
-    unit: str = ""
+    """單筆量測讀數
+
+    Issue #47 輸入驗證：
+    - value 拒絕 NaN/inf（NaN 進入 gte/lte 比較必為 False → 誤判 fail，屬安全問題）
+    - field_name 去空白後不可為空、長度上限防呆
+    """
+    field_name: str = Field(max_length=200)
+    value: float = Field(allow_inf_nan=False)
+    unit: str = Field(default="", max_length=32)
+
+    @field_validator("field_name")
+    @classmethod
+    def _field_name_not_blank(cls, v: str) -> str:
+        stripped = v.strip()
+        if not stripped:
+            raise ValueError("field_name 不可為空白")
+        return stripped
 
 
 class EquipmentInfo(BaseModel):
@@ -773,9 +786,12 @@ async def batch_process(request: BatchProcessRequest):
 # ============ 輕量級讀數判定（App 自動定檢用） ============
 
 class JudgeReadingsRequest(BaseModel):
-    """讀數判定請求 — 行動 App 在 AI 辨識後直接送出讀數做標準判定"""
-    readings: list[ReadingItem]
-    equipment_type: str = ""
+    """讀數判定請求 — 行動 App 在 AI 辨識後直接送出讀數做標準判定
+
+    Issue #47：readings 數量上限防呆（單張表單欄位至多數十筆，500 已極寬鬆）
+    """
+    readings: list[ReadingItem] = Field(max_length=500)
+    equipment_type: str = Field(default="", max_length=100)
 
 
 class JudgeReadingsResponse(BaseModel):

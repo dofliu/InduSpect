@@ -243,6 +243,10 @@ class TestResults:
             self.errors.append(f"{test_name}: {detail}")
             print(f"  ❌ {test_name} — {detail}")
 
+        # Issue #45: pytest 下必須真的失敗，否則 CI 擋不住退化；
+        # __main__ 手動模式維持彙總報告行為
+        if os.environ.get("PYTEST_CURRENT_TEST"):
+            assert condition, f"{test_name}: {detail}"
     def summary(self) -> str:
         total = self.passed + self.failed
         lines = [
