@@ -21,6 +21,7 @@ Future<Database> _createTestDb() async {
             template_json TEXT,
             filled_data TEXT NOT NULL,
             ai_results TEXT,
+            standard_judgments TEXT,
             summary_report TEXT,
             filled_document_path TEXT,
             status TEXT NOT NULL,

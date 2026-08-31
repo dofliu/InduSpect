@@ -252,4 +252,80 @@ void main() {
       }
     });
   });
+
+  // ========== 法規標準判定持久化（Issue #44，SQLite v4） ==========
+
+  group('standardJudgments 持久化', () {
+    final judgment = {
+      'judgment': 'fail',
+      'standard_text': '>= 1.0 MΩ',
+      'regulation': '屋內線路裝置規則',
+      'measured_value': 500,
+      'unit': 'kΩ',
+      'converted_value': 0.5,
+      'converted_unit': 'MΩ',
+    };
+
+    test('toMap/fromMap 往返保留判定內容', () {
+      final r = FormInspectionRecord(
+        recordId: 'judg-1',
+        title: '判定測試',
+        standardJudgments: {'f1': judgment},
+      );
+
+      final restored = FormInspectionRecord.fromMap(r.toMap());
+      expect(restored.standardJudgments['f1']['judgment'], 'fail');
+      expect(restored.standardJudgments['f1']['regulation'], '屋內線路裝置規則');
+      expect(restored.standardJudgments['f1']['converted_value'], 0.5);
+    });
+
+    test('fromMap 對 v3 舊紀錄（無 standard_judgments 欄）回空 map', () {
+      final r = FormInspectionRecord.fromMap({
+        'record_id': 'legacy-v3',
+        'title': '舊紀錄',
+        'filled_data': '{}',
+        'status': 'draft',
+        'created_at': DateTime.now().toIso8601String(),
+        'updated_at': DateTime.now().toIso8601String(),
+      });
+
+      expect(r.standardJudgments, isEmpty);
+      expect(r.failCount, 0);
+      expect(r.warningCount, 0);
+    });
+
+    test('copyWith 未指定時深拷貝、指定時取代', () {
+      final r = FormInspectionRecord(
+        recordId: 'judg-2',
+        title: '判定測試',
+        standardJudgments: {'f1': judgment},
+      );
+
+      final copy = r.copyWith();
+      expect(copy.standardJudgments['f1']['judgment'], 'fail');
+      // 深拷貝：改副本的 map 不影響原本
+      copy.standardJudgments['f2'] = {'judgment': 'pass'};
+      expect(r.standardJudgments.containsKey('f2'), false);
+
+      final replaced = r.copyWith(standardJudgments: {'x': {'judgment': 'pass'}});
+      expect(replaced.standardJudgments.containsKey('f1'), false);
+      expect(replaced.standardJudgments['x']['judgment'], 'pass');
+    });
+
+    test('failCount / warningCount 統計正確', () {
+      final r = FormInspectionRecord(
+        recordId: 'judg-3',
+        title: '統計測試',
+        standardJudgments: {
+          'f1': {'judgment': 'fail'},
+          'f2': {'judgment': 'warning'},
+          'f3': {'judgment': 'pass'},
+          'f4': {'judgment': 'fail'},
+        },
+      );
+
+      expect(r.failCount, 2);
+      expect(r.warningCount, 1);
+    });
+  });
 }

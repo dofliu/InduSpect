@@ -403,11 +403,15 @@ class _FormInspectionScreenState extends State<FormInspectionScreen> {
   Future<void> _saveDraft() async {
     if (_currentRecord == null) return;
 
-    // 收集 AI 結果
+    // 收集 AI 結果與法規判定（判定為稽核依據，隨紀錄持久化 — Issue #44）
     final aiResults = <String, dynamic>{};
+    final standardJudgments = <String, dynamic>{};
     final photoPaths = <String>[];
     for (final item in _inspectionItems) {
       if (item.aiResult != null) aiResults[item.fieldId] = item.aiResult;
+      if (item.standardJudgment != null) {
+        standardJudgments[item.fieldId] = item.standardJudgment;
+      }
       if (item.photoPath != null) photoPaths.add(item.photoPath!);
     }
 
@@ -415,6 +419,7 @@ class _FormInspectionScreenState extends State<FormInspectionScreen> {
       title: _inspectionTitle,
       filledData: Map.from(_filledData),
       aiResults: aiResults,
+      standardJudgments: standardJudgments,
       photoPaths: photoPaths,
       latitude: _locationData?.latitude ?? _currentRecord!.latitude,
       longitude: _locationData?.longitude ?? _currentRecord!.longitude,

@@ -24,13 +24,14 @@ class DatabaseService {
 
     return await openDatabase(
       path,
-      version: 3,
-      onCreate: _onCreate,
-      onUpgrade: _onUpgrade,
+      version: 4,
+      onCreate: onCreate,
+      onUpgrade: onUpgrade,
     );
   }
 
-  Future<void> _onCreate(Database db, int version) async {
+  @visibleForTesting
+  Future<void> onCreate(Database db, int version) async {
     await db.execute('''
       CREATE TABLE template_inspection_records (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -99,6 +100,7 @@ class DatabaseService {
         template_json TEXT,
         filled_data TEXT NOT NULL,
         ai_results TEXT,
+        standard_judgments TEXT,
         summary_report TEXT,
         filled_document_path TEXT,
         status TEXT NOT NULL,
@@ -123,7 +125,8 @@ class DatabaseService {
     ''');
   }
 
-  Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
+  @visibleForTesting
+  Future<void> onUpgrade(Database db, int oldVersion, int newVersion) async {
     debugPrint('Upgrading database from version $oldVersion to $newVersion');
 
     // v2: photo_sync_tasks 表
@@ -154,6 +157,14 @@ class DatabaseService {
     // v3: form_inspection_records 表
     if (oldVersion < 3) {
       await _createFormInspectionRecordsTable(db);
+    }
+
+    // v4: 法規標準判定結果持久化（Issue #44）
+    // 舊使用者升級路徑：既有紀錄該欄為 NULL，model 端 _decodeJson 回空 map
+    if (oldVersion < 4) {
+      await db.execute(
+        'ALTER TABLE form_inspection_records ADD COLUMN standard_judgments TEXT',
+      );
     }
   }
 
