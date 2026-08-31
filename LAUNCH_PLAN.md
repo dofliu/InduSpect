@@ -219,8 +219,8 @@ FastAPI 後端（未部署；Dockerfile/cloudbuild.yaml 備妥但有 5 項阻塞
 
 ### 第 5-8 週：離線能力 v1 + 後端最小安全部署（對應 G3/G4）
 - [x] **判定引擎 Dart 化（Tier 0）** ✅ 2026-08-31：標準資料 JSON 單一來源（含後端同步守門測試）、24 條 Dart 測試移植、離線判定取代「待判定」（僅本地引擎也失敗時退回）
-- [ ] ML Kit OCR 數位錶離線讀值（Tier 1a）
-- [~] 後端：API-Key middleware + CORS 白名單 + 422/500 淨化 ✅；cloudbuild.yaml 已改 Artifact Registry + Secret Manager；**待辦**：實際部署 Cloud Run（需 GCP 帳號操作）+ 報告狀態記憶體問題（`form_fill.py:50`）
+- [x] ML Kit OCR 數位錶離線讀值（Tier 1a）✅ 2026-08-31：拍照 → 離線 OCR → 解析（誤讀修正/雜訊過濾）→ Tier 0 判定 → 持久化；OCR 品質待實機驗證
+- [~] 後端：API-Key middleware + CORS 白名單 + 422/500 淨化 ✅；報告狀態記憶體問題 ✅（class-level + `/generate` 同步化 + 404）；cloudbuild.yaml 已改 Artifact Registry + Secret Manager；**待辦**：實際部署 Cloud Run（需 GCP 帳號操作）
 - [x] #47 judge-readings 輸入驗證（含 NaN→500 修復）、#45 測試假陽性修正（11 檔）、CI 納入全部測試檔 + analyze 轉硬性 ✅ 2026-08-31
 - [ ] PDF 報告輸出（申報場景的交付格式）
 - **退出條件**：斷網可完成「拍照→判定→匯出」全流程（程式面已達成，待實機驗證）；後端公網部署且非匿名可用
