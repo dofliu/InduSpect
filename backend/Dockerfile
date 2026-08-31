@@ -20,9 +20,9 @@ COPY app/ ./app/
 # 暴露端口
 EXPOSE 8080
 
-# 健康檢查
+# 健康檢查（python:3.11-slim 未預裝 curl，改用標準庫；Cloud Run 不讀此指令，供本地 docker/compose 用）
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost:8080/health || exit 1
+    CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8080/health')" || exit 1
 
 # 啟動命令
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8080"]

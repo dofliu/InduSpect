@@ -20,6 +20,7 @@ from pydantic import BaseModel
 from typing import Optional
 import logging
 
+from app.api.errors import internal_error
 from app.services.form_fill import FormFillService
 from app.services.template_service import TemplateService
 
@@ -91,7 +92,7 @@ async def create_template_from_file(
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
         logger.error(f"Create template from file failed: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise internal_error(e)
 
 
 # ============ 範本庫端點（Sprint 5） ============
@@ -104,7 +105,7 @@ async def get_default_templates():
         return service.get_default_templates()
     except Exception as e:
         logger.error(f"Get default templates failed: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise internal_error(e)
 
 
 @router.get("/recent", response_model=list)
@@ -115,7 +116,7 @@ async def get_recent_templates(user_id: str):
         return service.get_recent_templates(user_id=user_id)
     except Exception as e:
         logger.error(f"Get recent templates failed: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise internal_error(e)
 
 
 @router.post("/record-usage")
@@ -131,4 +132,4 @@ async def record_template_usage(request: RecordUsageRequest):
         return {"success": ok}
     except Exception as e:
         logger.error(f"Record template usage failed: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise internal_error(e)

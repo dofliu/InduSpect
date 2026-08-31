@@ -2,8 +2,11 @@
 InduSpect AI Backend - FastAPI 入口
 """
 
-from fastapi import FastAPI
+import logging
+
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 
 from app.config import settings
 from app.api import rag, templates, reports, auto_fill
@@ -11,31 +14,63 @@ from app.api import rag, templates, reports, auto_fill
 from contextlib import asynccontextmanager
 from app.db.database import init_db, close_db
 
+logger = logging.getLogger("induspect")
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Startup
+    if not settings.backend_api_key:
+        logger.warning(
+            "BACKEND_API_KEY 未設定 — /api/* 端點不驗證請求（僅限開發環境）。"
+            "生產環境請透過 Secret Manager 注入 BACKEND_API_KEY。"
+        )
     await init_db()
     yield
     # Shutdown
     await close_db()
 
+
 app = FastAPI(
     title="InduSpect AI Backend",
     description="智能工業巡檢系統後端 API - RAG 查詢與廠商報告生成",
     version="1.0.0",
-    docs_url="/docs",
-    redoc_url="/redoc",
+    # 生產環境設 ENABLE_DOCS=false 關閉互動式文件（LAUNCH_PLAN P0-3）
+    docs_url="/docs" if settings.enable_docs else None,
+    redoc_url="/redoc" if settings.enable_docs else None,
     lifespan=lifespan,
 )
 
-# CORS 設定 - 允許 Flutter Web/App 存取
+# CORS 白名單：由 CORS_ALLOW_ORIGINS 環境變數控制（逗號分隔）。
+# 依瀏覽器規範，wildcard origin 不可與 credentials 並用。
+_cors_origins = [o.strip() for o in settings.cors_allow_origins.split(",") if o.strip()]
+_cors_wildcard = _cors_origins == ["*"]
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # 生產環境應限制
-    allow_credentials=True,
+    allow_origins=_cors_origins or ["*"],
+    allow_credentials=not _cors_wildcard,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+@app.middleware("http")
+async def api_key_guard(request: Request, call_next):
+    """API Key 驗證：BACKEND_API_KEY 設定時，/api/* 須帶相符的 X-API-Key。
+
+    - `/`、`/health` 保持開放（Cloud Run 探針）
+    - OPTIONS 放行（CORS preflight 不帶自訂 header）
+    - 未設定 key 時不驗證（開發模式，啟動時已警告）
+    """
+    expected = settings.backend_api_key
+    if (
+        expected
+        and request.url.path.startswith("/api/")
+        and request.method != "OPTIONS"
+        and request.headers.get("X-API-Key") != expected
+    ):
+        return JSONResponse(status_code=401, content={"detail": "無效或缺少 API Key"})
+    return await call_next(request)
 
 
 # 註冊路由

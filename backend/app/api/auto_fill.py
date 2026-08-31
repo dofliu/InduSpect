@@ -15,6 +15,7 @@ from typing import Optional
 import logging
 import io
 
+from app.api.errors import internal_error
 from app.services.form_fill import FormFillService
 from app.services.history_service import HistoryService
 
@@ -247,7 +248,7 @@ async def generate_photo_tasks(request: GeneratePhotoTasksRequest):
 
     except Exception as e:
         logger.error(f"Generate photo tasks failed: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise internal_error(e)
 
 
 @router.post("/precision-map-fields", response_model=MapFieldsResponse)
@@ -277,7 +278,7 @@ async def precision_map_fields(request: PrecisionMapFieldsRequest):
 
     except Exception as e:
         logger.error(f"Precision map fields failed: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise internal_error(e)
 
 
 @router.post("/insert-photos")
@@ -344,7 +345,7 @@ async def insert_photos(
         raise HTTPException(status_code=400, detail=f"JSON 格式錯誤: {e}")
     except Exception as e:
         logger.error(f"Insert photos failed: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise internal_error(e)
 
 
 @router.post("/analyze-structure", response_model=StructureAnalysisResponse)
@@ -382,7 +383,7 @@ async def analyze_structure(file: UploadFile = File(...)):
         raise
     except Exception as e:
         logger.error(f"Analyze structure failed: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise internal_error(e)
 
 
 @router.post("/map-fields", response_model=MapFieldsResponse)
@@ -405,7 +406,7 @@ async def map_fields(request: MapFieldsRequest):
 
     except Exception as e:
         logger.error(f"Map fields failed: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise internal_error(e)
 
 
 @router.post("/preview", response_model=PreviewResponse)
@@ -428,7 +429,7 @@ async def preview_auto_fill(request: PreviewRequest):
 
     except Exception as e:
         logger.error(f"Preview auto-fill failed: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise internal_error(e)
 
 
 @router.post("/execute")
@@ -508,7 +509,7 @@ async def execute_auto_fill(
         )
     except Exception as e:
         logger.error(f"Execute auto-fill failed: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise internal_error(e)
 
 
 # ============ Sprint 4: One-Stop Inspection Workflow ============
@@ -706,7 +707,7 @@ async def one_stop_process(request: OneStopProcessRequest):
 
     except Exception as e:
         logger.error(f"One-stop process failed: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise internal_error(e)
 
 
 # ============ Sprint 5: Batch Inspection Mode ============
@@ -766,7 +767,7 @@ async def batch_process(request: BatchProcessRequest):
 
     except Exception as e:
         logger.error(f"Batch process failed: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise internal_error(e)
 
 
 # ============ 輕量級讀數判定（App 自動定檢用） ============
@@ -836,4 +837,4 @@ async def judge_readings(request: JudgeReadingsRequest):
 
     except Exception as e:
         logger.error(f"Judge readings failed: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise internal_error(e)

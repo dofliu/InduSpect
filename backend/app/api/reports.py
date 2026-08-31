@@ -10,6 +10,7 @@ import logging
 import uuid
 from datetime import datetime
 
+from app.api.errors import internal_error
 from app.services.form_fill import FormFillService
 
 router = APIRouter()
@@ -117,7 +118,7 @@ async def preview_report(request: ReportPreviewRequest):
         
     except Exception as e:
         logger.error(f"Preview report failed: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise internal_error(e)
 
 
 @router.post("/generate", response_model=GenerateReportResponse)
@@ -154,7 +155,7 @@ async def generate_report(
         
     except Exception as e:
         logger.error(f"Generate report failed: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise internal_error(e)
 
 
 @router.get("/{report_id}/status", response_model=GenerateReportResponse)
@@ -173,7 +174,7 @@ async def get_report_status(report_id: str):
         raise
     except Exception as e:
         logger.error(f"Get report status failed: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise internal_error(e)
 
 
 @router.get("/{report_id}/download")
@@ -196,7 +197,7 @@ async def download_report(report_id: str):
         raise
     except Exception as e:
         logger.error(f"Download report failed: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise internal_error(e)
 
 
 @router.post("/batch", response_model=BatchGenerateResponse)
@@ -250,4 +251,4 @@ async def batch_generate_reports(request: BatchGenerateRequest):
         
     except Exception as e:
         logger.error(f"Batch generate failed: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise internal_error(e)
