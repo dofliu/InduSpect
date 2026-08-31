@@ -19,7 +19,9 @@
 | `flutter_app/lib/services/database_service.dart` | SQLite v3 CRUD |
 | `flutter_app/lib/services/location_service.dart` | GPS 定位 |
 | `flutter_app/lib/services/share_queue_service.dart` | 離線分享佇列 |
+| `flutter_app/lib/services/standards_engine.dart` | ★ Tier 0 離線法規判定引擎 |
 | `flutter_app/DEVELOPMENT.md` | 完整開發文件 |
+| `LAUNCH_PLAN.md` | 產品化評估與 90 天上線行動計畫 |
 
 ## 開發慣例
 - 路徑操作用 `package:path/path.dart`，不手動 `split('/')`
@@ -30,15 +32,17 @@
 
 ## 測試
 ```bash
-flutter test test/form_inspection_record_test.dart test/database_service_test.dart test/inspection_item_state_test.dart test/photo_service_test.dart
+flutter test          # 全部 88 tests（widget_test 已修復，不再排除）
+cd backend && GEMINI_API_KEY=ci-fake-key pytest tests/ --asyncio-mode=auto   # 167 pytest
 ```
-目前 59 tests，全部通過（`inspection_item_state_test.dart` 含法規標準判定 verdict 測試）。DB 測試使用 `sqflite_common_ffi` in-memory。後端 150 pytest 全綠。
+Flutter 88 tests / 後端 167 pytest 全綠（2026-08-31 實測）。DB 測試使用 `sqflite_common_ffi` in-memory。標準資料為單一來源：改 `backend/app/data/inspection_standards.py` 後必須跑 `python backend/scripts/export_standards.py` 重新匯出 JSON（有同步守門測試）。
 
 ## 已知問題追蹤
 - GitHub Issues #14-#19 已全數修復並關閉（2026-04-16）
 - GitHub Issues #27-#28 自動化 AI 定檢功能增強（2026-04-17）
 - 自動定檢標準判定單位換算修正（2026-05-25）：修正 kΩ/MΩ 單位數量級誤判與匹配假陽性，新增 `judge-readings` 端點。詳見 `flutter_app/DEVELOPMENT.md` 變更紀錄
-- 自動 AI 定檢標準判定串接（2026-05-28）：`judge-readings` 串入 `form_inspection_screen.dart`，量測欄位 AI 辨識後自動帶出合格/不合格/警告與法規依據，離線標記「待判定」。詳見 `flutter_app/DEVELOPMENT.md` 變更紀錄
+- 自動 AI 定檢標準判定串接（2026-05-28）：`judge-readings` 串入 `form_inspection_screen.dart`，量測欄位 AI 辨識後自動帶出合格/不合格/警告與法規依據
+- 產品化 P0 批次 + Tier 0 離線判定（2026-08-31）：Issues #44/#45/#47 完成；判定引擎 Dart 化（離線判定取代「待判定」）、判定持久化（SQLite v4）、release 簽署/後端認證/模型 ID 汰換/CI 全量收緊。詳見 `LAUNCH_PLAN.md` 與 `flutter_app/DEVELOPMENT.md` 變更紀錄
 
 ## 既有 error（已修復）
 - ~~`measurement.dart`: `sqrt` 未 import `dart:math`~~ → 已修復

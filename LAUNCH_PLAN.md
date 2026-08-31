@@ -209,21 +209,21 @@ FastAPI 後端（未部署；Dockerfile/cloudbuild.yaml 備妥但有 5 項阻塞
 ## 7. 90 天行動計畫
 
 ### 第 1-4 週：實機驗證 + 上架準備（對應 G1）
-- [ ] 實機 E2E（#43）：上傳 Excel → 一鍵自動檢測 → 判定回填 → 匯出 → 分享；斷網全流程 + 恢復後自動分享/重判
-- [ ] `flutter analyze` + `flutter test` 在真 SDK 環境跑通並修 lint
-- [ ] P0-2 簽署金鑰 / P0-4 `BACKEND_API_URL` 顯性化 + 無聲降級改提示 / P0-6 GA 模型 ID / P0-8 移除 release 日誌洩漏
-- [ ] #44 判定持久化（v3→v4 migration，欄位設計需劉老師定案）
-- [ ] 隱私權政策 + Play Data Safety 表 + Play 內部測試軌上架
-- [ ] 接 Crashlytics/Sentry
+- [ ] 實機 E2E（#43）：上傳 Excel → 一鍵自動檢測 → 判定回填 → 匯出 → 分享；斷網全流程（**需實體裝置**；斷網判定已改走本地引擎）
+- [x] `flutter analyze` + `flutter test` 在真 SDK 環境跑通並修 lint ✅ 2026-08-31（88 tests 綠、0 warning、widget_test 修復）
+- [x] P0-2 簽署金鑰（key.properties 模式 + R8）/ P0-4 `BACKEND_API_URL` 顯性化 + 降級提示 / P0-6 GA 模型 ID + 可設定化 / P0-8 移除 release 日誌洩漏 ✅ 2026-08-31
+- [x] #44 判定持久化（v3→v4 migration + 測試）✅ 2026-08-31（欄位設計：獨立 `standard_judgments` JSON 欄，請劉老師 review）
+- [~] 隱私權政策草稿完成（`docs/PRIVACY_POLICY.md`）；**待辦**：法律審閱 + 發布公開 URL + Play Data Safety 表 + 內部測試軌上架（需 Play 帳號）
+- [ ] 接 Crashlytics/Sentry（需 Firebase/Sentry 帳號設定）
 - **退出條件**：兩台實機全綠、internal testing 軌可安裝、崩潰回報看得到資料
 
 ### 第 5-8 週：離線能力 v1 + 後端最小安全部署（對應 G3/G4）
-- [ ] **判定引擎 Dart 化（Tier 0）**：標準資料 JSON 化單一來源、25 條換算測試移植、離線判定取代「待判定」
+- [x] **判定引擎 Dart 化（Tier 0）** ✅ 2026-08-31：標準資料 JSON 單一來源（含後端同步守門測試）、24 條 Dart 測試移植、離線判定取代「待判定」（僅本地引擎也失敗時退回）
 - [ ] ML Kit OCR 數位錶離線讀值（Tier 1a）
-- [ ] 後端：API-Key middleware + CORS 白名單 + Secret Manager + 部署 Cloud Run（`asia-east1`）；報告狀態記憶體問題改同步回傳或落 DB
-- [ ] #47 judge-readings 輸入驗證、#45 測試假陽性修正、CI 納入全部測試檔
+- [~] 後端：API-Key middleware + CORS 白名單 + 422/500 淨化 ✅；cloudbuild.yaml 已改 Artifact Registry + Secret Manager；**待辦**：實際部署 Cloud Run（需 GCP 帳號操作）+ 報告狀態記憶體問題（`form_fill.py:50`）
+- [x] #47 judge-readings 輸入驗證（含 NaN→500 修復）、#45 測試假陽性修正（11 檔）、CI 納入全部測試檔 + analyze 轉硬性 ✅ 2026-08-31
 - [ ] PDF 報告輸出（申報場景的交付格式）
-- **退出條件**：斷網可完成「拍照→判定→匯出」全流程；後端公網部署且非匿名可用
+- **退出條件**：斷網可完成「拍照→判定→匯出」全流程（程式面已達成，待實機驗證）；後端公網部署且非匿名可用
 
 ### 第 9-12 週：試點計畫（todo.md 第二階段的落地）
 - [ ] 2-3 個場域、5-10 名巡檢員（建議組合：一家消防檢修 + 一個工廠設備課，覆蓋§4 實例 1 與 3）

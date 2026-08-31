@@ -26,3 +26,7 @@ dist-ssr
 # 本機暫存檔案存放區 — 不上 git 但保留在工作目錄
 # 用於：AI 生成圖、海報草稿、過去測試報告 PDF 等不應上版控的素材
 _local_archive/
+
+# 環境變數（legacy React 原型的 vite.config.ts 會讀根目錄 .env — 防止誤 commit API key）
+.env
+.env.local
