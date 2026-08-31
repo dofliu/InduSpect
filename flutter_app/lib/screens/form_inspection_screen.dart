@@ -22,6 +22,8 @@ import '../services/location_service.dart';
 import '../services/photo_service.dart';
 import '../services/connectivity_service.dart';
 import '../services/standards_engine.dart';
+import '../services/image_quality_service.dart';
+import '../widgets/image_quality_dialog.dart';
 import '../services/meter_ocr_service.dart';
 import '../services/ocr_reading_parser.dart';
 import '../screens/guided_capture_screen.dart';
@@ -603,6 +605,9 @@ class _FormInspectionScreenState extends State<FormInspectionScreen> {
 
     final imageBytes = await image.readAsBytes();
 
+    // 品質閘門：不合格先問要不要重拍（純本機判斷，離線同樣有效）
+    if (!await _passesQualityGate(imageBytes)) return _captureAndAnalyze(index);
+
     setState(() {
       item.photoPath = image.path;
       item.photoBytes = imageBytes;
@@ -611,6 +616,14 @@ class _FormInspectionScreenState extends State<FormInspectionScreen> {
 
     await _runAIAnalysis(item, imageBytes, image.path);
     if (item.isCompleted) await _runStandardJudgment(onlyItem: item);
+  }
+
+  /// 拍照品質閘門：回傳 false 代表使用者選擇重拍
+  Future<bool> _passesQualityGate(Uint8List bytes) async {
+    final quality = await ImageQualityService.assess(bytes);
+    if (quality.isAcceptable || !mounted) return true;
+    final retake = await showImageQualityWarning(context, quality);
+    return !retake;
   }
 
   /// 從相簿選取照片
@@ -627,6 +640,8 @@ class _FormInspectionScreenState extends State<FormInspectionScreen> {
     if (image == null) return;
 
     final imageBytes = await image.readAsBytes();
+
+    if (!await _passesQualityGate(imageBytes)) return _pickFromGallery(index);
 
     setState(() {
       item.photoPath = image.path;
@@ -645,6 +660,19 @@ class _FormInspectionScreenState extends State<FormInspectionScreen> {
     String photoPath,
   ) async {
     if (_geminiService != null) {
+      // 先確認「真的」連得到網路：廠區常見連上 AP 卻沒有 uplink，
+      // 只看介面狀態會讓每張照片都空等 Gemini 逾時（60 秒 × N 張）。
+      // 探測不通就直接走裝置端 OCR 備援。
+      if (!await ConnectivityService().checkConnection()) {
+        final ocrHandled = await _tryOcrFallback(item, photoPath);
+        if (mounted) setState(() => item.isAnalyzing = false);
+        if (!ocrHandled) {
+          _pendingAnalysisErrors.add(item.label);
+          _debouncedShowAnalysisErrors();
+        }
+        return;
+      }
+
       try {
         final analysisResult = await _geminiService!.analyzeInspectionPhoto(
           itemId: item.fieldId,

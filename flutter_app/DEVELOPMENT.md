@@ -239,6 +239,23 @@ flutter build apk --debug
 
 ## 變更紀錄
 
+### 2026-08-31（第三批：現場惡劣環境因應）
+
+- **feat(quality)**: ★ **拍照品質閘門** `image_quality_service.dart` — 純本機、零 AI、
+  零網路（Tier 0 思路）。Laplacian 響應變異數測模糊、平均亮度與過曝/過暗比例測曝光、
+  局部死白比例測錶面反光；分析前統一降採樣到 512px 讓分數可跨機型比較，
+  運算跑在 isolate 不卡 UI。不合格時彈出可執行建議（「請對焦後重拍」「開手電筒補光」
+  「側身避開反光」）並提供重拍 / 仍要使用；三個拍照入口（單張、相簿、批次引導）皆已接。
+  解決的問題：髒污反光導致 AI 讀出錯誤數值，卻被當成正常讀值送進法規判定。
+- **feat(offline)**: **連線可達性探測** — `ConnectivityService.checkConnection()` 原本
+  只看網路介面，廠區「連上 AP 但沒有 uplink / captive portal」會被誤判為 online，
+  導致每張照片空等 Gemini 60 秒逾時。改為探測 `<BACKEND_API_URL>/health`
+  （逾時 3 秒、結果快取 10 秒；介面已斷則不浪費時間探測；未設定後端則維持舊行為）。
+  `_runAIAnalysis` 在呼叫 Gemini 前先探測，不通直接走 Tier 1a OCR 備援。
+- **test**: +28 測試（品質閘門 14：以合成影像涵蓋模糊/過暗/過曝/反光/無法解碼/門檻可調/
+  跨解析度一致性；可達性探測 14：介面×可達性決策矩陣、快取 TTL、forceProbe、
+  逾時與例外處理）。Flutter 109 → **137 tests**。
+
 ### 2026-08-31（第二批：Tier 1a 離線 OCR + 後端狀態修正 + repo 清理）
 
 - **feat(offline)**: ★ **Tier 1a 裝置端 OCR 讀值備援** — AI 不可用（離線）時：
