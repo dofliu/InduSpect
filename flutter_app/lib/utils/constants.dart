@@ -2,8 +2,12 @@ import 'package:flutter/material.dart';
 
 /// 應用常量定義
 class AppConstants {
-  // Gemini API 模型名稱 (2026-03 更新至最新版)
-  static const String geminiFlashModel = 'gemini-3-flash-preview';
+  // Gemini API 模型名稱（2026-08 更新）
+  // Flash：gemini-3.6-flash 為 GA 穩定版（舊 gemini-3-flash-preview 屬 preview，隨時可能下架）
+  // Pro：Pro 系列至今最新公開 ID 仍為 gemini-3.1-pro-preview（尚無 GA 版）
+  // 此處僅為預設值 — 可由 .env 的 GEMINI_FLASH_MODEL / GEMINI_PRO_MODEL 覆寫（GeminiService.init），
+  // 使用者亦可在設定頁切換（SettingsProvider），模型下架時無需改版即可切換
+  static const String geminiFlashModel = 'gemini-3.6-flash';
   static const String geminiProModel = 'gemini-3.1-pro-preview';
 
   // 本地存儲 keys

@@ -30,9 +30,11 @@ class Settings(BaseSettings):
     enable_docs: bool = True
 
     # Gemini 模型設定（可透過環境變數覆蓋，方便模型升級）
-    gemini_flash_model: str = "gemini-3-flash-preview"    # 快速分析用
-    gemini_pro_model: str = "gemini-3.1-pro-preview"     # 高複雜度推理用
-    gemini_doc_model: str = "gemini-3-flash-preview"     # 文件分析用
+    # 2026-08 更新：Flash 改用 GA 穩定版（preview 版模型隨時可能被下架）；
+    # Pro 系列至今最新公開 ID 仍為 gemini-3.1-pro-preview（尚無 GA 版），待 GA 後以環境變數切換
+    gemini_flash_model: str = "gemini-3.6-flash"       # 快速分析用（GA）
+    gemini_pro_model: str = "gemini-3.1-pro-preview"   # 高複雜度推理用
+    gemini_doc_model: str = "gemini-3.6-flash"         # 文件分析用（GA）
 
     # Embedding 設定
     embedding_provider: str = "gemini"  # "gemini" or "openai"

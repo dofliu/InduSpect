@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../utils/constants.dart';
 
 class SettingsProvider with ChangeNotifier {
   static const String _apiKeyKey = 'gemini_api_key';
@@ -7,8 +8,15 @@ class SettingsProvider with ChangeNotifier {
   static const String _usageCountKey = 'usage_count';
   static const int _freeTrialLimit = 5;
 
+  // 已下架/過期的舊模型 ID → 自動遷移到現行預設（P0-6）
+  static const Set<String> _retiredModels = {
+    'gemini-3-flash-preview',
+    'gemini-2.0-flash',
+    'gemini-2.0-flash-exp',
+  };
+
   String? _customApiKey;
-  String _selectedModel = 'gemini-3-flash-preview'; // 預設模型 (2026-03 更新至穩定版)
+  String _selectedModel = AppConstants.geminiFlashModel; // 預設模型（見 constants.dart）
   int _usageCount = 0;
   bool _isInitialized = false;
 
@@ -34,7 +42,13 @@ class SettingsProvider with ChangeNotifier {
   Future<void> _loadSettings() async {
     final prefs = await SharedPreferences.getInstance();
     _customApiKey = prefs.getString(_apiKeyKey);
-    _selectedModel = prefs.getString(_selectedModelKey) ?? 'gemini-3-flash-preview';
+    _selectedModel =
+        prefs.getString(_selectedModelKey) ?? AppConstants.geminiFlashModel;
+    // 舊版儲存的已下架模型 → 遷移到現行預設並回寫，避免呼叫失效模型
+    if (_retiredModels.contains(_selectedModel)) {
+      _selectedModel = AppConstants.geminiFlashModel;
+      await prefs.setString(_selectedModelKey, _selectedModel);
+    }
     _usageCount = prefs.getInt(_usageCountKey) ?? 0;
     notifyListeners();
   }
@@ -97,10 +111,10 @@ class SettingsProvider with ChangeNotifier {
 
   String getModelDisplayName(String model) {
     switch (model) {
-      case 'gemini-3-flash-preview':
-        return 'Gemini 3 Flash (標準)';
+      case 'gemini-3.6-flash':
+        return 'Gemini 3.6 Flash (標準)';
       case 'gemini-3.1-pro-preview':
-        return 'Gemini 3 Pro (進階)';
+        return 'Gemini 3.1 Pro (進階)';
       default:
         return model;
     }
@@ -108,10 +122,10 @@ class SettingsProvider with ChangeNotifier {
 
   String getModelDescription(String model) {
     switch (model) {
-      case 'gemini-3-flash-preview':
-        return '快速回應，平衡效能與成本\n費用：\$0.50/\$3 (輸入/輸出)';
+      case 'gemini-3.6-flash':
+        return '快速回應，平衡效能與成本（GA 穩定版）\n費用依 Google 官方定價';
       case 'gemini-3.1-pro-preview':
-        return '最強分析能力，適合複雜檢測\n費用：\$2/\$12 (輸入/輸出)';
+        return '最強分析能力，適合複雜檢測\n費用依 Google 官方定價';
       default:
         return '';
     }
@@ -120,18 +134,18 @@ class SettingsProvider with ChangeNotifier {
   List<Map<String, String>> getAvailableModels() {
     return [
       {
-        'id': 'gemini-3-flash-preview',
-        'name': 'Gemini 3 Flash',
+        'id': 'gemini-3.6-flash',
+        'name': 'Gemini 3.6 Flash',
         'badge': '推薦',
-        'description': '快速回應，平衡效能與成本',
-        'cost': '\$0.50/\$3',
+        'description': '快速回應，平衡效能與成本（GA 穩定版）',
+        'cost': '依官方定價',
       },
       {
         'id': 'gemini-3.1-pro-preview',
-        'name': 'Gemini 3 Pro',
+        'name': 'Gemini 3.1 Pro',
         'badge': '進階',
         'description': '最強分析能力，適合複雜設備檢測',
-        'cost': '\$2/\$12',
+        'cost': '依官方定價',
       },
     ];
   }
