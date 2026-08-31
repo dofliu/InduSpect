@@ -1,0 +1,397 @@
+<!doctype html>
+<html lang="zh-TW">
+<head>
+<meta charset="utf-8">
+<title>InduSpect AI — 專案介紹</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@600;700;900&family=Noto+Sans+TC:wght@400;500;700;900&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+:root{
+  --ground:#F4F6F5;
+  --surface:#FFFFFF;
+  --ink:#0F1C1B;
+  --ink-soft:#3D4B49;
+  --muted:#6B7977;
+  --line:#D5DEDC;
+  --teal:#0E7C74;
+  --teal-deep:#0A5C56;
+  --teal-soft:#DDEEEB;
+  --pass:#2E7D46;
+  --warn:#A96400;
+  --fail:#B3362B;
+  --fail-soft:#FAE7E4;
+  --pass-soft:#E2F0E7;
+  --serif:"Noto Serif TC","WenQuanYi Zen Hei",serif;
+  --sans:"Noto Sans TC","WenQuanYi Zen Hei",sans-serif;
+  --mono:"IBM Plex Mono",monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#222;font-family:var(--sans);-webkit-font-smoothing:antialiased}
+
+.slide{
+  width:1920px;height:1080px;position:relative;overflow:hidden;
+  background:var(--ground);color:var(--ink);
+  padding:96px 120px;display:flex;flex-direction:column;
+}
+.slide.dark{background:var(--ink);color:#EAF1F0}
+.slide.dark .eyebrow{color:#6FD6C9}
+.slide.dark h2{color:#FFFFFF}
+.slide.dark .muted{color:#9DAFAC}
+.slide.dark .card{background:#182A28;border-color:#2A3E3B}
+
+/* 頂部：眉標 + 進度 */
+.eyebrow{
+  font-family:var(--mono);font-size:26px;letter-spacing:.22em;text-transform:uppercase;
+  color:var(--teal-deep);margin-bottom:26px;font-weight:600;
+}
+h1{font-family:var(--serif);font-weight:900;font-size:170px;line-height:1.02;letter-spacing:-.02em}
+h2{font-family:var(--serif);font-weight:700;font-size:82px;line-height:1.16;margin-bottom:14px;letter-spacing:-.01em}
+h2.sm{font-size:68px}
+.lede{font-size:38px;line-height:1.55;color:var(--ink-soft);max-width:1180px}
+.muted{color:var(--muted)}
+.progress{position:absolute;left:0;bottom:0;height:8px;background:var(--teal);}
+.pagenum{position:absolute;left:120px;bottom:46px;font-family:var(--mono);font-size:24px;color:var(--muted)}
+.slide.dark .pagenum{color:#7C8D8B}
+
+/* 兩欄：文字 + 手機截圖 */
+.split{display:flex;gap:88px;flex:1;align-items:center}
+.split .col{flex:1;min-width:0}
+.phone{
+  width:380px;flex:0 0 380px;border-radius:34px;overflow:hidden;
+  border:11px solid #1A2A28;background:#1A2A28;
+  box-shadow:0 40px 90px rgba(15,28,27,.28);
+  max-height:846px;
+}
+.phone img{display:block;width:100%;height:auto}
+
+/* 條列 */
+ul.big{list-style:none;display:flex;flex-direction:column;gap:26px;margin-top:40px}
+ul.big li{font-size:36px;line-height:1.45;padding-left:52px;position:relative;color:var(--ink-soft)}
+ul.big li::before{
+  content:"";position:absolute;left:0;top:16px;width:22px;height:22px;border-radius:6px;
+  background:var(--teal);
+}
+ul.big li b{color:var(--ink);font-weight:700}
+.slide.dark ul.big li{color:#C6D6D3}
+.slide.dark ul.big li b{color:#fff}
+
+/* 編號步驟（真實流程序列） */
+.steps{display:flex;flex-direction:column;gap:20px;margin-top:34px}
+.step{display:flex;gap:30px;align-items:baseline}
+.step .n{
+  font-family:var(--mono);font-size:30px;font-weight:600;color:var(--teal);
+  flex:0 0 66px;border-bottom:3px solid var(--teal-soft);padding-bottom:6px
+}
+.step .t{font-size:34px;line-height:1.4;color:var(--ink-soft)}
+.step .t b{color:var(--ink)}
+
+/* 資料卡 / 數字 */
+.grid{display:grid;gap:28px;margin-top:44px}
+.g4{grid-template-columns:repeat(4,1fr)}
+.g3{grid-template-columns:repeat(3,1fr)}
+.g2{grid-template-columns:repeat(2,1fr)}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:34px 36px}
+.card .k{font-family:var(--mono);font-size:22px;letter-spacing:.14em;text-transform:uppercase;color:var(--teal-deep);margin-bottom:14px}
+.card h3{font-family:var(--serif);font-size:40px;font-weight:700;margin-bottom:12px}
+.card p{font-size:28px;line-height:1.5;color:var(--muted)}
+.stat .n{font-family:var(--mono);font-size:78px;font-weight:600;line-height:1;font-variant-numeric:tabular-nums}
+.stat .l{font-size:26px;color:var(--muted);margin-top:14px}
+.stat .n.ok{color:var(--pass)}
+.stat .n.ac{color:var(--teal)}
+
+/* 判定案例面板 */
+.verdict{margin-top:46px;display:flex;flex-direction:column;gap:22px;max-width:1500px}
+.vrow{display:flex;align-items:center;gap:28px;padding:30px 38px;border-radius:16px;font-size:36px;line-height:1.3}
+.vrow .tag{font-family:var(--mono);font-size:26px;font-weight:600;padding:8px 18px;border-radius:8px;flex:0 0 auto}
+.vbad{background:var(--fail-soft);border:2px solid #E6A79E}
+.vbad .tag{background:var(--fail);color:#fff}
+.vgood{background:var(--pass-soft);border:2px solid #A6CDB4}
+.vgood .tag{background:var(--pass);color:#fff}
+.vhead{font-family:var(--mono);font-size:34px;color:var(--ink);background:#E9EEED;border:2px solid var(--line)}
+.vrow .mono{font-family:var(--mono)}
+.basis{margin-top:30px;font-size:30px;color:var(--muted)}
+.basis b{color:var(--teal-deep);font-family:var(--mono);font-weight:600}
+
+/* Tier 架構 */
+.tiers{display:flex;flex-direction:column;gap:20px;margin-top:40px}
+.tier{display:flex;align-items:stretch;border-radius:16px;overflow:hidden;border:1px solid #2A3E3B}
+.tier .lab{
+  flex:0 0 330px;background:#16302D;padding:28px 32px;font-family:var(--mono);
+  display:flex;flex-direction:column;justify-content:center;gap:8px
+}
+.tier .lab b{font-size:34px;color:#6FD6C9;font-weight:600}
+.tier .lab span{font-size:23px;color:#8CA5A1}
+.tier .body{flex:1;background:#182A28;padding:28px 36px;display:flex;flex-direction:column;justify-content:center;gap:8px}
+.tier .body b{font-size:34px;color:#fff;font-weight:700}
+.tier .body span{font-size:26px;color:#A9BEBB}
+.tier.hot{border-color:var(--teal);box-shadow:inset 6px 0 0 var(--teal)}
+
+/* 終端面板（真實輸出） */
+.term{
+  margin-top:38px;background:#0C1817;border:1px solid #24403C;border-radius:16px;
+  padding:32px 36px;font-family:var(--mono);font-size:25px;line-height:1.62;color:#CFE3DF;
+  white-space:pre-wrap;
+}
+.term .ok{color:#6FD6C9}
+.term .dim{color:#6E8683}
+
+/* 比較表 */
+table{width:100%;border-collapse:collapse;margin-top:40px;font-size:31px}
+th{font-family:var(--mono);font-size:23px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);
+   text-align:left;padding:18px 24px;border-bottom:3px solid var(--line)}
+td{padding:24px;border-bottom:1px solid var(--line);color:var(--ink-soft);vertical-align:top}
+td.num{font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+tr.us td{background:var(--teal-soft);color:var(--ink);font-weight:500}
+tr.us td:first-child{font-weight:700}
+
+/* 標題頁 */
+.title-wrap{flex:1;display:flex;flex-direction:column;justify-content:center;gap:36px}
+.title-tag{
+  display:inline-flex;align-items:center;gap:20px;font-size:40px;color:var(--teal-deep);
+  font-family:var(--mono);letter-spacing:.04em
+}
+.rule{width:180px;height:6px;background:var(--teal);border-radius:3px}
+.title-sub{font-family:var(--serif);font-size:64px;font-weight:700;color:var(--ink)}
+.title-line{font-size:42px;color:var(--ink-soft);line-height:1.5}
+.credit{font-family:var(--mono);font-size:26px;color:var(--muted);letter-spacing:.06em}
+
+.foot{margin-top:auto;padding-top:36px;font-size:27px;color:var(--muted);border-top:1px solid var(--line)}
+.slide.dark .foot{border-color:#2A3E3B;color:#8CA5A1}
+.kbd{font-family:var(--mono);background:#E9EEED;border:1px solid var(--line);border-radius:6px;padding:3px 12px;font-size:.86em}
+.slide.dark .kbd{background:#16302D;border-color:#2A3E3B;color:#BFD5D1}
+</style>
+</head>
+<body>
+
+<!-- ═══════════ S1 標題 (12s) ═══════════ -->
+<section class="slide" id="s1">
+  <div class="title-wrap">
+    <div class="title-tag">產品介紹 · 2026.08 <span class="rule"></span></div>
+    <h1>InduSpect AI</h1>
+    <div class="title-sub">工業設備智慧巡檢系統</div>
+    <div class="title-line">拍照 → AI 讀值 → 台灣法規自動判定 → 回填你原本的定檢表</div>
+  </div>
+  <div class="foot">doflab · 國立勤益科技大學 劉瑞弘研究團隊　|　Flutter + FastAPI + Gemini · 離線優先架構</div>
+  <div class="progress" style="width:9%"></div>
+</section>
+
+<!-- ═══════════ S2 問題 (18s) ═══════════ -->
+<section class="slide dark" id="s2">
+  <div class="eyebrow">問題</div>
+  <h2>紙本定檢表，吃掉了師傅的時間</h2>
+  <div class="lede muted">法定定期檢查每年數十萬場次，流程幾乎沒有數位化。</div>
+  <div class="grid g2">
+    <div class="card">
+      <div class="k">現場</div>
+      <h3>抄兩次、走兩趟</h3>
+      <p>現場抄錶 → 回辦公室謄寫申報表；漏抄一項就得重回現場。</p>
+    </div>
+    <div class="card">
+      <div class="k">判定</div>
+      <h3>「這樣算合格嗎？」</h3>
+      <p>法規門檻與條文依據靠老師傅記憶；新人無從查證。</p>
+    </div>
+    <div class="card">
+      <div class="k">單位</div>
+      <h3>500 kΩ 還是 0.5 MΩ？</h3>
+      <p>單位換算錯一個數量級，安全判定就翻轉。</p>
+    </div>
+    <div class="card">
+      <div class="k">交期</div>
+      <h3>旺季人力吃緊</h3>
+      <p>單場所文書作業 40–60 分鐘，全都壓在申報季。</p>
+    </div>
+  </div>
+  <div class="progress" style="width:18%"></div>
+  <div class="pagenum">02</div>
+</section>
+
+<!-- ═══════════ S3 解法 + 主頁 (18s) ═══════════ -->
+<section class="slide" id="s3">
+  <div class="eyebrow">解法</div>
+  <div class="split">
+    <div class="col">
+      <h2>一支 App 走完全程<br>交付物仍是客戶原本的檔案</h2>
+      <ul class="big">
+        <li><b>兩個入口就好</b>：開始檢測、歷史紀錄——現場不需要教學</li>
+        <li><b>離線優先</b>：拍照、判定、暫存全程可斷網作業</li>
+        <li><b>GPS + 時間戳</b>：自動附上到場稽核軌跡</li>
+        <li><b>零導入成本</b>：不改客戶的表單習慣，回填原始 Excel / Word</li>
+      </ul>
+    </div>
+    <div class="phone"><img src="../screenshots/01-dashboard.png" alt="InduSpect 主頁"></div>
+  </div>
+  <div class="progress" style="width:27%"></div>
+  <div class="pagenum">03</div>
+</section>
+
+<!-- ═══════════ S4 核心流程 (20s) ═══════════ -->
+<section class="slide" id="s4">
+  <div class="eyebrow">核心流程</div>
+  <div class="split">
+    <div class="col">
+      <h2 class="sm">一鍵自動檢測：五個步驟</h2>
+      <div class="steps">
+        <div class="step"><div class="n">01</div><div class="t"><b>上傳定檢表</b><br><span class="muted">Excel / Word → AI 解析欄位結構與位置</span></div></div>
+        <div class="step"><div class="n">02</div><div class="t"><b>引導拍照</b><br><span class="muted">依欄位型別給專業拍攝提示</span></div></div>
+        <div class="step"><div class="n">03</div><div class="t"><b>批次 AI 分析</b><br><span class="muted">併發上限 3，即時進度覆蓋層</span></div></div>
+        <div class="step"><div class="n">04</div><div class="t"><b>法規判定 + 自動回填</b><br><span class="muted">合格 / 不合格 / 警告，寫回原始格式</span></div></div>
+        <div class="step"><div class="n">05</div><div class="t"><b>AI 摘要報告 → 分享</b><br><span class="muted">離線時自動排入佇列，恢復網路即送出</span></div></div>
+      </div>
+    </div>
+    <div class="phone"><img src="../screenshots/03-guide.png" alt="App 內建使用說明：開始檢測五步驟"></div>
+  </div>
+  <div class="progress" style="width:38%"></div>
+  <div class="pagenum">04</div>
+</section>
+
+<!-- ═══════════ S5 法規判定 (20s) ═══════════ -->
+<section class="slide" id="s5">
+  <div class="eyebrow">差異化 ① 法規判定</div>
+  <h2>56 條台灣法規標準，自動判定合格與否</h2>
+  <div class="lede muted">判定前先把讀值換算成法規單位——這是安全等級的防呆。</div>
+  <div class="verdict">
+    <div class="vrow vhead">
+      <span class="tag" style="background:var(--ink);color:#fff">實例</span>
+      絕緣電阻讀值 <b class="mono">500 kΩ</b>　·　法規標準 <b class="mono">≥ 1.0 MΩ</b>
+    </div>
+    <div class="vrow vbad">
+      <span class="tag">未換算</span>
+      <span><span class="mono">500 ≥ 1.0</span> → 誤判「<b>合格</b>」　<span class="muted">← 差一個數量級，安全隱患直接放行</span></span>
+    </div>
+    <div class="vrow vgood">
+      <span class="tag">換算後</span>
+      <span><span class="mono">500 kΩ = 0.5 MΩ</span>，<span class="mono">0.5 &lt; 1.0</span> → 正確判「<b>不合格</b>」</span>
+    </div>
+  </div>
+  <div class="basis">法規依據自動附上：<b>屋內線路裝置規則 第59條</b>　·　覆蓋電氣 / 消防 / 機械 / 壓力四大類</div>
+  <div class="progress" style="width:49%"></div>
+  <div class="pagenum">05</div>
+</section>
+
+<!-- ═══════════ S6 離線架構 (18s) ═══════════ -->
+<section class="slide dark" id="s6">
+  <div class="eyebrow">差異化 ② 離線能力</div>
+  <h2>斷網也能判定——三層 AI 架構</h2>
+  <div class="tiers">
+    <div class="tier hot">
+      <div class="lab"><b>Tier 0</b><span>離線 · 全機型</span></div>
+      <div class="body"><b>法規判定引擎（純規則，零 AI）</b><span>56 條標準內嵌 App；單位換算 + 條文引用。判定零延遲、零 token 成本</span></div>
+    </div>
+    <div class="tier">
+      <div class="lab"><b>Tier 1a</b><span>離線 · 全機型</span></div>
+      <div class="body"><b>裝置端 OCR 讀值</b><span>ML Kit 離線辨識數位錶與銘牌 → 直接進 Tier 0 判定</span></div>
+    </div>
+    <div class="tier">
+      <div class="lab"><b>Tier 2</b><span>聯網</span></div>
+      <div class="body"><b>雲端 Gemini 精判 + 摘要報告</b><span>指針錶與複雜異常；恢復網路後自動覆核離線初判</span></div>
+    </div>
+  </div>
+  <div class="foot">標準資料單一來源：後端 Python 為編輯來源 → 匯出 JSON 內嵌 App，CI 守門確保兩端永不漂移</div>
+  <div class="progress" style="width:59%"></div>
+  <div class="pagenum">06</div>
+</section>
+
+<!-- ═══════════ S7 工程韌性 + 設定頁 (16s) ═══════════ -->
+<section class="slide" id="s7">
+  <div class="eyebrow">工程韌性</div>
+  <div class="split">
+    <div class="col">
+      <h2 class="sm">模型可換，金鑰在你手上</h2>
+      <ul class="big">
+        <li><b>GA 穩定版模型</b>：preview 版模型下架不會讓 App 全面故障</li>
+        <li><b>三層覆寫</b>：參數 &gt; <span class="kbd">.env</span> &gt; 內建預設，換模型免改版</li>
+        <li><b>自帶 API Key</b>：資料與費用都在使用者自己的帳號</li>
+        <li><b>資安敏感場域</b>：後端可整套部署到廠內網（禁網亦可用）</li>
+      </ul>
+    </div>
+    <div class="phone"><img src="../screenshots/02-settings.png" alt="設定：模型選擇"></div>
+  </div>
+  <div class="progress" style="width:70%"></div>
+  <div class="pagenum">07</div>
+</section>
+
+<!-- ═══════════ S8 工程品質 (18s) ═══════════ -->
+<section class="slide dark" id="s8">
+  <div class="eyebrow">工程品質</div>
+  <h2>281 個自動化測試，CI 全量把關</h2>
+  <div class="grid g4">
+    <div class="card stat"><div class="n ok">172</div><div class="l">後端 pytest（全套進 CI）</div></div>
+    <div class="card stat"><div class="n ok">109</div><div class="l">Flutter 測試</div></div>
+    <div class="card stat"><div class="n ac">0</div><div class="l">analyzer warning</div></div>
+    <div class="card stat"><div class="n ac">56</div><div class="l">法規標準（單一來源守門）</div></div>
+  </div>
+  <div class="term" id="termbox">$ flutter test test/standards_engine_test.dart
+<span class="dim">+16:</span> autoJudge 絕緣電阻 0.5 MΩ → fail
+<span class="dim">+17:</span> autoJudge 絕緣電阻 500 kΩ → 換算 0.5 MΩ → fail（單位防呆）
+<span class="dim">+19:</span> autoJudge 接地電阻 85 Ω → warning（lte 100 但超過警告閾值 80）
+<span class="dim">+22:</span> judgeReadingsLocally 頂層合約 + 同序 + summary 計數
+<span class="ok">+24: All tests passed!</span>
+</div>
+  <div class="foot">Release 正式簽署 + R8　·　後端 X-API-Key 認證 + CORS 白名單　·　錯誤訊息淨化　·　判定結果寫入 SQLite（稽核留存）　·　隱私政策就緒</div>
+  <div class="progress" style="width:80%"></div>
+  <div class="pagenum">08</div>
+</section>
+
+<!-- ═══════════ S9 應用場景 (18s) ═══════════ -->
+<section class="slide" id="s9">
+  <div class="eyebrow">應用場景</div>
+  <h2>法規驅動的四類客戶</h2>
+  <div class="grid g2">
+    <div class="card">
+      <div class="k">消防法 第 9 條</div>
+      <h3>消防設備師 / 士事務所</h3>
+      <p>半年一次檢修申報。滅火器壓力上下限判定已內建；GPS 紀錄回應「未到場代簽」稽查風險。</p>
+    </div>
+    <div class="card">
+      <div class="k">電業法 · 屋內線路裝置規則</div>
+      <h3>電機技師事務所</h3>
+      <p>高壓用電場所年度檢驗。絕緣電阻、接地電阻、漏電流的單位換算防呆正為此而生。</p>
+    </div>
+    <div class="card">
+      <div class="k">職安法 · ISO 45001</div>
+      <h3>工廠設備課</h3>
+      <p>月巡檢自主檢查。批次拍照 + 趨勢紀錄，照片與判定形成可稽核軌跡。</p>
+    </div>
+    <div class="card">
+      <div class="k">鍋爐及壓力容器安全規則</div>
+      <h3>代檢機構</h3>
+      <p>壓力類 11 條標準。廠區常禁止照片上雲 → 正是離線與地端部署的目標客群。</p>
+    </div>
+  </div>
+  <div class="progress" style="width:90%"></div>
+  <div class="pagenum">09</div>
+</section>
+
+<!-- ═══════════ S10 市場定位 (14s) ═══════════ -->
+<section class="slide" id="s10">
+  <div class="eyebrow">市場定位</div>
+  <h2 class="sm">別人有的我們有，我們有的別人沒有</h2>
+  <table>
+    <tr><th>產品</th><th>價格</th><th>缺少什麼</th></tr>
+    <tr><td>SafetyCulture (iAuditor)</td><td class="num">US$29 / 人 / 月</td><td>無台灣法規判定、無原格式回填，AI 僅做報告摘要</td></tr>
+    <tr><td>MaintainX</td><td class="num">US$16 / 人 / 月</td><td>CMMS 導向，同上</td></tr>
+    <tr><td>GoAudits / Lumiform</td><td class="num">US$10 / 人 / 月</td><td>表單數位化為主，AI 讀值能力弱</td></tr>
+    <tr class="us"><td>InduSpect AI</td><td class="num">NT$300–600 / 人 / 月</td><td>台灣法規自動判定 + 條文引用　·　回填客戶原本的檔案　·　離線優先</td></tr>
+  </table>
+  <div class="basis">或按份計費 NT$30–50 / 份報告，適配申報型事務所的專案性質</div>
+  <div class="progress" style="width:96%"></div>
+  <div class="pagenum">10</div>
+</section>
+
+<!-- ═══════════ S11 結尾 (8s) ═══════════ -->
+<section class="slide dark" id="s11">
+  <div class="eyebrow">下一步</div>
+  <div class="title-wrap" style="gap:30px">
+    <h2>剩最後一哩：實機驗證 → Play 封測</h2>
+    <ul class="big" style="margin-top:8px">
+      <li>實機端到端驗證（含斷網走本地判定與 OCR）</li>
+      <li>正式簽署金鑰 · Play 內部測試軌 · Cloud Run 部署</li>
+      <li>2–3 場域試點：量測時間節省與 AI 讀值免修改率</li>
+    </ul>
+  </div>
+  <div class="foot" style="font-size:30px">github.com/dofliu/InduSpect　·　產品化評估與 90 天計畫見 LAUNCH_PLAN.md</div>
+  <div class="progress" style="width:100%"></div>
+</section>
+
+</body>
+</html>

@@ -43,8 +43,11 @@ lib/
 │   ├── gemini_service.dart           # Gemini AI 分析 + 摘要報告
 │   ├── location_service.dart         # GPS 一次性定位 + 反向地理編碼
 │   ├── standards_engine.dart         # ★ Tier 0 離線法規判定引擎（56 條標準內嵌）
+│   ├── ocr_reading_parser.dart       # Tier 1a 離線 OCR 讀值解析
+│   ├── meter_ocr_service.dart        # ML Kit OCR adapter（條件導入）
+│   ├── image_quality_service.dart    # ★ 拍照品質閘門（模糊/曝光/反光，純本機）
 │   ├── share_queue_service.dart      # 離線分享佇列（上線自動處理）
-│   ├── connectivity_service.dart     # 網路連線狀態監聽
+│   ├── connectivity_service.dart     # 連線監聽 + /health 可達性探測
 │   ├── file_save_service.dart        # 平台適應的檔案分享
 │   ├── photo_service.dart            # 照片命名與管理
 │   └── backend_api_service.dart      # 後端 API（表單回填）
@@ -147,12 +150,14 @@ flutter test
 flutter test test/form_inspection_record_test.dart
 ```
 
-### 測試清單（109 tests）
+### 測試清單（137 tests）
 
 | 檔案 | 數量 | 覆蓋範圍 |
 |------|------|---------|
 | `standards_engine_test.dart` | 24 | ★ Tier 0 離線判定引擎：單位正規化/換算、標準匹配、autoJudge、批次判定合約 |
 | `ocr_reading_parser_test.dart` | 21 | ★ Tier 1a OCR 讀值解析：誤讀修正、雜訊過濾、最佳讀值優先序 |
+| `image_quality_service_test.dart` | 14 | ★ 拍照品質閘門：模糊/過暗/過曝/反光/無法解碼、門檻可調、跨解析度一致性（合成影像） |
+| `connectivity_probe_test.dart` | 14 | ★ 可達性探測：介面×可達性決策矩陣、快取 TTL、forceProbe、逾時與例外 |
 | `inspection_item_state_test.dart` | 22 | displayValue/verdict 邏輯（含法規標準判定優先序）、controller 生命週期 |
 | `form_inspection_record_test.dart` | 21 | Model: toMap/fromMap 往返、null 處理、舊格式相容、standardJudgments 持久化、copyWith 深拷貝 |
 | `database_service_test.dart` | 12 | DB CRUD: insert/update/delete、排序、limit、搜尋、GPS 持久化、UNIQUE 約束 |
@@ -233,11 +238,29 @@ flutter build apk --debug
 2. **上架準備**：產生 upload keystore（見 ANDROID_DEPLOYMENT.md）、隱私政策發布到
    公開 URL（docs/PRIVACY_POLICY.md）、Play 內部測試軌
 3. **後端部署**：Cloud Run + Secret Manager（cloudbuild.yaml 已備妥前置步驟註解）
-4. **Tier 1a**：ML Kit OCR 數位錶離線讀值；**試點計畫**：2-3 場域量測指標
+4. **試點計畫**：2-3 場域量測指標（時間節省、AI 讀值免修改率）；
+   品質閘門門檻需以現場實拍照片校準（見 `image_quality_service.dart` 註記）
 
 ---
 
 ## 變更紀錄
+
+### 2026-08-31（第三批：現場惡劣環境因應）
+
+- **feat(quality)**: ★ **拍照品質閘門** `image_quality_service.dart` — 純本機、零 AI、
+  零網路（Tier 0 思路）。Laplacian 響應變異數測模糊、平均亮度與過曝/過暗比例測曝光、
+  局部死白比例測錶面反光；分析前統一降採樣到 512px 讓分數可跨機型比較，
+  運算跑在 isolate 不卡 UI。不合格時彈出可執行建議（「請對焦後重拍」「開手電筒補光」
+  「側身避開反光」）並提供重拍 / 仍要使用；三個拍照入口（單張、相簿、批次引導）皆已接。
+  解決的問題：髒污反光導致 AI 讀出錯誤數值，卻被當成正常讀值送進法規判定。
+- **feat(offline)**: **連線可達性探測** — `ConnectivityService.checkConnection()` 原本
+  只看網路介面，廠區「連上 AP 但沒有 uplink / captive portal」會被誤判為 online，
+  導致每張照片空等 Gemini 60 秒逾時。改為探測 `<BACKEND_API_URL>/health`
+  （逾時 3 秒、結果快取 10 秒；介面已斷則不浪費時間探測；未設定後端則維持舊行為）。
+  `_runAIAnalysis` 在呼叫 Gemini 前先探測，不通直接走 Tier 1a OCR 備援。
+- **test**: +28 測試（品質閘門 14：以合成影像涵蓋模糊/過暗/過曝/反光/無法解碼/門檻可調/
+  跨解析度一致性；可達性探測 14：介面×可達性決策矩陣、快取 TTL、forceProbe、
+  逾時與例外處理）。Flutter 109 → **137 tests**。
 
 ### 2026-08-31（第二批：Tier 1a 離線 OCR + 後端狀態修正 + repo 清理）
 

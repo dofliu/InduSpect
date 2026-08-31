@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import '../utils/constants.dart';
 import '../services/photo_service.dart';
+import '../services/image_quality_service.dart';
+import '../widgets/image_quality_dialog.dart';
 import '../widgets/common/cross_platform_image.dart';
 
 /// 引導式拍照畫面
@@ -155,10 +157,32 @@ class _GuidedCaptureScreenState extends State<GuidedCaptureScreen> {
 
     if (image == null) return;
 
+    final Uint8List bytes;
+    try {
+      bytes = await image.readAsBytes();
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('照片讀取失敗: $e'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+      return;
+    }
+
+    // 品質閘門：現場光線不足/手震/錶面反光時先擋下，避免 AI 讀出錯誤數值
+    // 後仍被當成正常讀值送去法規判定（純本機運算，離線同樣有效）
+    final quality = await ImageQualityService.assess(bytes);
+    if (!quality.isAcceptable && mounted) {
+      final retake = await showImageQualityWarning(context, quality);
+      if (retake) return _capturePhoto(task);
+    }
+
     setState(() => _isProcessing = true);
 
     try {
-      final Uint8List bytes = await image.readAsBytes();
       final taskId = task['task_id'] ?? '';
       final displayName = task['display_name'] ?? task['field_name'] ?? '';
       final sequence = task['sequence'] ?? (_currentIndex + 1);

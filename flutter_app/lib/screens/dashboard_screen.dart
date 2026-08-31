@@ -192,7 +192,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   Widget _buildMainActions(BuildContext context) {
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      // stretch：卡片撐滿可用寬度。用 start 時卡片會依內容（副標題長度）縮成
+      // 不同寬度，與下方「全寬突出」的設計不符；標題 Text 預設左對齊不受影響。
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Text(
           '選擇檢測模式',
