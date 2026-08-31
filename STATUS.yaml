@@ -16,4 +16,4 @@ outputs:
   - app
 description: "Flutter mobile app for AI-powered industrial inspection with offline-first architecture, on-device regulation judgment engine (Tier 0), form auto-fill pipeline, and GPS-tagged history"
 description_zh: "利用多模態 AI 和 Flutter 行動應用，實現工業設備的智慧巡檢。核心功能為完整檢測 pipeline（表單上傳 → 引導拍照 → AI 分析 → 法規判定（離線亦可）→ 自動回填 → 摘要報告 → 離線分享）及 GPS 定位歷史紀錄。"
-key_metrics: "2 core features, 88 Flutter tests, 167 backend pytest (full suite in CI), 56 regulation standards single-sourced to on-device Dart judgment engine (Tier 0 offline), release signing + backend auth + privacy policy in place, 3 open issues (#43 device-E2E remainder, #44 done, #45/#47 done)"
+key_metrics: "2 core features, 109 Flutter tests, 172 backend pytest (full suite in CI), 56 regulation standards single-sourced to on-device Dart judgment engine (Tier 0) + on-device OCR reading fallback (Tier 1a), release signing + backend auth + privacy policy in place"

@@ -147,11 +147,12 @@ flutter test
 flutter test test/form_inspection_record_test.dart
 ```
 
-### 測試清單（88 tests）
+### 測試清單（109 tests）
 
 | 檔案 | 數量 | 覆蓋範圍 |
 |------|------|---------|
 | `standards_engine_test.dart` | 24 | ★ Tier 0 離線判定引擎：單位正規化/換算、標準匹配、autoJudge、批次判定合約 |
+| `ocr_reading_parser_test.dart` | 21 | ★ Tier 1a OCR 讀值解析：誤讀修正、雜訊過濾、最佳讀值優先序 |
 | `inspection_item_state_test.dart` | 22 | displayValue/verdict 邏輯（含法規標準判定優先序）、controller 生命週期 |
 | `form_inspection_record_test.dart` | 21 | Model: toMap/fromMap 往返、null 處理、舊格式相容、standardJudgments 持久化、copyWith 深拷貝 |
 | `database_service_test.dart` | 12 | DB CRUD: insert/update/delete、排序、limit、搜尋、GPS 持久化、UNIQUE 約束 |
@@ -237,6 +238,20 @@ flutter build apk --debug
 ---
 
 ## 變更紀錄
+
+### 2026-08-31（第二批：Tier 1a 離線 OCR + 後端狀態修正 + repo 清理）
+
+- **feat(offline)**: ★ **Tier 1a 裝置端 OCR 讀值備援** — AI 不可用（離線）時：
+  拍照 → ML Kit 離線 OCR（latin 模型）→ `OcrReadingParser` 解析讀值（全形
+  正規化、MQ→MΩ 誤讀修正、年份/型號/日期雜訊過濾、期望單位優先）→
+  合成 `source: ocr` 的 aiResult → Tier 0 本地判定 → 持久化。
+  數位錶在全斷網環境有端到端流程。OCR 品質需實機驗證（G1 追加項）。
+- **fix(backend)**: reports 舊版流程修正 — `FormFillService._templates` 原為
+  instance attribute 且 service 每請求 new 一個 → 模板活不過單一請求；
+  改 class-level + `/generate` 改同步回傳 + Template not found 回 404
+- **chore**: legacy React 原型移入 `legacy/`、後端維運腳本移入
+  `backend/scripts/dev/`、刪除 scratch 測試腳本與輸出
+- **test**: Flutter 88 → **109 tests**（+21 OCR 解析器）；後端 167 → **172 pytest**（+5 reports 狀態）
 
 ### 2026-08-31（產品化 P0 批次 + Tier 0 離線判定，對應 LAUNCH_PLAN.md）
 

@@ -38,6 +38,18 @@ logger = logging.getLogger(__name__)
 class FormFillService:
     """表單自動填入服務 — Orchestrator"""
 
+    # 模板/報告狀態的行程內共享存放區（class-level）。
+    #
+    # 原本是 instance attribute，而各 endpoint 每個請求都 new 一個
+    # FormFillService → 存進去的模板活不過單一請求，/reports 舊版流程
+    # 跨請求必然 Template not found（LAUNCH_PLAN P1 發現）。
+    # 改為 class-level 後單一實例（行程）內跨請求可用。
+    #
+    # 已知限制：多實例（Cloud Run max-instances>1）或重啟後仍會遺失 —
+    # 真正的多實例支援需落 DB/GCS（核心 pipeline 不受影響：
+    # /api/auto-fill/* 為無狀態設計，檔案隨請求帶入）。
+    _templates: dict[str, dict] = {}
+
     def __init__(self):
         # Sub-services
         self._photo_task_service = PhotoTaskService()
@@ -46,9 +58,6 @@ class FormFillService:
         self._checkbox_service = CheckboxService()
         self._photo_service = PhotoProcessingService()
         self._judgment_service = JudgmentService()
-
-        # TODO: 正式環境改用資料庫
-        self._templates: dict[str, dict] = {}
 
     # ================================================================
     # 拍照任務清單產生（Sprint 1）

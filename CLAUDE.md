@@ -20,6 +20,7 @@
 | `flutter_app/lib/services/location_service.dart` | GPS 定位 |
 | `flutter_app/lib/services/share_queue_service.dart` | 離線分享佇列 |
 | `flutter_app/lib/services/standards_engine.dart` | ★ Tier 0 離線法規判定引擎 |
+| `flutter_app/lib/services/ocr_reading_parser.dart` | Tier 1a 離線 OCR 讀值解析 |
 | `flutter_app/DEVELOPMENT.md` | 完整開發文件 |
 | `LAUNCH_PLAN.md` | 產品化評估與 90 天上線行動計畫 |
 
@@ -32,10 +33,10 @@
 
 ## 測試
 ```bash
-flutter test          # 全部 88 tests（widget_test 已修復，不再排除）
-cd backend && GEMINI_API_KEY=ci-fake-key pytest tests/ --asyncio-mode=auto   # 167 pytest
+flutter test          # 全部 109 tests（widget_test 已修復，不再排除）
+cd backend && GEMINI_API_KEY=ci-fake-key pytest tests/ --asyncio-mode=auto   # 172 pytest
 ```
-Flutter 88 tests / 後端 167 pytest 全綠（2026-08-31 實測）。DB 測試使用 `sqflite_common_ffi` in-memory。標準資料為單一來源：改 `backend/app/data/inspection_standards.py` 後必須跑 `python backend/scripts/export_standards.py` 重新匯出 JSON（有同步守門測試）。
+Flutter 109 tests / 後端 172 pytest 全綠（2026-08-31 實測）。DB 測試使用 `sqflite_common_ffi` in-memory。標準資料為單一來源：改 `backend/app/data/inspection_standards.py` 後必須跑 `python backend/scripts/export_standards.py` 重新匯出 JSON（有同步守門測試）。
 
 ## 已知問題追蹤
 - GitHub Issues #14-#19 已全數修復並關閉（2026-04-16）

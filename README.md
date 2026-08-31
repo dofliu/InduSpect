@@ -112,11 +112,11 @@ InduSpect AI 的智慧能力主要基於以下幾個核心技術概念：
 **詳細文檔**: [Flutter App README](flutter_app/README.md)
 **功能規劃**: [ROADMAP.md](ROADMAP.md)
 
-### 🌐 Web 原型版本（已完成，供參考）
+### 🌐 Web 原型版本（已凍結，見 `legacy/`）
 
-*   **前端框架**: React.js with TypeScript
-*   **核心 AI**: Google Gemini API (`gemini-3-flash-preview`, `gemini-3.1-pro-preview`)
+*   **前端框架**: React.js with TypeScript（第一階段可行性驗證原型，已由 Flutter 版取代）
 *   **本機儲存**: 瀏覽器 `localStorage` API
+*   原始碼已移至 [`legacy/`](legacy/)，不再維護
 
 ### 🔮 未來規劃架構 (詳見 `arch.md`)
 

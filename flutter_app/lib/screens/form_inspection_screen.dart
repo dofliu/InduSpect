@@ -22,6 +22,8 @@ import '../services/location_service.dart';
 import '../services/photo_service.dart';
 import '../services/connectivity_service.dart';
 import '../services/standards_engine.dart';
+import '../services/meter_ocr_service.dart';
+import '../services/ocr_reading_parser.dart';
 import '../screens/guided_capture_screen.dart';
 import '../utils/constants.dart';
 
@@ -676,12 +678,16 @@ class _FormInspectionScreenState extends State<FormInspectionScreen> {
         _saveDraft();
       } catch (e) {
         debugPrint('AI 分析失敗: $e');
+        // Tier 1a：AI 不可用（多為離線）→ 裝置端 OCR 讀值備援（數位錶/銘牌）
+        final ocrHandled = await _tryOcrFallback(item, photoPath);
         setState(() {
           item.isAnalyzing = false;
         });
-        // Issue #15: 收集錯誤，避免 SnackBar 連續彈出
-        _pendingAnalysisErrors.add(item.label);
-        _debouncedShowAnalysisErrors();
+        if (!ocrHandled) {
+          // Issue #15: 收集錯誤，避免 SnackBar 連續彈出
+          _pendingAnalysisErrors.add(item.label);
+          _debouncedShowAnalysisErrors();
+        }
       }
     } else {
       setState(() {
@@ -695,6 +701,50 @@ class _FormInspectionScreenState extends State<FormInspectionScreen> {
           ),
         );
       }
+    }
+  }
+
+  /// Tier 1a：AI 不可用時的裝置端 OCR 讀值備援（數位錶/銘牌）。
+  ///
+  /// 成功抽到讀值 → 合成標記 source=ocr 的最小 aiResult（readings 為真實
+  /// OCR 讀值），下游的欄位映射、Tier 0 判定與持久化全部照常生效；
+  /// 抽不到或 OCR 不可用 → 回傳 false，走原本的失敗提示路徑。
+  Future<bool> _tryOcrFallback(InspectionItemState item, String photoPath) async {
+    try {
+      final text = await MeterOcrService().recognizeText(photoPath);
+      if (text == null || text.trim().isEmpty) return false;
+
+      // 期望單位：從欄位對應的法規標準推測（找不到就不設限）
+      final expectedUnit = (await StandardsEngine.load())
+          .findMatchingStandard(item.label)?['unit'] as String?;
+      final reading =
+          OcrReadingParser.bestReading(text, expectedUnit: expectedUnit);
+      if (reading == null) return false;
+
+      final resultMap = <String, dynamic>{
+        'equipment_type': '',
+        'readings': {
+          item.label: {'value': reading.value, 'unit': reading.unit},
+        },
+        'condition_assessment': '裝置端 OCR 讀值（離線初判），請人工確認',
+        'is_anomaly': false,
+        'anomaly_description': null,
+        'estimated_size': null,
+        'source': 'ocr',
+      };
+
+      setState(() {
+        item.aiResult = resultMap;
+        item.isCompleted = true;
+        _mapAIResultToField(item, resultMap);
+      });
+      _saveDraft();
+      _showNotice('離線：以裝置端 OCR 讀得「${reading.display}」（${item.label}），請確認讀值',
+          color: Colors.blueGrey);
+      return true;
+    } catch (e) {
+      debugPrint('OCR 備援失敗: $e');
+      return false;
     }
   }
 
