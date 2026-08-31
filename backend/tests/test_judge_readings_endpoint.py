@@ -17,19 +17,18 @@ import os
 import sys
 
 import pytest
-from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 os.environ.setdefault("GEMINI_API_KEY", "test-key")
 
-from app.api.auto_fill import router  # noqa: E402
+# 使用真實的 app.main:app（含 422 淨化 handler 與 middleware），
+# 不以 context manager 開啟 → 不觸發 lifespan/DB。
+from app.main import app  # noqa: E402
 
 
 @pytest.fixture(scope="module")
 def client():
-    app = FastAPI()
-    app.include_router(router, prefix="/api/auto-fill")
     return TestClient(app)
 
 
@@ -127,3 +126,67 @@ def test_empty_readings(client):
     assert data["success"] is True
     assert data["judgments"] == []
     assert data["summary"]["total_readings"] == 0
+
+
+# ============ Issue #47：輸入驗證與邊角案例 ============
+
+
+def _post_raw(client, payload):
+    return client.post("/api/auto-fill/judge-readings", json=payload)
+
+
+def test_nan_value_rejected(client):
+    """NaN 進 gte/lte 比較必為 False → 誤判 fail，必須在驗證層擋下（422）。"""
+    resp = _post_raw(client, {
+        "readings": [{"field_name": "絕緣電阻", "value": float("nan"), "unit": "MΩ"}],
+        "equipment_type": "電氣",
+    })
+    assert resp.status_code == 422
+
+
+def test_infinity_value_rejected(client):
+    resp = _post_raw(client, {
+        "readings": [{"field_name": "絕緣電阻", "value": float("inf"), "unit": "MΩ"}],
+        "equipment_type": "電氣",
+    })
+    assert resp.status_code == 422
+
+
+def test_blank_field_name_rejected(client):
+    for bad_name in ("", "   "):
+        resp = _post_raw(client, {
+            "readings": [{"field_name": bad_name, "value": 1.0, "unit": "MΩ"}],
+            "equipment_type": "電氣",
+        })
+        assert resp.status_code == 422, f"field_name={bad_name!r} 應被拒絕"
+
+
+def test_field_name_stripped(client):
+    """前後空白應被去除後正常判定。"""
+    data = _post(client, [{"field_name": "  絕緣電阻  ", "value": 52.3, "unit": "MΩ"}], "電氣")
+    assert data["judgments"][0]["field_name"] == "絕緣電阻"
+    assert data["judgments"][0]["judgment"] == "pass"
+
+
+def test_oversized_readings_rejected(client):
+    readings = [
+        {"field_name": f"欄位{i}", "value": 1.0, "unit": "MΩ"} for i in range(501)
+    ]
+    resp = _post_raw(client, {"readings": readings, "equipment_type": "電氣"})
+    assert resp.status_code == 422
+
+
+def test_overlong_unit_rejected(client):
+    resp = _post_raw(client, {
+        "readings": [{"field_name": "絕緣電阻", "value": 1.0, "unit": "M" * 40}],
+        "equipment_type": "電氣",
+    })
+    assert resp.status_code == 422
+
+
+def test_missing_value_rejected(client):
+    resp = _post_raw(client, {
+        "readings": [{"field_name": "絕緣電阻", "unit": "MΩ"}],
+        "equipment_type": "電氣",
+    })
+    assert resp.status_code == 422

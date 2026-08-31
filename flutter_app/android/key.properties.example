@@ -1,0 +1,6 @@
+# 複製為 android/key.properties 並填入實際值（key.properties 已被 .gitignore 排除）
+# 金鑰產生方式見 ANDROID_DEPLOYMENT.md「Release 簽署」一節
+storeFile=../upload-keystore.jks
+storePassword=CHANGE_ME
+keyAlias=upload
+keyPassword=CHANGE_ME

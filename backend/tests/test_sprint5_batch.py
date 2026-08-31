@@ -45,6 +45,10 @@ class TestResults:
             print(f"  \u274c {name} \u2014 {detail}")
 
 
+        # Issue #45: pytest 下必須真的失敗，否則 CI 擋不住退化；
+        # __main__ 手動模式維持彙總報告行為
+        if os.environ.get("PYTEST_CURRENT_TEST"):
+            assert condition, f"{name}: {detail}"
 def create_test_template_service() -> TemplateService:
     """建立使用臨時 DB 的模板服務"""
     tmp = tempfile.NamedTemporaryFile(suffix='.db', delete=False)

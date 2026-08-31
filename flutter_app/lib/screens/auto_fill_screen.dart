@@ -47,11 +47,9 @@ class _AutoFillScreenState extends State<AutoFillScreen> {
 
   // 分析結果
   List<Map<String, dynamic>> _fieldMap = [];
-  String _fileType = '';
 
   // 映射結果
   List<Map<String, dynamic>> _fillValues = [];
-  List<String> _unmappedFields = [];
 
   // 預覽結果
   List<Map<String, dynamic>> _previewItems = [];
@@ -575,7 +573,6 @@ class _AutoFillScreenState extends State<AutoFillScreen> {
       }
 
       _fieldMap = List<Map<String, dynamic>>.from(result['field_map'] ?? []);
-      _fileType = result['file_type'] ?? '';
 
       if (_fieldMap.isEmpty) {
         setState(() {
@@ -611,7 +608,6 @@ class _AutoFillScreenState extends State<AutoFillScreen> {
       }
 
       final mappings = List<Map<String, dynamic>>.from(result['mappings'] ?? []);
-      _unmappedFields = List<String>.from(result['unmapped_fields'] ?? []);
 
       // 轉換為 fill_values 格式
       _fillValues = mappings.map((m) => {

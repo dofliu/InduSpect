@@ -20,10 +20,21 @@ class Settings(BaseSettings):
     gemini_api_key: str = ""
     openai_api_key: str = ""
 
+    # 後端 API 存取控制（LAUNCH_PLAN P0-3）
+    # 設定後，所有 /api/* 請求須帶 X-API-Key header；留空 = 開發模式不驗證（啟動時會警告）
+    backend_api_key: str = ""
+    # CORS 白名單，逗號分隔（例 "https://app.example.com,https://admin.example.com"）
+    # "*" 僅供開發；為 "*" 時 allow_credentials 會自動關閉（符合瀏覽器規範）
+    cors_allow_origins: str = "*"
+    # 生產環境應設 false 關閉 /docs 與 /redoc
+    enable_docs: bool = True
+
     # Gemini 模型設定（可透過環境變數覆蓋，方便模型升級）
-    gemini_flash_model: str = "gemini-3-flash-preview"    # 快速分析用
-    gemini_pro_model: str = "gemini-3.1-pro-preview"     # 高複雜度推理用
-    gemini_doc_model: str = "gemini-3-flash-preview"     # 文件分析用
+    # 2026-08 更新：Flash 改用 GA 穩定版（preview 版模型隨時可能被下架）；
+    # Pro 系列至今最新公開 ID 仍為 gemini-3.1-pro-preview（尚無 GA 版），待 GA 後以環境變數切換
+    gemini_flash_model: str = "gemini-3.6-flash"       # 快速分析用（GA）
+    gemini_pro_model: str = "gemini-3.1-pro-preview"   # 高複雜度推理用
+    gemini_doc_model: str = "gemini-3.6-flash"         # 文件分析用（GA）
 
     # Embedding 設定
     embedding_provider: str = "gemini"  # "gemini" or "openai"

@@ -210,10 +210,15 @@ class InspectionProvider with ChangeNotifier {
   }
 
   void _initGeminiService() {
+    // 使用者在設定頁選擇的分析模型（P0-6：模型可切換，不寫死）
+    final selectedModel = _settingsProvider?.selectedModel;
     if (_settingsProvider?.hasValidApiKey == true) {
-      _geminiService.init(apiKey: _settingsProvider!.customApiKey);
+      _geminiService.init(
+        apiKey: _settingsProvider!.customApiKey,
+        flashModel: selectedModel,
+      );
     } else {
-      _geminiService.init();
+      _geminiService.init(flashModel: selectedModel);
     }
   }
 

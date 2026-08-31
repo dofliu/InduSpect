@@ -22,6 +22,16 @@ if (flutterVersionName == null) {
     flutterVersionName = '1.0'
 }
 
+// Release 簽署設定：從 android/key.properties 載入（不入版控）。
+// 產生方式見 ANDROID_DEPLOYMENT.md「Release 簽署」一節。
+def keystoreProperties = new Properties()
+def keystorePropertiesFile = rootProject.file('key.properties')
+if (keystorePropertiesFile.exists()) {
+    keystorePropertiesFile.withReader('UTF-8') { reader ->
+        keystoreProperties.load(reader)
+    }
+}
+
 android {
     namespace "com.induspect.flutter_app"
     compileSdk 36
@@ -48,11 +58,30 @@ android {
         multiDexEnabled true
     }
 
+    signingConfigs {
+        if (keystorePropertiesFile.exists()) {
+            release {
+                keyAlias keystoreProperties['keyAlias']
+                keyPassword keystoreProperties['keyPassword']
+                storeFile file(keystoreProperties['storeFile'])
+                storePassword keystoreProperties['storePassword']
+            }
+        }
+    }
+
     buildTypes {
         release {
-            signingConfig signingConfigs.debug
-            minifyEnabled false
-            shrinkResources false
+            // key.properties 存在 → 正式簽署；否則退回 debug 簽署並警告。
+            // debug 簽署的 APK 僅供本機測試，不可上架或散布。
+            if (keystorePropertiesFile.exists()) {
+                signingConfig signingConfigs.release
+            } else {
+                signingConfig signingConfigs.debug
+                println '⚠️  android/key.properties 不存在 — release 建置將使用 DEBUG 簽署（不可發布）'
+            }
+            minifyEnabled true
+            shrinkResources true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
 }

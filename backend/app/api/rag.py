@@ -7,6 +7,7 @@ from pydantic import BaseModel
 from typing import Optional
 import logging
 
+from app.api.errors import internal_error
 from app.services.rag import RAGService
 from app.services.embedding import EmbeddingService
 
@@ -124,7 +125,7 @@ async def query_similar_cases(request: RAGQueryRequest):
     except Exception as e:
         logger.error(f"RAG query failed: {e}")
         print(f"❌ [Backend] RAG query failed: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise internal_error(e)
 
 
 @router.post("/add", response_model=AddToRAGResponse)
@@ -161,7 +162,7 @@ async def add_to_knowledge_base(request: AddToRAGRequest):
     except Exception as e:
         logger.error(f"Add to RAG failed: {e}")
         print(f"❌ [Backend] Add to RAG failed: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise internal_error(e)
 
 
 @router.get("/stats")
@@ -173,7 +174,7 @@ async def get_knowledge_base_stats():
         return stats
     except Exception as e:
         logger.error(f"Get stats failed: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise internal_error(e)
 
 
 @router.get("/items")
@@ -187,7 +188,7 @@ async def get_knowledge_items(skip: int = 0, limit: int = 100):
         return items
     except Exception as e:
         logger.error(f"Get items failed: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise internal_error(e)
 
 
 @router.delete("/items/{item_id}")
@@ -205,7 +206,7 @@ async def delete_knowledge_item(item_id: str):
         raise
     except Exception as e:
         logger.error(f"Delete item failed: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise internal_error(e)
 
 
 @router.post("/upload")
@@ -246,6 +247,6 @@ async def upload_document(file: UploadFile = File(...)):
     except Exception as e:
         logger.error(f"Upload failed: {e}")
         print(f"❌ [Backend] Upload failed: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise internal_error(e)
 
 

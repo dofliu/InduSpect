@@ -1,25 +1,37 @@
 # GCP Cloud Build 配置
+#
+# 前置作業（一次性，見 CLOUD_RUN_ASSESSMENT.md）：
+#   1. 建立 Artifact Registry repo：
+#      gcloud artifacts repositories create induspect --repository-format=docker --location=asia-east1
+#   2. 建立 Secret Manager secrets 並授權 Cloud Run SA 讀取：
+#      echo -n "<gemini-key>"  | gcloud secrets create gemini-api-key  --data-file=-
+#      echo -n "<backend-key>" | gcloud secrets create backend-api-key --data-file=-
+#   3. 觸發時以 substitutions 傳入 CORS 白名單：
+#      gcloud builds submit --substitutions=_CORS_ALLOW_ORIGINS="https://your-frontend.example.com"
+#
+# 注意：Cloud Run 層維持 --allow-unauthenticated（行動 App 無法帶 IAM OIDC token），
+# 存取控制由應用層 BACKEND_API_KEY（X-API-Key header）負責。
 steps:
   # Build Docker image
   - name: 'gcr.io/cloud-builders/docker'
     args:
       - 'build'
       - '-t'
-      - 'gcr.io/$PROJECT_ID/induspect-backend:$COMMIT_SHA'
+      - 'asia-east1-docker.pkg.dev/$PROJECT_ID/induspect/induspect-backend:$COMMIT_SHA'
       - '-t'
-      - 'gcr.io/$PROJECT_ID/induspect-backend:latest'
+      - 'asia-east1-docker.pkg.dev/$PROJECT_ID/induspect/induspect-backend:latest'
       - '.'
 
-  # Push to Container Registry
+  # Push to Artifact Registry
   - name: 'gcr.io/cloud-builders/docker'
     args:
       - 'push'
-      - 'gcr.io/$PROJECT_ID/induspect-backend:$COMMIT_SHA'
+      - 'asia-east1-docker.pkg.dev/$PROJECT_ID/induspect/induspect-backend:$COMMIT_SHA'
 
   - name: 'gcr.io/cloud-builders/docker'
     args:
       - 'push'
-      - 'gcr.io/$PROJECT_ID/induspect-backend:latest'
+      - 'asia-east1-docker.pkg.dev/$PROJECT_ID/induspect/induspect-backend:latest'
 
   # Deploy to Cloud Run
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
@@ -29,14 +41,17 @@ steps:
       - 'deploy'
       - 'induspect-backend'
       - '--image'
-      - 'gcr.io/$PROJECT_ID/induspect-backend:$COMMIT_SHA'
+      - 'asia-east1-docker.pkg.dev/$PROJECT_ID/induspect/induspect-backend:$COMMIT_SHA'
       - '--region'
       - 'asia-east1'
       - '--platform'
       - 'managed'
       - '--allow-unauthenticated'
+      # 敏感值一律走 Secret Manager，不用明文 env（LAUNCH_PLAN P0-3）
+      - '--set-secrets'
+      - 'GEMINI_API_KEY=gemini-api-key:latest,BACKEND_API_KEY=backend-api-key:latest'
       - '--set-env-vars'
-      - 'GEMINI_API_KEY=${_GEMINI_API_KEY}'
+      - 'CORS_ALLOW_ORIGINS=${_CORS_ALLOW_ORIGINS},ENABLE_DOCS=false'
       - '--memory'
       - '1Gi'
       - '--cpu'
@@ -46,9 +61,13 @@ steps:
       - '--max-instances'
       - '10'
 
+substitutions:
+  # 預設鎖死（無合法 web origin）；部署時依前端網域覆寫
+  _CORS_ALLOW_ORIGINS: 'https://localhost'
+
 images:
-  - 'gcr.io/$PROJECT_ID/induspect-backend:$COMMIT_SHA'
-  - 'gcr.io/$PROJECT_ID/induspect-backend:latest'
+  - 'asia-east1-docker.pkg.dev/$PROJECT_ID/induspect/induspect-backend:$COMMIT_SHA'
+  - 'asia-east1-docker.pkg.dev/$PROJECT_ID/induspect/induspect-backend:latest'
 
 timeout: '1200s'
 

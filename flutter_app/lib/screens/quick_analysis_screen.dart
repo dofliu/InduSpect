@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
-import '../providers/app_state_provider.dart';
 import '../providers/inspection_provider.dart';
-import '../models/analysis_result.dart';
 import '../utils/constants.dart';
 import '../widgets/common/loading_widget.dart';
 import '../widgets/ai_suggestions_widget.dart';

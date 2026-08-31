@@ -1,6 +1,6 @@
 # Flutter App 開發指南
 
-> **最後更新**: 2026-04-17
+> **最後更新**: 2026-08-31
 
 ---
 
@@ -42,6 +42,7 @@ lib/
 │   ├── database_service.dart         # SQLite CRUD（v3：含 form_inspection_records）
 │   ├── gemini_service.dart           # Gemini AI 分析 + 摘要報告
 │   ├── location_service.dart         # GPS 一次性定位 + 反向地理編碼
+│   ├── standards_engine.dart         # ★ Tier 0 離線法規判定引擎（56 條標準內嵌）
 │   ├── share_queue_service.dart      # 離線分享佇列（上線自動處理）
 │   ├── connectivity_service.dart     # 網路連線狀態監聽
 │   ├── file_save_service.dart        # 平台適應的檔案分享
@@ -139,21 +140,24 @@ ShareQueueService (監聽 ConnectivityService)
 ### 執行測試
 
 ```bash
-# 全部測試（排除壞掉的 widget_test.dart）
-flutter test test/form_inspection_record_test.dart test/database_service_test.dart test/inspection_item_state_test.dart test/photo_service_test.dart
+# 全部測試（widget_test.dart 已於 2026-08-31 修復，不再排除）
+flutter test
 
 # 單一檔案
 flutter test test/form_inspection_record_test.dart
 ```
 
-### 測試清單（46 tests）
+### 測試清單（88 tests）
 
 | 檔案 | 數量 | 覆蓋範圍 |
 |------|------|---------|
-| `form_inspection_record_test.dart` | 17 | Model: toMap/fromMap 往返、null 處理、舊格式向後相容、computed getters、copyWith 深拷貝、日期邊界 |
-| `database_service_test.dart` | 12 | DB CRUD: insert/update/delete、排序、limit、搜尋 title/locationName、GPS 持久化、UNIQUE 約束、clearAll |
-| `inspection_item_state_test.dart` | 11 | displayValue/verdict 邏輯、TextEditingController 生命週期 |
+| `standards_engine_test.dart` | 24 | ★ Tier 0 離線判定引擎：單位正規化/換算、標準匹配、autoJudge、批次判定合約 |
+| `inspection_item_state_test.dart` | 22 | displayValue/verdict 邏輯（含法規標準判定優先序）、controller 生命週期 |
+| `form_inspection_record_test.dart` | 21 | Model: toMap/fromMap 往返、null 處理、舊格式相容、standardJudgments 持久化、copyWith 深拷貝 |
+| `database_service_test.dart` | 12 | DB CRUD: insert/update/delete、排序、limit、搜尋、GPS 持久化、UNIQUE 約束 |
 | `photo_service_test.dart` | 6 | 照片命名格式、序號補零、截斷、特殊字元 |
+| `database_migration_test.dart` | 2 | SQLite v3→v4 真實 onUpgrade 升級路徑（standard_judgments 欄位） |
+| `widget_test.dart` | 1 | App smoke test（sqflite ffi + mock prefs + dotenv testLoad） |
 
 ### 測試依賴
 
@@ -220,16 +224,51 @@ flutter build apk --debug
 
 ---
 
-## 下一步
+## 下一步（詳見 LAUNCH_PLAN.md 90 天計畫）
 
-1. **實機端到端測試**：完整流程 上傳 Excel → 一鍵自動檢測 → 匯出 → 分享
-2. **離線測試**：斷網狀態完成檢測 → 恢復網路 → 確認自動分享
-3. **效能優化**：大量紀錄時的列表滾動效能
-4. **UI 微調**：根據實機測試回饋進行調整
+1. **實機端到端測試**（G1/#43，僅剩實機部分）：上傳 Excel → 一鍵自動檢測 →
+   法規判定回填 → 匯出 → 分享；斷網流程改驗證「本地引擎判定」而非「待判定」；
+   R8 開啟後的 release build 需實機煙霧測試
+2. **上架準備**：產生 upload keystore（見 ANDROID_DEPLOYMENT.md）、隱私政策發布到
+   公開 URL（docs/PRIVACY_POLICY.md）、Play 內部測試軌
+3. **後端部署**：Cloud Run + Secret Manager（cloudbuild.yaml 已備妥前置步驟註解）
+4. **Tier 1a**：ML Kit OCR 數位錶離線讀值；**試點計畫**：2-3 場域量測指標
 
 ---
 
 ## 變更紀錄
+
+### 2026-08-31（產品化 P0 批次 + Tier 0 離線判定，對應 LAUNCH_PLAN.md）
+
+- **feat(offline)**: ★ **Tier 0 法規判定引擎 Dart 化**（`lib/services/standards_engine.dart`）
+  - 標準資料單一來源：`backend/scripts/export_standards.py` 將 56 條標準匯出為
+    `assets/standards/inspection_standards.json` 內嵌 App；後端
+    `test_standards_json_sync.py` 守門兩者一致
+  - 完整移植單位正規化/換算（kΩ→MΩ、°C↔°F 仿射）、標準匹配、判定與 confidence
+  - 離線或後端失敗 → 本地引擎判定（judgment 帶 `source: local`），
+    **「待判定」僅在本地引擎也失敗時出現**；判定結果照常持久化
+- **feat(db)**: 判定結果持久化（Issue #44）— SQLite **v3→v4**，
+  `form_inspection_records` 新增 `standard_judgments` 欄位（fieldId → judgment JSON），
+  `FormInspectionRecord.standardJudgments` + `failCount`/`warningCount` getters，
+  `_saveDraft` 隨紀錄儲存；migration 測試以 v3 歷史 schema 快照驗證升級路徑
+- **feat(models)**: Gemini 模型 ID 汰換 preview（P0-6）— Flash 預設改 GA 版
+  `gemini-3.6-flash`；`GeminiService.init` 支援 `GEMINI_FLASH_MODEL`/`GEMINI_PRO_MODEL`
+  env 覆寫與參數注入；設定頁選擇的模型真正生效（原本選了沒作用）；
+  已下架模型 ID 自動遷移
+- **feat(android)**: Release 簽署改 `key.properties` 模式（P0-2）—
+  不再寫死 debug 簽署；開啟 R8 minify + shrinkResources；
+  金鑰產生步驟見 `ANDROID_DEPLOYMENT.md`「Release 簽署」
+- **fix(app)**: `BACKEND_API_URL` 顯性化（P0-4）— `.env.example` 補實機必填說明；
+  兩處無聲降級（表單本機解析、匯出 JSON fallback）改為明確 SnackBar 提示；
+  自動帶 `X-API-Key` 對接後端認證；dio LogInterceptor 僅 debug 啟用（P0-8）
+- **fix(test)**: 修復長期壞掉的 `widget_test.dart`（sqflite ffi + mock prefs +
+  dotenv testLoad；固定幀數 pump 取代會逾時的 pumpAndSettle）；
+  清零全部 15 個 analyzer warning（unused imports/fields）
+- **後端同步改動**：API Key middleware + CORS 白名單 + 422/500 淨化（P0-3/P0-8）、
+  judge-readings 輸入驗證（#47）、sprint 測試假陽性修正（#45）、
+  CI 全量收緊（後端 167 pytest / Flutter 88 tests / analyze 硬性）
+- **文件**: 新增 `LAUNCH_PLAN.md`（產品化評估與 90 天行動計畫）、
+  `docs/PRIVACY_POLICY.md`（隱私政策草稿，Play 上架用）
 
 ### 2026-05-28
 

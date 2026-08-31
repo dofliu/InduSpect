@@ -35,6 +35,10 @@ class TestResults:
             print(f"  ❌ {name} — {detail}")
 
 
+        # Issue #45: pytest 下必須真的失敗，否則 CI 擋不住退化；
+        # __main__ 手動模式維持彙總報告行為
+        if os.environ.get("PYTEST_CURRENT_TEST"):
+            assert condition, f"{name}: {detail}"
 def generate_file_name(sequence: int, display_name: str, timestamp: datetime) -> str:
     """
     照片命名規則 (與 Dart PhotoService._generateFileName 相同邏輯):

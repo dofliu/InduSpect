@@ -16,10 +16,22 @@ class GeminiService {
   late GenerativeModel _proModel;
   bool _initialized = false;
   String? _currentApiKey;
+  String? _currentFlashModel;
+  String? _currentProModel;
+
+  /// 解析模型 ID：明確參數 > .env 覆寫 > AppConstants 預設
+  /// （P0-6：preview 模型可能被下架，模型 ID 不可寫死，需可不改版切換）
+  static String _resolveModel(String? explicit, String envKey, String fallback) {
+    if (explicit != null && explicit.trim().isNotEmpty) return explicit.trim();
+    final fromEnv = dotenv.env[envKey];
+    if (fromEnv != null && fromEnv.trim().isNotEmpty) return fromEnv.trim();
+    return fallback;
+  }
 
   /// 初始化 Gemini 服務
   /// [apiKey] 如果提供，使用此 API key；否則從 .env 讀取
-  void init({String? apiKey}) {
+  /// [flashModel]/[proModel] 如果提供，覆寫模型 ID（例如設定頁的使用者選擇）
+  void init({String? apiKey, String? flashModel, String? proModel}) {
     final effectiveApiKey = apiKey ?? dotenv.env['GEMINI_API_KEY'];
 
     if (effectiveApiKey == null || effectiveApiKey.isEmpty) {
@@ -28,14 +40,26 @@ class GeminiService {
       );
     }
 
-    // 如果 API key 變更，重新初始化
-    if (_initialized && _currentApiKey == effectiveApiKey) return;
+    final effectiveFlash = _resolveModel(
+        flashModel, 'GEMINI_FLASH_MODEL', AppConstants.geminiFlashModel);
+    final effectivePro = _resolveModel(
+        proModel, 'GEMINI_PRO_MODEL', AppConstants.geminiProModel);
+
+    // API key 與模型皆未變更時不重新初始化
+    if (_initialized &&
+        _currentApiKey == effectiveApiKey &&
+        _currentFlashModel == effectiveFlash &&
+        _currentProModel == effectivePro) {
+      return;
+    }
 
     _currentApiKey = effectiveApiKey;
+    _currentFlashModel = effectiveFlash;
+    _currentProModel = effectivePro;
 
     // Flash 模型：用於圖像分析（快速、成本低）
     _flashModel = GenerativeModel(
-      model: AppConstants.geminiFlashModel,
+      model: effectiveFlash,
       apiKey: effectiveApiKey,
       generationConfig: GenerationConfig(
         temperature: 0.2, // 較低溫度，更穩定的輸出
@@ -48,7 +72,7 @@ class GeminiService {
 
     // Pro 模型：用於報告生成（高複雜度推理）
     _proModel = GenerativeModel(
-      model: AppConstants.geminiProModel,
+      model: effectivePro,
       apiKey: effectiveApiKey,
       generationConfig: GenerationConfig(
         temperature: 0.4, // 略高溫度，更有創意
@@ -60,21 +84,6 @@ class GeminiService {
     );
 
     _initialized = true;
-  }
-
-  /// 動態創建模型（支援不同的模型選擇）
-  GenerativeModel _createModel(String modelName, String apiKey) {
-    return GenerativeModel(
-      model: modelName,
-      apiKey: apiKey,
-      generationConfig: GenerationConfig(
-        temperature: 0.2,
-        topP: 0.8,
-        topK: 40,
-        maxOutputTokens: 2048,
-      ),
-      requestOptions: const RequestOptions(apiVersion: 'v1beta'),
-    );
   }
 
   /// 提取 JSON 內容（處理混合回應）

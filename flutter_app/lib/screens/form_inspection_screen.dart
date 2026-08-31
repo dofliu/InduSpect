@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
-import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:file_picker/file_picker.dart';
@@ -13,7 +12,6 @@ import 'package:uuid/uuid.dart';
 import 'package:path_provider/path_provider.dart';
 import '../models/inspection_template.dart';
 import '../models/template_field.dart';
-import '../models/analysis_result.dart';
 import '../models/form_inspection_record.dart';
 import '../services/gemini_service.dart';
 import '../services/local_template_creator.dart';
@@ -23,6 +21,7 @@ import '../services/database_service.dart';
 import '../services/location_service.dart';
 import '../services/photo_service.dart';
 import '../services/connectivity_service.dart';
+import '../services/standards_engine.dart';
 import '../screens/guided_capture_screen.dart';
 import '../utils/constants.dart';
 
@@ -176,17 +175,14 @@ class _FormInspectionScreenState extends State<FormInspectionScreen> {
 
   // 上傳的原始檔案
   PlatformFile? _uploadedFile;
-  Uint8List? _uploadedFileBytes;
   String? _fileName;
 
   // 分析出的結構
   Map<String, dynamic>? _templateJson;
   InspectionTemplate? _template;
-  List<Map<String, dynamic>> _fieldMap = [];
 
   // 檢測項目狀態
   List<InspectionItemState> _inspectionItems = [];
-  int _currentItemIndex = 0;
 
   // 所有填寫的資料 (fieldId -> value)
   final Map<String, dynamic> _filledData = {};
@@ -272,7 +268,6 @@ class _FormInspectionScreenState extends State<FormInspectionScreen> {
 
     setState(() {
       _uploadedFile = file;
-      _uploadedFileBytes = bytes;
       _fileName = file.name;
       _isLoading = true;
       _errorMessage = null;
@@ -292,6 +287,10 @@ class _FormInspectionScreenState extends State<FormInspectionScreen> {
       }
 
       if (response['success'] != true) {
+        // 後端不可用 → 本地解析備援。明確告知使用者（AI 欄位分類與原格式回填品質可能較低）
+        _showNotice(BackendApiService().isExplicitlyConfigured
+            ? '後端無法連線，已改用本機解析表單（匯出時可能無法回填原始格式）'
+            : '尚未設定後端位址（BACKEND_API_URL），已改用本機解析表單（匯出時可能無法回填原始格式）');
         final localCreator = LocalTemplateCreator();
         response = await localCreator.createTemplateFromBytes(
           bytes: bytes,
@@ -353,8 +352,6 @@ class _FormInspectionScreenState extends State<FormInspectionScreen> {
         ));
       }
     }
-
-    _currentItemIndex = 0;
   }
 
   // ========== GPS & 持久化 ==========
@@ -399,11 +396,15 @@ class _FormInspectionScreenState extends State<FormInspectionScreen> {
   Future<void> _saveDraft() async {
     if (_currentRecord == null) return;
 
-    // 收集 AI 結果
+    // 收集 AI 結果與法規判定（判定為稽核依據，隨紀錄持久化 — Issue #44）
     final aiResults = <String, dynamic>{};
+    final standardJudgments = <String, dynamic>{};
     final photoPaths = <String>[];
     for (final item in _inspectionItems) {
       if (item.aiResult != null) aiResults[item.fieldId] = item.aiResult;
+      if (item.standardJudgment != null) {
+        standardJudgments[item.fieldId] = item.standardJudgment;
+      }
       if (item.photoPath != null) photoPaths.add(item.photoPath!);
     }
 
@@ -411,6 +412,7 @@ class _FormInspectionScreenState extends State<FormInspectionScreen> {
       title: _inspectionTitle,
       filledData: Map.from(_filledData),
       aiResults: aiResults,
+      standardJudgments: standardJudgments,
       photoPaths: photoPaths,
       latitude: _locationData?.latitude ?? _currentRecord!.latitude,
       longitude: _locationData?.longitude ?? _currentRecord!.longitude,
@@ -875,31 +877,61 @@ class _FormInspectionScreenState extends State<FormInspectionScreen> {
         }
         _saveDraft();
       } else {
-        // 離線或失敗 → 標記待判定（保留既有 AI 判定作為暫時結果）
-        for (final item in targets) {
-          if (item.standardJudgment == null) {
-            item.standardJudgmentPending = true;
-          }
-        }
-        if (mounted && result['error'] == 'offline') {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('目前離線，量測項目標記為「待判定」，恢復網路後可重新判定'),
-              backgroundColor: Colors.orange,
-              duration: Duration(seconds: 3),
-            ),
-          );
-        }
+        // 離線或後端失敗 → Tier 0 本地判定引擎（內建法規標準庫），
+        // 僅在本地引擎也失敗時才標記「待判定」
+        await _applyLocalJudgment(
+          targets,
+          readings,
+          equipmentType,
+          offline: result['error'] == 'offline',
+        );
       }
     } catch (e) {
       debugPrint('標準判定失敗: $e');
+      await _applyLocalJudgment(targets, readings, equipmentType, offline: false);
+    } finally {
+      if (mounted) setState(() => _isJudging = false);
+    }
+  }
+
+  /// Tier 0 離線判定：後端不可用時以內建法規標準庫（StandardsEngine）判定。
+  /// 判定結果帶 source=local 供稽核區別；本地引擎也失敗時退回「待判定」。
+  Future<void> _applyLocalJudgment(
+    List<InspectionItemState> targets,
+    List<Map<String, dynamic>> readings,
+    String equipmentType, {
+    required bool offline,
+  }) async {
+    try {
+      final engine = await StandardsEngine.load();
+      final result =
+          engine.judgeReadingsLocally(readings, equipmentType: equipmentType);
+      final judgments = (result['judgments'] as List)
+          .map((e) => Map<String, dynamic>.from(e as Map))
+          .toList();
+      // 引擎保證 judgments 與輸入 readings 同序
+      for (int i = 0; i < targets.length && i < judgments.length; i++) {
+        targets[i].standardJudgment = judgments[i];
+        targets[i].standardJudgmentPending = false;
+      }
+      _saveDraft();
+      _showNotice(
+        offline
+            ? '目前離線，已使用內建法規標準庫（${engine.version}）完成判定'
+            : '後端判定失敗，已使用內建法規標準庫（${engine.version}）完成判定',
+        color: Colors.blueGrey,
+      );
+    } catch (e) {
+      // 本地引擎失敗（asset 缺失等）→ 維持原本的「待判定」補償路徑
+      debugPrint('本地標準判定失敗: $e');
       for (final item in targets) {
         if (item.standardJudgment == null) {
           item.standardJudgmentPending = true;
         }
       }
-    } finally {
-      if (mounted) setState(() => _isJudging = false);
+      if (offline) {
+        _showNotice('目前離線，量測項目標記為「待判定」，恢復網路後可重新判定');
+      }
     }
   }
 
@@ -1000,6 +1032,8 @@ class _FormInspectionScreenState extends State<FormInspectionScreen> {
         } catch (e) {
           debugPrint('後端回填失敗，使用本地匯出: $e');
         }
+        // 走到這裡表示原格式回填未完成（離線、後端錯誤或映射失敗）— 明確告知，不無聲降級
+        _showNotice('無法回填原始表格格式（後端不可用或回填失敗），將改匯出 JSON 檢測摘要');
       }
 
       // 後端不可用時，匯出為 JSON 摘要
@@ -1127,6 +1161,18 @@ class _FormInspectionScreenState extends State<FormInspectionScreen> {
       _isLoading = false;
       _errorMessage = message;
     });
+  }
+
+  /// 非致命提示（降級、備援路徑）— 讓使用者知道系統走了替代方案，而非無聲降級（P0-4）
+  void _showNotice(String message, {Color color = Colors.orange}) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: color,
+        duration: const Duration(seconds: 4),
+      ),
+    );
   }
 
   int get _completedCount => _inspectionItems.where((i) => i.isCompleted).length;

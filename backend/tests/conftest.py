@@ -39,6 +39,10 @@ class TestResults:
             print(msg)
             self.errors.append(name)
 
+        # Issue #45: pytest 下必須真的失敗，否則 CI 擋不住退化；
+        # __main__ 手動模式維持彙總報告行為
+        if os.environ.get("PYTEST_CURRENT_TEST"):
+            assert condition, f"{name}: {detail}"
     def summary(self, section_name=""):
         total = self.passed + self.failed
         prefix = f"[{section_name}] " if section_name else ""

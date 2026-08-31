@@ -52,6 +52,25 @@ Flutter 應用已完成 Web 平台測試，所有核心功能正常運作：
    flutter config --android-sdk /path/to/android/sdk
    ```
 
+### Release 簽署（上架前必做）
+
+Release 建置由 `android/key.properties` 控制簽署：**檔案存在 → 正式簽署；不存在 → 退回 debug 簽署並印出警告（該 APK 不可發布）**。金鑰與 `key.properties` 已被 `.gitignore` 排除，絕不入版控。
+
+```bash
+# 1. 產生 upload keystore（一次性；請把產出的 .jks 與密碼備份到安全處，遺失無法補發）
+keytool -genkey -v -keystore flutter_app/android/upload-keystore.jks \
+  -keyalg RSA -keysize 2048 -validity 10000 -alias upload
+
+# 2. 建立簽署設定
+cp flutter_app/android/key.properties.example flutter_app/android/key.properties
+# 編輯 key.properties 填入 storePassword / keyPassword
+
+# 3. 建置（會自動使用正式簽署 + R8 minify）
+cd flutter_app && flutter build appbundle --release
+```
+
+> 注意：本次改動同時開啟了 R8（`minifyEnabled true` + `shrinkResources true`，規則在 `app/proguard-rules.pro`）。第一次 release 建置後請在實機完整跑過主流程（G1 檢查清單），確認混淆未破壞任何 plugin。
+
 ### 編譯 Android APK
 
 #### 方法 1: Debug APK (測試用)

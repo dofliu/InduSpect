@@ -17,6 +17,12 @@ class FormInspectionRecord {
   final String? templateJson;
   final Map<String, dynamic> filledData;
   final Map<String, dynamic> aiResults;
+
+  /// 法規標準判定結果（fieldId → judgment map），v4 新增。
+  /// judgment map 結構同後端 judge-readings 回傳：
+  /// {judgment, standard_text, regulation, converted_value, converted_unit, ...}
+  /// 法規判定是稽核依據，必須隨紀錄留存（Issue #44）。
+  final Map<String, dynamic> standardJudgments;
   String? summaryReport;
   String? filledDocumentPath;
   FormRecordStatus status;
@@ -36,6 +42,7 @@ class FormInspectionRecord {
     this.templateJson,
     Map<String, dynamic>? filledData,
     Map<String, dynamic>? aiResults,
+    Map<String, dynamic>? standardJudgments,
     this.summaryReport,
     this.filledDocumentPath,
     this.status = FormRecordStatus.draft,
@@ -48,6 +55,7 @@ class FormInspectionRecord {
     this.pendingShare = false,
   })  : filledData = filledData ?? {},
         aiResults = aiResults ?? {},
+        standardJudgments = standardJudgments ?? {},
         photoPaths = photoPaths ?? [],
         createdAt = createdAt ?? DateTime.now(),
         updatedAt = updatedAt ?? DateTime.now();
@@ -66,6 +74,16 @@ class FormInspectionRecord {
   /// 已完成項目數
   int get completedCount => filledData.length;
 
+  /// 法規判定不合格項目數
+  int get failCount => standardJudgments.values
+      .where((j) => j is Map && j['judgment'] == 'fail')
+      .length;
+
+  /// 法規判定警告項目數
+  int get warningCount => standardJudgments.values
+      .where((j) => j is Map && j['judgment'] == 'warning')
+      .length;
+
   /// 轉為 SQLite Map
   Map<String, dynamic> toMap() {
     final map = <String, dynamic>{
@@ -75,6 +93,7 @@ class FormInspectionRecord {
       'template_json': templateJson,
       'filled_data': jsonEncode(filledData),
       'ai_results': jsonEncode(aiResults),
+      'standard_judgments': jsonEncode(standardJudgments),
       'summary_report': summaryReport,
       'filled_document_path': filledDocumentPath,
       'status': status.name,
@@ -100,6 +119,8 @@ class FormInspectionRecord {
       templateJson: map['template_json'] as String?,
       filledData: _decodeJson(map['filled_data']),
       aiResults: _decodeJson(map['ai_results']),
+      // v3 舊紀錄無此欄位 → _decodeJson(null) 回空 map，向後相容
+      standardJudgments: _decodeJson(map['standard_judgments']),
       summaryReport: map['summary_report'] as String?,
       filledDocumentPath: map['filled_document_path'] as String?,
       status: FormRecordStatus.values.firstWhere(
@@ -125,6 +146,7 @@ class FormInspectionRecord {
     String? templateJson,
     Map<String, dynamic>? filledData,
     Map<String, dynamic>? aiResults,
+    Map<String, dynamic>? standardJudgments,
     String? summaryReport,
     String? filledDocumentPath,
     FormRecordStatus? status,
@@ -144,6 +166,7 @@ class FormInspectionRecord {
       templateJson: templateJson ?? this.templateJson,
       filledData: filledData ?? Map.from(this.filledData),
       aiResults: aiResults ?? Map.from(this.aiResults),
+      standardJudgments: standardJudgments ?? Map.from(this.standardJudgments),
       summaryReport: summaryReport ?? this.summaryReport,
       filledDocumentPath: filledDocumentPath ?? this.filledDocumentPath,
       status: status ?? this.status,

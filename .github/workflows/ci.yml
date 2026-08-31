@@ -38,20 +38,14 @@ jobs:
           pip install -r requirements.txt
           pip install pytest pytest-asyncio
 
-      # 只跑「明確 pytest 相容」的測試檔。
-      # 其他 sprint test 為 __main__-style script，未來 routine 可逐步改造成 pytest function。
+      # 跑「全部」後端測試（Issue #45 收緊：sprint 系列的 results.check
+      # 已在 pytest 模式下改為真 assert，CI 可真正擋退化）。
       # GEMINI_API_KEY 用假值（這些測試不會打真實 API）。
-      - name: Run pytest (auto_fill + standards + photo naming)
+      - name: Run pytest (full suite)
         env:
           GEMINI_API_KEY: ci-fake-key
         run: |
-          pytest tests/test_auto_fill.py \
-                 tests/test_sprint2_photo_naming.py \
-                 tests/test_sprint3_standards.py \
-                 tests/test_judgment_service.py \
-                 tests/test_judgment_service_batch.py \
-                 -v --tb=short \
-                 --asyncio-mode=auto
+          pytest tests/ -v --tb=short --asyncio-mode=auto
 
   flutter-checks:
     name: Flutter (analyze + test)
@@ -81,16 +75,11 @@ jobs:
       - name: Create empty .env placeholder for asset bundle
         run: touch .env
 
-      # analyze 初版設為 advisory：lint 議題不該阻擋 PR。
-      # 待 routine 逐步清理後再改為 fatal。
-      - name: Static analysis (advisory)
-        continue-on-error: true
+      # analyze 已轉硬性（warning 級以上擋 PR；info 級不擋）。
+      # warning 已於 2026-08-31 全數清零，新增 warning 會在此失敗。
+      - name: Static analysis
         run: flutter analyze --no-fatal-infos
 
+      # 跑「全部」Flutter 測試（widget_test 已修復，不再排除）
       - name: Unit tests
-        run: |
-          flutter test \
-            test/form_inspection_record_test.dart \
-            test/database_service_test.dart \
-            test/inspection_item_state_test.dart \
-            test/photo_service_test.dart
+        run: flutter test

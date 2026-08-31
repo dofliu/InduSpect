@@ -10,11 +10,12 @@
 
 from fastapi import APIRouter, HTTPException, UploadFile, File, Form
 from fastapi.responses import StreamingResponse
-from pydantic import BaseModel
+from pydantic import BaseModel, Field, field_validator
 from typing import Optional
 import logging
 import io
 
+from app.api.errors import internal_error
 from app.services.form_fill import FormFillService
 from app.services.history_service import HistoryService
 
@@ -247,7 +248,7 @@ async def generate_photo_tasks(request: GeneratePhotoTasksRequest):
 
     except Exception as e:
         logger.error(f"Generate photo tasks failed: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise internal_error(e)
 
 
 @router.post("/precision-map-fields", response_model=MapFieldsResponse)
@@ -277,7 +278,7 @@ async def precision_map_fields(request: PrecisionMapFieldsRequest):
 
     except Exception as e:
         logger.error(f"Precision map fields failed: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise internal_error(e)
 
 
 @router.post("/insert-photos")
@@ -344,7 +345,7 @@ async def insert_photos(
         raise HTTPException(status_code=400, detail=f"JSON 格式錯誤: {e}")
     except Exception as e:
         logger.error(f"Insert photos failed: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise internal_error(e)
 
 
 @router.post("/analyze-structure", response_model=StructureAnalysisResponse)
@@ -382,7 +383,7 @@ async def analyze_structure(file: UploadFile = File(...)):
         raise
     except Exception as e:
         logger.error(f"Analyze structure failed: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise internal_error(e)
 
 
 @router.post("/map-fields", response_model=MapFieldsResponse)
@@ -405,7 +406,7 @@ async def map_fields(request: MapFieldsRequest):
 
     except Exception as e:
         logger.error(f"Map fields failed: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise internal_error(e)
 
 
 @router.post("/preview", response_model=PreviewResponse)
@@ -428,7 +429,7 @@ async def preview_auto_fill(request: PreviewRequest):
 
     except Exception as e:
         logger.error(f"Preview auto-fill failed: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise internal_error(e)
 
 
 @router.post("/execute")
@@ -508,16 +509,29 @@ async def execute_auto_fill(
         )
     except Exception as e:
         logger.error(f"Execute auto-fill failed: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise internal_error(e)
 
 
 # ============ Sprint 4: One-Stop Inspection Workflow ============
 
 class ReadingItem(BaseModel):
-    """單筆量測讀數"""
-    field_name: str
-    value: float
-    unit: str = ""
+    """單筆量測讀數
+
+    Issue #47 輸入驗證：
+    - value 拒絕 NaN/inf（NaN 進入 gte/lte 比較必為 False → 誤判 fail，屬安全問題）
+    - field_name 去空白後不可為空、長度上限防呆
+    """
+    field_name: str = Field(max_length=200)
+    value: float = Field(allow_inf_nan=False)
+    unit: str = Field(default="", max_length=32)
+
+    @field_validator("field_name")
+    @classmethod
+    def _field_name_not_blank(cls, v: str) -> str:
+        stripped = v.strip()
+        if not stripped:
+            raise ValueError("field_name 不可為空白")
+        return stripped
 
 
 class EquipmentInfo(BaseModel):
@@ -706,7 +720,7 @@ async def one_stop_process(request: OneStopProcessRequest):
 
     except Exception as e:
         logger.error(f"One-stop process failed: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise internal_error(e)
 
 
 # ============ Sprint 5: Batch Inspection Mode ============
@@ -766,15 +780,18 @@ async def batch_process(request: BatchProcessRequest):
 
     except Exception as e:
         logger.error(f"Batch process failed: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise internal_error(e)
 
 
 # ============ 輕量級讀數判定（App 自動定檢用） ============
 
 class JudgeReadingsRequest(BaseModel):
-    """讀數判定請求 — 行動 App 在 AI 辨識後直接送出讀數做標準判定"""
-    readings: list[ReadingItem]
-    equipment_type: str = ""
+    """讀數判定請求 — 行動 App 在 AI 辨識後直接送出讀數做標準判定
+
+    Issue #47：readings 數量上限防呆（單張表單欄位至多數十筆，500 已極寬鬆）
+    """
+    readings: list[ReadingItem] = Field(max_length=500)
+    equipment_type: str = Field(default="", max_length=100)
 
 
 class JudgeReadingsResponse(BaseModel):
@@ -836,4 +853,4 @@ async def judge_readings(request: JudgeReadingsRequest):
 
     except Exception as e:
         logger.error(f"Judge readings failed: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise internal_error(e)
