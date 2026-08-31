@@ -62,8 +62,11 @@ cmd += [
     "-map", f"[{prev}]",
     "-r", str(FPS),
     "-c:v", "libx264",
-    "-preset", "medium",
-    "-crf", "20",
+    "-preset", "slow",
+    # stillimage 針對投影片型內容最佳化；CRF 25 在 1080p 文字畫面仍銳利，
+    # 檔案可壓到 30 MB 以下便於直接傳送
+    "-tune", "stillimage",
+    "-crf", "25",
     "-pix_fmt", "yuv420p",
     "-movflags", "+faststart",
     "-t", str(sum(DURATIONS)),  # 精確切齊 180 秒
