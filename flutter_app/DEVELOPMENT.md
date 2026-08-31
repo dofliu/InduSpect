@@ -43,8 +43,11 @@ lib/
 │   ├── gemini_service.dart           # Gemini AI 分析 + 摘要報告
 │   ├── location_service.dart         # GPS 一次性定位 + 反向地理編碼
 │   ├── standards_engine.dart         # ★ Tier 0 離線法規判定引擎（56 條標準內嵌）
+│   ├── ocr_reading_parser.dart       # Tier 1a 離線 OCR 讀值解析
+│   ├── meter_ocr_service.dart        # ML Kit OCR adapter（條件導入）
+│   ├── image_quality_service.dart    # ★ 拍照品質閘門（模糊/曝光/反光，純本機）
 │   ├── share_queue_service.dart      # 離線分享佇列（上線自動處理）
-│   ├── connectivity_service.dart     # 網路連線狀態監聽
+│   ├── connectivity_service.dart     # 連線監聽 + /health 可達性探測
 │   ├── file_save_service.dart        # 平台適應的檔案分享
 │   ├── photo_service.dart            # 照片命名與管理
 │   └── backend_api_service.dart      # 後端 API（表單回填）
@@ -147,12 +150,14 @@ flutter test
 flutter test test/form_inspection_record_test.dart
 ```
 
-### 測試清單（109 tests）
+### 測試清單（137 tests）
 
 | 檔案 | 數量 | 覆蓋範圍 |
 |------|------|---------|
 | `standards_engine_test.dart` | 24 | ★ Tier 0 離線判定引擎：單位正規化/換算、標準匹配、autoJudge、批次判定合約 |
 | `ocr_reading_parser_test.dart` | 21 | ★ Tier 1a OCR 讀值解析：誤讀修正、雜訊過濾、最佳讀值優先序 |
+| `image_quality_service_test.dart` | 14 | ★ 拍照品質閘門：模糊/過暗/過曝/反光/無法解碼、門檻可調、跨解析度一致性（合成影像） |
+| `connectivity_probe_test.dart` | 14 | ★ 可達性探測：介面×可達性決策矩陣、快取 TTL、forceProbe、逾時與例外 |
 | `inspection_item_state_test.dart` | 22 | displayValue/verdict 邏輯（含法規標準判定優先序）、controller 生命週期 |
 | `form_inspection_record_test.dart` | 21 | Model: toMap/fromMap 往返、null 處理、舊格式相容、standardJudgments 持久化、copyWith 深拷貝 |
 | `database_service_test.dart` | 12 | DB CRUD: insert/update/delete、排序、limit、搜尋、GPS 持久化、UNIQUE 約束 |
@@ -233,7 +238,8 @@ flutter build apk --debug
 2. **上架準備**：產生 upload keystore（見 ANDROID_DEPLOYMENT.md）、隱私政策發布到
    公開 URL（docs/PRIVACY_POLICY.md）、Play 內部測試軌
 3. **後端部署**：Cloud Run + Secret Manager（cloudbuild.yaml 已備妥前置步驟註解）
-4. **Tier 1a**：ML Kit OCR 數位錶離線讀值；**試點計畫**：2-3 場域量測指標
+4. **試點計畫**：2-3 場域量測指標（時間節省、AI 讀值免修改率）；
+   品質閘門門檻需以現場實拍照片校準（見 `image_quality_service.dart` 註記）
 
 ---
 
