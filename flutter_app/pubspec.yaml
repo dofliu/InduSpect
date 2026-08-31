@@ -85,6 +85,7 @@ flutter:
   assets:
     - assets/images/
     - assets/templates/
+    - assets/standards/
     - .env
 
   # 如果需要自定義字體，可以在這裡添加

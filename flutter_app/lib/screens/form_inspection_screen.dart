@@ -23,6 +23,7 @@ import '../services/database_service.dart';
 import '../services/location_service.dart';
 import '../services/photo_service.dart';
 import '../services/connectivity_service.dart';
+import '../services/standards_engine.dart';
 import '../screens/guided_capture_screen.dart';
 import '../utils/constants.dart';
 
@@ -884,31 +885,61 @@ class _FormInspectionScreenState extends State<FormInspectionScreen> {
         }
         _saveDraft();
       } else {
-        // 離線或失敗 → 標記待判定（保留既有 AI 判定作為暫時結果）
-        for (final item in targets) {
-          if (item.standardJudgment == null) {
-            item.standardJudgmentPending = true;
-          }
-        }
-        if (mounted && result['error'] == 'offline') {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('目前離線，量測項目標記為「待判定」，恢復網路後可重新判定'),
-              backgroundColor: Colors.orange,
-              duration: Duration(seconds: 3),
-            ),
-          );
-        }
+        // 離線或後端失敗 → Tier 0 本地判定引擎（內建法規標準庫），
+        // 僅在本地引擎也失敗時才標記「待判定」
+        await _applyLocalJudgment(
+          targets,
+          readings,
+          equipmentType,
+          offline: result['error'] == 'offline',
+        );
       }
     } catch (e) {
       debugPrint('標準判定失敗: $e');
+      await _applyLocalJudgment(targets, readings, equipmentType, offline: false);
+    } finally {
+      if (mounted) setState(() => _isJudging = false);
+    }
+  }
+
+  /// Tier 0 離線判定：後端不可用時以內建法規標準庫（StandardsEngine）判定。
+  /// 判定結果帶 source=local 供稽核區別；本地引擎也失敗時退回「待判定」。
+  Future<void> _applyLocalJudgment(
+    List<InspectionItemState> targets,
+    List<Map<String, dynamic>> readings,
+    String equipmentType, {
+    required bool offline,
+  }) async {
+    try {
+      final engine = await StandardsEngine.load();
+      final result =
+          engine.judgeReadingsLocally(readings, equipmentType: equipmentType);
+      final judgments = (result['judgments'] as List)
+          .map((e) => Map<String, dynamic>.from(e as Map))
+          .toList();
+      // 引擎保證 judgments 與輸入 readings 同序
+      for (int i = 0; i < targets.length && i < judgments.length; i++) {
+        targets[i].standardJudgment = judgments[i];
+        targets[i].standardJudgmentPending = false;
+      }
+      _saveDraft();
+      _showNotice(
+        offline
+            ? '目前離線，已使用內建法規標準庫（${engine.version}）完成判定'
+            : '後端判定失敗，已使用內建法規標準庫（${engine.version}）完成判定',
+        color: Colors.blueGrey,
+      );
+    } catch (e) {
+      // 本地引擎失敗（asset 缺失等）→ 維持原本的「待判定」補償路徑
+      debugPrint('本地標準判定失敗: $e');
       for (final item in targets) {
         if (item.standardJudgment == null) {
           item.standardJudgmentPending = true;
         }
       }
-    } finally {
-      if (mounted) setState(() => _isJudging = false);
+      if (offline) {
+        _showNotice('目前離線，量測項目標記為「待判定」，恢復網路後可重新判定');
+      }
     }
   }
 

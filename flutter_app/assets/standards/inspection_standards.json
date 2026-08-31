@@ -1,0 +1,1042 @@
+{
+  "version": "2026-08-31+56",
+  "total": 56,
+  "categories": {
+    "electrical": 15,
+    "fire": 15,
+    "mechanical": 15,
+    "pressure": 11
+  },
+  "standards": [
+    {
+      "standard_id": "elec_insulation_lv",
+      "category": "electrical",
+      "equipment_type": "低壓配電設備",
+      "inspection_item": "絕緣電阻",
+      "keywords": [
+        "絕緣",
+        "insulation",
+        "IR"
+      ],
+      "unit": "MΩ",
+      "pass_condition": "gte",
+      "pass_value": 1.0,
+      "warning_value": 2.0,
+      "regulation": "屋內線路裝置規則 第59條",
+      "notes": "三相各相分別量測，對地絕緣電阻"
+    },
+    {
+      "standard_id": "elec_ground_resistance",
+      "category": "electrical",
+      "equipment_type": "低壓配電設備",
+      "inspection_item": "接地電阻",
+      "keywords": [
+        "接地",
+        "ground",
+        "earth"
+      ],
+      "unit": "Ω",
+      "pass_condition": "lte",
+      "pass_value": 100.0,
+      "warning_value": 80.0,
+      "regulation": "屋內線路裝置規則 第59條",
+      "notes": "第三種接地工程"
+    },
+    {
+      "standard_id": "elec_rcd_time",
+      "category": "electrical",
+      "equipment_type": "低壓配電設備",
+      "inspection_item": "漏電斷路器動作時間",
+      "keywords": [
+        "漏電",
+        "動作時間",
+        "RCD",
+        "ELCB",
+        "斷路器"
+      ],
+      "unit": "ms",
+      "pass_condition": "lte",
+      "pass_value": 100.0,
+      "warning_value": 80.0,
+      "regulation": "CNS 14816",
+      "notes": "額定動作電流下之動作時間"
+    },
+    {
+      "standard_id": "elec_rcd_current",
+      "category": "electrical",
+      "equipment_type": "低壓配電設備",
+      "inspection_item": "漏電斷路器動作電流",
+      "keywords": [
+        "漏電",
+        "動作電流",
+        "RCD",
+        "ELCB"
+      ],
+      "unit": "mA",
+      "pass_condition": "lte",
+      "pass_value": 30.0,
+      "warning_value": 25.0,
+      "regulation": "CNS 14816",
+      "notes": "額定感度電流"
+    },
+    {
+      "standard_id": "elec_voltage_deviation",
+      "category": "electrical",
+      "equipment_type": "低壓配電設備",
+      "inspection_item": "電壓偏差率",
+      "keywords": [
+        "電壓",
+        "偏差",
+        "voltage"
+      ],
+      "unit": "%",
+      "pass_condition": "lte",
+      "pass_value": 5.0,
+      "warning_value": 4.0,
+      "regulation": "電業法施行細則 第38條",
+      "notes": "額定電壓 ±5% 以內"
+    },
+    {
+      "standard_id": "elec_transformer_temp",
+      "category": "electrical",
+      "equipment_type": "變壓器",
+      "inspection_item": "變壓器油溫",
+      "keywords": [
+        "變壓器",
+        "油溫",
+        "transformer",
+        "temperature"
+      ],
+      "unit": "°C",
+      "pass_condition": "lte",
+      "pass_value": 85.0,
+      "warning_value": 75.0,
+      "regulation": "CNS 1390",
+      "notes": "油浸式變壓器頂層油溫"
+    },
+    {
+      "standard_id": "elec_transformer_insulation_hv",
+      "category": "electrical",
+      "equipment_type": "高壓配電設備",
+      "inspection_item": "高壓絕緣電阻",
+      "keywords": [
+        "高壓",
+        "絕緣",
+        "HV"
+      ],
+      "unit": "MΩ",
+      "pass_condition": "gte",
+      "pass_value": 100.0,
+      "warning_value": 200.0,
+      "regulation": "屋內線路裝置規則 第59條",
+      "notes": "高壓設備對地絕緣電阻"
+    },
+    {
+      "standard_id": "elec_contact_resistance",
+      "category": "electrical",
+      "equipment_type": "低壓配電設備",
+      "inspection_item": "接觸電阻",
+      "keywords": [
+        "接觸",
+        "contact"
+      ],
+      "unit": "μΩ",
+      "pass_condition": "lte",
+      "pass_value": 100.0,
+      "warning_value": 80.0,
+      "regulation": "IEC 62271",
+      "notes": "斷路器接觸電阻"
+    },
+    {
+      "standard_id": "elec_harmonic_thd",
+      "category": "electrical",
+      "equipment_type": "低壓配電設備",
+      "inspection_item": "諧波失真率",
+      "keywords": [
+        "諧波",
+        "THD",
+        "harmonic"
+      ],
+      "unit": "%",
+      "pass_condition": "lte",
+      "pass_value": 5.0,
+      "warning_value": 4.0,
+      "regulation": "IEEE 519",
+      "notes": "總諧波失真率 THD"
+    },
+    {
+      "standard_id": "elec_power_factor",
+      "category": "electrical",
+      "equipment_type": "低壓配電設備",
+      "inspection_item": "功率因數",
+      "keywords": [
+        "功率因數",
+        "power factor",
+        "PF",
+        "cosφ"
+      ],
+      "unit": "",
+      "pass_condition": "gte",
+      "pass_value": 0.85,
+      "warning_value": 0.9,
+      "regulation": "電業法 第45條",
+      "notes": "用戶功率因數不得低於 0.85"
+    },
+    {
+      "standard_id": "elec_busbar_temp",
+      "category": "electrical",
+      "equipment_type": "低壓配電設備",
+      "inspection_item": "匯流排溫度",
+      "keywords": [
+        "匯流排",
+        "busbar",
+        "溫度",
+        "溫升"
+      ],
+      "unit": "°C",
+      "pass_condition": "lte",
+      "pass_value": 70.0,
+      "warning_value": 60.0,
+      "regulation": "IEC 61439",
+      "notes": "銅匯流排最高容許溫度"
+    },
+    {
+      "standard_id": "elec_cable_insulation",
+      "category": "electrical",
+      "equipment_type": "電纜",
+      "inspection_item": "電纜絕緣電阻",
+      "keywords": [
+        "電纜",
+        "cable",
+        "絕緣"
+      ],
+      "unit": "MΩ",
+      "pass_condition": "gte",
+      "pass_value": 1.0,
+      "warning_value": 5.0,
+      "regulation": "屋內線路裝置規則 第59條",
+      "notes": "電力電纜對地絕緣電阻"
+    },
+    {
+      "standard_id": "elec_ups_battery_voltage",
+      "category": "electrical",
+      "equipment_type": "UPS",
+      "inspection_item": "UPS 電池電壓",
+      "keywords": [
+        "UPS",
+        "電池",
+        "battery",
+        "voltage"
+      ],
+      "unit": "V",
+      "pass_condition": "range",
+      "pass_value": [
+        10.8,
+        13.8
+      ],
+      "warning_value": null,
+      "regulation": "IEEE 1188",
+      "notes": "單節鉛酸蓄電池，浮充電壓"
+    },
+    {
+      "standard_id": "elec_lightning_arrester",
+      "category": "electrical",
+      "equipment_type": "避雷設備",
+      "inspection_item": "避雷器接地電阻",
+      "keywords": [
+        "避雷",
+        "lightning",
+        "SPD"
+      ],
+      "unit": "Ω",
+      "pass_condition": "lte",
+      "pass_value": 10.0,
+      "warning_value": 8.0,
+      "regulation": "建築技術規則 第25條",
+      "notes": "避雷導線接地電阻"
+    },
+    {
+      "standard_id": "elec_emergency_gen_start",
+      "category": "electrical",
+      "equipment_type": "發電機",
+      "inspection_item": "緊急發電機啟動時間",
+      "keywords": [
+        "發電機",
+        "generator",
+        "啟動"
+      ],
+      "unit": "s",
+      "pass_condition": "lte",
+      "pass_value": 10.0,
+      "warning_value": 8.0,
+      "regulation": "消防法施行細則 第15條",
+      "notes": "緊急發電機應於 10 秒內啟動供電"
+    },
+    {
+      "standard_id": "fire_extinguisher_pressure",
+      "category": "fire",
+      "equipment_type": "滅火器",
+      "inspection_item": "滅火器壓力",
+      "keywords": [
+        "滅火器",
+        "壓力",
+        "extinguisher",
+        "pressure"
+      ],
+      "unit": "MPa",
+      "pass_condition": "range",
+      "pass_value": [
+        0.7,
+        0.98
+      ],
+      "warning_value": null,
+      "regulation": "消防法 第6條 / 各類場所消防安全設備設置標準",
+      "notes": "綠色區域為合格範圍"
+    },
+    {
+      "standard_id": "fire_emergency_light_duration",
+      "category": "fire",
+      "equipment_type": "緊急照明",
+      "inspection_item": "緊急照明持續時間",
+      "keywords": [
+        "緊急照明",
+        "emergency light",
+        "持續"
+      ],
+      "unit": "min",
+      "pass_condition": "gte",
+      "pass_value": 30.0,
+      "warning_value": 35.0,
+      "regulation": "消防法 第6條",
+      "notes": "停電後應持續照明至少 30 分鐘"
+    },
+    {
+      "standard_id": "fire_emergency_light_lux",
+      "category": "fire",
+      "equipment_type": "緊急照明",
+      "inspection_item": "緊急照明照度",
+      "keywords": [
+        "照度",
+        "lux",
+        "照明"
+      ],
+      "unit": "lux",
+      "pass_condition": "gte",
+      "pass_value": 1.0,
+      "warning_value": 2.0,
+      "regulation": "消防法 第6條",
+      "notes": "地面照度 1 lux 以上"
+    },
+    {
+      "standard_id": "fire_smoke_detector_sensitivity",
+      "category": "fire",
+      "equipment_type": "偵煙探測器",
+      "inspection_item": "偵煙探測器靈敏度",
+      "keywords": [
+        "偵煙",
+        "smoke",
+        "探測器",
+        "靈敏度"
+      ],
+      "unit": "%/m",
+      "pass_condition": "range",
+      "pass_value": [
+        5.0,
+        20.0
+      ],
+      "warning_value": null,
+      "regulation": "CNS 11877",
+      "notes": "光電式偵煙探測器每公尺減光率"
+    },
+    {
+      "standard_id": "fire_sprinkler_pressure",
+      "category": "fire",
+      "equipment_type": "灑水設備",
+      "inspection_item": "灑水頭放水壓力",
+      "keywords": [
+        "灑水",
+        "sprinkler",
+        "放水壓力"
+      ],
+      "unit": "kgf/cm²",
+      "pass_condition": "gte",
+      "pass_value": 1.0,
+      "warning_value": 1.5,
+      "regulation": "各類場所消防安全設備設置標準 第46條",
+      "notes": "最遠灑水頭放水壓力"
+    },
+    {
+      "standard_id": "fire_hydrant_pressure",
+      "category": "fire",
+      "equipment_type": "消防栓",
+      "inspection_item": "消防栓放水壓力",
+      "keywords": [
+        "消防栓",
+        "hydrant",
+        "放水壓力"
+      ],
+      "unit": "kgf/cm²",
+      "pass_condition": "gte",
+      "pass_value": 1.7,
+      "warning_value": 2.0,
+      "regulation": "各類場所消防安全設備設置標準 第31條",
+      "notes": "室內消防栓瞄子放水壓力"
+    },
+    {
+      "standard_id": "fire_hydrant_flow",
+      "category": "fire",
+      "equipment_type": "消防栓",
+      "inspection_item": "消防栓放水量",
+      "keywords": [
+        "消防栓",
+        "hydrant",
+        "放水量",
+        "流量"
+      ],
+      "unit": "L/min",
+      "pass_condition": "gte",
+      "pass_value": 130.0,
+      "warning_value": 150.0,
+      "regulation": "各類場所消防安全設備設置標準 第31條",
+      "notes": "第一種消防栓每支瞄子放水量"
+    },
+    {
+      "standard_id": "fire_exit_sign_lux",
+      "category": "fire",
+      "equipment_type": "出口標示燈",
+      "inspection_item": "出口標示燈亮度",
+      "keywords": [
+        "出口",
+        "標示燈",
+        "exit",
+        "亮度"
+      ],
+      "unit": "cd/m²",
+      "pass_condition": "gte",
+      "pass_value": 50.0,
+      "warning_value": 60.0,
+      "regulation": "CNS 11820",
+      "notes": "出口標示燈面板亮度"
+    },
+    {
+      "standard_id": "fire_co_detector",
+      "category": "fire",
+      "equipment_type": "一氧化碳偵測器",
+      "inspection_item": "CO 偵測器動作濃度",
+      "keywords": [
+        "CO",
+        "一氧化碳",
+        "carbon monoxide"
+      ],
+      "unit": "ppm",
+      "pass_condition": "lte",
+      "pass_value": 200.0,
+      "warning_value": 150.0,
+      "regulation": "CNS 15440",
+      "notes": "應於 CO 濃度 200ppm 以下時動作"
+    },
+    {
+      "standard_id": "fire_fire_door_closing",
+      "category": "fire",
+      "equipment_type": "防火門",
+      "inspection_item": "防火門關閉時間",
+      "keywords": [
+        "防火門",
+        "fire door",
+        "關閉"
+      ],
+      "unit": "s",
+      "pass_condition": "lte",
+      "pass_value": 5.0,
+      "warning_value": 4.0,
+      "regulation": "建築技術規則 第76條",
+      "notes": "防火門應能自動關閉"
+    },
+    {
+      "standard_id": "fire_alarm_panel_indicator",
+      "category": "fire",
+      "equipment_type": "火警受信總機",
+      "inspection_item": "火警受信總機指示燈",
+      "keywords": [
+        "受信總機",
+        "alarm panel",
+        "指示燈",
+        "fire panel"
+      ],
+      "unit": "",
+      "pass_condition": "in_set",
+      "pass_value": [
+        "正常",
+        "綠燈",
+        "OK"
+      ],
+      "warning_value": null,
+      "regulation": "各類場所消防安全設備設置標準 第120條",
+      "notes": "受信總機運轉狀態，紅燈或閃爍代表異常"
+    },
+    {
+      "standard_id": "fire_extinguisher_gauge_zone",
+      "category": "fire",
+      "equipment_type": "滅火器",
+      "inspection_item": "滅火器壓力錶顯示區域",
+      "keywords": [
+        "滅火器",
+        "壓力錶",
+        "綠區",
+        "extinguisher gauge"
+      ],
+      "unit": "",
+      "pass_condition": "in_set",
+      "pass_value": [
+        "綠區",
+        "正常",
+        "OK"
+      ],
+      "warning_value": null,
+      "regulation": "CNS 1387 / 消防法 第6條",
+      "notes": "目視檢查，指針落在紅區（過壓/欠壓）需更換"
+    },
+    {
+      "standard_id": "fire_evacuation_sign_battery_duration",
+      "category": "fire",
+      "equipment_type": "避難方向指示燈",
+      "inspection_item": "避難方向指示燈電池續航時間",
+      "keywords": [
+        "避難",
+        "方向指示",
+        "exit sign",
+        "battery"
+      ],
+      "unit": "min",
+      "pass_condition": "gte",
+      "pass_value": 20.0,
+      "warning_value": 25.0,
+      "regulation": "各類場所消防安全設備設置標準 第175條",
+      "notes": "停電後內建電池應能維持至少 20 分鐘"
+    },
+    {
+      "standard_id": "fire_heat_detector_response_temp",
+      "category": "fire",
+      "equipment_type": "定溫式探測器",
+      "inspection_item": "定溫式探測器動作溫度",
+      "keywords": [
+        "定溫",
+        "heat detector",
+        "探測器",
+        "動作溫度"
+      ],
+      "unit": "°C",
+      "pass_condition": "range",
+      "pass_value": [
+        65.0,
+        75.0
+      ],
+      "warning_value": null,
+      "regulation": "CNS 8884 / 消防安全設備設置標準",
+      "notes": "標稱動作溫度範圍，公差依型式認證"
+    },
+    {
+      "standard_id": "fire_alarm_bell_db",
+      "category": "fire",
+      "equipment_type": "火警警鈴",
+      "inspection_item": "火警警鈴音壓",
+      "keywords": [
+        "警鈴",
+        "alarm bell",
+        "音壓",
+        "dB"
+      ],
+      "unit": "dB",
+      "pass_condition": "gte",
+      "pass_value": 90.0,
+      "warning_value": 95.0,
+      "regulation": "各類場所消防安全設備設置標準 第127條",
+      "notes": "距警鈴 1 公尺處量測，應 ≥90 dB"
+    },
+    {
+      "standard_id": "mech_motor_temp",
+      "category": "mechanical",
+      "equipment_type": "馬達",
+      "inspection_item": "馬達溫度",
+      "keywords": [
+        "馬達",
+        "motor",
+        "溫度",
+        "temperature"
+      ],
+      "unit": "°C",
+      "pass_condition": "lte",
+      "pass_value": 80.0,
+      "warning_value": 70.0,
+      "regulation": "CNS 14400 / IEC 60034",
+      "notes": "B級絕緣馬達表面溫度"
+    },
+    {
+      "standard_id": "mech_vibration",
+      "category": "mechanical",
+      "equipment_type": "旋轉機械",
+      "inspection_item": "振動值",
+      "keywords": [
+        "振動",
+        "vibration"
+      ],
+      "unit": "mm/s",
+      "pass_condition": "lte",
+      "pass_value": 4.5,
+      "warning_value": 3.5,
+      "regulation": "ISO 10816-3",
+      "notes": "Group 2 (15-75kW) 中型旋轉機械"
+    },
+    {
+      "standard_id": "mech_bearing_temp",
+      "category": "mechanical",
+      "equipment_type": "軸承",
+      "inspection_item": "軸承溫度",
+      "keywords": [
+        "軸承",
+        "bearing",
+        "溫度"
+      ],
+      "unit": "°C",
+      "pass_condition": "lte",
+      "pass_value": 70.0,
+      "warning_value": 60.0,
+      "regulation": "ISO 10816",
+      "notes": "滾動軸承表面溫度"
+    },
+    {
+      "standard_id": "mech_pump_flow",
+      "category": "mechanical",
+      "equipment_type": "泵浦",
+      "inspection_item": "泵浦流量",
+      "keywords": [
+        "泵浦",
+        "pump",
+        "流量",
+        "flow"
+      ],
+      "unit": "m³/h",
+      "pass_condition": "gte",
+      "pass_value": null,
+      "warning_value": null,
+      "regulation": "CNS 7783",
+      "notes": "應不低於設計流量的 90%（需配合設計值）"
+    },
+    {
+      "standard_id": "mech_belt_tension",
+      "category": "mechanical",
+      "equipment_type": "皮帶傳動",
+      "inspection_item": "皮帶張力",
+      "keywords": [
+        "皮帶",
+        "belt",
+        "張力",
+        "tension"
+      ],
+      "unit": "mm",
+      "pass_condition": "range",
+      "pass_value": [
+        10,
+        25
+      ],
+      "warning_value": null,
+      "regulation": "設備廠商規範",
+      "notes": "每 100mm 跨距下壓 10-25mm 撓度"
+    },
+    {
+      "standard_id": "mech_oil_level",
+      "category": "mechanical",
+      "equipment_type": "潤滑系統",
+      "inspection_item": "潤滑油液位",
+      "keywords": [
+        "油位",
+        "oil level",
+        "潤滑油"
+      ],
+      "unit": "",
+      "pass_condition": "in_set",
+      "pass_value": [
+        "正常",
+        "合格",
+        "OK",
+        "normal"
+      ],
+      "warning_value": null,
+      "regulation": "設備維護手冊",
+      "notes": "油位應在上下限標記之間"
+    },
+    {
+      "standard_id": "mech_noise_level",
+      "category": "mechanical",
+      "equipment_type": "旋轉機械",
+      "inspection_item": "噪音值",
+      "keywords": [
+        "噪音",
+        "noise",
+        "dB"
+      ],
+      "unit": "dB(A)",
+      "pass_condition": "lte",
+      "pass_value": 85.0,
+      "warning_value": 80.0,
+      "regulation": "職業安全衛生設施規則 第300條",
+      "notes": "勞工八小時日時量平均音壓級"
+    },
+    {
+      "standard_id": "mech_alignment",
+      "category": "mechanical",
+      "equipment_type": "旋轉機械",
+      "inspection_item": "軸心偏移量",
+      "keywords": [
+        "偏移",
+        "alignment",
+        "軸心"
+      ],
+      "unit": "mm",
+      "pass_condition": "lte",
+      "pass_value": 0.05,
+      "warning_value": 0.03,
+      "regulation": "ISO 10816",
+      "notes": "徑向偏移量"
+    },
+    {
+      "standard_id": "mech_fan_airflow",
+      "category": "mechanical",
+      "equipment_type": "風機",
+      "inspection_item": "風量",
+      "keywords": [
+        "風量",
+        "airflow",
+        "風機",
+        "fan"
+      ],
+      "unit": "CMM",
+      "pass_condition": "gte",
+      "pass_value": null,
+      "warning_value": null,
+      "regulation": "設計規範",
+      "notes": "應不低於設計風量的 90%"
+    },
+    {
+      "standard_id": "mech_compressor_pressure",
+      "category": "mechanical",
+      "equipment_type": "空壓機",
+      "inspection_item": "空壓機出口壓力",
+      "keywords": [
+        "空壓機",
+        "compressor",
+        "壓力"
+      ],
+      "unit": "kgf/cm²",
+      "pass_condition": "range",
+      "pass_value": [
+        6.0,
+        8.0
+      ],
+      "warning_value": null,
+      "regulation": "設備規範",
+      "notes": "一般工業用空壓機出口壓力"
+    },
+    {
+      "standard_id": "mech_motor_insulation",
+      "category": "mechanical",
+      "equipment_type": "馬達",
+      "inspection_item": "馬達絕緣電阻",
+      "keywords": [
+        "馬達絕緣",
+        "motor insulation",
+        "繞組絕緣"
+      ],
+      "unit": "MΩ",
+      "pass_condition": "gte",
+      "pass_value": 1.0,
+      "warning_value": 5.0,
+      "regulation": "IEEE 43 / CNS 14400",
+      "notes": "馬達停機冷態量測，最低標準為每千伏特額定電壓 1MΩ"
+    },
+    {
+      "standard_id": "mech_motor_current_balance",
+      "category": "mechanical",
+      "equipment_type": "馬達",
+      "inspection_item": "馬達三相電流不平衡率",
+      "keywords": [
+        "三相",
+        "不平衡",
+        "current balance",
+        "phase imbalance"
+      ],
+      "unit": "%",
+      "pass_condition": "lte",
+      "pass_value": 10.0,
+      "warning_value": 5.0,
+      "regulation": "NEMA MG-1 / IEEE 141",
+      "notes": "不平衡率 > 10% 會顯著縮短馬達壽命並增加溫升"
+    },
+    {
+      "standard_id": "mech_lube_oil_temp",
+      "category": "mechanical",
+      "equipment_type": "減速機/泵浦",
+      "inspection_item": "潤滑油溫度",
+      "keywords": [
+        "潤滑油",
+        "lube oil",
+        "oil temperature"
+      ],
+      "unit": "°C",
+      "pass_condition": "lte",
+      "pass_value": 70.0,
+      "warning_value": 60.0,
+      "regulation": "ISO 6743 / 設備商建議",
+      "notes": "油溫過高加速油品劣化、降低黏度"
+    },
+    {
+      "standard_id": "mech_cooling_water_temp",
+      "category": "mechanical",
+      "equipment_type": "冷卻系統",
+      "inspection_item": "冷卻水出口溫度",
+      "keywords": [
+        "冷卻水",
+        "cooling water",
+        "outlet temperature"
+      ],
+      "unit": "°C",
+      "pass_condition": "lte",
+      "pass_value": 35.0,
+      "warning_value": 32.0,
+      "regulation": "設備商建議",
+      "notes": "冷卻塔/熱交換器出口水溫，過高代表冷卻效能不足"
+    },
+    {
+      "standard_id": "mech_pump_seal_leakage",
+      "category": "mechanical",
+      "equipment_type": "泵浦",
+      "inspection_item": "泵浦軸封漏液",
+      "keywords": [
+        "軸封",
+        "seal",
+        "leakage",
+        "漏液",
+        "漏油"
+      ],
+      "unit": "",
+      "pass_condition": "in_set",
+      "pass_value": [
+        "無",
+        "正常",
+        "微滲(可接受)",
+        "OK"
+      ],
+      "warning_value": null,
+      "regulation": "API 682 / 設備商規範",
+      "notes": "機械軸封容許微量滴漏，明顯洩漏需停機檢修"
+    },
+    {
+      "standard_id": "pres_vessel_thickness",
+      "category": "pressure",
+      "equipment_type": "壓力容器",
+      "inspection_item": "壓力容器壁厚",
+      "keywords": [
+        "壁厚",
+        "thickness",
+        "壓力容器"
+      ],
+      "unit": "mm",
+      "pass_condition": "gte",
+      "pass_value": null,
+      "warning_value": null,
+      "regulation": "鍋爐及壓力容器安全規則 第39條",
+      "notes": "不得低於設計最小壁厚"
+    },
+    {
+      "standard_id": "pres_relief_valve",
+      "category": "pressure",
+      "equipment_type": "壓力容器",
+      "inspection_item": "安全閥動作壓力",
+      "keywords": [
+        "安全閥",
+        "relief valve",
+        "安全裝置"
+      ],
+      "unit": "kgf/cm²",
+      "pass_condition": "lte",
+      "pass_value": null,
+      "warning_value": null,
+      "regulation": "鍋爐及壓力容器安全規則 第42條",
+      "notes": "不得超過最高使用壓力之 1.1 倍"
+    },
+    {
+      "standard_id": "pres_boiler_water_level",
+      "category": "pressure",
+      "equipment_type": "鍋爐",
+      "inspection_item": "鍋爐水位",
+      "keywords": [
+        "鍋爐",
+        "boiler",
+        "水位"
+      ],
+      "unit": "",
+      "pass_condition": "in_set",
+      "pass_value": [
+        "正常",
+        "合格",
+        "OK"
+      ],
+      "warning_value": null,
+      "regulation": "鍋爐及壓力容器安全規則 第51條",
+      "notes": "水位應在正常操作範圍內"
+    },
+    {
+      "standard_id": "pres_pipe_pressure_test",
+      "category": "pressure",
+      "equipment_type": "壓力管路",
+      "inspection_item": "管路耐壓試驗",
+      "keywords": [
+        "管路",
+        "pipe",
+        "耐壓"
+      ],
+      "unit": "kgf/cm²",
+      "pass_condition": "gte",
+      "pass_value": null,
+      "warning_value": null,
+      "regulation": "鍋爐及壓力容器安全規則",
+      "notes": "試驗壓力為最高使用壓力之 1.5 倍，維持 30 分鐘無洩漏"
+    },
+    {
+      "standard_id": "pres_boiler_stack_temp",
+      "category": "pressure",
+      "equipment_type": "鍋爐",
+      "inspection_item": "鍋爐排氣溫度",
+      "keywords": [
+        "排氣",
+        "stack",
+        "煙囪",
+        "排煙"
+      ],
+      "unit": "°C",
+      "pass_condition": "lte",
+      "pass_value": 250.0,
+      "warning_value": 220.0,
+      "regulation": "鍋爐效率管理規範",
+      "notes": "排氣溫度過高表示熱交換效率不足"
+    },
+    {
+      "standard_id": "pres_boiler_feedwater_ph",
+      "category": "pressure",
+      "equipment_type": "鍋爐",
+      "inspection_item": "鍋爐給水 pH 值",
+      "keywords": [
+        "pH",
+        "給水",
+        "feedwater",
+        "酸鹼"
+      ],
+      "unit": "",
+      "pass_condition": "range",
+      "pass_value": [
+        8.5,
+        10.5
+      ],
+      "warning_value": null,
+      "regulation": "CNS 10861 鍋爐用水水質",
+      "notes": "pH 過低易腐蝕、過高易結垢；爐水範圍以鍋爐使用壓力為準"
+    },
+    {
+      "standard_id": "pres_boiler_feedwater_hardness",
+      "category": "pressure",
+      "equipment_type": "鍋爐",
+      "inspection_item": "鍋爐給水硬度",
+      "keywords": [
+        "硬度",
+        "hardness",
+        "給水",
+        "CaCO3"
+      ],
+      "unit": "mg/L",
+      "pass_condition": "lte",
+      "pass_value": 1.0,
+      "warning_value": 0.5,
+      "regulation": "CNS 10861 鍋爐用水水質",
+      "notes": "以 CaCO3 計，硬度過高易在加熱面結垢降低熱效率"
+    },
+    {
+      "standard_id": "pres_steam_insulation_surface_temp",
+      "category": "pressure",
+      "equipment_type": "蒸汽管路",
+      "inspection_item": "保溫外表面溫度",
+      "keywords": [
+        "保溫",
+        "insulation",
+        "管路表面",
+        "燙傷"
+      ],
+      "unit": "°C",
+      "pass_condition": "lte",
+      "pass_value": 60.0,
+      "warning_value": 50.0,
+      "regulation": "職業安全衛生設施規則 第229條",
+      "notes": "勞工易接觸之高溫管路表面溫度應降至 60°C 以下防灼傷"
+    },
+    {
+      "standard_id": "pres_chimney_co_concentration",
+      "category": "pressure",
+      "equipment_type": "鍋爐",
+      "inspection_item": "煙道 CO 濃度",
+      "keywords": [
+        "CO",
+        "一氧化碳",
+        "煙道",
+        "排煙"
+      ],
+      "unit": "ppm",
+      "pass_condition": "lte",
+      "pass_value": 400.0,
+      "warning_value": 300.0,
+      "regulation": "鍋爐效率管理規範 / 固定污染源空污排放標準",
+      "notes": "CO 高表示燃燒不完全，需調整空燃比"
+    },
+    {
+      "standard_id": "pres_relief_valve_seal_intact",
+      "category": "pressure",
+      "equipment_type": "壓力容器",
+      "inspection_item": "安全閥鉛封完整性",
+      "keywords": [
+        "鉛封",
+        "安全閥",
+        "seal"
+      ],
+      "unit": "",
+      "pass_condition": "in_set",
+      "pass_value": [
+        "完整",
+        "良好",
+        "OK"
+      ],
+      "warning_value": null,
+      "regulation": "鍋爐及壓力容器安全規則 第42條",
+      "notes": "鉛封破損代表設定壓力可能遭更動，須重新校驗"
+    },
+    {
+      "standard_id": "pres_pressure_gauge_calibration",
+      "category": "pressure",
+      "equipment_type": "壓力容器",
+      "inspection_item": "壓力錶檢校有效期",
+      "keywords": [
+        "壓力錶",
+        "gauge",
+        "檢校",
+        "校驗"
+      ],
+      "unit": "",
+      "pass_condition": "in_set",
+      "pass_value": [
+        "有效",
+        "在期",
+        "OK"
+      ],
+      "warning_value": null,
+      "regulation": "度量衡法 / 鍋爐及壓力容器安全規則",
+      "notes": "壓力錶應依規定期間檢校，過期需更換或送驗"
+    }
+  ]
+}
