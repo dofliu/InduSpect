@@ -1,0 +1,14 @@
+gradle-wrapper.jar
+/.gradle
+**/.gradle
+/captures/
+/gradlew
+/gradlew.bat
+/local.properties
+**/local.properties
+GeneratedPluginRegistrant.java
+
+# 簽署金鑰與設定 — 絕不入版控（LAUNCH_PLAN P0-2）
+key.properties
+**/*.keystore
+**/*.jks
