@@ -108,6 +108,21 @@ class StandardsEngine {
     'm/s': ('velocity', 1000.0),
   };
 
+  /// 是否為引擎認得的單位（別名或可換算單位；供 OCR 解析器過濾雜訊）
+  static bool isKnownUnit(String? unit) {
+    if (unit == null) return false;
+    final u = unit.trim();
+    if (u.isEmpty) return false;
+    final normalized = normalizeUnit(u);
+    if (_conversionFactors.containsKey(normalized)) return true;
+    if (_unitAliases.containsKey(u) || _unitAliasesCi.containsKey(u.toLowerCase())) {
+      return true;
+    }
+    // 換算表未涵蓋但常見於巡檢讀值的單位
+    const extra = {'°C', '°F', '%', 'Hz', 'rpm', 'CMM', 'm³/h', 'cd/m²'};
+    return extra.contains(normalized);
+  }
+
   /// 將單位變體寫法正規化為標準寫法。無對應者原樣回傳（去空白）。
   static String normalizeUnit(String? unit) {
     if (unit == null) return '';
