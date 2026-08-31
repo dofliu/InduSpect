@@ -2,7 +2,7 @@
 報告生成 API - 根據巡檢資料填入廠商模板並產生報告
 """
 
-from fastapi import APIRouter, HTTPException, BackgroundTasks
+from fastapi import APIRouter, HTTPException
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
 from typing import Optional
@@ -113,46 +113,51 @@ async def preview_report(request: ReportPreviewRequest):
             template_id=request.template_id,
             inspection_data=request.inspection_data.model_dump()
         )
-        
+
         return preview
-        
+
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
     except Exception as e:
         logger.error(f"Preview report failed: {e}")
         raise internal_error(e)
 
 
 @router.post("/generate", response_model=GenerateReportResponse)
-async def generate_report(
-    request: GenerateReportRequest,
-    background_tasks: BackgroundTasks
-):
+async def generate_report(request: GenerateReportRequest):
     """
     產生廠商報告
-    
-    根據巡檢資料填入選定的廠商模板，產生完成的報告檔案
+
+    根據巡檢資料填入選定的廠商模板，產生完成的報告檔案。
+
+    同步執行（LAUNCH_PLAN P1 修正）：原本為背景任務 + status 輪詢，
+    但報告狀態存在行程記憶體，多實例/scale-to-zero 下輪詢會 404。
+    報告檔案很小（單份 xlsx/docx），同步產生直接回傳 completed 與
+    download_url，消除跨請求狀態依賴。
     """
     try:
         service = FormFillService()
-        
-        # 建立報告記錄
+
         report_id = str(uuid.uuid4())
-        
-        # 背景執行報告產生
-        background_tasks.add_task(
-            service.generate_report,
+
+        await service.generate_report(
             report_id=report_id,
             template_id=request.template_id,
             inspection_data=request.inspection_data.model_dump(),
-            output_format=request.output_format
+            output_format=request.output_format,
         )
-        
+
         return GenerateReportResponse(
             success=True,
             report_id=report_id,
-            status="processing",
-            message="報告產生中，完成後可下載"
+            status="completed",
+            message="報告已產生",
+            download_url=f"/api/reports/{report_id}/download",
         )
-        
+
+    except ValueError as e:
+        # 模板不存在等輸入面錯誤 → 404，讓客戶端能區分「找不到」與「伺服器錯誤」
+        raise HTTPException(status_code=404, detail=str(e))
     except Exception as e:
         logger.error(f"Generate report failed: {e}")
         raise internal_error(e)
