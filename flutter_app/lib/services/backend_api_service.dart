@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:file_picker/file_picker.dart';
@@ -12,13 +13,19 @@ class BackendApiService {
   static BackendApiService? _instance;
   late final Dio _dio;
   late final String _baseUrl;
+  late final bool _explicitlyConfigured;
   final ConnectivityService _connectivity = ConnectivityService();
-  
+
   // 離線佇列 key
   static const String _pendingItemsKey = 'pending_rag_items';
 
   BackendApiService._internal() {
-    _baseUrl = dotenv.env['BACKEND_API_URL'] ?? 'http://localhost:8000';
+    final configuredUrl = dotenv.env['BACKEND_API_URL'];
+    _explicitlyConfigured = configuredUrl != null && configuredUrl.trim().isNotEmpty;
+    // 未設定 BACKEND_API_URL 時退回 localhost 僅供本機開發；
+    // 實機上 localhost 必然連不到後端，UI 需以 isExplicitlyConfigured 提示（P0-4）
+    _baseUrl = _explicitlyConfigured ? configuredUrl!.trim() : 'http://localhost:8000';
+    final apiKey = dotenv.env['BACKEND_API_KEY'];
     _dio = Dio(BaseOptions(
       baseUrl: _baseUrl,
       connectTimeout: const Duration(seconds: 10),
@@ -26,16 +33,26 @@ class BackendApiService {
       headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
+        // 後端設定 BACKEND_API_KEY 時的存取憑證（見 backend/app/main.py api_key_guard）
+        if (apiKey != null && apiKey.trim().isNotEmpty) 'X-API-Key': apiKey.trim(),
       },
     ));
-    
-    // 添加請求攔截器 (日誌)
-    _dio.interceptors.add(LogInterceptor(
-      requestBody: true,
-      responseBody: true,
-      error: true,
-    ));
+
+    // 請求日誌僅限 debug 建置：release 全量記錄 request/response 會洩漏資料（P0-8）
+    if (kDebugMode) {
+      _dio.interceptors.add(LogInterceptor(
+        requestBody: true,
+        responseBody: true,
+        error: true,
+      ));
+    }
   }
+
+  /// BACKEND_API_URL 是否有明確設定（false = 退回 localhost，實機上後端功能不可用）
+  bool get isExplicitlyConfigured => _explicitlyConfigured;
+
+  /// 目前使用的後端位址（供設定頁/診斷顯示）
+  String get baseUrl => _baseUrl;
 
   factory BackendApiService() {
     _instance ??= BackendApiService._internal();

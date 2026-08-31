@@ -292,6 +292,10 @@ class _FormInspectionScreenState extends State<FormInspectionScreen> {
       }
 
       if (response['success'] != true) {
+        // 後端不可用 → 本地解析備援。明確告知使用者（AI 欄位分類與原格式回填品質可能較低）
+        _showNotice(BackendApiService().isExplicitlyConfigured
+            ? '後端無法連線，已改用本機解析表單（匯出時可能無法回填原始格式）'
+            : '尚未設定後端位址（BACKEND_API_URL），已改用本機解析表單（匯出時可能無法回填原始格式）');
         final localCreator = LocalTemplateCreator();
         response = await localCreator.createTemplateFromBytes(
           bytes: bytes,
@@ -1000,6 +1004,8 @@ class _FormInspectionScreenState extends State<FormInspectionScreen> {
         } catch (e) {
           debugPrint('後端回填失敗，使用本地匯出: $e');
         }
+        // 走到這裡表示原格式回填未完成（離線、後端錯誤或映射失敗）— 明確告知，不無聲降級
+        _showNotice('無法回填原始表格格式（後端不可用或回填失敗），將改匯出 JSON 檢測摘要');
       }
 
       // 後端不可用時，匯出為 JSON 摘要
@@ -1127,6 +1133,18 @@ class _FormInspectionScreenState extends State<FormInspectionScreen> {
       _isLoading = false;
       _errorMessage = message;
     });
+  }
+
+  /// 非致命提示（降級、備援路徑）— 讓使用者知道系統走了替代方案，而非無聲降級（P0-4）
+  void _showNotice(String message, {Color color = Colors.orange}) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: color,
+        duration: const Duration(seconds: 4),
+      ),
+    );
   }
 
   int get _completedCount => _inspectionItems.where((i) => i.isCompleted).length;
