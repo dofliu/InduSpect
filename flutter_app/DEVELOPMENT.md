@@ -1,6 +1,6 @@
 # Flutter App 開發指南
 
-> **最後更新**: 2026-08-31
+> **最後更新**: 2026-09-02
 
 ---
 
@@ -8,7 +8,7 @@
 
 InduSpect 聚焦於 **2 個核心功能**：
 
-1. **完整檢測 Pipeline**：上傳/匯入定檢表 → 引導拍照 → AI 辨識 → 自動回填原始格式文件 → AI 摘要報告 → 分享/傳送（離線暫存）
+1. **完整檢測 Pipeline**：上傳/匯入定檢表 → 引導拍照 → AI 辨識 → 自動回填原始格式文件 → AI 摘要報告 → PDF 申報報告 → 分享/傳送（離線暫存）
 2. **歷史紀錄**：含 GPS 定位、可編輯標題、搜尋功能
 
 ```
@@ -46,6 +46,7 @@ lib/
 │   ├── ocr_reading_parser.dart       # Tier 1a 離線 OCR 讀值解析
 │   ├── meter_ocr_service.dart        # ML Kit OCR adapter（條件導入）
 │   ├── image_quality_service.dart    # ★ 拍照品質閘門（模糊/曝光/反光，純本機）
+│   ├── pdf_report_service.dart       # ★ 申報用 PDF 報告（純 Dart 離線、內嵌繁中字型）
 │   ├── share_queue_service.dart      # 離線分享佇列（上線自動處理）
 │   ├── connectivity_service.dart     # 連線監聽 + /health 可達性探測
 │   ├── file_save_service.dart        # 平台適應的檔案分享
@@ -119,6 +120,7 @@ Step 4: exporting
 Step 5: done
   └─ 統計卡片
   └─ ★ AI 摘要報告自動產生（無需手動觸發）
+  └─ ★ 匯出 PDF 報告（PdfReportService，純本機：判定/法規依據/AI 報告/照片附件）
   └─ 分享表單 / 分享報告
   └─ 離線時 → pendingShare=1，上線自動分享
 ```
@@ -150,11 +152,12 @@ flutter test
 flutter test test/form_inspection_record_test.dart
 ```
 
-### 測試清單（137 tests）
+### 測試清單（155 tests）
 
 | 檔案 | 數量 | 覆蓋範圍 |
 |------|------|---------|
 | `standards_engine_test.dart` | 24 | ★ Tier 0 離線判定引擎：單位正規化/換算、標準匹配、autoJudge、批次判定合約 |
+| `pdf_report_service_test.dart` | 18 | ★ PDF 報告：合法 PDF/字型內嵌/照片嵌入與容錯/跨頁、fromRecord 重建（模板順序、判定優先序、值格式化、舊紀錄相容）、檔名 |
 | `ocr_reading_parser_test.dart` | 21 | ★ Tier 1a OCR 讀值解析：誤讀修正、雜訊過濾、最佳讀值優先序 |
 | `image_quality_service_test.dart` | 14 | ★ 拍照品質閘門：模糊/過暗/過曝/反光/無法解碼、門檻可調、跨解析度一致性（合成影像） |
 | `connectivity_probe_test.dart` | 14 | ★ 可達性探測：介面×可達性決策矩陣、快取 TTL、forceProbe、逾時與例外 |
@@ -240,10 +243,32 @@ flutter build apk --debug
 3. **後端部署**：Cloud Run + Secret Manager（cloudbuild.yaml 已備妥前置步驟註解）
 4. **試點計畫**：2-3 場域量測指標（時間節省、AI 讀值免修改率）；
    品質閘門門檻需以現場實拍照片校準（見 `image_quality_service.dart` 註記）
+5. **PDF 報告實機驗證**：以現場真實照片與 30+ 項目的定檢表產生 PDF，確認檔案大小
+   （照片降採樣 900px/JPEG q75）、中低階機記憶體與產生時間可接受；若出現缺字「□」
+   依 `scripts/subset_pdf_font.py` 說明擴充字元範圍
 
 ---
 
 ## 變更紀錄
+
+### 2026-09-02（PDF 報告輸出 — LAUNCH_PLAN 第 5-8 週）
+
+- **feat(report)**: ★ **申報用 PDF 報告** `pdf_report_service.dart` — 純 Dart（`pdf` 套件）
+  裝置端產生、不經後端、離線可用，符合「斷網可完成拍照 → 判定 → 匯出」原則。
+  內容：基本資料（標題/日期/來源表單/地點/GPS/紀錄編號）→ 判定統計（總數/已完成/合格/
+  不合格/警告/待判定）→ 逐項明細表（檢測值、判定色標、法規依據 + 單位換算說明）→
+  異常/不合格清單 → AI 總結報告 → 照片附件（每項照片 + 標籤）→ 產生說明；頁首/頁尾含頁碼。
+  - `PdfReportData` 與 UI/SQLite 解耦：完成頁以現場狀態組資料（照片可對應項目）；
+    歷史紀錄以 `PdfReportData.fromRecord()` 由 `template_json` + `filled_data` +
+    `ai_results` + `standard_judgments` 重建（舊紀錄無模板/模板損毀皆容錯）。
+  - 判定優先序與 `InspectionItemState.verdict` 一致（法規判定 > AI 異常 > 手動 > 未檢測）。
+  - 照片以 isolate 降採樣（最長邊 900px、JPEG q75）控制檔案大小；讀取失敗的照片略過不中斷。
+  - 中文字型：內嵌 Noto Sans TC 子集（`assets/fonts/`，OFL；Big5 全字元 + 單位符號，4.9 MB），
+    產生腳本 `scripts/subset_pdf_font.py`；`pdf` 輸出時再依實際用字二次子集。
+- **ui**: 完成頁新增「匯出 PDF 報告」按鈕；歷史紀錄卡片新增「PDF 報告」按鈕（任何狀態皆可重建）。
+- **test**: +18 測試 `pdf_report_service_test.dart`（合法 PDF/字型與照片嵌入/照片容錯/去重/
+  120 項跨頁/空資料、fromRecord 映射與格式化、檔名清理）。Flutter 137 → **155 tests**。
+- **deps**: 新增 `pdf: ^3.11.0`（解析 3.12.0）；`assets/fonts/` 加入 asset bundle。
 
 ### 2026-08-31（第三批：現場惡劣環境因應）
 

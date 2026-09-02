@@ -6,6 +6,7 @@ import 'package:path/path.dart' as p;
 import '../models/form_inspection_record.dart';
 import '../services/database_service.dart';
 import '../services/file_save_service.dart';
+import '../services/pdf_report_service.dart';
 
 /// 統一歷史紀錄畫面
 ///
@@ -26,6 +27,8 @@ class _UnifiedHistoryScreenState extends State<UnifiedHistoryScreen> {
   List<FormInspectionRecord> _records = [];
   List<FormInspectionRecord> _filteredRecords = [];
   bool _isLoading = true;
+  // 正在產生 PDF 的紀錄 ID（同時只允許一筆，避免重複產生）
+  String? _exportingPdfRecordId;
 
   @override
   void initState() {
@@ -308,6 +311,20 @@ class _UnifiedHistoryScreenState extends State<UnifiedHistoryScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
+                // ★ PDF 報告（從紀錄離線重建：判定、法規依據、AI 報告、照片）
+                OutlinedButton.icon(
+                  onPressed: _exportingPdfRecordId == null ? () => _exportPdf(record) : null,
+                  icon: _exportingPdfRecordId == record.recordId
+                      ? const SizedBox(
+                          width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2))
+                      : const Icon(Icons.picture_as_pdf, size: 16),
+                  label: const Text('PDF 報告', style: TextStyle(fontSize: 12)),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: Colors.deepOrange[700],
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  ),
+                ),
+                const SizedBox(width: 8),
                 if (record.filledDocumentPath != null)
                   OutlinedButton.icon(
                     onPressed: () => _reshareFile(record),
@@ -416,6 +433,27 @@ class _UnifiedHistoryScreenState extends State<UnifiedHistoryScreen> {
     if (confirmed == true) {
       await _dbService.clearAllFormRecords();
       await _loadRecords();
+    }
+  }
+
+  /// ★ 從歷史紀錄產生 PDF 報告（申報交付格式；純本機、離線可用）
+  Future<void> _exportPdf(FormInspectionRecord record) async {
+    setState(() => _exportingPdfRecordId = record.recordId);
+    try {
+      final data = PdfReportData.fromRecord(record);
+      final bytes = await PdfReportService.build(data);
+      await FileSaveService.saveAndShare(
+        bytes: bytes,
+        fileName: PdfReportService.suggestedFileName(data),
+      );
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('PDF 報告產生失敗: $e'), backgroundColor: Colors.red),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _exportingPdfRecordId = null);
     }
   }
 

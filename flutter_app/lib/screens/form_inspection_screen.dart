@@ -26,6 +26,7 @@ import '../services/image_quality_service.dart';
 import '../widgets/image_quality_dialog.dart';
 import '../services/meter_ocr_service.dart';
 import '../services/ocr_reading_parser.dart';
+import '../services/pdf_report_service.dart';
 import '../screens/guided_capture_screen.dart';
 import '../utils/constants.dart';
 
@@ -194,6 +195,7 @@ class _FormInspectionScreenState extends State<FormInspectionScreen> {
   // AI 摘要報告
   String? _summaryReport;
   bool _isGeneratingReport = false;
+  bool _isExportingPdf = false;
 
   // 持久化 & GPS
   final DatabaseService _dbService = DatabaseService();
@@ -2319,6 +2321,24 @@ class _FormInspectionScreenState extends State<FormInspectionScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
+              // ★ PDF 報告（申報交付格式；純本機產生，離線可用）
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: _isExportingPdf ? null : _exportPdfReport,
+                  icon: _isExportingPdf
+                      ? const SizedBox(
+                          width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
+                      : const Icon(Icons.picture_as_pdf, size: 18),
+                  label: Text(_isExportingPdf ? '產生 PDF 中...' : '匯出 PDF 報告（含照片與法規判定）',
+                      style: const TextStyle(fontSize: 13)),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: Colors.deepOrange[700],
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 8),
               // 分享按鈕列
               Row(
                 children: [
@@ -2427,6 +2447,71 @@ class _FormInspectionScreenState extends State<FormInspectionScreen> {
           SnackBar(content: Text('分享報告失敗: $e'), backgroundColor: Colors.red),
         );
       }
+    }
+  }
+
+  /// 將目前檢測狀態組成 PDF 報告資料（與 JSON 摘要匯出同源）
+  PdfReportData _buildPdfReportData() {
+    final items = _inspectionItems.map((item) {
+      final ai = item.aiResult;
+      return PdfReportItem(
+        fieldId: item.fieldId,
+        label: item.label,
+        value: PdfReportData.formatValue(
+          _filledData[item.fieldId] ?? item.manualValue,
+          fieldType: item.fieldType,
+          aiResult: ai,
+          judgment: item.standardJudgment,
+        ),
+        verdict: item.verdict,
+        standardBasis: item.standardBasis,
+        conversionNote: item.conversionNote,
+        anomalyDescription:
+            (ai != null && ai['is_anomaly'] == true) ? ai['anomaly_description']?.toString() : null,
+        photoPath: item.photoPath,
+      );
+    }).toList();
+
+    return PdfReportData(
+      title: _inspectionTitle.isNotEmpty ? _inspectionTitle : (_currentRecord?.title ?? '檢測報告'),
+      sourceFileName: _fileName,
+      inspectionDate: _currentRecord?.createdAt ?? DateTime.now(),
+      locationName: _locationData?.locationName ?? _currentRecord?.locationName,
+      latitude: _locationData?.latitude ?? _currentRecord?.latitude,
+      longitude: _locationData?.longitude ?? _currentRecord?.longitude,
+      recordId: _currentRecord?.recordId,
+      items: items,
+      summaryReport: _summaryReport,
+    );
+  }
+
+  /// ★ 匯出 PDF 報告（LAUNCH_PLAN 第 5-8 週：申報場景的交付格式）
+  ///
+  /// 純本機產生（內嵌字型、照片降採樣），不需網路；檔案存於 app 文件目錄
+  /// `induspect_exports/` 後開啟系統分享。
+  Future<void> _exportPdfReport() async {
+    if (_isExportingPdf) return;
+    setState(() => _isExportingPdf = true);
+    try {
+      final data = _buildPdfReportData();
+      final bytes = await PdfReportService.build(data);
+
+      // Issue #18：使用 app 文件目錄，避免被 OS 清除
+      final appDir = await getApplicationDocumentsDirectory();
+      final dir = Directory(p.join(appDir.path, 'induspect_exports'));
+      if (!await dir.exists()) await dir.create(recursive: true);
+      final outputPath = p.join(dir.path, PdfReportService.suggestedFileName(data));
+      await File(outputPath).writeAsBytes(bytes);
+
+      await FileSaveService.saveAndShare(bytes: bytes, fileName: p.basename(outputPath));
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('PDF 報告產生失敗: $e'), backgroundColor: Colors.red),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isExportingPdf = false);
     }
   }
 
