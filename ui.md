@@ -1,3 +1,7 @@
+> ⚠️ **歷史文件（2025-10 版）— 內容可能與現況不符**
+> 現行狀態請看 [README.md](README.md) / [LAUNCH_PLAN.md](LAUNCH_PLAN.md) /
+> [flutter_app/DEVELOPMENT.md](flutter_app/DEVELOPMENT.md)。保留本檔僅供追溯設計脈絡。
+
 使用者介面與體驗 (UI/UX) 設計規格
 本文件旨在為 Flutter 開發人員和 UI 設計師提供行動應用程式介面的設計指南和使用者流程。設計應遵循「行動優先」和「人在迴路中」的原則。
 

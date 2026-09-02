@@ -1,5 +1,9 @@
 # InduSpect AI - Flutter 移動應用遷移計劃
 
+> ⚠️ **歷史文件（2026-03 版）— 內容可能與現況不符**
+> 現行狀態請看 [README.md](README.md) / [LAUNCH_PLAN.md](LAUNCH_PLAN.md) /
+> [flutter_app/DEVELOPMENT.md](flutter_app/DEVELOPMENT.md)。保留本檔僅供追溯設計脈絡。
+
 ## 專案概覽
 
 本文檔描述將現有 React Web 應用遷移到 Flutter 移動應用（iOS/Android）的完整計劃。

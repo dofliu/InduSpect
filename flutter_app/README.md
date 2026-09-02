@@ -1,394 +1,105 @@
-# InduSpect AI - Flutter 移動應用
-
-> 這是 InduSpect AI 智慧巡檢系統的 Flutter 移動應用版本，支援 iOS 和 Android 雙平台。
-
-## 📱 專案狀態
-
-**當前版本**: v1.0.0 Beta
-**開發階段**: MVP - 核心功能已完成並測試通過
-**分支**: `claude/convert-to-mobile-app-011CUm7vyz4NEct62sVZPhPG`
-**最後更新**: 2025-11-04
-
-⚠️ **注意**: 這是一個獨立的 Flutter 項目，與 Web 版本（位於根目錄）並行開發。
-
-## 🎯 功能特性
-
-### ✅ 已實現並測試通過
-
-- **快速分析模式** 🚀
-  - 單張照片即時分析（無需預建清單）
-  - 支援相機拍攝與圖庫選擇
-  - AI 自動識別設備類型與狀況評估
-  - 智能提取數值資料（溫度、壓力、速度、油位等）
-  - 分析結果可編輯與儲存
-  - 試用次數限制與友好提示（免費 5 次）
-
-- **詳細分析流程** 📋
-  - **步驟 1**: 上傳定檢表（支援相機/圖庫），AI 自動提取檢查項目
-  - **步驟 2**: 引導式照片拍攝，支援相機與圖庫雙選項
-  - **步驟 3**: AI 批量分析與結果審核（可編輯所有欄位）
-  - **步驟 4**: 檢測記錄自動儲存，支援報告生成
-
-- **核心服務層** ⚙️
-  - Gemini AI 圖像分析服務（gemini-2.0-flash-exp）
-  - 本地持久化存儲（SharedPreferences）
-  - 圖片處理與壓縮（支援 JPEG/PNG）
-  - 自動資料儲存機制（分析完成立即保存）
-  - 完整錯誤處理與調試日誌
-  - Cloud Run API 整合（登入、任務、照片上傳、AI 結果輪詢）
-
-- **狀態管理** 🔄
-  - Provider 模式（AppStateProvider + InspectionProvider + SettingsProvider）
-  - 完整生命週期管理（init/dispose）
-  - 應用狀態與巡檢數據分離
-  - 設定資料持久化
-
-- **用戶界面** 🎨
-  - Material Design 3
-  - 響應式佈局
-  - 步驟指示器與進度反饋
-  - 數值資料特殊顯示（藍色卡片）
-  - 自訂關於對話框（含團隊資訊）
-  - 完整載入與錯誤狀態提示
-
-- **用戶體驗優化** ✨
-  - 試用次數到達提示（含快速跳轉設定）
-  - 圖片來源選擇對話框（相機/圖庫）
-  - AI 輸出內容優化（快速分析 50 字、詳細分析 100 字）
-  - 自動儲存機制（避免資料遺失）
-  - 支援照片重新上傳
-
-- **RAG 知識庫管理** 📚
-  - **知識庫瀏覽**: 查看已入庫的維修知識
-  - **各項操作**: 支援刪除過期或錯誤資料
-  - **手冊自動匯入**: 上傳 PDF/文字檔，AI 自動分析並擴充知識庫
-  - **API 整合**: 支援查看知識來源 (巡檢/文件/手動)
-
-### 🚧 規劃中功能
-
-詳見 [ROADMAP.md](../ROADMAP.md)
-
-- 數據管理與報告導出（PDF/Excel）
-- 批量分析與設備管理
-- 智能提醒與追蹤系統
-- 團隊協作功能
-- 圖片測量工具（CustomPaint 實現）
-- 離線模式增強與雲端同步
-- 相機拍攝體驗優化（網格線、防手震）
-
-## 🛠️ 技術棧
-
-- **框架**: Flutter 3.x
-- **語言**: Dart 3.2+
-- **狀態管理**: Provider 6.1.0
-- **AI 服務**: Google Generative AI (Gemini)
-- **本地存儲**: SharedPreferences, SQLite (sqflite)
-- **圖片處理**: image_picker, camera, image
-
-完整依賴列表請查看 [`pubspec.yaml`](pubspec.yaml)
-
-## 📋 環境要求
-
-### 開發環境
-
-- Flutter SDK >= 3.2.0
-- Dart SDK >= 3.2.0
-- Android Studio / Xcode（用於模擬器）
-- VS Code + Flutter 擴展（推薦）
-
-### API 密鑰
-
-需要 Google Gemini API Key，獲取方式：
-1. 訪問 [Google AI Studio](https://ai.google.dev/)
-2. 創建 API Key
-3. 添加到 `.env` 文件
-
-若要啟用 Cloud Run API，還需設定以下端點（若共用同一入口，僅需 `CLOUD_RUN_BASE_URL`）：
-
-```env
-CLOUD_RUN_BASE_URL=https://api-your-service.run.app
-CLOUD_RUN_AUTH_URL=
-CLOUD_RUN_TASK_URL=
-CLOUD_RUN_UPLOAD_URL=
-```
-
-## 🚀 快速開始
-
-### 1. 安裝 Flutter
-
-如果尚未安裝 Flutter，請訪問 [Flutter 官網](https://flutter.dev/docs/get-started/install) 按照您的操作系統安裝。
-
-```bash
-# 驗證安裝
-flutter doctor
-```
-
-### 2. 克隆項目
-
-```bash
-git clone https://github.com/dofliu/InduSpect.git
-cd InduSpect
-git checkout claude/convert-to-mobile-app-*
-cd flutter_app
-```
-
-### 3. 安裝依賴
-
-```bash
-flutter pub get
-```
-
-### 4. 配置環境變量
-
-```bash
-# 複製環境變量範例文件
-cp .env.example .env
-
-# 編輯 .env 文件，添加您的 Gemini API Key 與 Cloud Run 端點
-# GEMINI_API_KEY=your_api_key_here
-# CLOUD_RUN_BASE_URL=https://api-your-service.run.app
-```
-
-### 5. 運行應用
-
-```bash
-# 連接設備或啟動模擬器後
-
-# Android
-flutter run
-
-# iOS (僅限 macOS)
-flutter run -d ios
-
-# 指定設備
-flutter devices
-flutter run -d <device_id>
-```
-
-### 6. 構建發布版本
-
-```bash
-# Android APK
-flutter build apk --release
-
-# Android App Bundle (推薦用於 Google Play)
-flutter build appbundle --release
-
-# iOS (需要 macOS 和 Xcode)
-flutter build ios --release
-```
-
-## 🔐 Cloud Run 任務流程
-
-1. **登入**：在步驟 1 輸入派工帳號與密碼，App 會透過 Cloud Run Auth 服務取得 access token 並安全儲存。
-2. **任務載入**：登入後自動呼叫 Task 服務同步派發的巡檢工作與檢查表，並快取於本地，支援離線復原。
-3. **拍攝與上傳**：步驟 2 會在每次拍照後先將影像寫入本地，接著向 Upload 服務索取簽章 URL，若無網路則排入背景佇列等待重試。
-4. **AI 結果**：上傳成功後，App 會輪詢 Processing 服務取得 AI 結果；超時或多次失敗時會自動啟動 Gemini 後備分析。
-5. **審核與報告**：所有 AI 結果都保存在裝置，於步驟 3 審核、步驟 4 生成報告時才會送交雲端保存。
-
-## 🧪 端對端測試
-
-請參考 [`docs/manual_e2e_test.md`](docs/manual_e2e_test.md) 了解完整的手動測試腳本，涵蓋：
-- 離線快取與重啟復原
-- 待上傳佇列與重試邏輯
-- Gemini 錯誤回退
-- 檢測記錄與報告生成驗證
-
-## 📁 項目結構
-
-```
-flutter_app/
-├── lib/
-│   ├── main.dart                    # 應用入口
-│   ├── config/                      # 配置文件
-│   ├── models/                      # 數據模型
-│   │   ├── inspection_item.dart
-│   │   ├── analysis_result.dart
-│   │   ├── inspection_record.dart
-│   │   └── measurement.dart
-│   ├── services/                    # 業務邏輯服務
-│   │   ├── gemini_service.dart     # AI 分析
-│   │   ├── storage_service.dart    # 本地存儲
-│   │   └── image_service.dart      # 圖片處理
-│   ├── providers/                   # 狀態管理
-│   │   ├── app_state_provider.dart
-│   │   └── inspection_provider.dart
-│   ├── screens/                     # 頁面
-│   │   ├── home_screen.dart
-│   │   ├── step1_upload_checklist.dart
-│   │   ├── step2_capture_photos.dart
-│   │   ├── step3_review_results.dart
-│   │   ├── step4_records_report.dart
-│   │   └── quick_analysis_screen.dart
-│   ├── widgets/                     # 可複用組件
-│   │   ├── stepper_widget.dart
-│   │   └── common/
-│   └── utils/                       # 工具和常量
-│       └── constants.dart
-├── assets/                          # 資源文件
-├── test/                            # 單元測試
-├── pubspec.yaml                     # 依賴配置
-└── README.md                        # 本文件
-```
-
-## 🔑 關鍵實現說明
-
-### AI 分析服務
-
-使用 Google Gemini API 進行圖像分析，遵循 `aimodel.md` 中定義的 Prompt 工程策略：
-
-- **gemini-3-flash-preview**: 用於快速圖像分析
-- **gemini-3.1-pro-preview**: 用於高質量報告生成
-
-示例：
-
-```dart
-final result = await GeminiService().analyzeInspectionPhoto(
-  itemId: item.id,
-  itemDescription: item.description,
-  imageBytes: imageBytes,
-  photoPath: photoPath,
-);
-```
-
-### 本地存儲
-
-- **SharedPreferences**: 用於輕量級鍵值對存儲
-- **SQLite (計劃中)**: 用於結構化數據和大容量存儲
-
-```dart
-await StorageService().saveInspectionItems(items);
-final items = StorageService().getInspectionItems();
-```
-
-### 狀態管理
-
-使用 Provider 模式進行狀態管理：
-
-```dart
-// 讀取狀態
-final inspection = context.watch<InspectionProvider>();
-
-// 調用方法
-context.read<InspectionProvider>().analyzeAllPhotos();
-```
-
-## 🧪 測試
-
-```bash
-# 運行所有測試
-flutter test
-
-# 運行特定測試文件
-flutter test test/services/gemini_service_test.dart
-
-# 生成覆蓋率報告
-flutter test --coverage
-```
-
-## 📱 平台配置
-
-### Android 配置
-
-編輯 `android/app/src/main/AndroidManifest.xml` 添加權限：
-
-```xml
-<uses-permission android:name="android.permission.CAMERA" />
-<uses-permission android:name="android.permission.INTERNET" />
-<uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
-<uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
-```
-
-### iOS 配置
-
-編輯 `ios/Runner/Info.plist` 添加相機權限描述：
-
-```xml
-<key>NSCameraUsageDescription</key>
-<string>需要相機權限以拍攝巡檢照片</string>
-<key>NSPhotoLibraryUsageDescription</key>
-<string>需要相冊權限以選擇照片</string>
-```
-
-## 🐛 故障排除
-
-### 常見問題
-
-1. **Gemini API 調用失敗**
-   - 檢查 `.env` 文件中的 API Key 是否正確
-   - 確認網路連接正常
-   - 查看 API 使用配額
-
-2. **相機無法啟動**
-   - 確認已授予相機權限
-   - 檢查設備是否支持相機
-   - 查看平台配置文件
-
-3. **圖片無法保存**
-   - 檢查存儲權限
-   - 確認應用目錄可寫
-
-4. **依賴安裝失敗**
-
-   ```bash
-   flutter clean
-   flutter pub get
-   ```
-
-## 📚 相關文檔
-
-- [Flutter Migration Plan](../FLUTTER_MIGRATION_PLAN.md) - 完整遷移計劃
-- [AI Model Integration](../aimodel.md) - AI 模型整合規範
-- [Architecture Design](../arch.md) - 系統架構設計
-- [Web Version README](../README.md) - Web 版本文檔
-
-## 🤝 與 Web 版本的關係
-
-- **獨立開發**: Flutter 版本獨立於 Web 版本
-- **功能同步**: 盡可能保持功能一致
-- **共享文檔**: 共享 `aimodel.md`, `prj.md` 等設計文檔
-- **分支管理**: Web 版本在 `main`, Flutter 版本在 `claude/convert-to-mobile-app-*`
-
-## 📝 開發指南
-
-### 添加新功能
-
-1. 在 `models/` 中定義數據模型
-2. 在 `services/` 中實現業務邏輯
-3. 在 `providers/` 中添加狀態管理
-4. 在 `screens/` 中創建 UI
-5. 在 `widgets/` 中提取可複用組件
-
-### 代碼風格
-
-遵循 Flutter 官方代碼風格，使用 `flutter_lints` 進行檢查：
-
-```bash
-flutter analyze
-```
-
-### Git 工作流
-
-```bash
-# 確保在正確的分支
-git checkout claude/convert-to-mobile-app-*
-
-# 提交更改
-git add .
-git commit -m "feat: description"
-git push origin claude/convert-to-mobile-app-*
-```
-
-## 📄 授權
-
-本專案使用與主專案相同的授權協議。
-
-## 👥 貢獻
-
-歡迎提交 Issue 和 Pull Request！
+# InduSpect AI — Flutter 行動應用
+
+工業設備智慧巡檢 App。拍照 → AI 讀值 → 台灣法規自動判定 → 回填原始定檢表。
+
+> **最後更新**：2026-08-31
+> 架構細節、DB schema、測試清單與完整變更紀錄見 **[DEVELOPMENT.md](DEVELOPMENT.md)**
+> 專案總覽與使用說明見 [../README.md](../README.md)
+
+| 項目 | 現況 |
+|------|------|
+| 版本 | `1.0.0+1`（`pubspec.yaml`） |
+| Flutter / Dart | 3.47 / 3.13 |
+| 測試 | **137 tests** 全綠 |
+| 靜態分析 | 0 error / 0 warning |
+| 平台 | Android（主要）、Web / Windows（開發用）；**iOS 未建置** |
 
 ---
 
-**開發者**: Claude (Anthropic AI)
-**專案負責人**: dofliu
-**最後更新**: 2025-11-03
+## 兩個核心功能
+
+| 功能 | 進入點 |
+|------|--------|
+| **完整檢測 Pipeline**（5 步驟） | `screens/form_inspection_screen.dart` |
+| **歷史紀錄**（GPS / 搜尋 / 重新分享） | `screens/unified_history_screen.dart` |
+
+其餘畫面（快速分析、範本系統、一站式流程等）已停用但仍在 repo 中，**沒有從 `main.dart` 或主流程可達**。
+
+---
+
+## 三層 AI 架構
+
+```
+拍照
+ ├─ 品質閘門   image_quality_service.dart   模糊/曝光/反光（純本機，離線可用）
+ ├─ Tier 1a    meter_ocr_service.dart       ML Kit 離線 OCR
+ │             ocr_reading_parser.dart      讀值解析（誤讀修正、雜訊過濾）
+ ├─ Tier 0     standards_engine.dart        56 條法規標準離線判定
+ └─ Tier 2     gemini_service.dart          雲端精判 + AI 摘要報告
+```
+
+呼叫 Gemini 前先經 `connectivity_service.dart` 的**可達性探測**（`/health`，逾時 3 秒、快取 10 秒）；不通直接走 Tier 1a，不空等 60 秒逾時。
+
+---
+
+## 開發環境
+
+```bash
+flutter pub get
+cp .env.example .env      # GEMINI_API_KEY 必填；BACKEND_API_URL 實機必填
+flutter run
+
+flutter analyze --no-pub  # 應為 0 error / 0 warning
+flutter test              # 137 tests
+```
+
+### `.env` 設定
+| 變數 | 說明 |
+|------|------|
+| `GEMINI_API_KEY` | 必填。使用者亦可在設定頁自行輸入（存 SharedPreferences） |
+| `BACKEND_API_URL` | **實機必填**。未設定會退回 `http://localhost:8000`，手機上必然連不到 |
+| `BACKEND_API_KEY` | 後端有設 `BACKEND_API_KEY` 時必填，隨請求以 `X-API-Key` 送出 |
+| `GEMINI_FLASH_MODEL` / `GEMINI_PRO_MODEL` | 選填，覆寫模型 ID（模型下架時免改版） |
+
+> `.env` 被宣告為 asset 且已 gitignore；CI 會 `touch .env` 讓 asset bundle 建置成功。
+
+### Release 建置
+需先建立簽署金鑰（`android/key.properties`），步驟見 **[ANDROID_DEPLOYMENT.md](ANDROID_DEPLOYMENT.md)**。
+未設定時會退回 debug 簽署並印出警告——**該 APK 不可發布**。
+
+---
+
+## 目錄結構
+
+```
+lib/
+├── models/          form_inspection_record.dart（SQLite v4 核心 model）等
+├── screens/         dashboard / form_inspection / unified_history / guided_capture / settings / guide
+├── services/        standards_engine · ocr_reading_parser · meter_ocr_service
+│                    image_quality_service · connectivity_service · database_service
+│                    gemini_service · backend_api_service · share_queue_service · location_service
+├── providers/       settings / inspection / app_state
+├── widgets/         image_quality_dialog 等
+└── utils/           constants.dart（模型 ID 預設值、色彩、尺寸）
+
+assets/standards/inspection_standards.json   ← 56 條法規標準（由後端匯出，勿手改）
+test/                                        ← 137 tests
+```
+
+---
+
+## 常見注意事項
+
+- **標準資料勿手改**：`assets/standards/inspection_standards.json` 由 `backend/scripts/export_standards.py` 產生，後端有同步守門測試。
+- **DB migration**：目前 SQLite v4。新增欄位務必處理既有使用者升級路徑，並補 migration 測試（見 `test/database_migration_test.dart`）。
+- **Web 平台限制**：`FormInspectionScreen` 在 Web 上會因 `sqflite` / `path_provider` 無 Web 實作而初始化失敗。Web 僅供開發與擷圖，不影響 Android。
+- **品質閘門門檻**：`image_quality_service.dart` 的預設門檻以合成影像校準，**上實機後需以現場實拍照片重新校準**。
+
+---
+
+## 相關文件
+
+- [DEVELOPMENT.md](DEVELOPMENT.md) — 架構、DB schema、測試清單、變更紀錄
+- [ANDROID_DEPLOYMENT.md](ANDROID_DEPLOYMENT.md) — 建置與 Release 簽署
+- [../LAUNCH_PLAN.md](../LAUNCH_PLAN.md) — 產品化評估與 90 天計畫
+- [../CLAUDE.md](../CLAUDE.md) — 開發規則

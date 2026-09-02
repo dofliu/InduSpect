@@ -1,5 +1,9 @@
 # 功能增強計畫：提升準確度與空間感知
 
+> ⚠️ **歷史文件（2025-10 版）— 內容可能與現況不符**
+> 現行狀態請看 [README.md](README.md) / [LAUNCH_PLAN.md](LAUNCH_PLAN.md) /
+> [flutter_app/DEVELOPMENT.md](flutter_app/DEVELOPMENT.md)。保留本檔僅供追溯設計脈絡。
+
 本文件旨在規劃與記錄一系列功能增強，核心目標是提升 AI 影像分析的準確度，並賦予系統對真實世界尺寸的感知能力。
 
 ## 1. 提升影像辨識準確度策略 (Strategies to Improve Image Recognition Accuracy)

@@ -1,3 +1,7 @@
+> ⚠️ **歷史文件（2026-03 版）— 內容可能與現況不符**
+> 現行狀態請看 [README.md](README.md) / [LAUNCH_PLAN.md](LAUNCH_PLAN.md) /
+> [flutter_app/DEVELOPMENT.md](flutter_app/DEVELOPMENT.md)。保留本檔僅供追溯設計脈絡。
+
 AI 模型整合規格
 本文件為 AI 開發人員提供整合 Gemini 模型的具體技術指南，包括模型選擇、API 介面和提示工程策略。
 

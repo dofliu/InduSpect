@@ -1,5 +1,9 @@
 # 定檢表模板系統技術規格
 
+> ⚠️ **歷史文件（2026-03 版）— 內容可能與現況不符**
+> 現行狀態請看 [README.md](README.md) / [LAUNCH_PLAN.md](LAUNCH_PLAN.md) /
+> [flutter_app/DEVELOPMENT.md](flutter_app/DEVELOPMENT.md)。保留本檔僅供追溯設計脈絡。
+
 > **專案**: InduSpect AI - 智慧巡檢系統
 > **版本**: v2.0 規格書
 > **建立日期**: 2025-11-04

@@ -1,3 +1,7 @@
+> ⚠️ **歷史文件（2026-03 版）— 內容可能與現況不符**
+> 現行狀態請看 [README.md](README.md) / [LAUNCH_PLAN.md](LAUNCH_PLAN.md) /
+> [flutter_app/DEVELOPMENT.md](flutter_app/DEVELOPMENT.md)。保留本檔僅供追溯設計脈絡。
+
 系統架構設計
 本系統採用現代化的三層式無伺服器架構，以確保高可擴展性、高彈性與成本效益。架構圍繞 Google Cloud 平台構建，並採用事件驅動的設計模式。
 

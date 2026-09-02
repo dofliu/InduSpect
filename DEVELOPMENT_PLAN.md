@@ -1,5 +1,9 @@
 # InduSpect AI — 定檢系統改善開發計畫
 
+> ⚠️ **歷史文件（2026-03 版）— 內容可能與現況不符**
+> 現行狀態請看 [README.md](README.md) / [LAUNCH_PLAN.md](LAUNCH_PLAN.md) /
+> [flutter_app/DEVELOPMENT.md](flutter_app/DEVELOPMENT.md)。保留本檔僅供追溯設計脈絡。
+
 > **建立日期**: 2026-03-13
 > **目標**: 讓系統符合多數工廠現場定檢需求，達成「除了拍照，其餘全自動」的終極目標
 > **核心原則**: 回填原始表單、維持原本格式、可直接上繳

@@ -1,5 +1,9 @@
 # Flutter 編譯檢查報告
 
+> ⚠️ **歷史文件（2025-11 版）— 內容可能與現況不符**
+> 現行狀態請看 [README.md](README.md) / [LAUNCH_PLAN.md](LAUNCH_PLAN.md) /
+> [flutter_app/DEVELOPMENT.md](flutter_app/DEVELOPMENT.md)。保留本檔僅供追溯設計脈絡。
+
 **檢查時間**: 2025-11-04
 **專案**: InduSpect AI - 模板系統
 **檢查範圍**: 引導式填寫 UI 第一階段

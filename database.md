@@ -1,3 +1,7 @@
+> ⚠️ **歷史文件（2025-10 版）— 內容可能與現況不符**
+> 現行狀態請看 [README.md](README.md) / [LAUNCH_PLAN.md](LAUNCH_PLAN.md) /
+> [flutter_app/DEVELOPMENT.md](flutter_app/DEVELOPMENT.md)。保留本檔僅供追溯設計脈絡。
+
 資料庫結構設計 (Supabase)
 本文件定義了 Supabase (PostgreSQL) 資料庫的資料表 (Tables) 結構，用於儲存系統的所有數據。此設計採用關聯式數據模型。
 

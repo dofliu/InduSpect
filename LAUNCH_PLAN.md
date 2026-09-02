@@ -206,6 +206,25 @@ FastAPI 後端（未部署；Dockerfile/cloudbuild.yaml 備妥但有 5 項阻塞
 
 ---
 
+## 6.5 執行進度（2026-08-31）
+
+三批已全部合併進 main：
+
+| PR | 內容 |
+|----|------|
+| [#48](https://github.com/dofliu/InduSpect/pull/48) | P0 批次：簽署、後端認證、判定持久化 v4、GA 模型、隱私政策、**Tier 0 離線判定引擎**、CI 全量收緊 |
+| [#49](https://github.com/dofliu/InduSpect/pull/49) | **Tier 1a 離線 OCR**、reports 狀態修正、repo 清理 |
+| [#50](https://github.com/dofliu/InduSpect/pull/50) | **拍照品質閘門 + 連線可達性探測**、UI 修正、介紹影片素材 |
+
+測試從 57 + 150 成長到 **137 + 172**；analyzer warning 15 → **0**；Issues #44/#45/#47 全數關閉。
+
+**剩餘全部需實機或帳號操作**：實機 E2E（#43）、品質閘門現場校準、upload keystore、
+Play 內部測試軌、隱私政策公開 URL、Cloud Run 部署、Crashlytics、場域試點。
+
+程式面可續做（非阻塞）：低信心露出、重拍快捷鍵、PDF 報告、多幀取樣。
+
+---
+
 ## 7. 90 天行動計畫
 
 ### 第 1-4 週：實機驗證 + 上架準備（對應 G1）
@@ -215,6 +234,7 @@ FastAPI 後端（未部署；Dockerfile/cloudbuild.yaml 備妥但有 5 項阻塞
 - [x] #44 判定持久化（v3→v4 migration + 測試）✅ 2026-08-31（欄位設計：獨立 `standard_judgments` JSON 欄，請劉老師 review）
 - [~] 隱私權政策草稿完成（`docs/PRIVACY_POLICY.md`）；**待辦**：法律審閱 + 發布公開 URL + Play Data Safety 表 + 內部測試軌上架（需 Play 帳號）
 - [ ] 接 Crashlytics/Sentry（需 Firebase/Sentry 帳號設定）
+- [x] **現場惡劣環境因應** ✅ 2026-08-31：拍照品質閘門（模糊/曝光/反光，純本機）+ 連線可達性探測（假在線快速失敗）；門檻待現場照片校準
 - **退出條件**：兩台實機全綠、internal testing 軌可安裝、崩潰回報看得到資料
 
 ### 第 5-8 週：離線能力 v1 + 後端最小安全部署（對應 G3/G4）

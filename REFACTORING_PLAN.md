@@ -1,5 +1,9 @@
 # InduSpect AI — 程式碼重構計畫
 
+> ⚠️ **歷史文件（2026-03 版）— 內容可能與現況不符**
+> 現行狀態請看 [README.md](README.md) / [LAUNCH_PLAN.md](LAUNCH_PLAN.md) /
+> [flutter_app/DEVELOPMENT.md](flutter_app/DEVELOPMENT.md)。保留本檔僅供追溯設計脈絡。
+
 > **建立日期**: 2026-03-13
 > **目標**: 移除冗餘程式碼、合併重複功能、提升可維護性
 > **原則**: 重構不改變外部行為，所有測試必須通過

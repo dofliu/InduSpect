@@ -1,5 +1,9 @@
 # InduSpect AI — Google AI Studio 完整重建規格文件
 
+> ⚠️ **歷史文件（2026-05 版）— 內容可能與現況不符**
+> 現行狀態請看 [README.md](README.md) / [LAUNCH_PLAN.md](LAUNCH_PLAN.md) /
+> [flutter_app/DEVELOPMENT.md](flutter_app/DEVELOPMENT.md)。保留本檔僅供追溯設計脈絡。
+
 > **用途**：此文件供 Google AI Studio 從零開始重建 InduSpect，並發布為 Android App。
 > **語言**：UI 介面與 AI 回應使用**繁體中文**，程式碼以英文撰寫。
 > **最後更新**：2026-05-28

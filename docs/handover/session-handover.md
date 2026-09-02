@@ -5,6 +5,70 @@
 
 ---
 
+## 2026-08-31 — Session #8（產品化三批 + 現場環境因應 + 文件重整）
+
+**這是目前的接手點。** 本次為一整天的長 session，三個 PR 全部合併進 main。
+
+### 已完成（全部在 main 上）
+
+| PR | 內容 |
+|----|------|
+| [#48](https://github.com/dofliu/InduSpect/pull/48) | P0 批次：Release 簽署（key.properties + R8）、後端 X-API-Key 認證 + CORS 白名單 + 錯誤淨化、判定持久化（SQLite **v3→v4**）、GA 模型 ID + 三層可覆寫、隱私政策草稿、**Tier 0 離線判定引擎**、CI 全量收緊 |
+| [#49](https://github.com/dofliu/InduSpect/pull/49) | **Tier 1a 裝置端 OCR**（ML Kit + `OcrReadingParser`）、reports 狀態修正、repo 清理（legacy 原型歸檔） |
+| [#50](https://github.com/dofliu/InduSpect/pull/50) | **拍照品質閘門**（模糊/曝光/反光）、**連線可達性探測**、兩個 UI 修正、介紹影片素材 |
+
+**指標變化**：Flutter 57 → **137 tests**；後端 150 → **172 pytest**（全套進 CI）；
+analyzer warning 15 → **0**；Issues #44 / #45 / #47 全數關閉。
+
+### 現在的架構重點（接手前先讀這段）
+
+- **三層 AI**：品質閘門 → Tier 0 法規判定（離線、純規則）→ Tier 1a OCR（離線）→ Tier 2 Gemini（聯網）
+- **法規資料單一來源**：編輯 `backend/app/data/inspection_standards.py` 後**必須**跑
+  `python backend/scripts/export_standards.py` 重新匯出 JSON，否則 `test_standards_json_sync.py` 會擋
+- **可達性探測**：`ConnectivityService.checkConnection()` 會探測 `<BACKEND_API_URL>/health`
+  （3s 逾時、10s 快取）；未設定後端位址時退回介面判定
+- **SQLite v4**：`form_inspection_records.standard_judgments` 存法規判定（稽核依據）
+
+### 下一步（依優先序）
+
+**A. 需實機／帳號操作（阻塞上線，非程式面）**
+1. **實機端到端驗證**（[#43](https://github.com/dofliu/InduSpect/issues/43)）：完整流程 + 斷網情境（驗證走本地判定與 OCR，而非「待判定」）+ R8 release build 煙霧測試
+2. **品質閘門門檻現場校準**：`image_quality_service.dart` 的 `ImageQualityThresholds` 預設值是用**合成影像**校準的，需以現場實拍照片調整
+3. upload keystore（見 `flutter_app/ANDROID_DEPLOYMENT.md`）、隱私政策公開 URL、Play 內部測試軌
+4. Cloud Run 部署（見 `CLOUD_RUN_ASSESSMENT.md`；`cloudbuild.yaml` 前置步驟已寫在註解）
+5. Crashlytics / Sentry
+
+**B. 程式面可續做（不阻塞，可直接開工）**
+1. **低信心露出**：判定引擎已產出 `confidence`（pass/fail 0.98、unknown 0.7、無匹配 0.0），
+   但只顯示在 `auto_fill_screen` / `one_stop_inspection_screen`——**這兩個畫面都是死程式碼**。
+   現行 `form_inspection_screen` 未露出。建議：`confidence < 0.9` 或 `source == 'ocr'` 標「需人工確認」
+2. **重拍快捷鍵**：`GuidedCaptureScreen` 加「這張不清楚，重拍」
+3. **PDF 報告輸出**：申報場景的實際交付格式（需嵌中文字型）
+4. **多幀取樣**：連拍 3 張取一致讀值，對抗手震與反光
+5. 標準庫擴充（[#46](https://github.com/dofliu/InduSpect/issues/46)，純資料、零風險）
+
+### 接手時的環境注意事項
+
+- 本 repo 的 dev 環境**沒有預裝 Flutter SDK**。本次是自行 clone stable（`git clone https://github.com/flutter/flutter.git -b stable`）後使用。
+- **不要對既有檔案跑 `dart format`**：repo 未統一格式化，會產生大量無關 churn。
+- **注意換行符**：部分檔案是 CRLF（如 `connectivity_service.dart`）。用腳本改檔時若寫成 LF，整個檔案會在 diff 中顯示為重寫。
+- Flutter Web 可建置並用 Playwright 擷圖，但需處理兩個坑（CanvasKit CDN、中文字型 fallback）——做法見 `docs/media/intro-video/README.md`。
+  `FormInspectionScreen` 在 Web 上會因 `sqflite`/`path_provider` 無 Web 實作而初始化失敗（不影響 Android）。
+
+### 文件現況（本次重整）
+
+- **有效**：`README.md`（總覽 + 使用說明）、`LAUNCH_PLAN.md`（90 天計畫 + 市場定位）、
+  `ROADMAP.md`（功能藍圖）、`todo.md`（階段進度）、`CLAUDE.md`、`STATUS.yaml`、
+  `flutter_app/README.md`、`flutter_app/DEVELOPMENT.md`
+- **歷史**：`arch.md`、`aimodel.md`、`ui.md`、`prj.md`、`database.md`、`DEVELOPMENT_PLAN.md` 等
+  已於檔首加上「歷史文件」標註，**不要據此施工**
+
+**[NEEDS HUMAN]**
+- #44 的欄位設計採獨立 `standard_judgments` JSON 欄（非併入 `ai_results`），請劉老師 review 確認
+- 介紹影片檔（20 MB）未入版控，建議放 Release assets 或雲端硬碟
+
+---
+
 ## 2026-05-16 — Session #6（測試門檻收緊 + 文件對齊 housekeeping）
 
 **本週做了**：在 Sessions #2-#5 的 3 個 PR（#32 #34 #35）全部 merge 後做收尾整理。
