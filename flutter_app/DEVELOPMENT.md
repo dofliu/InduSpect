@@ -251,6 +251,26 @@ flutter build apk --debug
 
 ## 變更紀錄
 
+### 2026-09-04（後端 SDK 汰換 — LAUNCH_PLAN P1）
+
+- **refactor(backend)**: `google-generativeai`（已停止維護）→ **`google-genai`**。
+  新增 `backend/app/services/gemini_client.py` 作為唯一 Gemini 入口：
+  - **延遲建立 client**：新版 `Client(api_key="")` 會直接拋 ValueError，若沿用
+    「在 `__init__` 建 client」的舊寫法，連不需要 AI 的路徑（Excel/Word 回填、
+    結構分析）都會因為沒設 key 而整條掛掉。改為呼叫時才建。
+  - **依 key 快取**：`FormFillService` 每請求 new 一次，原本等於每請求建一個 HTTP client。
+  - 移除各 service 的 `genai.configure()` 全域狀態；`AutoFillService` 根本沒用到 Gemini，
+    其 genai 依賴一併刪除。
+- **fix(rag)**: 文件匯入的 `PROCESSING` 輪詢加上 120 秒上限，避免檔案卡住時請求無限等待。
+- **deps**: `google-genai` 要求 `httpx>=0.28.1` 與 `pydantic>=2.12.5`，而 httpx 0.28 移除了
+  `Client(app=...)` 捷徑、舊 starlette(0.35) 的 TestClient 仍在用它 → 相依鏈強制連帶升版：
+  `httpx` 0.26.0→0.28.1、`pydantic` 2.5.3→2.13.5、`fastapi` 0.109.0→0.116.1（starlette 0.47 線）。
+- **test**: +19 `backend/tests/test_gemini_client.py`（延遲建立、依 key 快取、`generate_text`
+  模型與空回應處理、檔案狀態 enum/物件/字串三形態、embedding task_type 鎖定、
+  舊 SDK 不再被 import 的守門）。後端 172 → **191 pytest**。
+  `test_judge_readings_endpoint.py` 的 NaN/Infinity 兩測改送原始 body——httpx 0.28 的
+  `json=` 會在客戶端就拒絕非標準 JSON，會讓「伺服器必須擋下 NaN」（Issue #47）失去覆蓋。
+
 ### 2026-09-02（PDF 報告輸出 — LAUNCH_PLAN 第 5-8 週）
 
 - **feat(report)**: ★ **申報用 PDF 報告** `pdf_report_service.dart` — 純 Dart（`pdf` 套件）

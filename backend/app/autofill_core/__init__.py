@@ -12,7 +12,7 @@ autofill_core — 通用表單自動回填核心模組
 - `app.constants.INSPECTION_FIELDS`（巡檢專屬欄位）
 - 任何 `app.models.*` 中的巡檢資料結構
 
-允許依賴：openpyxl、python-docx、google.generativeai（AI 映射為 optional）、
+允許依賴：openpyxl、python-docx、google-genai（AI 映射為 optional）、
 以及本套件內的模組。
 
 ## 組成

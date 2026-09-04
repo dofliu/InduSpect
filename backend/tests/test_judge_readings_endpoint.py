@@ -13,6 +13,7 @@ POST /api/auto-fill/judge-readings 取得法規標準判定。
 - 單位換算（kΩ → MΩ）會在 converted_value / converted_unit 透明顯示
 """
 
+import json
 import os
 import sys
 
@@ -132,7 +133,19 @@ def test_empty_readings(client):
 
 
 def _post_raw(client, payload):
-    return client.post("/api/auto-fill/judge-readings", json=payload)
+    """以自行序列化的原始 body 送出請求。
+
+    httpx 0.28 起 `json=` 改用嚴格 JSON 編碼，會在客戶端就拒絕 NaN/Infinity
+    （非標準 JSON 字面值）。但「伺服器必須擋下 NaN」正是 Issue #47 要守住的
+    安全性質，若在客戶端就擋掉就等於沒測到伺服器。因此改為用
+    `json.dumps`（Python 預設允許 NaN/Infinity 字面值）產生 body 直接送出，
+    讓請求真的抵達伺服器，由 Pydantic 驗證層回 422。
+    """
+    return client.post(
+        "/api/auto-fill/judge-readings",
+        content=json.dumps(payload),
+        headers={"Content-Type": "application/json"},
+    )
 
 
 def test_nan_value_rejected(client):

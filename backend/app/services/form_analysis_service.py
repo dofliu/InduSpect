@@ -16,13 +16,13 @@ import logging
 from typing import Optional
 from datetime import datetime
 
-import google.generativeai as genai
 from openpyxl import load_workbook
 from docx import Document
 
 from app.config import settings
 from app.constants import FIELD_KEYWORDS
 from app.autofill_core import StructureAnalyzer
+from app.services import gemini_client
 from app.services.form_utils import is_non_field_item, guess_field_type
 
 logger = logging.getLogger(__name__)
@@ -32,8 +32,8 @@ class FormAnalysisService:
     """表單分析與模板建立服務（InduSpect 工業巡檢專用）"""
 
     def __init__(self):
-        genai.configure(api_key=settings.gemini_api_key)
-        # 通用結構分析器（使用工業巡檢關鍵字擴充預設集）
+        # Gemini client 由 gemini_client 延遲建立（見該模組說明）：
+        # 結構分析／規則 fallback 不需要 API key，服務建構因此不再依賴 key。
         self._analyzer = StructureAnalyzer(field_keywords=FIELD_KEYWORDS)
 
     # ================================================================
@@ -320,8 +320,6 @@ class FormAnalysisService:
             })
 
         try:
-            model = genai.GenerativeModel(settings.gemini_flash_model)
-
             prompt = f"""你是一位工業定檢表單分析專家。請根據以下從真實定檢表格中擷取出的欄位資訊，
 建立一個完整的 InspectionTemplate JSON。
 
@@ -397,10 +395,12 @@ class FormAnalysisService:
 
 只回應 JSON，不要其他文字。"""
 
-            response = model.generate_content(prompt)
+            response_text = gemini_client.generate_text(
+                prompt, model=settings.gemini_flash_model
+            )
 
             # 解析 JSON
-            json_match = re.search(r'\{[\s\S]*\}', response.text)
+            json_match = re.search(r'\{[\s\S]*\}', response_text)
             if json_match:
                 template_json = json.loads(json_match.group())
                 if template_json.get('sections') and len(template_json['sections']) > 0:
@@ -730,8 +730,6 @@ class FormAnalysisService:
             results_summary.append(item)
 
         try:
-            model = genai.GenerativeModel(settings.gemini_flash_model)
-
             prompt = f"""你是一位工業定檢表單自動填寫專家。請將 AI 檢查結果映射到定檢表格欄位。
 
 【表格欄位】
@@ -761,9 +759,11 @@ class FormAnalysisService:
 
 只回應 JSON 陣列，不要其他文字。"""
 
-            response = model.generate_content(prompt)
+            response_text = gemini_client.generate_text(
+                prompt, model=settings.gemini_flash_model
+            )
 
-            json_match = re.search(r'\[[\s\S]*\]', response.text)
+            json_match = re.search(r'\[[\s\S]*\]', response_text)
             if json_match:
                 mappings = json.loads(json_match.group())
                 return {
@@ -862,8 +862,6 @@ class FormAnalysisService:
     ) -> dict[str, str]:
         """使用 AI 建議欄位對應"""
         try:
-            model = genai.GenerativeModel(settings.gemini_flash_model)
-
             fields_text = "\n".join([
                 f"- {f['field_id']}: {f['field_name']} ({f['field_type']})"
                 for f in fields
@@ -894,9 +892,11 @@ class FormAnalysisService:
 只回應 JSON，不要其他文字。無法對應的欄位請填 null。
 """
 
-            response = model.generate_content(prompt)
+            response_text = gemini_client.generate_text(
+                prompt, model=settings.gemini_flash_model
+            )
 
-            json_match = re.search(r'\{[^{}]+\}', response.text, re.DOTALL)
+            json_match = re.search(r'\{[^{}]+\}', response_text, re.DOTALL)
             if json_match:
                 mappings = json.loads(json_match.group())
                 return {k: v for k, v in mappings.items() if v}

@@ -1,5 +1,9 @@
 # FastAPI
-fastapi==0.109.0
+# 0.116.1：google-genai 要求 httpx>=0.28.1，而 httpx 0.28 移除了 `Client(app=...)` 捷徑，
+# 舊版 starlette(0.35) 的 TestClient 仍在用它 → 必須升到 starlette>=0.40 的 FastAPI。
+# 選 0.116.x（starlette 0.47 線）而非最新 0.141（starlette 1.x 全新大版本），
+# 以取得相容性又不吃新主版號的變動風險。
+fastapi==0.116.1
 uvicorn[standard]==0.27.0
 
 # Database
@@ -9,11 +13,14 @@ pgvector==0.2.4
 alembic==1.13.1
 
 # Pydantic
-pydantic==2.5.3
+# 2.12.5+ 為 google-genai 的下限（見下方 AI & Embeddings 註解）
+pydantic==2.13.5
 pydantic-settings==2.1.0
 
 # AI & Embeddings
-google-generativeai==0.3.2
+# google-genai 取代已停止維護的 google-generativeai（LAUNCH_PLAN P1「SDK 汰換」）。
+# 它要求 httpx>=0.28.1 與 pydantic>=2.12.5，因此下方 httpx 與上方 pydantic 一併升版。
+google-genai==2.22.0
 openai==1.10.0
 
 # Document Processing
@@ -29,4 +36,4 @@ google-cloud-storage==2.14.0
 # Utils
 python-multipart==0.0.6
 python-dotenv==1.0.0
-httpx==0.26.0
+httpx==0.28.1

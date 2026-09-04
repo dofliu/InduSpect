@@ -1,16 +1,22 @@
 """
 Embedding 服務 - 文字向量化
-支援 Google Gemini (使用新版 google-genai SDK) 和 OpenAI Embedding Models
+支援 Google Gemini（新版 google-genai SDK）和 OpenAI Embedding Models
 
 注意：Gemini Embedding API 對純中文文字有問題，會返回相同的向量。
 解決方案：在中文內容前加入英文關鍵字來幫助模型正確理解。
+
+task_type 必須維持 RETRIEVAL_DOCUMENT：知識庫既有向量都是以此 task type 產生，
+換成別的 task type 會讓新舊向量落在不同語意空間，餘弦相似度檢索直接失準。
 """
 
 import logging
-import re
 from typing import Optional
 
 from app.config import settings
+from app.services import gemini_client
+
+# 與知識庫既有向量一致的 embedding task type（勿隨意更動，見模組說明）
+EMBEDDING_TASK_TYPE = "RETRIEVAL_DOCUMENT"
 
 logger = logging.getLogger(__name__)
 
@@ -69,19 +75,9 @@ class EmbeddingService:
         self.provider = provider or settings.embedding_provider
         self.model = settings.embedding_model
         self.dimension = settings.embedding_dimension
-        
-        # 初始化 Gemini 客戶端 (使用新版 SDK)
-        if self.provider == "gemini":
-            try:
-                from google import genai
-                self._genai_client = genai.Client(api_key=settings.gemini_api_key)
-                logger.info(f"Gemini client initialized with model: {self.model}")
-            except ImportError:
-                logger.warning("google-genai not installed, falling back to google-generativeai")
-                import google.generativeai as genai_old
-                genai_old.configure(api_key=settings.gemini_api_key)
-                self._genai_client = None
-    
+        # Gemini client 由 gemini_client 延遲建立：建構本服務不需要 API key，
+        # 讓 RAGService 等只用到 DB 查詢的路徑在未設 key 時仍可運作。
+
     async def embed_text(self, text: str) -> list[float]:
         """
         將文字轉換為向量
@@ -108,29 +104,22 @@ class EmbeddingService:
         return embeddings
     
     async def _embed_with_gemini(self, text: str) -> list[float]:
-        """使用 Google Gemini Embedding API (新版 SDK)"""
+        """使用 Google Gemini Embedding API（google-genai 新版 SDK）"""
         try:
             # 為中文內容添加英文關鍵字以解決 Embedding 問題
             enhanced_text = _add_english_keywords(text)
             logger.debug(f"Enhanced text for embedding: {enhanced_text[:100]}...")
-            
-            if self._genai_client:
-                # 使用新版 google-genai SDK
-                result = self._genai_client.models.embed_content(
-                    model=self.model,
-                    contents=enhanced_text,
-                )
-                return list(result.embeddings[0].values)
-            else:
-                # 回退到舊版 SDK
-                import google.generativeai as genai_old
-                result = genai_old.embed_content(
-                    model=f"models/{self.model}",
-                    content=enhanced_text,
-                    task_type="retrieval_document"
-                )
-                return result['embedding']
-                
+
+            client = gemini_client.get_client()
+            result = client.models.embed_content(
+                model=self.model,
+                contents=enhanced_text,
+                config=gemini_client.types.EmbedContentConfig(
+                    task_type=EMBEDDING_TASK_TYPE
+                ),
+            )
+            return list(result.embeddings[0].values)
+
         except Exception as e:
             logger.error(f"Gemini embedding failed: {e}")
             raise

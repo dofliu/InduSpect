@@ -10,11 +10,9 @@
 import io
 import logging
 
-import google.generativeai as genai
 from openpyxl import load_workbook
 from docx import Document
 
-from app.config import settings
 from app.autofill_core import ExcelAutoFillEngine, WordAutoFillEngine
 
 logger = logging.getLogger(__name__)
@@ -24,7 +22,8 @@ class AutoFillService:
     """自動回填服務 — 薄層包裝，將執行委派給 autofill_core。"""
 
     def __init__(self):
-        genai.configure(api_key=settings.gemini_api_key)
+        # 本服務為純文件處理（openpyxl / python-docx），不呼叫 Gemini；
+        # 原本的 genai.configure() 是舊版 SDK 遺留的全域設定，已隨 SDK 汰換移除。
         self._excel_engine = ExcelAutoFillEngine()
         self._word_engine = WordAutoFillEngine()
 
