@@ -44,7 +44,7 @@ CVPR 2026 的 MeasureBench 基準顯示指針式儀表讀值對「所有」VLM �
 - **Issue 管理健康**：僅 5 個 open issues，全部是目標型（G1-G4），#43 實機 E2E 為最高優先，#44 判定持久化需 schema 決策。
 - **無密鑰外洩**：repo 掃描無 hardcoded API key、無 IP。但根目錄 `.gitignore` 沒列 `.env`（legacy React 原型的 `vite.config.ts` 會讀根目錄 `.env`），是個潛在事故點。
 - **死程式碼**：`lib/screens/` 有約 5,200 行不可達的舊畫面（step1-4 舊流程、one_stop、template_selection 等）；根目錄 legacy React 原型（1,208 行 `index.tsx`）已休眠 3 個月，建議歸檔。
-- **相依老化**：後端 `google-generativeai==0.3.2` 為已棄用的舊 SDK；`embedding.py` 引用未列入 requirements 的新 `google-genai`（永遠落入 ImportError 分支）。Flutter 端 `google_generative_ai ^0.4.6` 同樣已停止維護。
+- ~~**相依老化**：後端 `google-generativeai==0.3.2` 為已棄用的舊 SDK；`embedding.py` 引用未列入 requirements 的新 `google-genai`（永遠落入 ImportError 分支）。~~ → 後端已於 2026-09-04 遷移完成（見 §3 P1「SDK 汰換」）。Flutter 端 `google_generative_ai ^0.4.6` 仍已停止維護，待處理。
 - **模型 ID 風險**：全程式碼使用 `gemini-3-flash-preview` / `gemini-3.1-pro-preview` 等 **preview 版模型 ID**，且 Flutter 端寫死在 `constants.dart`（改模型要重新發版）。preview 模型會被 Google 下架，**這是一顆定時炸彈**——上線前必須改為 GA 版模型 ID 並支援遠端切換。
 
 ### 2.3 架構現況（實然，非文件應然）
@@ -80,7 +80,7 @@ FastAPI 後端（未部署；Dockerfile/cloudbuild.yaml 備妥但有 5 項阻塞
 - **後端部署**：依 `CLOUD_RUN_ASSESSMENT.md` 清單執行（Cloud SQL 或先不用 DB、Secret Manager、Artifact Registry）。注意 agent 發現的新問題：**報告狀態存在 in-process 記憶體**（`form_fill.py:51`），Cloud Run 多實例/scale-to-zero 下 `GET /reports/{id}/status` 會 404——需改存 DB 或改為同步回傳。
 - **崩潰回報與監控**：接 Crashlytics 或 Sentry（Flutter）+ Cloud Run 結構化 log。沒有這個，試點回饋等於盲飛。
 - **CI 收緊**：把 15 個測試檔全部納入 CI；#45 把 `results.check` 改 `assert`；移除 `flutter analyze` 的 `continue-on-error`；加 `flutter build apk` 煙霧測試。
-- **SDK 汰換**：後端遷移至 `google-genai` 新 SDK；Flutter 端評估 `firebase_ai`（Firebase AI Logic，可搭配 App Check 防濫用）或維持直連但集中封裝。
+- [x] **SDK 汰換（後端）** ✅ 2026-09-04：已遷移至 `google-genai`；新增 `app/services/gemini_client.py` 統一入口（client 延遲建立 + 依 key 快取），移除各 service 的 `genai.configure()` 全域狀態；連帶必須升版 `httpx` 0.26→0.28.1、`pydantic` 2.5.3→2.13.5、`fastapi` 0.109→0.116.1（相依鏈強制，見下）。**待辦**：Flutter 端評估 `firebase_ai`（Firebase AI Logic，可搭配 App Check 防濫用）或維持直連但集中封裝。
 - **iOS**：目前無 `ios/` 目錄。建議**延後**——台灣工業現場以 Android 為主，iOS 等產品驗證後再 `flutter create --platforms=ios` 補做。
 - **repo 清理**：legacy React 原型移入 `legacy/` 或 `_local_archive/`；刪除 `backend/` 根目錄的 dev-scratch 腳本（`reset_rag_db.py` 放在生產程式旁是個 footgun）；根目錄 `.gitignore` 補 `.env`。
 

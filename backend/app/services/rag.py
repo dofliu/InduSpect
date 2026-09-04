@@ -10,15 +10,18 @@ import time
 from typing import Optional
 from datetime import datetime
 
-import google.generativeai as genai
 from sqlalchemy import select, func
 
 from app.config import settings
+from app.services import gemini_client
 from app.services.embedding import EmbeddingService
 from app.db.database import async_session_maker
 from app.db.models import RAGItem
 
 logger = logging.getLogger(__name__)
+
+# Gemini File API 處理狀態的輪詢上限（秒）——避免文件卡在 PROCESSING 時請求無限等待
+FILE_PROCESSING_TIMEOUT_SECONDS = 120
 
 # 暫存檔案目錄
 UPLOAD_DIR = "uploads"
@@ -135,9 +138,6 @@ class RAGService:
             return ["暫無相似歷史案例，建議依照標準維修程序處理。"]
         
         try:
-            genai.configure(api_key=settings.gemini_api_key)
-            model = genai.GenerativeModel(settings.gemini_flash_model)
-            
             cases_text = "\n\n".join([
                 f"案例 {i+1} (相似度: {c['similarity']}):\n{c['content']}"
                 for i, c in enumerate(similar_cases[:3])
@@ -156,11 +156,13 @@ class RAGService:
 
 請提供 3-5 條具體、可操作的維修建議，每條一行，使用繁體中文。
 """
-            response = model.generate_content(prompt)
-            
+            response_text = gemini_client.generate_text(
+                prompt, model=settings.gemini_flash_model
+            )
+
             return [
                 line.strip().lstrip("•-123456789.、）)")
-                for line in response.text.strip().split("\n")
+                for line in response_text.strip().split("\n")
                 if line.strip() and len(line.strip()) > 5
             ][:5]
             
@@ -228,20 +230,25 @@ class RAGService:
         """從文件導入知識 (使用 Gemini File API)"""
         try:
             logger.info(f"Processing document: {source_filename}")
-            genai.configure(api_key=settings.gemini_api_key)
-            # 使用 Flash 模型進行文件分析（速度快）
-            model = genai.GenerativeModel(settings.gemini_doc_model)
 
-            # 1. 上傳檔案到 Gemini
-            logger.info(f"Uploading to Gemini...")
-            uploaded_file = genai.upload_file(path=file_path, display_name=source_filename)
-            
-            # 等待檔案處理 (通常很快，但安全起見)
-            while uploaded_file.state.name == "PROCESSING":
+            # 1. 上傳檔案到 Gemini（文件分析用 Flash 模型，速度快）
+            logger.info("Uploading to Gemini...")
+            uploaded_file = gemini_client.upload_file(
+                path=file_path, display_name=source_filename
+            )
+
+            # 等待檔案處理（通常很快，但安全起見；上限避免卡死請求）
+            waited = 0
+            while gemini_client.file_state_name(uploaded_file) == "PROCESSING":
+                if waited >= FILE_PROCESSING_TIMEOUT_SECONDS:
+                    raise TimeoutError(
+                        f"Gemini 檔案處理逾時（{FILE_PROCESSING_TIMEOUT_SECONDS} 秒）"
+                    )
                 time.sleep(1)
-                uploaded_file = genai.get_file(uploaded_file.name)
-            
-            if uploaded_file.state.name == "FAILED":
+                waited += 1
+                uploaded_file = gemini_client.get_file(uploaded_file.name)
+
+            if gemini_client.file_state_name(uploaded_file) == "FAILED":
                 raise ValueError("Gemini file processing failed")
 
             # 2. 發送 Prompt 進行提取
@@ -266,10 +273,12 @@ class RAGService:
             4. 僅回傳純 JSON 陣列，不要有 Markdown 標記。
             """
 
-            response = model.generate_content([prompt, uploaded_file])
-            
+            response_text = gemini_client.generate_text(
+                [prompt, uploaded_file], model=settings.gemini_doc_model
+            )
+
             # 3. 解析回應
-            text = response.text.strip()
+            text = response_text.strip()
             # 清理 Markdown
             if text.startswith("```json"):
                 text = text[7:]
@@ -300,11 +309,8 @@ class RAGService:
                 )
                 count += 1
             
-            # 清理：雖然 Gemini 會自動過期，但我們可以嘗試刪除(如果 library 支援)，或不理會
-            try:
-                genai.delete_file(uploaded_file.name)
-            except:
-                pass
+            # 清理：Gemini 上傳檔案會自動過期，主動刪除只是提早釋放（失敗僅記錄）
+            gemini_client.delete_file(uploaded_file.name)
 
             return {"success": True, "count": count, "message": f"成功導入 {count} 筆知識"}
 
