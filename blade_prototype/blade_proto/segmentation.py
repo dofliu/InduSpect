@@ -39,6 +39,7 @@ class SegmentationResult:
     sky_model: SkyModel
     threshold: float  # Mahalanobis 距離門檻
     scale: float  # 估模型時的縮圖比例
+    horizon_y: int | None = None  # 地平線列；None = 畫面沒有可辨識的地面帶
 
 
 @dataclass
@@ -155,6 +156,37 @@ def _clean_mask(fg: np.ndarray, min_area: int, max_width_frac: float = 0.7, drop
     return np.where(keep[lab], 255, 0).astype(np.uint8)
 
 
+def find_horizon(mask: np.ndarray, fill_thresh: float = 0.55, gap_rows: int = 6,
+                 min_sky_frac: float = 0.25, min_band_frac: float = 0.02) -> int | None:
+    """找地面帶的上緣（地平線列）。由畫面底部往上走，只要該列前景填充率高就繼續。
+
+    真實照片的地面不是「橫跨畫面的矮元件」——它常常和塔架連成同一個元件，
+    `_clean_mask` 的寬矮規則抓不到；但它有另一個穩定特徵：**整列幾乎都是前景**。
+    容許 gap_rows 列中斷（道路、水面反光會讓某幾列填充率掉下來）。
+
+    回傳 None 的兩種情況：帶太薄（<min_band_frac，多半只是畫面底噪），
+    或地面吃掉超過 1−min_sky_frac 的畫面（此時天空模型多半已經壞了，切了也沒意義）。
+    """
+    h = mask.shape[0]
+    fill = (mask > 0).mean(axis=1).astype(np.float32)
+    fill = cv2.medianBlur(fill.reshape(-1, 1), 5).ravel()
+    top = None
+    miss = 0
+    for y in range(h - 1, -1, -1):
+        if fill[y] >= fill_thresh:
+            top, miss = y, 0
+        else:
+            miss += 1
+            if miss > gap_rows:
+                break
+    if top is None:
+        return None
+    band = (h - top) / h
+    if band < min_band_frac or band > 1.0 - min_sky_frac:
+        return None
+    return int(top)
+
+
 def segment_turbine(
     img_bgr: np.ndarray,
     max_side: int = 1200,
@@ -189,7 +221,9 @@ def segment_turbine(
         mask_small = _clean_mask(dist_small > dist_thresh, int(min_area_frac * small.shape[0] * small.shape[1]),
                                  drop_wide_bands=drop_wide_bands)
         mask = cv2.resize(mask_small, (w, h), interpolation=cv2.INTER_NEAREST)
-    return SegmentationResult(mask=mask, sky_model=model, threshold=float(dist_thresh), scale=scale)
+    horizon = find_horizon(mask) if drop_wide_bands else None
+    return SegmentationResult(mask=mask, sky_model=model, threshold=float(dist_thresh),
+                              scale=scale, horizon_y=horizon)
 
 
 # ---------------------------------------------------------------- 結構定位
@@ -449,8 +483,12 @@ def _initial_hub_tower_first(mask: np.ndarray, dt: np.ndarray):
     """沿塔軸往上走，取「臂數 ≥ 3 的連續區段」最上端當輪轂/機艙位置。
 
     靠近六點鐘的葉片會在輪轂下方就與塔架黏合，那一段臂數也是 3，所以不能取第一個 3 臂點；
-    輪轂上方沿軸通常沒有遮罩（或只剩 2 臂的向上葉片），區段自然結束。斷開超過 3 步就停，
-    避免走到更上方的雲塊。正視：終點即輪轂；側視：終點是機艙中心，之後由 find_structure 投影到葉片軸線。
+    輪轂上方沿軸通常沒有遮罩（或只剩 2 臂的向上葉片），區段自然結束。
+
+    停止條件是「軸線離開遮罩超過 3 步」，不是「連續 3 步不合格」：六點鐘葉片貼著塔架時，
+    塔身中段會出現零星的 3 臂點，之後又掉回 2 臂——用「不合格就停」會讓走訪停在塔身中央
+    （真實影像 631b5a3e 即為此例）。離開遮罩才停，就只會停在機艙上方。
+    正視：終點即輪轂；側視：終點是機艙中心，之後由 find_structure 投影到葉片軸線。
     """
     axis = _tower_axis_from_bottom(mask)
     if axis is None:
@@ -458,7 +496,11 @@ def _initial_hub_tower_first(mask: np.ndarray, dt: np.ndarray):
     a, b, tw = axis
     h, w = mask.shape
     ys_all, _ = np.nonzero(mask)
-    top = int(ys_all.min())
+    top, bottom = int(ys_all.min()), int(ys_all.max())
+    # 轉子在框內時，輪轂上下都還有結構（上方葉片、下方塔架），不可能落在整體高度的最下緣。
+    # 落在下緣代表走訪停在塔身或地平線殘渣上（真實影像 631b5a3e），此時回傳 None 讓
+    # 呼叫端改用 DT + 臂數法，比硬給一個錯的輪轂安全。
+    y_limit = top + 0.75 * (bottom - top)
     step = max(2, int(tw / 2))
     best = None
     gap = 0
@@ -466,8 +508,8 @@ def _initial_hub_tower_first(mask: np.ndarray, dt: np.ndarray):
     for y in range(h - 1, top, -step):
         x = a * y + b
         xi, yi = int(round(x)), int(round(y))
-        ok = False
-        if 0 <= xi < w and mask[yi, xi] != 0:
+        on_mask = 0 <= xi < w and mask[yi, xi] != 0
+        if on_mask:
             r = float(dt[yi, xi])
             seg_peak = max(seg_peak, r)
             # DT 門檻：tw 是塔基寬度、塔架往上收窄，所以下限只用 0.2×tw；
@@ -475,12 +517,13 @@ def _initial_hub_tower_first(mask: np.ndarray, dt: np.ndarray):
             if r >= max(0.2 * tw, 0.6 * seg_peak) and \
                     _count_arms(mask, np.array([x, y], float), max(4.0 * r, 12.0)) >= 3:
                 best = (np.array([x, float(y)]), r)
-                ok = True
         if best is not None:
-            gap = 0 if ok else gap + 1
+            gap = 0 if on_mask else gap + 1
             if gap > 3:
                 break
-    return (best[0], best[1], (a, b, tw)) if best is not None else None
+    if best is None or best[0][1] > y_limit:
+        return None
+    return best[0], best[1], (a, b, tw)
 
 
 def _initial_hub(mask: np.ndarray, dt: np.ndarray, y_cut: int):
@@ -518,6 +561,7 @@ def find_structure(
     min_blade_area_frac: float = 2e-4,
     n_iter: int = 4,
     refine: bool | None = None,
+    horizon_y: int | None = None,
 ) -> TurbineStructure:
     """從分割遮罩找輪轂、塔架、葉片。
 
@@ -525,9 +569,17 @@ def find_structure(
        相鄰葉片夾角小時峰值會落在楔形上，靠下面的迭代修正。
     2. 迭代：移除輪轂圓盤 → 連通元件（楔形用角度聚類拆開）→ 分類塔架/葉片
        → 葉片外段軸線最小平方交點（正視）或投影到主葉片軸線（側視、共線）→ 更新輪轂。
+
+    horizon_y：地平線列（`find_horizon` 的輸出）。給了就只在地平線以上做結構定位。
+    真實影像上這是最重要的一個參數：地面/植被進入遮罩後，距離變換最厚處會落在地面，
+    輪轂初估與塔軸偵測會整個歪掉，而且地面殘塊會被當成第四片葉片。
     """
     h, w = mask.shape
     notes: list[str] = []
+    if horizon_y is not None and 0 < horizon_y < h:
+        mask = mask.copy()
+        mask[horizon_y:, :] = 0
+        notes.append(f"只用地平線（第 {horizon_y} 列）以上做結構定位")
     ys_all, xs_all = np.nonzero(mask)
     if len(ys_all) == 0:
         raise ValueError("遮罩為空，無法定位結構")

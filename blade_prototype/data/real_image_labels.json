@@ -1,0 +1,815 @@
+{
+ "_readme": [
+  "真實影像驗證的人工標註（ground truth）。影像本身不進版控（第三方 CC 授權，出處見",
+  "real_images*/manifest.json），此檔只存標註，讓結果可重現、可追溯。",
+  "",
+  "category: single = 單台主風機、整個轉子在框內（演算法的設計輸入）；",
+  "          multi  = 多台同框或全部遠景、無主風機（超出設計範圍）；",
+  "          none   = 畫面裡根本沒有水平軸風機轉子（超出設計範圍）。",
+  "          multi/none 的通過條件是「演算法要明確失敗」，不是定位正確。",
+  "hub: 目視標註的輪轂中心（三片葉根匯聚處），正規化座標 [x/W, y/H]，只有 single 才標。",
+  "     30 張 single 全部以 5 倍放大 + 2% 格線重讀過，精度約 ±0.01。重讀是在看演算法輸出",
+  "     「之前」對全部 single 影像一次做完，不是只挑不合的改（第一次用 10% 粗格線讀，",
+  "     有 8 張誤差超過 3%，會系統性低估演算法）。",
+  "sky: clear = 無明顯雲塊、無直射光；cloud = 畫面有明顯雲塊（積雲/卷雲/陰天雲幕）；",
+  "     backlit = 太陽或夕陽在畫面內或正對鏡頭（含暮色低照度）。看照片判定，兩批同一條規則。",
+  "framing: 轉子直徑相對畫面長邊——near ≥ 1/3、mid 1/6–1/3、far < 1/6。",
+  "         以疊在原圖上的 1/3 長邊參考線目視比對。",
+  "conditions: 這張照片帶進來的現場干擾條件，用來歸納失敗模式。",
+  "set: A = 第一批（開發與門檻選擇）；B = 第二批 holdout（不同查詢字、事後才抓），",
+  "     用來檢驗改動有沒有過擬合 A。",
+  "",
+  "量測結果與失敗案例集見 ../REAL_IMAGE_VALIDATION.md。"
+ ],
+ "images": {
+  "9a1f100f": {
+   "category": "single",
+   "hub": [
+    0.47,
+    0.47
+   ],
+   "conditions": [
+    "仰角",
+    "塔架出框"
+   ],
+   "set": "A",
+   "sky": "clear",
+   "framing": "near"
+  },
+  "6ae1af37": {
+   "category": "single",
+   "hub": [
+    0.58,
+    0.27
+   ],
+   "conditions": [
+    "遠處他機",
+    "樹林地平線"
+   ],
+   "set": "A",
+   "sky": "clear",
+   "framing": "near"
+  },
+  "309348db": {
+   "category": "single",
+   "hub": [
+    0.445,
+    0.31
+   ],
+   "conditions": [
+    "岩石地面"
+   ],
+   "set": "A",
+   "sky": "clear",
+   "framing": "near"
+  },
+  "b1fc10ba": {
+   "category": "single",
+   "hub": [
+    0.49,
+    0.51
+   ],
+   "conditions": [
+    "逆光",
+    "太陽在輪轂後"
+   ],
+   "set": "A",
+   "sky": "backlit",
+   "framing": "near"
+  },
+  "44f9c591": {
+   "category": "single",
+   "hub": [
+    0.405,
+    0.39
+   ],
+   "conditions": [
+    "塔基雜物",
+    "圍籬"
+   ],
+   "set": "A",
+   "sky": "clear",
+   "framing": "near"
+  },
+  "c9d215f9": {
+   "category": "single",
+   "hub": [
+    0.53,
+    0.4
+   ],
+   "conditions": [
+    "電線橫越",
+    "遠處他機",
+    "低對比霾"
+   ],
+   "set": "A",
+   "sky": "clear",
+   "framing": "near"
+  },
+  "631b5a3e": {
+   "category": "single",
+   "hub": [
+    0.435,
+    0.27
+   ],
+   "conditions": [
+    "塔架紅白條紋",
+    "葉片貼齊塔架"
+   ],
+   "set": "A",
+   "sky": "clear",
+   "framing": "near"
+  },
+  "1573f056": {
+   "category": "single",
+   "hub": [
+    0.31,
+    0.365
+   ],
+   "conditions": [
+    "塔基樹林建物",
+    "轉子近側視"
+   ],
+   "set": "A",
+   "sky": "clear",
+   "framing": "near"
+  },
+  "06a2eac4": {
+   "category": "single",
+   "hub": [
+    0.7,
+    0.38
+   ],
+   "conditions": [
+    "塔架被樹林遮蔽",
+    "遠處他機"
+   ],
+   "set": "A",
+   "sky": "clear",
+   "framing": "near"
+  },
+  "d526cb66": {
+   "category": "single",
+   "hub": [
+    0.66,
+    0.39
+   ],
+   "conditions": [
+    "濃積雲",
+    "前景欄杆",
+    "他機同框"
+   ],
+   "set": "A",
+   "sky": "cloud",
+   "framing": "near"
+  },
+  "126b2482": {
+   "category": "single",
+   "hub": [
+    0.62,
+    0.27
+   ],
+   "conditions": [
+    "濃積雲",
+    "轉子近側視",
+    "塔基人群"
+   ],
+   "set": "A",
+   "sky": "cloud",
+   "framing": "near"
+  },
+  "2c9237a4": {
+   "category": "single",
+   "hub": [
+    0.5,
+    0.34
+   ],
+   "conditions": [
+    "卷雲",
+    "地平線風場列"
+   ],
+   "set": "A",
+   "sky": "cloud",
+   "framing": "near"
+  },
+  "b4c1317b": {
+   "category": "single",
+   "hub": [
+    0.51,
+    0.315
+   ],
+   "conditions": [
+    "近距離",
+    "塔架出框"
+   ],
+   "set": "A",
+   "sky": "clear",
+   "framing": "near"
+  },
+  "27f344ce": {
+   "category": "single",
+   "hub": [
+    0.71,
+    0.31
+   ],
+   "conditions": [
+    "前景穀倉",
+    "雪地",
+    "他機同框",
+    "浮水印"
+   ],
+   "set": "A",
+   "sky": "clear",
+   "framing": "near"
+  },
+  "b78792bf": {
+   "category": "single",
+   "hub": [
+    0.41,
+    0.35
+   ],
+   "conditions": [
+    "他機同框",
+    "荒原地面"
+   ],
+   "set": "A",
+   "sky": "clear",
+   "framing": "near"
+  },
+  "ed894e7a": {
+   "category": "single",
+   "hub": [
+    0.32,
+    0.29
+   ],
+   "conditions": [
+    "他機同框",
+    "荒原地面"
+   ],
+   "set": "A",
+   "sky": "clear",
+   "framing": "near"
+  },
+  "839eaf2b": {
+   "category": "single",
+   "hub": [
+    0.54,
+    0.29
+   ],
+   "conditions": [
+    "夕陽色偏",
+    "長列他機"
+   ],
+   "set": "A",
+   "sky": "clear",
+   "framing": "near"
+  },
+  "79d39652": {
+   "category": "single",
+   "hub": [
+    0.36,
+    0.31
+   ],
+   "conditions": [
+    "暮色剪影",
+    "他機同框",
+    "低照度"
+   ],
+   "set": "A",
+   "sky": "backlit",
+   "framing": "near"
+  },
+  "3d8dac16": {
+   "category": "single",
+   "hub": [
+    0.66,
+    0.35
+   ],
+   "conditions": [
+    "三台同框",
+    "山脊背景"
+   ],
+   "set": "A",
+   "sky": "clear",
+   "framing": "near"
+  },
+  "dc0c168c": {
+   "category": "multi",
+   "conditions": [
+    "兩台等大",
+    "右側轉子出框"
+   ],
+   "set": "A"
+  },
+  "08233c81": {
+   "category": "multi",
+   "conditions": [
+    "多台同框",
+    "無主機"
+   ],
+   "set": "A"
+  },
+  "174ced42": {
+   "category": "multi",
+   "conditions": [
+    "三台遠景",
+    "麥田"
+   ],
+   "set": "A"
+  },
+  "0dbe7ef2": {
+   "category": "multi",
+   "conditions": [
+    "長列遠景"
+   ],
+   "set": "A"
+  },
+  "28a89b4b": {
+   "category": "multi",
+   "conditions": [
+    "兩台 + 整片風場"
+   ],
+   "set": "A"
+  },
+  "cf87d570": {
+   "category": "multi",
+   "conditions": [
+    "遠景多台",
+    "樹林"
+   ],
+   "set": "A"
+  },
+  "a0086f94": {
+   "category": "multi",
+   "conditions": [
+    "離岸列陣"
+   ],
+   "set": "A"
+  },
+  "ce8a9648": {
+   "category": "multi",
+   "conditions": [
+    "遠景多台",
+    "農地"
+   ],
+   "set": "A"
+  },
+  "d1d5b4c6": {
+   "category": "multi",
+   "conditions": [
+    "遠景多台",
+    "前景麥穗淺景深"
+   ],
+   "set": "A"
+  },
+  "38781b3d": {
+   "category": "multi",
+   "conditions": [
+    "逆光日落",
+    "遠景多台"
+   ],
+   "set": "A"
+  },
+  "c742cf5a": {
+   "category": "multi",
+   "conditions": [
+    "日落剪影",
+    "電線桿",
+    "遠景多台"
+   ],
+   "set": "A"
+  },
+  "8e6a9af9": {
+   "category": "multi",
+   "conditions": [
+    "山脊遠景多台"
+   ],
+   "set": "A"
+  },
+  "104b5488": {
+   "category": "multi",
+   "conditions": [
+    "遠景多台",
+    "前景燈塔碎石路"
+   ],
+   "set": "A"
+  },
+  "c37ef14c": {
+   "category": "multi",
+   "conditions": [
+    "暮色地平線遠景"
+   ],
+   "set": "A"
+  },
+  "d0ed2613": {
+   "category": "multi",
+   "conditions": [
+    "離岸遠景",
+    "海面"
+   ],
+   "set": "A"
+  },
+  "5b2129c9": {
+   "category": "multi",
+   "conditions": [
+    "黑白",
+    "48 km 外地平線"
+   ],
+   "set": "A"
+  },
+  "3b0c8329": {
+   "category": "multi",
+   "conditions": [
+    "1987 底片",
+    "多座塔架",
+    "轉子不可解析"
+   ],
+   "set": "A"
+  },
+  "879d4ff7": {
+   "category": "multi",
+   "conditions": [
+    "霧雨",
+    "前景大樹",
+    "風機幾乎不可見"
+   ],
+   "set": "A"
+  },
+  "7c2cc7ac": {
+   "category": "none",
+   "conditions": [
+    "屋頂小型風機",
+    "建物佔畫面"
+   ],
+   "set": "A"
+  },
+  "200cf46b": {
+   "category": "none",
+   "conditions": [
+    "屋頂小型風機",
+    "建物佔畫面"
+   ],
+   "set": "A"
+  },
+  "85b10c35": {
+   "category": "none",
+   "conditions": [
+    "屋頂垂直軸風機",
+    "建物佔畫面"
+   ],
+   "set": "A"
+  },
+  "1a08b0fd": {
+   "category": "none",
+   "conditions": [
+    "屋頂小型風機",
+    "建物佔畫面"
+   ],
+   "set": "A"
+  },
+  "bdfb3c1e": {
+   "category": "none",
+   "conditions": [
+    "機翼空拍",
+    "非風機"
+   ],
+   "set": "A"
+  },
+  "6ac5211f": {
+   "category": "none",
+   "conditions": [
+    "高空俯瞰",
+    "風機僅數像素"
+   ],
+   "set": "A"
+  },
+  "90ec88e8": {
+   "category": "none",
+   "conditions": [
+    "高空俯瞰",
+    "風機僅數像素"
+   ],
+   "set": "A"
+  },
+  "fd7d67d4": {
+   "category": "none",
+   "conditions": [
+    "嚴重曝光失敗",
+    "幾乎全黑"
+   ],
+   "set": "A"
+  },
+  "580e2493": {
+   "category": "single",
+   "conditions": [
+    "他機同框",
+    "丘陵"
+   ],
+   "set": "B",
+   "hub": [
+    0.65,
+    0.26
+   ],
+   "sky": "cloud",
+   "framing": "near"
+  },
+  "2a4e45b6": {
+   "category": "single",
+   "conditions": [
+    "黑白",
+    "陰天",
+    "他機同框"
+   ],
+   "set": "B",
+   "hub": [
+    0.34,
+    0.27
+   ],
+   "sky": "cloud",
+   "framing": "near"
+  },
+  "8a95faf1": {
+   "category": "single",
+   "conditions": [
+    "日落",
+    "長列他機"
+   ],
+   "set": "B",
+   "hub": [
+    0.66,
+    0.21
+   ],
+   "sky": "backlit",
+   "framing": "mid"
+  },
+  "422cd36c": {
+   "category": "single",
+   "conditions": [
+    "卷雲",
+    "遠處他機",
+    "風機在畫面中偏小"
+   ],
+   "set": "B",
+   "hub": [
+    0.5,
+    0.48
+   ],
+   "sky": "cloud",
+   "framing": "mid"
+  },
+  "dbc90d73": {
+   "category": "single",
+   "conditions": [
+    "積雲",
+    "玉米田"
+   ],
+   "set": "B",
+   "hub": [
+    0.51,
+    0.5
+   ],
+   "sky": "cloud",
+   "framing": "mid"
+  },
+  "b1632b63": {
+   "category": "single",
+   "conditions": [
+    "陰天",
+    "多台同框",
+    "前景護欄"
+   ],
+   "set": "B",
+   "hub": [
+    0.8,
+    0.42
+   ],
+   "sky": "cloud",
+   "framing": "mid"
+  },
+  "ff813f97": {
+   "category": "single",
+   "conditions": [
+    "前景腳踏車",
+    "逆光陰天",
+    "樹林"
+   ],
+   "set": "B",
+   "hub": [
+    0.6,
+    0.33
+   ],
+   "sky": "cloud",
+   "framing": "far"
+  },
+  "71bd6a66": {
+   "category": "single",
+   "conditions": [
+    "他機同框",
+    "乾草原"
+   ],
+   "set": "B",
+   "hub": [
+    0.57,
+    0.45
+   ],
+   "sky": "cloud",
+   "framing": "mid"
+  },
+  "c441c06b": {
+   "category": "single",
+   "conditions": [
+    "暴風雲",
+    "油菜花田"
+   ],
+   "set": "B",
+   "hub": [
+    0.29,
+    0.28
+   ],
+   "sky": "cloud",
+   "framing": "mid"
+  },
+  "a4b7f3db": {
+   "category": "single",
+   "conditions": [
+    "卷雲",
+    "長列他機"
+   ],
+   "set": "B",
+   "hub": [
+    0.16,
+    0.58
+   ],
+   "sky": "cloud",
+   "framing": "mid"
+  },
+  "28bb2bed": {
+   "category": "single",
+   "conditions": [
+    "濃積雲",
+    "農地"
+   ],
+   "set": "B",
+   "hub": [
+    0.2,
+    0.58
+   ],
+   "sky": "cloud",
+   "framing": "mid"
+  },
+  "896b5635": {
+   "category": "multi",
+   "conditions": [
+    "高壓電塔",
+    "油菜花田",
+    "風機極遠"
+   ],
+   "set": "B"
+  },
+  "3144e335": {
+   "category": "multi",
+   "conditions": [
+    "高壓電塔",
+    "油菜花田",
+    "風機極遠"
+   ],
+   "set": "B"
+  },
+  "85ff8977": {
+   "category": "multi",
+   "conditions": [
+    "高壓電塔",
+    "油菜花田",
+    "風機極遠"
+   ],
+   "set": "B"
+  },
+  "cc916ec1": {
+   "category": "multi",
+   "conditions": [
+    "多台重疊",
+    "陰天"
+   ],
+   "set": "B"
+  },
+  "7a3e7a36": {
+   "category": "multi",
+   "conditions": [
+    "兩台遠景",
+    "丘陵"
+   ],
+   "set": "B"
+  },
+  "c7b5afeb": {
+   "category": "multi",
+   "conditions": [
+    "兩台相鄰",
+    "前景木柵步道"
+   ],
+   "set": "B"
+  },
+  "bc15f153": {
+   "category": "multi",
+   "conditions": [
+    "樹線後長列遠景"
+   ],
+   "set": "B"
+  },
+  "dceefb51": {
+   "category": "multi",
+   "conditions": [
+    "樹線後遠景",
+    "玉米田"
+   ],
+   "set": "B"
+  },
+  "76404c86": {
+   "category": "multi",
+   "conditions": [
+    "遠景多台",
+    "乾草原"
+   ],
+   "set": "B"
+  },
+  "f1af9854": {
+   "category": "multi",
+   "conditions": [
+    "山脊長列遠景"
+   ],
+   "set": "B"
+  },
+  "c38209f1": {
+   "category": "multi",
+   "conditions": [
+    "濃煙/霧",
+    "遠景多台"
+   ],
+   "set": "B"
+  },
+  "77b2510b": {
+   "category": "multi",
+   "conditions": [
+    "遠景多台",
+    "丘陵"
+   ],
+   "set": "B"
+  },
+  "3e2eb1fe": {
+   "category": "multi",
+   "conditions": [
+    "濃積雲",
+    "多台同框"
+   ],
+   "set": "B"
+  },
+  "dcce015e": {
+   "category": "multi",
+   "conditions": [
+    "遠景多台",
+    "石牆草地"
+   ],
+   "set": "B"
+  },
+  "b01f62bb": {
+   "category": "multi",
+   "conditions": [
+    "黑白",
+    "遠景多台",
+    "水面"
+   ],
+   "set": "B"
+  },
+  "8010118c": {
+   "category": "none",
+   "conditions": [
+    "太陽能板",
+    "無風機轉子"
+   ],
+   "set": "B"
+  },
+  "7ada8cde": {
+   "category": "none",
+   "conditions": [
+    "太陽能板",
+    "無風機轉子"
+   ],
+   "set": "B"
+  },
+  "0ce67d7e": {
+   "category": "none",
+   "conditions": [
+    "太陽能板",
+    "無風機轉子"
+   ],
+   "set": "B"
+  },
+  "415a1adc": {
+   "category": "none",
+   "conditions": [
+    "太陽能板 + 雷達站",
+    "無風機轉子"
+   ],
+   "set": "B"
+  }
+ }
+}

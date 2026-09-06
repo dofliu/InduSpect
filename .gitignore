@@ -35,3 +35,6 @@ _local_archive/
 __pycache__/
 .pytest_cache/
 blade_prototype/.venv/
+
+# 真實影像驗證語料（第三方 CC 授權照片，不進版控；出處記在 manifest.json）
+blade_prototype/real_images*/

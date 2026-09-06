@@ -204,3 +204,34 @@ def test_charts_handle_nan_and_single_series():
     bar = bar_chart(["A", "B", "C"], [1.0, float("nan"), 2.0], title="含缺值")
     assert bar.count("<path") == 2 and "—" in bar
     assert line_chart([], title="空").count("無資料") == 1
+
+
+def test_report_refuses_geometry_conclusions_when_capture_is_rejected(tmp_path):
+    """拍攝品質不合格時，報告不得呈現任何三片互比數值——真實影像驗證顯示定位錯誤時
+    互比照樣吐得出一組看起來正常的數字，那才是危險的失敗模式。"""
+    still, still_img = _still_payload(tmp_path, deflection_cm=(500, 0, 0))
+    still["capture_quality"] = {
+        "ok": False,
+        "reasons": ["三片葉尖半徑差 84%（上限 15%）：同一台風機三片等長，"
+                    "差這麼多代表有一片其實是地物、電線或別台風機，請重拍並確保只有一台風機在框內"],
+        "warnings": ["沒有找到塔架：塔架傾斜與六點鐘方位判讀不可用（幾何互比仍可進行）"],
+        "metrics": {"tip_radius_spread": 0.845},
+    }
+    html = build_report(CaseMeta(asset_id="WTG-09", noise_floor_px=1.2),
+                        still=still, still_overlay=still_img)
+    assert "拍攝品質不合格，本層未做判定" in html
+    assert "葉尖半徑差 84%" in html
+    assert "互比指標" not in html          # 表格整段不出現
+    assert "離群，需人工確認" not in html   # 也不得下任何離群判定
+    assert "需重拍" in html
+
+
+def test_report_shows_capture_warnings_but_keeps_results_when_passed(tmp_path):
+    still, still_img = _still_payload(tmp_path, deflection_cm=(500, 0, 0))
+    still["capture_quality"] = {"ok": True, "reasons": [],
+                                "warnings": ["地平線以上的前景占 20%（一般 <15%）：判定結果請降權看待"],
+                                "metrics": {}}
+    html = build_report(CaseMeta(asset_id="WTG-10", noise_floor_px=1.2),
+                        still=still, still_overlay=still_img)
+    assert "判定結果請降權看待" in html
+    assert "互比指標" in html
