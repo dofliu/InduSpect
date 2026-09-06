@@ -174,25 +174,51 @@ class MetricComparison:
     others_spread: float  # 另外兩片彼此差
     z: float  # |deviation| / noise_floor
     flagged: bool
+    direction: str = "both"  # both / high / low：哪個方向才算缺陷徵兆
 
     def to_dict(self) -> dict:
         return asdict(self)
 
 
 def compare_metric(name: str, values: list[float], noise_floor: float, z_thresh: float = 3.0,
-                   spread_ratio: float = 2.0) -> MetricComparison:
-    """三片互比：離群者 = 離中位數最遠者；同時要求它與另外兩片的差距明顯大於另外兩片彼此差。"""
+                   spread_ratio: float = 2.0, direction: str = "both") -> MetricComparison:
+    """三片互比：離群者 = 離中位數最遠者；同時要求它與另外兩片的差距明顯大於另外兩片彼此差。
+
+    direction 決定哪個方向才算缺陷徵兆：
+    - "both"（預設）：幾何量（葉尖偏移、弦寬）兩個方向都是異常
+    - "high" / "low"：只有偏高（或偏低）才算。例如聲學的寬頻位準與高頻占比——
+      比另兩片**低**不是缺陷，若不限方向就會把安靜的那片標成侵蝕。
+    NaN 一律不參與（全 NaN 時回傳未標記結果）。
+    """
     vals = np.asarray(values, float)
-    med = float(np.median(vals))
+    finite = np.flatnonzero(np.isfinite(vals))
+    if len(finite) < 2:
+        return MetricComparison(name, [float(x) for x in vals],
+                                [float("nan")] * len(vals), int(finite[0]) if len(finite) else 0,
+                                float("nan"), float("nan"), float("nan"), False, direction)
+    fv = vals[finite]
+    med = float(np.median(fv))
     dev = vals - med
-    k = int(np.argmax(np.abs(dev)))
-    others = np.delete(vals, k)
+    # 有方向性時，離群者就是「最高（或最低）的那片」；沒方向性才用「離中位數最遠」。
+    # 兩片往相反方向偏時這個差別是關鍵：high 模式要抓最吵的，不是偏離最多的。
+    if direction == "high":
+        j = int(np.argmax(fv))
+    elif direction == "low":
+        j = int(np.argmin(fv))
+    else:
+        j = int(np.argmax(np.abs(fv - med)))
+    k = int(finite[j])
+    others = np.delete(fv, j)
     spread = float(np.abs(others[0] - others[1])) if len(others) == 2 else 0.0
     dev_k = float(vals[k] - others.mean()) if len(others) else float(dev[k])
     z = abs(dev_k) / max(noise_floor, 1e-9)
     flagged = bool(z >= z_thresh and abs(dev_k) >= spread_ratio * spread)
+    if direction == "high" and dev_k <= 0:
+        flagged = False
+    elif direction == "low" and dev_k >= 0:
+        flagged = False
     return MetricComparison(name, [float(x) for x in vals], [float(x) for x in dev], k,
-                            dev_k, spread, float(z), flagged)
+                            dev_k, spread, float(z), flagged, direction)
 
 
 def compare_blades(
