@@ -26,6 +26,7 @@
 | `backend/app/services/gemini_client.py` | ★ 後端唯一 Gemini 入口（google-genai SDK，延遲建立 + 快取） |
 | `flutter_app/DEVELOPMENT.md` | 完整開發文件 |
 | `LAUNCH_PLAN.md` | 產品化評估與 90 天上線行動計畫 |
+| `BLADE_INSPECTION_SPEC.md` | 風力機葉片地面目視檢測模組規格（獨立功能，Phase 0 尚未實作） |
 
 ## 開發慣例
 - 路徑操作用 `package:path/path.dart`，不手動 `split('/')`
