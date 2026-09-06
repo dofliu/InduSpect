@@ -7,6 +7,8 @@
     python -m blade_proto synth-segment  [--cm-per-px 0.4] [--erosion-cm 5] --out seg.png
     python -m blade_proto synth-video    [--rpm 12] [--fps 30] [--seconds 5] [--shake 6] --out video.mp4
     python -m blade_proto sensitivity    [--quick] [--out SENSITIVITY.md]
+    python -m blade_proto case           --asset WTG-07 [--still F] [--edge F] [--video F] --out-dir DIR
+    python -m blade_proto report         [--still r.json] [--edge e.json] [--video v.json] --out report.html
 
 外業回來後的用法見 README.md。
 """
@@ -23,10 +25,12 @@ import cv2
 import numpy as np
 
 from . import synth
+from . import __version__
 from .segmentation import segment_turbine, find_structure
 from .geometry import profiles_from_structure, compare_blades
 from .surface import analyze_blade_edges
 from .dynamics import analyze_frames, analyze_video, video_frames, video_fps
+from .report import CaseMeta, build_report, write_report
 
 
 def _read(path: str) -> np.ndarray:
@@ -131,20 +135,28 @@ def cmd_analyze_video(a) -> None:
     res = analyze_video(a.video, step=a.step, max_side=a.max_side, six_tol_deg=a.six_tol_deg, view=a.view)
     out = res.to_dict()
     out["video"] = a.video
+    out["view"] = a.view
     out["elapsed_s"] = round(time.time() - t0, 1)
     _dump(out, a.out)
     if a.frames_dir:
-        os.makedirs(a.frames_dir, exist_ok=True)
-        wanted = {}
-        for b, idxs in enumerate(res.six_oclock_frames):
-            for k in idxs:
-                wanted.setdefault(k, []).append(b)
-        for k, frame in enumerate(video_frames(a.video, a.step)):
-            if k in wanted:
-                for b in wanted[k]:
-                    path = os.path.join(a.frames_dir, f"blade{b}_frame{k:05d}.png")
-                    cv2.imwrite(path, frame)
-        print(f"→ {a.frames_dir}/ ({sum(len(v) for v in wanted.values())} 張六點鐘幀)")
+        paths = dump_six_oclock_frames(a.video, a.step, res.six_oclock_frames, a.frames_dir)
+        print(f"→ {a.frames_dir}/ ({len(paths)} 張六點鐘幀)")
+
+
+def dump_six_oclock_frames(video: str, step: int, six: list[list[int]], out_dir: str) -> list[str]:
+    """把每片葉片的六點鐘幀存成 PNG，回傳檔案路徑（依葉片與幀序）。"""
+    os.makedirs(out_dir, exist_ok=True)
+    wanted: dict[int, list[int]] = {}
+    for b, idxs in enumerate(six):
+        for k in idxs:
+            wanted.setdefault(k, []).append(b)
+    paths: list[str] = []
+    for k, frame in enumerate(video_frames(video, step)):
+        for b in wanted.get(k, []):
+            path = os.path.join(out_dir, f"blade{b}_frame{k:05d}.png")
+            cv2.imwrite(path, frame)
+            paths.append(path)
+    return sorted(paths)
 
 
 # ---------------------------------------------------------------- synth
@@ -190,6 +202,111 @@ def cmd_synth_video(a) -> None:
         writer.write(img)
     writer.release()
     print(f"→ {a.out} ({n} 幀 @ {a.fps} fps, {a.rpm} rpm)")
+
+
+# ---------------------------------------------------------------- case / report
+
+
+def _analyze_still_payload(image: str, *, cm_per_px=None, rotor_radius_m=None, hub=None,
+                           dist_thresh=None, noise_floor_px=1.5, overlay_path=None) -> dict:
+    """跑一張全機照，回傳與 analyze-still 相同結構的 dict；有給 overlay_path 就順便寫疊圖。"""
+    img = _read(image)
+    t0 = time.time()
+    seg = segment_turbine(img, dist_thresh=dist_thresh)
+    st = find_structure(seg.mask, hub_hint=hub)
+    profs = profiles_from_structure(st)
+    cmp_ = compare_blades(profs, noise_floor_px=noise_floor_px, cm_per_px=cm_per_px,
+                          rotor_radius_m=rotor_radius_m)
+    if overlay_path:
+        cv2.imwrite(overlay_path, draw_still_overlay(img, seg.mask, st, profs, cmp_))
+    return {
+        "image": image,
+        "size": [img.shape[1], img.shape[0]],
+        "segmentation": {"threshold_sigma": seg.threshold, "mask_area_frac": float((seg.mask > 0).mean())},
+        "structure": {
+            "hub": st.hub, "hub_radius_px": st.hub_radius_px, "hub_refined": st.hub_refined,
+            "tower_found": st.tower_found, "tower_roll_deg": st.tower_angle_deg,
+            "tower_width_px": st.tower_width_px, "n_blades": len(st.blades), "notes": st.notes,
+        },
+        "blades": [p.to_dict() for p in profs],
+        "comparison": cmp_,
+        "elapsed_s": round(time.time() - t0, 2),
+    }
+
+
+def cmd_case(a) -> None:
+    """一個指令跑完一次拍攝作業：分析 → 疊圖 → JSON → 圖文報告。"""
+    if not (a.still or a.edge or a.video):
+        sys.exit("至少要給 --still / --edge / --video 其中一項")
+    os.makedirs(a.out_dir, exist_ok=True)
+    meta = CaseMeta(
+        asset_id=a.asset, site_name=a.site or "", turbine_model=a.model or "",
+        turbine_state=a.state or "", captured_at=a.captured_at or "", inspector=a.inspector or "",
+        weather_note=a.weather or "", cm_per_px=a.cm_per_px, rotor_radius_m=a.rotor_radius_m,
+        noise_floor_px=a.noise_floor_px, notes=list(a.note or []),
+    )
+    still = edge = video = None
+    still_overlay = edge_overlay = None
+    six_paths: list[str] = []
+
+    if a.still:
+        still_overlay = os.path.join(a.out_dir, "still_overlay.png")
+        still = _analyze_still_payload(
+            a.still, cm_per_px=a.cm_per_px, rotor_radius_m=a.rotor_radius_m,
+            hub=_parse_xy(a.hub), dist_thresh=a.dist_thresh,
+            noise_floor_px=a.noise_floor_px or 1.5, overlay_path=still_overlay)
+        _dump(still, os.path.join(a.out_dir, "still.json"))
+
+    if a.edge:
+        edge_overlay = a.edge  # 邊緣分析的疊圖就是原圖（指標以表格與圖表呈現）
+        res = analyze_blade_edges(_read(a.edge), cm_per_px=a.edge_cm_per_px or a.cm_per_px,
+                                  leading_edge=a.le)
+        edge = {"image": a.edge, **res.to_dict()}
+        _dump(edge, os.path.join(a.out_dir, "edge.json"))
+
+    if a.video:
+        res = analyze_video(a.video, step=a.step, max_side=a.max_side, view=a.view)
+        video = res.to_dict()
+        video["video"] = a.video
+        video["view"] = a.view
+        _dump(video, os.path.join(a.out_dir, "video.json"))
+        six_paths = dump_six_oclock_frames(a.video, a.step, res.six_oclock_frames,
+                                           os.path.join(a.out_dir, "six"))
+
+    html = build_report(meta, still=still, still_overlay=still_overlay, edge=edge,
+                        edge_overlay=edge_overlay, video=video, six_frames=six_paths,
+                        tool_version=__version__)
+    out = os.path.join(a.out_dir, a.report_name)
+    write_report(out, html)
+    print(f"→ {out}  ({os.path.getsize(out) / 1024:.0f} KB，自帶內容，可離線開啟／列印成 PDF)")
+
+
+def cmd_report(a) -> None:
+    """從既有 JSON 重建報告（不重跑分析）。"""
+    def _load(path):
+        if not path:
+            return None
+        with open(path, encoding="utf-8") as f:
+            return json.load(f)
+
+    still, edge, video = _load(a.still), _load(a.edge), _load(a.video)
+    if not (still or edge or video):
+        sys.exit("至少要給 --still / --edge / --video 其中一個 JSON")
+    six = sorted(
+        os.path.join(a.six_dir, n) for n in os.listdir(a.six_dir)
+        if n.lower().endswith((".png", ".jpg", ".jpeg"))
+    ) if a.six_dir and os.path.isdir(a.six_dir) else []
+    meta = CaseMeta(
+        asset_id=a.asset, site_name=a.site or "", turbine_model=a.model or "",
+        turbine_state=a.state or "", captured_at=a.captured_at or "", inspector=a.inspector or "",
+        weather_note=a.weather or "", cm_per_px=a.cm_per_px, rotor_radius_m=a.rotor_radius_m,
+        noise_floor_px=a.noise_floor_px, notes=list(a.note or []),
+    )
+    html = build_report(meta, still=still, still_overlay=a.still_overlay, edge=edge,
+                        edge_overlay=a.edge_overlay, video=video, six_frames=six,
+                        tool_version=__version__)
+    write_report(a.out, html)
+    print(f"→ {a.out}  ({os.path.getsize(a.out) / 1024:.0f} KB)")
 
 
 # ---------------------------------------------------------------- sensitivity
@@ -378,6 +495,46 @@ def build_parser() -> argparse.ArgumentParser:
     s.add_argument("--seed", type=int, default=0)
     s.add_argument("--out", required=True)
     s.set_defaults(fn=cmd_synth_video)
+
+    def _meta_args(sp):
+        sp.add_argument("--asset", default="未命名資產", help="資產編號，例如 WTG-07")
+        sp.add_argument("--site", help="風場 / 位置")
+        sp.add_argument("--model", help="機型")
+        sp.add_argument("--state", choices=["stopped", "idling", "running"], help="風機狀態")
+        sp.add_argument("--captured-at", help="拍攝時間（自由格式字串）")
+        sp.add_argument("--inspector", help="檢測人員")
+        sp.add_argument("--weather", help="天氣 / 風速備註")
+        sp.add_argument("--note", action="append", help="現場備註，可重複")
+        sp.add_argument("--cm-per-px", type=float)
+        sp.add_argument("--rotor-radius-m", type=float)
+        sp.add_argument("--noise-floor-px", type=float, default=1.5)
+
+    s = sub.add_parser("case", help="一次拍攝作業：分析全部輸入並產生圖文報告")
+    _meta_args(s)
+    s.add_argument("--still", help="全機靜態照")
+    s.add_argument("--edge", help="長焦分區段照")
+    s.add_argument("--video", help="轉動影片")
+    s.add_argument("--edge-cm-per-px", type=float, help="分區段照的尺度（與全機照不同時指定）")
+    s.add_argument("--le", choices=["top", "bottom"], help="分區段照哪一側是前緣")
+    s.add_argument("--hub", help="手動指定輪轂 x,y")
+    s.add_argument("--dist-thresh", type=float)
+    s.add_argument("--view", choices=["front", "side"], default="front", help="影片視角")
+    s.add_argument("--step", type=int, default=1)
+    s.add_argument("--max-side", type=int, default=960)
+    s.add_argument("--out-dir", required=True)
+    s.add_argument("--report-name", default="report.html")
+    s.set_defaults(fn=cmd_case)
+
+    s = sub.add_parser("report", help="從既有 JSON 重建圖文報告")
+    _meta_args(s)
+    s.add_argument("--still", help="analyze-still 的 JSON")
+    s.add_argument("--edge", help="analyze-edge 的 JSON")
+    s.add_argument("--video", help="analyze-video 的 JSON")
+    s.add_argument("--still-overlay", help="全機照疊圖 PNG")
+    s.add_argument("--edge-overlay", help="分區段照 PNG")
+    s.add_argument("--six-dir", help="六點鐘幀資料夾")
+    s.add_argument("--out", default="report.html")
+    s.set_defaults(fn=cmd_report)
 
     s = sub.add_parser("sensitivity", help="產生靈敏度分析 Markdown")
     s.add_argument("--quick", action="store_true")

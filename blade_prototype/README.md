@@ -12,7 +12,7 @@
 cd blade_prototype
 python3 -m venv .venv && . .venv/bin/activate
 pip install -r requirements.txt
-pytest            # 23 tests，約 45 秒
+pytest            # 30 tests，約 55 秒
 ```
 
 ## 三種輸入、三個指令
@@ -22,12 +22,48 @@ pytest            # 23 tests，約 45 秒
 | 全機靜態照（正視或側視，轉子完整入鏡） | `analyze-still` | 輪轂/塔架/三片葉片定位、每片彎曲係數、**三片互比**是否有離群片 |
 | 長焦分區段照（一段葉片橫越畫面） | `analyze-edge` | 上下兩條邊緣的粗糙度：rms、往內凹 p95、凹坑數、分 zone；前緣/後緣比 |
 | 轉動影片（20–30 秒，正視或側視） | `analyze-video` | 轉速、三片葉尖半徑一致性、每片**六點鐘幀**索引（可輸出 PNG 進 `analyze-still`） |
+| 以上任意組合 | `case` | 一次跑完並產生**圖文報告**（單一 HTML，含疊圖照片、圖表、數值表、待確認欄） |
 
 ```bash
 python -m blade_proto analyze-still  IMG_1234.JPG --rotor-radius-m 60 --out r.json --overlay o.png
 python -m blade_proto analyze-edge   IMG_1240.JPG --cm-per-px 0.4 --le top --out e.json
 python -m blade_proto analyze-video  VID_0001.MP4 --step 2 --out v.json --frames-dir six/
 ```
+
+## 圖文報告
+
+一個指令跑完一次拍攝作業並產出可交付的報告：
+
+```bash
+python -m blade_proto case --asset WTG-07 --site "彰濱風場" --state stopped \
+  --captured-at "2026-09-20 09:40" --inspector "王大明" --weather "北風 5 m/s，晴" \
+  --still IMG_1234.JPG --cm-per-px 4.8 --rotor-radius-m 60 --noise-floor-px 1.2 \
+  --edge IMG_1240.JPG --edge-cm-per-px 0.4 --le top \
+  --video VID_0001.MP4 --view side --step 2 \
+  --out-dir cases/WTG-07-0920/
+# → cases/WTG-07-0920/report.html（含 still/edge/video.json、疊圖、六點鐘幀）
+```
+
+不想重跑分析、只要重排報告時用 `report`（吃既有 JSON）：
+
+```bash
+python -m blade_proto report --asset WTG-07 --still still.json --still-overlay still_overlay.png \
+  --edge edge.json --edge-overlay seg.png --video video.json --six-dir six/ --out report.html
+```
+
+報告特性：
+
+- **單一自帶內容 HTML**：照片內嵌成 base64、圖表是內嵌 SVG、CSS 內嵌、**零 JavaScript**。
+  可離線開啟、可直接 email，瀏覽器列印即成 PDF（實測 A4 約 8 頁、1.2 MB）。
+- **圖表**：三片中心線側向偏移（折線）、各片葉尖偏移（直條，附 3σ 門檻線）、
+  前緣粗糙度分段（直條）、三片葉尖半徑（直條）。滑過任一記號有原生 tooltip；
+  每張圖旁都有對應的數值表（圖表的資料檢視）。
+- **安全語意**：固定聲明「演算法初判，需人工確認」，異常列有「☐ 待確認」欄，
+  **報告不會出現「合格」字樣**——沒偵測到異常不等於沒有異常。
+- 淺色/深色主題自動切換；列印強制淺底黑字。
+
+`case` 的 `--asset/--site/--state/--inspector/...` 對應規格 §7 的 `wt_capture_sessions` 欄位，
+日後 App 化時同一組 metadata 直接進 SQLite。
 
 `--cm-per-px` 不知道時給 `--rotor-radius-m`，程式以量到的葉片像素長度反推尺度。
 分割失敗時可用 `--hub x,y` 手動指定輪轂（座標用任何看圖軟體讀）、`--dist-thresh` 調天空門檻。
@@ -40,6 +76,7 @@ python -m blade_proto analyze-video  VID_0001.MP4 --step 2 --out v.json --frames
 | `geometry.py` | 每片：以輪轂為原點、塔架轉正、PCA 主軸、沿 span 分 48 箱取兩側邊緣中點 = 中心線；弦寬對 span 做 robust 擬合找出被雲塊/附著物污染的分箱，以擬合值修補偏離較大的那側邊緣（`n_contaminated_bins`）；二次擬合係數 a2 = 彎曲係數（軸吸收一次項，對軸傾斜不敏感）；`tip_deflection_px = a2·R`。三片互比：離中位數最遠者為離群，z = 偏差 / 雜訊底，並要求偏差 ≥ 2× 另兩片彼此差 | §5.3 |
 | `surface.py` | 葉片轉水平 → 每欄上下邊緣 → 灰階半高交叉 sub-pixel → robust 三次多項式基線 → 殘差：rms、往內凹 p95、凹坑（連續 ≥2 欄 > 2.5σ）、高頻能量比、三 zone；邊內帶狀區局部灰階 std = 紋理 | §5.2 |
 | `dynamics.py` | 正視：每幀分割 + 結構 → 葉尖 (角度, 半徑) → 角度連續性配到三條軌跡（缺測用角速度預測補）→ 展開角度回歸得轉速 → \|角度−270°\| 局部極小 = 六點鐘幀（葉片被塔架遮住，為內插值）→ 三片半徑中位數互比。側視（`--view side`）：三葉尖共線、角度無意義，改追蹤向下葉片的投影長度，局部極大 + 拋物線精修 = 六點鐘幀，相鄰通過間隔 = 1/3 圈得轉速。兩者皆有線上輪轂中位數濾波處理離群幀 | §5.4 |
+| `report.py` / `charts.py` | 圖文報告：把數值排成 HTML（區段、統計磚、數值表、待確認欄）＋內嵌 SVG 圖表。無外部相依、無 JS；照片以 base64 內嵌 | 交付物 |
 | `synth.py` | 參數化風機（60 m 葉片、4 m 根弦、塔架、機艙、預彎），正視/側視/分區段/影片；`SceneSpec.for_scale()` 依感光元件像素數與 cm/px 建場景，轉子塞不進畫面會拒絕 | 測試夾具 |
 
 原則：**數字由演算法算，AI 只解讀**。這裡沒有任何 AI 呼叫；候選裁切送 Gemini 的那一段在 App 端（規格 §6）。
@@ -71,4 +108,7 @@ python -m blade_proto sensitivity --out SENSITIVITY.md           # ~10 分鐘，
 - **正視時葉片在六點鐘 ±20° 會與塔架合併**：拍攝協定應避免（Y 字型停機），影片模式已用預測補缺測。
 - 三片互比假設相機在轉子軸線上；偏軸會引入透視差，用塔架轉正只能修 roll。側視、影片六點鐘取幀不受此限。
 - 影片每幀約 0.1–0.2 秒（960 px），30 秒 4K 建議 `--step 2`。
+- **側視葉尖長度只採真實偵測**：偵測有缺口的通過（向下葉片被遮住或分割失敗）會回報
+  「不可用」而非內插值——早期版本用平滑後的內插值當量測，會憑空生出 25% 的假差異。
+  報告中該片顯示「—」，並在演算法備註說明。
 - 尚未實作：聲音分段（§5.4 音軌）、健康樣本異常偵測（Phase 2）、跨次基線比對（需資料模型）。

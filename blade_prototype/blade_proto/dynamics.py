@@ -200,6 +200,8 @@ def _analyze_side(frames, fps: float, max_side: int, hub_window: int, hub_jump_p
     six: list[int] = []
     peak_len: list[float] = []
     win_full = max(4, n // 10)
+    half = max(2, win_full // 2)
+    n_unmeasured = 0
     for k in merged:
         win = min(win_full, k, n - 1 - k)
         if win >= 3:
@@ -214,7 +216,19 @@ def _analyze_side(frames, fps: float, max_side: int, hub_window: int, hub_jump_p
         if six and abs(k - six[-1]) < min_gap:
             continue  # 兩個原始峰精修後收斂到同一頂點
         six.append(k)
-        peak_len.append(float(Ls[k]))
+        # 峰值長度只取**真實偵測**（不用內插/平滑值）：偵測有缺口的峰，
+        # Ls[k] 是跨缺口內插出來的，拿它當「葉尖半徑」會憑空生出一個數字。
+        # 餘弦峰頂平坦，故取窗內真實值的 80 百分位；真實樣本不足 3 個就回報「不可用」。
+        lo, hi = max(0, k - half), min(n, k + half + 1)
+        vals = L[lo:hi][np.isfinite(L[lo:hi])]
+        if len(vals) >= 3:
+            peak_len.append(float(np.percentile(vals, 80)))
+        else:
+            peak_len.append(float("nan"))
+            n_unmeasured += 1
+    if n_unmeasured:
+        notes.append(f"{n_unmeasured} 次通過六點鐘時向下葉片偵測樣本不足，"
+                     f"該片葉尖長度不列入比較（不以內插值充當量測）")
     rpm = float("nan")
     if len(six) >= 2:
         dt = np.diff(six) / fps  # 相鄰兩片通過六點鐘 = 1/3 圈
@@ -223,7 +237,10 @@ def _analyze_side(frames, fps: float, max_side: int, hub_window: int, hub_jump_p
     six_by_blade: list[list[int]] = [[], [], []]
     for i, k in enumerate(six):
         six_by_blade[i % 3].append(k)
-    med = [float(np.median([peak_len[i] for i in range(len(peak_len)) if i % 3 == b])) if any(i % 3 == b for i in range(len(peak_len))) else float("nan") for b in range(3)]
+    med = []
+    for b in range(3):
+        vals = [peak_len[i] for i in range(len(peak_len)) if i % 3 == b and peak_len[i] == peak_len[i]]
+        med.append(float(np.median(vals)) if vals else float("nan"))
     r_out, r_dev = None, None
     if all(np.isfinite(med)):
         m = np.array(med)
