@@ -30,3 +30,8 @@ _local_archive/
 # 環境變數（legacy React 原型的 vite.config.ts 會讀根目錄 .env — 防止誤 commit API key）
 .env
 .env.local
+
+# Python caches
+__pycache__/
+.pytest_cache/
+blade_prototype/.venv/

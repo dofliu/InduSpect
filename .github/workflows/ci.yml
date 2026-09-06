@@ -83,3 +83,30 @@ jobs:
       # 跑「全部」Flutter 測試（widget_test 已修復，不再排除）
       - name: Unit tests
         run: flutter test
+
+  blade-prototype:
+    name: Blade prototype (pytest)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: blade_prototype
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: blade_prototype/requirements.txt
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      # 風力機葉片地面目視檢測原型（BLADE_INSPECTION_SPEC.md §5.1–5.4 的 Python 參考實作）。
+      # 全部用合成影像做為夾具，不需外部資料。
+      - name: Run pytest
+        run: pytest --tb=short
