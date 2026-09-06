@@ -3,9 +3,11 @@
     python -m blade_proto analyze-still  IMG   [--cm-per-px X | --rotor-radius-m 60] [--hub x,y] [--out r.json] [--overlay o.png]
     python -m blade_proto analyze-edge   IMG   [--cm-per-px X] [--le top|bottom] [--out r.json] [--overlay o.png]
     python -m blade_proto analyze-video  VIDEO [--step N] [--max-side 960] [--out r.json] [--frames-dir DIR]
+    python -m blade_proto analyze-audio  AUDIO_OR_VIDEO [--rpm 12] [--out r.json]
     python -m blade_proto synth-still    --view front|side [--cm-per-px 12] [--deflection-cm 50,0,0] [--erosion IDX:AMP:S:E] --out img.png
     python -m blade_proto synth-segment  [--cm-per-px 0.4] [--erosion-cm 5] --out seg.png
     python -m blade_proto synth-video    [--rpm 12] [--fps 30] [--seconds 5] [--shake 6] --out video.mp4
+    python -m blade_proto synth-audio    [--rpm 12] [--erosion-blade 1] [--erosion-db 6] [--whistle 2:1400:0.03] --out a.wav
     python -m blade_proto sensitivity    [--quick] [--out SENSITIVITY.md]
     python -m blade_proto case           --asset WTG-07 [--still F] [--edge F] [--video F] --out-dir DIR
     python -m blade_proto report         [--still r.json] [--edge e.json] [--video v.json] --out report.html
@@ -30,6 +32,7 @@ from .segmentation import segment_turbine, find_structure
 from .geometry import profiles_from_structure, compare_blades
 from .surface import analyze_blade_edges
 from .dynamics import analyze_frames, analyze_video, video_frames, video_fps
+from .acoustics import AudioClip, analyze_audio, analyze_samples, find_ffmpeg, load_audio
 from .report import CaseMeta, build_report, write_report
 
 
@@ -204,6 +207,38 @@ def cmd_synth_video(a) -> None:
     print(f"→ {a.out} ({n} 幀 @ {a.fps} fps, {a.rpm} rpm)")
 
 
+# ---------------------------------------------------------------- analyze-audio
+
+
+def cmd_analyze_audio(a) -> None:
+    t0 = time.time()
+    res = analyze_audio(a.audio, rpm=a.rpm)
+    out = res.to_dict()
+    out["audio"] = a.audio
+    out["elapsed_s"] = round(time.time() - t0, 1)
+    _dump(out, a.out)
+    if not res.usable:
+        print("⚠ 這段音軌不可用於逐片比較：" + "；".join(res.notes), file=sys.stderr)
+
+
+def cmd_synth_audio(a) -> None:
+    whistle = {}
+    for item in a.whistle or []:
+        idx, f0, amp = item.split(":")
+        whistle[int(idx)] = (float(f0), float(amp))
+    gains = {}
+    if a.erosion_db:
+        gains[a.erosion_blade] = a.erosion_db
+    spec = synth.AudioSpec(rpm=a.rpm, duration_s=a.seconds, wind_level=a.wind,
+                           broadband_gain_db=gains, whistle=whistle, seed=a.seed)
+    y, truth = synth.render_audio(spec)
+    synth.write_wav(a.out, y, spec.sample_rate)
+    print(f"→ {a.out}（{spec.duration_s:.0f} s @ {spec.sample_rate} Hz，"
+          f"{len(truth['pass_times_s'])} 次葉片通過）")
+    if a.truth:
+        _dump(truth, a.truth)
+
+
 # ---------------------------------------------------------------- case / report
 
 
@@ -245,7 +280,7 @@ def cmd_case(a) -> None:
         weather_note=a.weather or "", cm_per_px=a.cm_per_px, rotor_radius_m=a.rotor_radius_m,
         noise_floor_px=a.noise_floor_px, notes=list(a.note or []),
     )
-    still = edge = video = None
+    still = edge = video = audio = None
     still_overlay = edge_overlay = None
     six_paths: list[str] = []
 
@@ -273,9 +308,22 @@ def cmd_case(a) -> None:
         six_paths = dump_six_oclock_frames(a.video, a.step, res.six_oclock_frames,
                                            os.path.join(a.out_dir, "six"))
 
+    # 聲音層：優先用 --audio；否則試著從影片抽音軌（沒有音軌或沒有 ffmpeg 就跳過）
+    audio_src = a.audio or a.video
+    if audio_src and not a.no_audio:
+        try:
+            clip = load_audio(audio_src)
+            rpm_hint = (video or {}).get("rpm") if video else None
+            res = analyze_samples(clip, rpm=rpm_hint if rpm_hint and rpm_hint == rpm_hint else None)
+            audio = res.to_dict()
+            audio["audio"] = audio_src
+            _dump(audio, os.path.join(a.out_dir, "audio.json"))
+        except Exception as e:  # 沒音軌／沒 ffmpeg／太短：報告照出，只是少一層
+            print(f"（略過聲音層：{e}）", file=sys.stderr)
+
     html = build_report(meta, still=still, still_overlay=still_overlay, edge=edge,
                         edge_overlay=edge_overlay, video=video, six_frames=six_paths,
-                        tool_version=__version__)
+                        audio=audio, tool_version=__version__)
     out = os.path.join(a.out_dir, a.report_name)
     write_report(out, html)
     print(f"→ {out}  ({os.path.getsize(out) / 1024:.0f} KB，自帶內容，可離線開啟／列印成 PDF)")
@@ -289,9 +337,9 @@ def cmd_report(a) -> None:
         with open(path, encoding="utf-8") as f:
             return json.load(f)
 
-    still, edge, video = _load(a.still), _load(a.edge), _load(a.video)
-    if not (still or edge or video):
-        sys.exit("至少要給 --still / --edge / --video 其中一個 JSON")
+    still, edge, video, audio = _load(a.still), _load(a.edge), _load(a.video), _load(a.audio)
+    if not (still or edge or video or audio):
+        sys.exit("至少要給 --still / --edge / --video / --audio 其中一個 JSON")
     six = sorted(
         os.path.join(a.six_dir, n) for n in os.listdir(a.six_dir)
         if n.lower().endswith((".png", ".jpg", ".jpeg"))
@@ -304,7 +352,7 @@ def cmd_report(a) -> None:
     )
     html = build_report(meta, still=still, still_overlay=a.still_overlay, edge=edge,
                         edge_overlay=a.edge_overlay, video=video, six_frames=six,
-                        tool_version=__version__)
+                        audio=audio, tool_version=__version__)
     write_report(a.out, html)
     print(f"→ {a.out}  ({os.path.getsize(a.out) / 1024:.0f} KB)")
 
@@ -338,6 +386,26 @@ def _edge_metrics(cm_per_px: float, amp_cm: float, seed: int):
     img, _ = synth.render_blade_segment(cm_per_px=cm_per_px, chord_m=2.0, erosion_amp_cm=amp_cm, seed=seed)
     d = analyze_blade_edges(img, cm_per_px=cm_per_px, leading_edge="top").to_dict()
     return d["le_over_te_rms_ratio"], d["top"]["inward_p95_px"], d["top"]["pit_count"]
+
+
+def _acoustic_case(gain_db: float, seed: int, rpm: float, whistle_amp: float = 0.0,
+                   wind: float = 0.05):
+    """回傳 (可用, 位準標記且指對, 哨音指對, 量到的最大位準差, 訊噪比)。"""
+    blade = seed % 3
+    kw: dict = {"wind_level": wind}
+    if gain_db:
+        kw["broadband_gain_db"] = {blade: gain_db}
+    if whistle_amp:
+        kw["whistle"] = {blade: (1400.0, whistle_amp)}
+    y, _ = synth.render_audio(synth.AudioSpec(rpm=rpm, duration_s=14.0, seed=seed, **kw))
+    res = analyze_samples(AudioClip(y, 24000), rpm=rpm)
+    if not res.usable:
+        return False, False, False, float("nan"), res.envelope_snr_db
+    lvl_ok = any(c["flagged"] and c["metric"] == "band_level_db"
+                 and c["outlier_index"] == blade for c in res.comparisons)
+    wh = [b for b in res.blades if b.tonal_exclusive]
+    wh_ok = bool(wh) and wh[0].index == blade
+    return True, lvl_ok, wh_ok, max(b.band_level_db for b in res.blades), res.envelope_snr_db
 
 
 def cmd_sensitivity(a) -> None:
@@ -412,12 +480,55 @@ def cmd_sensitivity(a) -> None:
         lines.append(f"| {s} ({labels[s]}) | {p95_clean:.2f} | " + " | ".join(cells) + " |")
         print(f"edge {s} cm/px done", file=sys.stderr)
     lines.append("")
+    # 4. 聲音層
+    lines += ["## 4. 音軌：逐片聲音異常可偵測門檻", "",
+              "夾具為合成音軌（1/f 風噪 + 每片每轉一次的寬頻 swish；"
+              "缺陷 = 指定葉片的 swish 增益或通過時的窄頻正弦）。"
+              "每格 seed 輪流把缺陷放在不同葉片，並檢查演算法**指對哪一片**。", ""]
+    seeds_a = 4 if quick else 8
+    rpms = (12.0,) if quick else (10.0, 14.0)
+    lines += ["| 前緣侵蝕（寬頻增益） | 可用 | 標記且指對葉片 | 量到的位準差中位數 |",
+              "|---|---|---|---|"]
+    for g in ([0.0, 2.0, 3.0, 6.0] if quick else [0.0, 1.0, 2.0, 3.0, 6.0, 8.0]):
+        res = [_acoustic_case(g, s_, r) for s_ in range(seeds_a) for r in rpms]
+        usable = [r for r in res if r[0]]
+        hit = sum(r[1] for r in usable)
+        med = np.nanmedian([r[3] for r in usable]) if usable else float("nan")
+        mark = "✅" if (g >= 3.0 and hit == len(usable) and usable) else ("—" if g == 0 else "❌")
+        lines.append(f"| +{g:.0f} dB | {len(usable)}/{len(res)} | {mark} {hit}/{len(usable)} | "
+                     f"{med:.2f} dB |")
+        print(f"acoustic gain +{g} done", file=sys.stderr)
+    lines += ["", "| 後緣哨音（振幅） | 抓到且指對葉片 |", "|---|---|"]
+    for amp in ([0.005, 0.01, 0.03] if quick else [0.003, 0.005, 0.01, 0.02, 0.03]):
+        res = [_acoustic_case(0.0, s_, 12.0, whistle_amp=amp) for s_ in range(seeds_a)]
+        usable = [r for r in res if r[0]]
+        hit = sum(r[2] for r in usable)
+        lines.append(f"| {amp:.3f} | {'✅' if hit == len(usable) and usable else '❌'} "
+                     f"{hit}/{len(usable)} |")
+        print(f"acoustic whistle {amp} done", file=sys.stderr)
+    lines += ["", "| 風噪耐受（+6 dB 侵蝕） | 可用 | 指對葉片 | 包絡訊噪比 |", "|---|---|---|---|"]
+    for w in ([0.05, 0.3, 0.5] if quick else [0.05, 0.15, 0.3, 0.4, 0.5]):
+        res = [_acoustic_case(6.0, s_, 12.0, wind=w) for s_ in range(seeds_a)]
+        usable = [r for r in res if r[0]]
+        hit = sum(r[1] for r in usable)
+        snr = np.nanmedian([r[4] for r in res])
+        lines.append(f"| {w:.2f} | {len(usable)}/{len(res)} | {hit}/{len(usable) or 1} | "
+                     f"{snr:.1f} dB |")
+        print(f"acoustic wind {w} done", file=sys.stderr)
+    lines += ["",
+              "**1P / 3P 不對稱不是門檻**：掃描 rpm 8–16 × seed 0–4 實測，健康 −17.4…−6.9 dB、"
+              "單片 +6 dB 侵蝕 −11.8…−1.8 dB，**值域重疊**。同一組參數下缺陷確實會讓它上升"
+              "（趨勢真實、已鎖進測試），但跨轉速不能單獨用它判定；可靠的判別是逐片位準互比。", ""]
+
     lines += ["## 解讀", "",
               "- 正視整轉子幾何：12 MP 橫幅在 ~130 m（4.8 cm/px）可分辨 50 cm 級的葉尖偏移（≈10 px，雜訊底 1–2 px）；25 cm 不行。",
               "  **整轉子幾何靠主鏡頭高像素模式，不靠長焦**——長焦塞不進整個轉子；48 MP 全解析（2.4 cm/px）可把門檻壓到 25 cm。",
               "- 側視垂掛葉片：直幅 12 MP 在 2.5–3.5 cm/px，單幀彎曲量測雜訊約 1 px；50 cm 可分辨、25 cm 邊緣。",
               "  主要風險是雲塊黏在葉片邊緣把中心線拉歪（`n_contaminated_bins` > 0 時該幀應降權或重拍）。",
               "- 前緣侵蝕：5x 長焦在 50 m（0.37 cm/px）約 1 cm 深的凹坑就能分辨；5x 在 100 m 要 2 cm；1x 在 100 m 要 10 cm 級。",
+              "- 音軌：合成資料上 **+3 dB 的寬頻差異**（量到約 +2.6 dB）就能標記並指對葉片，+2 dB 抓不到；",
+              "  哨音振幅 0.01（突出約 10 dB 以上）可抓。風噪是主要限制——包絡訊噪比掉到約 2 dB 時",
+              "  同樣的缺陷只量到 +1.3 dB 而被雜訊底抑制（漏判，不是誤判）。**站下風處 + 防風罩是必要的**。",
               "- 以上皆為理想分割 + 靜止葉片的上限；外業第一件事是量實際雜訊底（同一片葉片連拍 5 張的量測 std）。"]
     text = "\n".join(lines)
     with open(a.out, "w", encoding="utf-8") as f:
@@ -461,6 +572,24 @@ def build_parser() -> argparse.ArgumentParser:
     s.add_argument("--out")
     s.add_argument("--frames-dir", help="輸出六點鐘幀 PNG 的資料夾")
     s.set_defaults(fn=cmd_analyze_video)
+
+    s = sub.add_parser("analyze-audio", help="音軌：逐片聲音異常（寬頻位準、窄頻哨音）")
+    s.add_argument("audio", help="WAV 檔，或含音軌的影片（需 ffmpeg）")
+    s.add_argument("--rpm", type=float, help="已知轉速（影片分析得到）時可提高週期估計穩定度")
+    s.add_argument("--out")
+    s.set_defaults(fn=cmd_analyze_audio)
+
+    s = sub.add_parser("synth-audio", help="合成風機音軌（測試用）")
+    s.add_argument("--rpm", type=float, default=12.0)
+    s.add_argument("--seconds", type=float, default=14.0)
+    s.add_argument("--wind", type=float, default=0.05, help="風噪 RMS（0.3 以上會壓過逐片差異）")
+    s.add_argument("--erosion-blade", type=int, default=1, help="哪一片有前緣侵蝕（0/1/2）")
+    s.add_argument("--erosion-db", type=float, default=0.0, help="侵蝕葉片的寬頻增益 dB")
+    s.add_argument("--whistle", action="append", help="IDX:FREQ_HZ:AMP，可重複（後緣裂縫哨音）")
+    s.add_argument("--seed", type=int, default=0)
+    s.add_argument("--out", required=True)
+    s.add_argument("--truth")
+    s.set_defaults(fn=cmd_synth_audio)
 
     s = sub.add_parser("synth-still", help="合成全機照")
     s.add_argument("--view", choices=["front", "side"], default="front")
@@ -514,6 +643,8 @@ def build_parser() -> argparse.ArgumentParser:
     s.add_argument("--still", help="全機靜態照")
     s.add_argument("--edge", help="長焦分區段照")
     s.add_argument("--video", help="轉動影片")
+    s.add_argument("--audio", help="音軌 WAV（未給則試著從 --video 抽音軌）")
+    s.add_argument("--no-audio", action="store_true", help="不做聲音層分析")
     s.add_argument("--edge-cm-per-px", type=float, help="分區段照的尺度（與全機照不同時指定）")
     s.add_argument("--le", choices=["top", "bottom"], help="分區段照哪一側是前緣")
     s.add_argument("--hub", help="手動指定輪轂 x,y")
@@ -530,6 +661,7 @@ def build_parser() -> argparse.ArgumentParser:
     s.add_argument("--still", help="analyze-still 的 JSON")
     s.add_argument("--edge", help="analyze-edge 的 JSON")
     s.add_argument("--video", help="analyze-video 的 JSON")
+    s.add_argument("--audio", help="analyze-audio 的 JSON")
     s.add_argument("--still-overlay", help="全機照疊圖 PNG")
     s.add_argument("--edge-overlay", help="分區段照 PNG")
     s.add_argument("--six-dir", help="六點鐘幀資料夾")

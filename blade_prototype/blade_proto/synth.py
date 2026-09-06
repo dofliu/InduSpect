@@ -13,6 +13,8 @@
 
 from __future__ import annotations
 
+import contextlib
+import wave
 from dataclasses import dataclass, field, replace
 from typing import Iterator
 
@@ -392,3 +394,122 @@ def render_video_frames(
         truth["time_s"] = k / fps
         truth["shake_offset"] = tuple(offset)
         yield img, truth
+
+# ---------------------------------------------------------------- 合成音軌
+
+
+@dataclass
+class AudioSpec:
+    """合成風機音軌。用來測「逐片聲音異常」演算法（§5.4 音軌）。
+
+    模型（刻意簡化，但保留演算法要抓的結構）：
+    - **風噪**：低頻主導的有色雜訊（1/f 斜率），整段穩定、沒有葉片通過週期
+    - **葉片通過 swish**：每片每轉一次，寬頻噪音的高斯型振幅突起（這就是 AM 的來源）
+    - **前緣侵蝕**：指定葉片的 swish 增益 +N dB，且能量往高頻推（高通再混入）
+    - **後緣裂縫哨音**：指定葉片通過時才出現的窄頻正弦（含小幅頻率抖動，避免完美純音）
+    """
+
+    sample_rate: int = 24000
+    duration_s: float = 8.0
+    rpm: float = 12.0
+    n_blades: int = 3
+    wind_level: float = 0.05  # 風噪 RMS
+    wind_slope: float = 1.2  # 1/f^slope，越大低頻越重
+    swish_level: float = 0.05  # 葉片通過的寬頻突起振幅
+    swish_width: float = 0.18  # 突起寬度（佔一個通過週期的比例）
+    phase_s: float = 0.35  # 第一次通過的時刻
+    # blade_idx -> 額外寬頻增益 dB（模擬前緣侵蝕）
+    broadband_gain_db: dict = field(default_factory=dict)
+    # blade_idx -> (頻率 Hz, 振幅) 通過時的哨音（模擬後緣裂縫）
+    whistle: dict = field(default_factory=dict)
+    seed: int = 0
+
+    @property
+    def blade_pass_hz(self) -> float:
+        return self.rpm / 60.0 * self.n_blades
+
+
+def _colored_noise(n: int, sr: int, slope: float, rng: np.random.Generator) -> np.ndarray:
+    """1/f^slope 有色雜訊（頻域整形，回傳 RMS 正規化後的訊號）。"""
+    spec = rng.standard_normal(n // 2 + 1) + 1j * rng.standard_normal(n // 2 + 1)
+    f = np.fft.rfftfreq(n, d=1.0 / sr)
+    shape = np.ones_like(f)
+    nz = f > 0
+    shape[nz] = 1.0 / np.power(f[nz] / 20.0, slope / 2.0)
+    shape[0] = 0.0
+    x = np.fft.irfft(spec * shape, n=n)
+    return x / (np.sqrt(np.mean(x ** 2)) + 1e-12)
+
+
+def _highpassish(x: np.ndarray, sr: int, cutoff_hz: float) -> np.ndarray:
+    """一階高通（差分式），用來把侵蝕葉片的能量往高頻推，不引入 scipy 相依。"""
+    a = float(np.exp(-2.0 * np.pi * cutoff_hz / sr))
+    y = np.empty_like(x)
+    prev_x = prev_y = 0.0
+    for i, v in enumerate(x):
+        prev_y = a * (prev_y + v - prev_x)
+        prev_x = v
+        y[i] = prev_y
+    return y
+
+
+def render_audio(spec: AudioSpec) -> tuple[np.ndarray, dict]:
+    """回傳 (float32 單聲道 -1..1, ground truth dict)。"""
+    rng = np.random.default_rng(spec.seed + 7000)
+    sr = spec.sample_rate
+    n = int(spec.duration_s * sr)
+    t = np.arange(n) / sr
+    period = 1.0 / spec.blade_pass_hz
+
+    y = _colored_noise(n, sr, spec.wind_slope, rng) * spec.wind_level
+
+    broad = _colored_noise(n, sr, 0.4, rng)  # swish 用的偏寬頻噪音
+    broad_hf = _highpassish(broad, sr, 1500.0)
+    broad_hf /= (np.sqrt(np.mean(broad_hf ** 2)) + 1e-12)
+
+    pass_times, pass_blades = [], []
+    k = 0
+    tp = spec.phase_s
+    while tp < spec.duration_s:
+        b = k % spec.n_blades
+        pass_times.append(float(tp))
+        pass_blades.append(b)
+        sigma = spec.swish_width * period
+        bump = np.exp(-0.5 * ((t - tp) / sigma) ** 2)
+        gain_db = float(spec.broadband_gain_db.get(b, 0.0))
+        gain = 10.0 ** (gain_db / 20.0)
+        # 侵蝕葉片：整體變大，且高頻成分占比提高
+        hf_mix = 0.25 + min(0.5, max(0.0, gain_db) / 12.0 * 0.5)
+        src = (1.0 - hf_mix) * broad + hf_mix * broad_hf
+        y += spec.swish_level * gain * bump * src
+        wh = spec.whistle.get(b)
+        if wh:
+            f0, amp = float(wh[0]), float(wh[1])
+            jitter = np.cumsum(rng.standard_normal(n)) / sr * 1.5  # 緩慢頻率抖動
+            y += amp * bump * np.sin(2 * np.pi * f0 * t + jitter)
+        k += 1
+        tp += period
+
+    peak = float(np.max(np.abs(y))) or 1.0
+    if peak > 0.95:
+        y = y / peak * 0.95
+    truth = {
+        "sample_rate": sr, "duration_s": spec.duration_s, "rpm": spec.rpm,
+        "blade_pass_hz": spec.blade_pass_hz, "period_s": period,
+        "pass_times_s": pass_times, "pass_blades": pass_blades,
+        "broadband_gain_db": dict(spec.broadband_gain_db),
+        "whistle": {int(k2): list(v) for k2, v in spec.whistle.items()},
+    }
+    return y.astype(np.float32), truth
+
+
+def write_wav(path: str, samples: np.ndarray, sample_rate: int) -> str:
+    """存成 16-bit 單聲道 PCM WAV（stdlib，無外部相依）。"""
+    data = np.clip(samples, -1.0, 1.0)
+    pcm = (data * 32767.0).astype("<i2")
+    with contextlib.closing(wave.open(path, "wb")) as w:
+        w.setnchannels(1)
+        w.setsampwidth(2)
+        w.setframerate(int(sample_rate))
+        w.writeframes(pcm.tobytes())
+    return path

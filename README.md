@@ -46,6 +46,7 @@
 - 表面層：前緣侵蝕粗糙度、裂縫候選（長焦分區段照）
 - 幾何層：三片葉片中心線曲率互比、後緣開裂、附加件缺失
 - 動態層：轉速、三片葉尖軌跡一致性、六點鐘自動取幀（轉動影片）
+- 聲音層：逐片寬頻噪音（前緣侵蝕）、窄頻哨音（後緣裂縫）——指出「哪一片在叫」
 - 周邊層：塔架油漬、機艙罩破損
 - 交付物：圖文檢測報告（單一自帶內容 HTML，含疊圖、圖表、數值表與「待人工確認」欄）
 
@@ -94,6 +95,7 @@ cd blade_prototype
 python -m blade_proto analyze-still  IMG_1234.JPG --rotor-radius-m 60 --out r.json --overlay o.png
 python -m blade_proto analyze-edge   IMG_1240.JPG --cm-per-px 0.4 --le top --out e.json
 python -m blade_proto analyze-video  VID_0001.MP4 --step 2 --out v.json --frames-dir six/
+python -m blade_proto analyze-audio  VID_0001.MP4 --rpm 12 --out a.json
 
 # 一次跑完並產生圖文報告（單一 HTML，含疊圖照片、圖表、數值表；可列印成 PDF）
 python -m blade_proto case --asset WTG-07 --still IMG_1234.JPG --edge IMG_1240.JPG \
@@ -207,7 +209,7 @@ python -m blade_proto sensitivity --quick --out SENSITIVITY.md
 ```bash
 cd flutter_app && flutter test                                              # 155 tests
 cd backend && GEMINI_API_KEY=ci-fake-key pytest tests/ --asyncio-mode=auto  # 191 tests
-cd blade_prototype && pytest                                                # 30 tests
+cd blade_prototype && pytest                                                # 46 tests
 ```
 
 三者皆在 CI（`.github/workflows/ci.yml`）逐 PR 執行；`flutter analyze` 為硬性門檻（warning 級以上擋 PR）。

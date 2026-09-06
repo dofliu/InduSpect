@@ -354,6 +354,118 @@ def _dynamics_section(video: dict, six_uris: list[tuple[str, str | None]]) -> tu
     return "\n".join(parts), findings
 
 
+def _acoustic_section(audio: dict) -> tuple[str, list[str]]:
+    """聲音層：逐片寬頻位準、窄頻哨音、可用性。"""
+    findings: list[str] = []
+    blades = audio.get("blades") or []
+    comps = audio.get("comparisons") or []
+    usable = bool(audio.get("usable"))
+
+    parts = ['<section id="acoustic"><h2>聲音層 — 逐片音軌分析</h2>',
+             '<p class="lede">現場人員本來就是靠耳朵先發現葉片問題的，這一層把它量化。'
+             '前緣侵蝕會讓寬頻噪音上升；後緣裂縫或破洞會發出窄頻哨音。'
+             '關鍵是三片葉片每轉各通過觀測者一次，缺陷葉片的聲音<strong>以葉片通過週期出現</strong>，'
+             '所以把音軌依通過時刻切成三份互比，就能指出是哪一片在叫——'
+             '這也是它跟「整台都吵」「風噪很大」的分辨方式。</p>']
+    parts.append(_kv_table([
+        ("音軌長度", _fmt(audio.get("duration_s"), 1, " 秒")),
+        ("取樣率", f"{audio.get('sample_rate', '—')} Hz"),
+        ("轉速（由音軌推得）", _fmt(audio.get("rpm_from_audio"), 2, " rpm")),
+        ("葉片通過頻率", _fmt(audio.get("blade_pass_hz"), 3, " Hz")),
+        ("轉動週期信賴度", _fmt(audio.get("periodicity_confidence"), 2)),
+        ("葉片通過調變深度", _fmt(audio.get("am_depth_db"), 1, " dB")),
+        ("1P / 3P 不對稱", _fmt(audio.get("asymmetry_db"), 1, " dB")),
+        ("低頻（風噪）占比", _fmt((audio.get("wind_dominance") or 0) * 100, 0, " %")),
+        ("包絡訊噪比", _fmt(audio.get("envelope_snr_db"), 1, " dB")),
+        ("偵測到的通過次數", str(len(audio.get("pass_times_s") or []))),
+    ]))
+
+    if not usable:
+        reasons = "；".join(audio.get("notes") or []) or "訊號條件不足"
+        parts.append(f'<div class="verdict">{_status_chip("warning", "音軌不可用於逐片比較")}'
+                     f'<span class="pending">☐ 需重錄</span></div>')
+        parts.append(f'<p class="warn">{escape(reasons)}</p>')
+        parts.append('<p class="note">聲音層對風噪特別敏感。重錄要點：站到<strong>下風處</strong>、'
+                     '麥克風加防風罩、避開變電站與道路噪音、錄至少 3 圈（12 rpm 約 15 秒）。</p>')
+        findings.append("聲音層：音軌不可用於逐片比較（見該節說明），本次不採計")
+        parts.append("</section>")
+        return "\n".join(parts), findings
+
+    # 逐片寬頻位準
+    levels = [b.get("band_level_db") for b in blades]
+    labels = [f"葉片 {chr(65 + int(b.get('index', i)))}" for i, b in enumerate(blades)]
+    lvl_cmp = next((c for c in comps if c["metric"] == "band_level_db"), None)
+    if any(v is not None and v == v for v in levels):
+        parts.append(bar_chart(
+            labels, [float(v) if v is not None else float("nan") for v in levels],
+            title="各片寬頻噪音位準（相對三片中位數）", unit=" dB",
+            roles=SERIES_ROLES[:len(levels)], y_label="相對位準 (dB)", digits=2,
+            caption="前緣侵蝕會讓該片的寬頻噪音變大。只有「比另兩片吵」才是缺陷徵兆——"
+                    "比較安靜不是異常，所以本指標只往高的方向判。"))
+
+    # 逐片平均頻譜
+    spectra = audio.get("spectra") or {}
+    freqs = spectra.get("freqs_hz") or []
+    series = []
+    for i, ydb in enumerate(spectra.get("blade_db") or []):
+        if len(ydb) == len(freqs) and len(freqs) >= 2 and i < len(SERIES_ROLES):
+            series.append(Series(name=labels[i] if i < len(labels) else f"葉片 {chr(65 + i)}",
+                                 xs=list(freqs), ys=list(ydb), role=SERIES_ROLES[i]))
+    if series:
+        parts.append(line_chart(
+            series, title="各片通過時的平均頻譜", x_label="頻率 (Hz)", y_label="位準 (dB)",
+            unit=" dB", x_digits=0, y_digits=0,
+            caption="三條曲線整體上下平移 = 寬頻位準差（侵蝕）；某一片冒出一根細峰 = 窄頻哨音"
+                    "（後緣裂縫或破洞）。滑過曲線可看逐點數值。"))
+
+    rows = []
+    for i, b in enumerate(blades):
+        tf, tp_db = b.get("tonal_freq_hz"), b.get("tonal_prominence_db")
+        excl = bool(b.get("tonal_exclusive"))
+        tone = "—"
+        if tf is not None and tf == tf and tp_db is not None and tp_db == tp_db:
+            tone = f"{_fmt(tf, 0, ' Hz')}（突出 {_fmt(tp_db, 1, ' dB')}）"
+            if excl:
+                tone += " " + _status_chip("critical", "僅此片出現")
+        rows.append([
+            escape(labels[i]), str(b.get("n_passes", "—")),
+            _fmt(b.get("band_level_db"), 2, " dB"), _fmt(b.get("high_band_ratio"), 3), tone,
+            '<span class="pending">☐ 待確認</span>' if excl or (
+                lvl_cmp and lvl_cmp.get("flagged") and lvl_cmp.get("outlier_index") == i) else "—",
+        ])
+    parts.append("<h3>逐片聲學指標</h3>")
+    parts.append(_table(["葉片", "通過次數", "寬頻位準", "高頻占比", "窄頻哨音", "人工確認"],
+                        rows, "metrics"))
+
+    if lvl_cmp:
+        if lvl_cmp.get("flagged"):
+            oi = lvl_cmp["outlier_index"]
+            text = (f"葉片 {chr(65 + oi)} 的寬頻噪音高出另兩片 "
+                    f"{_fmt(lvl_cmp.get('outlier_deviation'), 1, ' dB')}"
+                    f"（z = {_fmt(lvl_cmp.get('z'), 1)}），疑似前緣侵蝕")
+            parts.append(f'<div class="verdict">{_status_chip("critical", text)}'
+                         f'<span class="pending">☐ 待人工確認</span></div>')
+            findings.append("聲音層：" + text)
+        else:
+            parts.append(f'<div class="verdict">'
+                         f'{_status_chip("good", "三片寬頻位準一致，未見單片噪音異常")}</div>')
+    for i, b in enumerate(blades):
+        if b.get("tonal_exclusive"):
+            text = (f"葉片 {chr(65 + i)} 在 {_fmt(b.get('tonal_freq_hz'), 0, ' Hz')} 有僅此片出現的窄頻哨音"
+                    f"（突出 {_fmt(b.get('tonal_prominence_db'), 1, ' dB')}），疑似後緣損傷或破洞")
+            parts.append(f'<div class="verdict">{_status_chip("critical", text)}'
+                         f'<span class="pending">☐ 待人工確認</span></div>')
+            findings.append("聲音層：" + text)
+
+    for n in audio.get("notes") or []:
+        parts.append(f'<p class="note"><strong>演算法備註：</strong>{escape(n)}</p>')
+    parts.append('<p class="note"><strong>1P / 3P 不對稱</strong>是描述量、不是判定門檻：'
+                 '合成資料實測顯示它在健康與單片缺陷之間會重疊，'
+                 '真正可靠的判別是上面的逐片位準互比。</p>')
+    parts.append("</section>")
+    return "\n".join(parts), findings
+
+
 # ---------------------------------------------------------------- 主組裝
 
 
@@ -476,6 +588,7 @@ def build_report(
     edge_overlay: str | None = None,
     video: dict | None = None,
     six_frames: list[str] | None = None,
+    audio: dict | None = None,
     tool_version: str = "",
 ) -> str:
     """組出完整報告 HTML（字串）。所有影像參數為檔案路徑，會被內嵌成 data URI。"""
@@ -508,6 +621,11 @@ def build_report(
         sections.append(html)
         findings += f
         layers_run.append("動態層")
+    if audio:
+        html, f = _acoustic_section(audio)
+        sections.append(html)
+        findings += f
+        layers_run.append("聲音層")
 
     # 摘要磚
     level = "critical" if findings else "good"
@@ -525,6 +643,17 @@ def build_report(
     if video:
         tiles.append(_stat_tile("轉速", _fmt(video.get("rpm"), 2, " rpm"),
                                 f"{video.get('n_frames', '—')} 幀"))
+    if audio:
+        if audio.get("usable"):
+            lvl = next((c for c in (audio.get("comparisons") or [])
+                        if c["metric"] == "band_level_db"), None)
+            tone = any(b.get("tonal_exclusive") for b in (audio.get("blades") or []))
+            bad = bool((lvl and lvl.get("flagged")) or tone)
+            tiles.append(_stat_tile(
+                "聲音層", "有異常" if bad else "三片一致",
+                "寬頻位準／窄頻哨音", "critical" if bad else "good"))
+        else:
+            tiles.append(_stat_tile("聲音層", "不可用", "風噪或訊噪比不足", "warning"))
 
     if findings:
         find_html = ('<ol class="findings">' +

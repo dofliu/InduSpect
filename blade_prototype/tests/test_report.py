@@ -60,6 +60,29 @@ _VIDEO = {
 }
 
 
+_AUDIO_OK = {
+    "audio": "a.wav", "sample_rate": 24000, "duration_s": 14.0,
+    "blade_pass_hz": 0.6, "rotor_hz": 0.2, "rpm_from_audio": 12.0,
+    "periodicity_confidence": 0.65, "am_depth_db": 17.6, "asymmetry_db": -5.5,
+    "wind_dominance": 0.76, "envelope_snr_db": 11.4, "usable": True,
+    "pass_times_s": [0.35, 2.02, 3.68], "notes": ["葉片標籤 A/B/C 為通過觀測者的先後順序（循環），非實際葉片編號"],
+    "blades": [
+        {"index": 0, "n_passes": 3, "band_level_db": -1.06, "high_band_ratio": 0.691,
+         "tonal_freq_hz": 3469.0, "tonal_prominence_db": 1.5, "tonal_exclusive": False},
+        {"index": 1, "n_passes": 3, "band_level_db": 4.44, "high_band_ratio": 0.774,
+         "tonal_freq_hz": 1945.0, "tonal_prominence_db": 1.8, "tonal_exclusive": False},
+        {"index": 2, "n_passes": 3, "band_level_db": 0.0, "high_band_ratio": 0.531,
+         "tonal_freq_hz": 1406.0, "tonal_prominence_db": 16.5, "tonal_exclusive": True},
+    ],
+    "comparisons": [{"metric": "band_level_db", "values": [-1.06, 4.44, 0.0],
+                     "deviations": [-1.06, 4.44, 0.0], "outlier_index": 1,
+                     "outlier_deviation": 4.95, "others_spread": 1.06, "z": 6.2,
+                     "flagged": True, "direction": "high"}],
+    "spectra": {"freqs_hz": [400.0, 1400.0, 4000.0],
+                "blade_db": [[-40.0, -39.0, -41.0], [-36.0, -35.0, -37.0], [-40.0, -24.0, -41.0]]},
+}
+
+
 def test_report_is_self_contained_and_embeds_images(tmp_path):
     still, still_img = _still_payload(tmp_path)
     edge, edge_img = _edge_payload(tmp_path)
@@ -67,7 +90,7 @@ def test_report_is_self_contained_and_embeds_images(tmp_path):
         CaseMeta(asset_id="WTG-07", site_name="測試風場", turbine_state="stopped",
                  cm_per_px=12.0, rotor_radius_m=60.0, noise_floor_px=1.2),
         still=still, still_overlay=still_img, edge=edge, edge_overlay=edge_img,
-        video=_VIDEO, tool_version="test")
+        video=_VIDEO, audio=_AUDIO_OK, tool_version="test")
     out = str(tmp_path / "report.html")
     write_report(out, html)
     assert os.path.getsize(out) > 20_000
@@ -84,7 +107,7 @@ def test_report_is_self_contained_and_embeds_images(tmp_path):
         assert raw[:2] == b"\xff\xd8"  # JPEG SOI
         assert len(raw) > 2000
     # 三層都有區段、四個主題色變數都定義
-    for sid in ("summary", "geometry", "surface", "dynamics"):
+    for sid in ("summary", "geometry", "surface", "dynamics", "acoustic"):
         assert f'id="{sid}"' in html
     for token in ("--series-1", "--status-critical", "prefers-color-scheme", '[data-theme="dark"]'):
         assert token in html
@@ -127,6 +150,29 @@ def test_report_reports_contaminated_bins_as_a_finding(tmp_path):
     assert "分箱的弦寬異常並經修補" in html
     assert "降權或重拍" in html
     assert "可信度下降" in html
+
+
+def test_report_acoustic_section_names_the_blade_and_the_mechanism(tmp_path):
+    """聲音層要指出「哪一片」與「哪種缺陷」，兩者都待人工確認。"""
+    html = build_report(CaseMeta(asset_id="WTG-07"), audio=_AUDIO_OK)
+    assert 'id="acoustic"' in html
+    assert "葉片 B 的寬頻噪音高出另兩片" in html and "疑似前緣侵蝕" in html
+    assert "葉片 C 在 1406 Hz" in html and "疑似後緣損傷或破洞" in html
+    assert "僅此片出現" in html
+    assert html.count("待人工確認") >= 2
+    assert "12 rpm" in html  # 由音軌推得的轉速
+    # 不對稱指標必須標示為描述量，避免被當門檻用
+    assert "是描述量、不是判定門檻" in html
+
+
+def test_report_acoustic_unusable_says_so_and_tells_how_to_refix(tmp_path):
+    audio = dict(_AUDIO_OK, usable=False, blades=[], comparisons=[], spectra={},
+                 notes=["包絡訊噪比僅 0.6 dB（門檻 1.5）：葉片通過的起伏被雜訊淹沒"])
+    html = build_report(CaseMeta(), audio=audio)
+    assert "音軌不可用於逐片比較" in html and "需重錄" in html
+    assert "下風處" in html and "防風罩" in html
+    assert "訊噪比僅 0.6 dB" in html
+    assert "疑似前緣侵蝕" not in html  # 不可用時不得給出任何逐片判定
 
 
 def test_report_survives_missing_images_and_empty_layers(tmp_path):

@@ -27,7 +27,7 @@
 | `flutter_app/DEVELOPMENT.md` | 完整開發文件 |
 | `LAUNCH_PLAN.md` | 產品化評估與 90 天上線行動計畫 |
 | `BLADE_INSPECTION_SPEC.md` | 風力機葉片地面目視檢測模組規格（獨立功能，Phase 0） |
-| `blade_prototype/` | ★ 葉片模組 Phase 0 演算法原型（Python/OpenCV；分割、三片互比、前緣粗糙度、影片六點鐘取幀、圖文報告產生器；`SENSITIVITY.md` 為合成影像靈敏度分析） |
+| `blade_prototype/` | ★ 葉片模組 Phase 0 演算法原型（Python/OpenCV；分割、三片互比、前緣粗糙度、影片六點鐘取幀、逐片聲音異常、圖文報告產生器；`SENSITIVITY.md` 為合成影像靈敏度分析） |
 
 ## 開發慣例
 - 路徑操作用 `package:path/path.dart`，不手動 `split('/')`
@@ -40,7 +40,7 @@
 ```bash
 flutter test          # 全部 155 tests（widget_test 已修復，不再排除）
 cd backend && GEMINI_API_KEY=ci-fake-key pytest tests/ --asyncio-mode=auto   # 191 pytest
-cd blade_prototype && pip install -r requirements.txt && pytest              # 30 tests（葉片原型，合成影像夾具）
+cd blade_prototype && pip install -r requirements.txt && pytest              # 46 tests（葉片原型，合成影像/音軌夾具）
 ```
 Flutter 155 tests / 後端 191 pytest 全綠（2026-09-04 實測）。DB 測試使用 `sqflite_common_ffi` in-memory。標準資料為單一來源：改 `backend/app/data/inspection_standards.py` 後必須跑 `python backend/scripts/export_standards.py` 重新匯出 JSON（有同步守門測試）。
 
