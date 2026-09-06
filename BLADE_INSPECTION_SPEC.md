@@ -278,7 +278,7 @@ CREATE TABLE wt_detections (
 | 階段 | 內容 | 產出 | 估時 |
 |------|------|------|------|
 | **Phase 0 外業** | 一次現場拍攝（§10），回來離線跑 §5.1–5.4 原型（Python 可，不必先寫 Dart） | 三層各自「做得到 / 做不到」的實測結論、門檻初值 | 1 週含外業 |
-| ↳ 原型（已完成 2026-09-06） | `blade_prototype/`：分割與結構定位、三片互比、前緣粗糙度、影片轉速/六點鐘取幀、合成影像靈敏度分析；23 pytest | 外業前的理論上限與拍攝協定修正（§3.1 註） | — |
+| ↳ 原型（已完成 2026-09-06） | `blade_prototype/`：分割與結構定位、三片互比、前緣粗糙度、影片轉速/六點鐘取幀、合成影像靈敏度分析、**圖文報告產生器**（`case` 指令一次跑完並輸出單一自帶內容 HTML，可列印成 PDF）；30 pytest | 外業前的理論上限與拍攝協定修正（§3.1 註）；報告版面已可直接給客戶看 | — |
 | **Phase 1 MVP** | 資產 + 拍攝作業 + 靜態照表面層候選 + Gemini 裁切解讀 + 人工確認 + PDF | 可交付的 Level 1 篩檢 App | 3–4 週 |
 | **Phase 2 幾何** | 引導拍照疊圖、三片互比、歷史基線、六點鐘取幀 | 變形/開裂/附加件缺失 | 3–4 週 |
 | **Phase 3 動態** | 影片葉尖追蹤、轉速、軌跡一致性、逐片聲音 | 不平衡與聲音異常篩檢 | 4 週 |
@@ -374,7 +374,7 @@ Phase 1 與 2 的順序可依 Phase 0 結果對調：若幾何層實測明顯比
 | `image_quality_service.dart` | 加遮罩參數，只評估葉片區域 |
 | `location_service.dart` | 記錄與導回拍攝點 |
 | `share_queue_service.dart` | 離線初判 → 聯網補跑 AI 解讀 |
-| `pdf_report_service.dart` | 新增葉片報告章節（缺陷疊框、三片互比圖、頻譜圖） |
+| `pdf_report_service.dart` | 新增葉片報告章節（缺陷疊框、三片互比圖、頻譜圖）。版面與內容可直接對照原型的 `blade_proto/report.py`（已實作 HTML 版：疊圖、四張圖表、數值表、待確認欄） |
 | `database_service.dart` | v4 → v5 migration，新增三張表 |
 | `standards_engine.dart` | **不用**。葉片判定是類別型，引擎是數值型 |
 | `form_inspection_screen.dart` | **不動** |

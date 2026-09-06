@@ -1,6 +1,6 @@
 # Flutter App 開發指南
 
-> **最後更新**: 2026-09-02
+> **最後更新**: 2026-09-06
 
 ---
 
@@ -60,7 +60,7 @@ lib/
 
 ---
 
-## 資料庫 Schema (SQLite v3)
+## 資料庫 Schema (SQLite v4)
 
 ### form_inspection_records（核心表）
 
@@ -83,12 +83,17 @@ lib/
 | created_at | TEXT (ISO8601) | 建立時間 |
 | updated_at | TEXT (ISO8601) | 更新時間 |
 | pending_share | INTEGER | 0/1 離線待分享 |
+| standard_judgments | TEXT (JSON) | ★ v4：法規判定結果（合格/不合格/警告 + 法規依據 + 單位換算） |
 
 索引：`status`, `created_at`, `title`
 
 ### Migration 路徑
 - v1 → v2：新增 `photo_sync_tasks` 表
 - v2 → v3：新增 `form_inspection_records` 表
+- v3 → v4：`form_inspection_records` 新增 `standard_judgments` 欄（判定持久化，Issue #44）
+
+> 葉片模組（`BLADE_INSPECTION_SPEC.md`）規劃的 v5 為**三張獨立新表**
+> （`wt_assets` / `wt_capture_sessions` / `wt_detections`），資產驅動、不動既有三表。
 
 ---
 
@@ -235,6 +240,9 @@ flutter build apk --debug
 
 ## 下一步（詳見 LAUNCH_PLAN.md 90 天計畫）
 
+> 葉片模組（獨立功能）的下一步不在此列，見 `BLADE_INSPECTION_SPEC.md` §9 分期與
+> `blade_prototype/README.md` 外業流程。本節只列定檢表主線。
+
 1. **實機端到端測試**（G1/#43，僅剩實機部分）：上傳 Excel → 一鍵自動檢測 →
    法規判定回填 → 匯出 → 分享；斷網流程改驗證「本地引擎判定」而非「待判定」；
    R8 開啟後的 release build 需實機煙霧測試
@@ -250,6 +258,27 @@ flutter build apk --debug
 ---
 
 ## 變更紀錄
+
+### 2026-09-06（風力機葉片模組 Phase 0 — 獨立功能）
+
+- **docs**: 新增 `BLADE_INSPECTION_SPEC.md` — 手機地面拍葉片的目視檢測模組規格。
+  定位為**獨立功能**（資產驅動：主鍵是某台風機的某片葉片、反覆檢測跨次比對），
+  與定檢表 pipeline（表單驅動）平行，**不整合進 `form_inspection_screen.dart`**。
+- **feat**: 新增 `blade_prototype/`（Python/OpenCV，23 pytest，已納入 CI）——
+  規格 §5.1–5.4 的參考實作，用於外業前量化可偵測門檻、外業後跑真實資料，
+  並作為日後 Dart 移植的對照。四層偵測：表面（前緣粗糙度）、幾何（三片中心線互比）、
+  動態（影片轉速/六點鐘取幀）、周邊。
+- **量化結論**（`blade_prototype/SENSITIVITY.md`，合成影像上限）：
+  正視整轉子在 12 MP 橫幅需 ≥ 4.8 cm/px 才塞得進畫面，此時 50 cm 葉尖偏移可分辨、
+  25 cm 不行；側視垂掛葉片直幅 2.5–3.5 cm/px 可用；5x 長焦在 50 m 可分辨 1 cm 深的前緣凹坑。
+  **整轉子幾何靠主鏡頭高像素模式，不靠長焦**（長焦塞不進整個轉子）。
+- **對 Flutter 端的影響（尚未實作，Phase 1 起）**：
+  - DB 需升 v5，新增三張獨立表（見上方 Migration 路徑註記）
+  - `image_quality_service.dart` 需支援「只在葉片遮罩內評估曝光」——往上拍必然帶大片天空，
+    現行 `maxOverexposedRatio` 會把好照片誤判為過曝
+  - 葉片為安全關鍵項目，**不得沿用 `_mapAIResultToField` 的「無異常即 pass」**：
+    沒偵測到異常不等於沒有異常，正常項應保留「待人工確認」
+  - 全解析度原圖不可沿用現行 quality 85 + 縮圖
 
 ### 2026-09-04（後端 SDK 汰換 — LAUNCH_PLAN P1）
 
