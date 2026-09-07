@@ -146,3 +146,59 @@ def test_segment_turbine_honours_an_explicitly_passed_model():
         seg = segment_turbine(img, sky_model=model)
         assert seg.sky_model is model
         assert (seg.mask > 0).any()
+
+def test_grid_median_is_what_the_app_runs_and_costs_little():
+    """`grid_step=16`（App 端的模式）與逐像素中值必須量到同一個結構。
+
+    Dart 端跑不動逐像素的大核中值（見 `_median_field` 的說明），所以 App 用網格。
+    這條測試守的是「網格化沒有換掉演算法的行為」：
+    場的差異要小、結構定位要一致、天空誤判不能變高。
+
+    真實語料上的代價已量過（30 張設計範圍內的輪轂命中 23 → 22），
+    這裡守的是合成夾具上「不該有差異」的那一面。
+    """
+    img, truth = render_front(SceneSpec(azimuth_deg=90.0, seed=1, cloud_strength=0.5))
+
+    exact = fit_local_sky(img, grid_step=1)
+    grid = fit_local_sky(img, grid_step=16)
+    assert grid.bg.shape == exact.bg.shape
+    assert grid.kernel_px == exact.kernel_px
+    # 場是低頻的，網格化的誤差應該遠小於門檻所在的尺規（局部 sigma 約 1–2 Lab 單位）
+    assert np.abs(grid.bg - exact.bg).max() < 12.0
+    assert np.median(np.abs(grid.bg - exact.bg)) < 1.0
+
+    seg_exact = segment_turbine(img, sky_mode="local", sky_model=exact)
+    seg_grid = segment_turbine(img, sky_mode="local", sky_model=grid)
+    r_e, fp_e = _recall_and_sky_fp(seg_exact.mask, truth["mask"])
+    r_g, fp_g = _recall_and_sky_fp(seg_grid.mask, truth["mask"])
+    assert r_g > 0.85, f"網格化把結構召回打壞了：{r_g:.3f} vs {r_e:.3f}"
+    assert fp_g < 0.001, f"網格化把天空誤判拉高了：{fp_g:.5f} vs {fp_e:.5f}"
+
+    st_e = find_structure(seg_exact.mask, horizon_y=seg_exact.horizon_y)
+    st_g = find_structure(seg_grid.mask, horizon_y=seg_grid.horizon_y)
+    assert len(st_g.blades) == 3
+    hub_shift = np.hypot(st_g.hub[0] - st_e.hub[0], st_g.hub[1] - st_e.hub[1])
+    assert hub_shift < 5.0, f"輪轂位置被網格化搬動了 {hub_shift:.1f} px"
+    # 葉尖半徑是幾何層的量測輸出，不能因為換中值模式就變
+    re_ = sorted(b.tip_radius_px for b in st_e.blades)
+    rg_ = sorted(b.tip_radius_px for b in st_g.blades)
+    for a, b in zip(re_, rg_):
+        assert abs(a - b) < 0.02 * truth["rotor_radius_px"]
+
+
+def test_grid_coords_always_covers_the_last_pixel():
+    """網格末端不等距是刻意的：少了最後一列，右／下邊緣就得靠外插。"""
+    from blade_proto.segmentation import _grid_coords, _interp_from_grid
+
+    for n, step in ((100, 16), (97, 16), (33, 32), (5, 16)):
+        xs = _grid_coords(n, step)
+        assert xs[0] == 0 and xs[-1] == n - 1
+        assert len(xs) >= 2
+        assert (np.diff(xs) > 0).all()
+
+    # 常數場內插回來還是常數（沒有邊緣掉值）
+    coarse = np.full((3, 4, 3), 7.0, np.float32)
+    xs, ys = _grid_coords(40, 16), _grid_coords(30, 16)
+    out = _interp_from_grid(coarse[: len(ys), : len(xs)], xs, ys, 40, 30)
+    assert out.shape == (30, 40, 3)
+    assert np.allclose(out, 7.0)
