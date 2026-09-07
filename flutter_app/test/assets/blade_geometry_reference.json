@@ -160,6 +160,73 @@
    "area": 1397
   }
  ],
+ "profiles": [
+  {
+   "axis_angle_deg": 89.96,
+   "radius_px": 159.9,
+   "bend_coeff": 0.00162,
+   "tip_deflection_px": 0.259,
+   "residual_rms_px": 0.1184,
+   "mean_width_px": 9.188,
+   "n_contaminated_bins": 0
+  },
+  {
+   "axis_angle_deg": 210.01,
+   "radius_px": 160.61,
+   "bend_coeff": -0.0021,
+   "tip_deflection_px": -0.338,
+   "residual_rms_px": 0.1141,
+   "mean_width_px": 9.201,
+   "n_contaminated_bins": 0
+  },
+  {
+   "axis_angle_deg": 329.91,
+   "radius_px": 159.96,
+   "bend_coeff": 0.00137,
+   "tip_deflection_px": 0.219,
+   "residual_rms_px": 0.1044,
+   "mean_width_px": 9.007,
+   "n_contaminated_bins": 1
+  }
+ ],
+ "comparison": {
+  "n_blades": 3,
+  "any_flagged": false,
+  "metrics": {
+   "tip_deflection_px": {
+    "z": 0.384,
+    "others_spread": 0.0405,
+    "outlier_deviation": -0.5767,
+    "flagged": false
+   },
+   "radius_px": {
+    "z": 0.228,
+    "others_spread": 0.0639,
+    "outlier_deviation": 0.6846,
+    "flagged": false
+   },
+   "mean_width_px": {
+    "z": 0.125,
+    "others_spread": 0.0125,
+    "outlier_deviation": -0.1875,
+    "flagged": false
+   },
+   "residual_rms_px": {
+    "z": 0.016,
+    "others_spread": 0.0042,
+    "outlier_deviation": -0.0119,
+    "flagged": false
+   }
+  }
+ },
+ "capture_verdict": {
+  "ok": true,
+  "n_reasons": 0,
+  "n_warnings": 0,
+  "tip_radius_spread": 0.003,
+  "sky_mask_frac": 0.0373,
+  "second_rotor_ratio": 0.0
+ },
  "truth": {
   "hub": [
    192.0,
@@ -167,5 +234,62 @@
   ],
   "rotor_radius_px": 160.0,
   "mask_area_frac": 0.04462
+ },
+ "deflected": {
+  "_note": "第二片注入 900 cm 葉尖偏移（24 px @ 37.5 cm/px）；不存 PNG，只存數值",
+  "profiles": [
+   {
+    "axis_angle_deg": 89.99,
+    "radius_px": 158.521,
+    "tip_deflection_px": 0.349,
+    "residual_rms_px": 0.1362,
+    "mean_width_px": 9.1671
+   },
+   {
+    "axis_angle_deg": 220.48,
+    "radius_px": 162.537,
+    "tip_deflection_px": 23.7623,
+    "residual_rms_px": 0.1488,
+    "mean_width_px": 8.8727
+   },
+   {
+    "axis_angle_deg": 329.92,
+    "radius_px": 161.327,
+    "tip_deflection_px": -0.0528,
+    "residual_rms_px": 0.1023,
+    "mean_width_px": 9.0081
+   }
+  ],
+  "any_flagged": true,
+  "metrics": {
+   "tip_deflection_px": {
+    "z": 15.743,
+    "outlier_index": 1,
+    "outlier_deviation": 23.6142,
+    "others_spread": 0.4019,
+    "flagged": true
+   },
+   "radius_px": {
+    "z": 1.137,
+    "outlier_index": 0,
+    "outlier_deviation": -3.4112,
+    "others_spread": 1.2097,
+    "flagged": false
+   },
+   "mean_width_px": {
+    "z": 0.151,
+    "outlier_index": 0,
+    "outlier_deviation": 0.2267,
+    "others_spread": 0.1354,
+    "flagged": false
+   },
+   "residual_rms_px": {
+    "z": 0.054,
+    "outlier_index": 2,
+    "outlier_deviation": -0.0402,
+    "others_spread": 0.0126,
+    "flagged": false
+   }
+  }
  }
 }

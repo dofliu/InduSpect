@@ -16,6 +16,8 @@ import json, os, sys
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 import cv2, numpy as np
 from blade_proto import segmentation as seg
+from blade_proto.geometry import compare_blades, profiles_from_structure
+from blade_proto.quality import assess_capture
 from blade_proto.synth import SceneSpec, render_front
 
 OUT = os.path.join(os.path.dirname(__file__), '..', '..', 'flutter_app', 'test', 'assets')
@@ -34,6 +36,10 @@ print(f'影像 {w}×{h}')
 model = seg.fit_local_sky(img, grid_step=GRID_STEP)
 sg = seg.segment_turbine(img, sky_mode='local', sky_model=model)
 st = seg.find_structure(sg.mask, horizon_y=sg.horizon_y)
+
+profiles = profiles_from_structure(st)
+cmp_ = compare_blades(profiles)
+verdict = assess_capture(sg, st)
 
 lab = cv2.cvtColor(img, cv2.COLOR_BGR2Lab)
 dist = seg.local_sky_distance(img, model)
@@ -71,13 +77,70 @@ ref = {
          'tip_angle_deg': round(float(b.tip_angle_deg), 2),
          'area': int(b.area)}
         for b in st.blades], key=lambda d: d['tip_angle_deg']),
+    'profiles': sorted([
+        {'axis_angle_deg': round(float(pr.axis_angle_deg), 2),
+         'radius_px': round(float(pr.radius_px), 2),
+         'bend_coeff': round(float(pr.bend_coeff), 5),
+         'tip_deflection_px': round(float(pr.tip_deflection_px), 3),
+         'residual_rms_px': round(float(pr.residual_rms_px), 4),
+         'mean_width_px': round(float(pr.mean_width_px), 3),
+         'n_contaminated_bins': int(pr.n_contaminated_bins)}
+        for pr in profiles], key=lambda d: d['axis_angle_deg']),
+    'comparison': {
+        'n_blades': cmp_['n_blades'],
+        'any_flagged': bool(cmp_['any_flagged']),
+        'metrics': {c['metric']: {'z': round(float(c['z']), 3),
+                                  'others_spread': round(float(c['others_spread']), 4),
+                                  'outlier_deviation': round(float(c['outlier_deviation']), 4),
+                                  'flagged': bool(c['flagged'])}
+                    for c in cmp_['comparisons']},
+    },
+    'capture_verdict': {
+        'ok': bool(verdict.ok),
+        'n_reasons': len(verdict.reasons),
+        'n_warnings': len(verdict.warnings),
+        'tip_radius_spread': verdict.metrics.get('tip_radius_spread'),
+        'sky_mask_frac': verdict.metrics.get('sky_mask_frac'),
+        'second_rotor_ratio': verdict.metrics.get('second_rotor_ratio'),
+    },
     'truth': {
         'hub': [round(float(truth['hub'][0]), 2), round(float(truth['hub'][1]), 2)],
         'rotor_radius_px': round(float(truth['rotor_radius_px']), 2),
         'mask_area_frac': round(float((truth['mask'] > 0).mean()), 5),
     },
 }
-with open(f'{OUT}/blade_geometry_reference.json', 'w', encoding='utf-8') as fh:
+# 一片有真實葉尖偏移的情境：只存數值不存第二張 PNG。
+# Dart 端用這些數值直接餵 compareBlades，驗「標記真的會觸發」——
+# 輪廓抽取本身已由上面健康那組逐項對照過，兩者合起來就覆蓋了整條路徑。
+spec_d = SceneSpec(width=384, height=512, cm_per_px=37.5, seed=1,
+                   noise_sigma=1.2, cloud_strength=0.35, azimuth_deg=90.0,
+                   tip_deflection_cm=(0.0, 900.0, 0.0))
+img_d, _ = render_front(spec_d)
+sg_d = seg.segment_turbine(img_d, sky_mode='local',
+                           sky_model=seg.fit_local_sky(img_d, grid_step=GRID_STEP))
+st_d = seg.find_structure(sg_d.mask, horizon_y=sg_d.horizon_y)
+pr_d = profiles_from_structure(st_d)
+cmp_d = compare_blades(pr_d)
+ref['deflected'] = {
+    '_note': '第二片注入 900 cm 葉尖偏移（24 px @ 37.5 cm/px）；不存 PNG，只存數值',
+    'profiles': [
+        {'axis_angle_deg': round(float(pr.axis_angle_deg), 2),
+         'radius_px': round(float(pr.radius_px), 3),
+         'tip_deflection_px': round(float(pr.tip_deflection_px), 4),
+         'residual_rms_px': round(float(pr.residual_rms_px), 4),
+         'mean_width_px': round(float(pr.mean_width_px), 4)}
+        for pr in pr_d],
+    'any_flagged': bool(cmp_d['any_flagged']),
+    'metrics': {c['metric']: {'z': round(float(c['z']), 3),
+                              'outlier_index': int(c['outlier_index']),
+                              'outlier_deviation': round(float(c['outlier_deviation']), 4),
+                              'others_spread': round(float(c['others_spread']), 4),
+                              'flagged': bool(c['flagged'])}
+                for c in cmp_d['comparisons']},
+}
+
+with open(os.path.join(OUT, 'blade_geometry_reference.json'), 'w',
+          encoding='utf-8') as fh:
     json.dump(ref, fh, indent=1, ensure_ascii=False)
     fh.write('\n')
 print(json.dumps({k: v for k, v in ref.items()

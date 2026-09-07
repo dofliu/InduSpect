@@ -13,12 +13,19 @@ class BladeTip {
   /// 數學慣例方位角（270° = 六點鐘）
   final double tipAngleDeg;
 
-  const BladeTip({
+  /// 這片葉片的像素座標。幾何層（中心線、弦寬、彎曲）要用它們，
+  /// 所以不能只留葉尖——與 Python 的 `BladeComponent` 一致。
+  final Int32List xs;
+  final Int32List ys;
+
+  BladeTip({
     required this.area,
     required this.tipX,
     required this.tipY,
     required this.tipRadiusPx,
     required this.tipAngleDeg,
+    required this.xs,
+    required this.ys,
   });
 }
 
@@ -292,6 +299,8 @@ class BladeStructureService {
         tipY: c.ys[j].toDouble(),
         tipRadiusPx: best,
         tipAngleDeg: _angleDeg(c.xs[j] - hubX, c.ys[j] - hubY),
+        xs: c.xs,
+        ys: c.ys,
       ));
     }
     out.sort((a, b) => a.tipAngleDeg.compareTo(b.tipAngleDeg));
