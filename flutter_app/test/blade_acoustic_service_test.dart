@@ -45,15 +45,15 @@ void main() {
         final r = analyze(name);
         final w = want(name);
         expect(r.usable, w['usable']);
-        expect(r.rpmFromAudio, closeTo(w['rpm_from_audio'] as double, 1e-5));
-        expect(r.bladePassHz, closeTo(w['blade_pass_hz'] as double, 1e-6));
-        expect(r.rotorHz, closeTo(w['rotor_hz'] as double, 1e-6));
+        expect(r.rpmFromAudio, closeTo(w['rpm_from_audio'] as double, 1e-9));
+        expect(r.bladePassHz, closeTo(w['blade_pass_hz'] as double, 1e-9));
+        expect(r.rotorHz, closeTo(w['rotor_hz'] as double, 1e-9));
         expect(r.periodicityConfidence,
-            closeTo(w['periodicity_confidence'] as double, 1e-6));
-        expect(r.envelopeSnrDb, closeTo(w['envelope_snr_db'] as double, 1e-6));
-        expect(r.windDominance, closeTo(w['wind_dominance'] as double, 1e-6));
-        expect(r.amDepthDb, closeTo(w['am_depth_db'] as double, 1e-5));
-        expect(r.asymmetryDb, closeTo(w['asymmetry_db'] as double, 1e-5));
+            closeTo(w['periodicity_confidence'] as double, 1e-9));
+        expect(r.envelopeSnrDb, closeTo(w['envelope_snr_db'] as double, 1e-9));
+        expect(r.windDominance, closeTo(w['wind_dominance'] as double, 1e-9));
+        expect(r.amDepthDb, closeTo(w['am_depth_db'] as double, 1e-9));
+        expect(r.asymmetryDb, closeTo(w['asymmetry_db'] as double, 1e-9));
         expect(r.passTimesS.length, w['n_passes']);
       });
 
@@ -79,14 +79,14 @@ void main() {
           final b = r.blades[i], w = wb[i];
           expect(b.index, w['index']);
           expect(b.nPasses, w['n_passes']);
-          expect(b.bandLevelDb, closeTo(w['band_level_db'] as double, 1e-6),
+          expect(b.bandLevelDb, closeTo(w['band_level_db'] as double, 1e-9),
               reason: '$name blade$i level');
           expect(b.highBandRatio,
-              closeTo(w['high_band_ratio'] as double, 1e-6),
+              closeTo(w['high_band_ratio'] as double, 1e-9),
               reason: '$name blade$i hb');
-          expect(b.tonalFreqHz, closeTo(w['tonal_freq_hz'] as double, 1e-3));
+          expect(b.tonalFreqHz, closeTo(w['tonal_freq_hz'] as double, 1e-6));
           expect(b.tonalProminenceDb,
-              closeTo(w['tonal_prominence_db'] as double, 1e-5));
+              closeTo(w['tonal_prominence_db'] as double, 1e-9));
           expect(b.tonalExclusive, w['tonal_exclusive'],
               reason: '$name blade$i exclusive');
         }
@@ -122,7 +122,7 @@ void main() {
         expect(c!.flagged, ww['flagged'], reason: '$metric flagged');
         expect(c.outlierIndex, ww['outlier_index'],
             reason: '$metric 指到的葉片');
-        expect(c.z, closeTo(ww['z'] as double, 1e-4));
+        expect(c.z, closeTo(ww['z'] as double, 1e-9));
         expect(c.direction, MetricDirection.high,
             reason: '聲學量只有偏高才算徵兆');
       }

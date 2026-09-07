@@ -36,7 +36,14 @@ SCENARIOS = [
 ]
 
 
-def _f(v, nd=6):
+def _f(v, nd=12):
+    """預設存到小數第 12 位。
+
+    位數決定 Dart 端測試容差的下限：轉寫對照顯示兩邊一致到 ~1e-15，
+    所以存太少位數會讓測試只驗到「大致相同」，反而放過真正的移植錯誤。
+    先前存 6 位、測試寫 1e-9，結果是測試自己紅——差的是**參考值的位數**
+    不是計算結果。
+    """
     v = float(v)
     return None if not np.isfinite(v) else round(v, nd)
 
@@ -70,12 +77,12 @@ def stage_dump(clip: ac.AudioClip) -> dict:
         'frame_hz': _f(frame_hz),
         'freq_hz_at': {str(k): _f(f[k], 4) for k in fi},
         'time_s_at': {str(k): _f(t[k], 6) for k in ti},
-        'mag_at': {f'{a},{b}': _f(S[a, b], 9) for a in fi for b in ti},
-        'band_energy_at': {str(k): _f(band[k], 9) for k in ti},
+        'mag_at': {f'{a},{b}': _f(S[a, b], 12) for a in fi for b in ti},
+        'band_energy_at': {str(k): _f(band[k], 12) for k in ti},
         'wind_sum': _f(wind.sum(), 6), 'total_sum': _f(total.sum(), 6),
         'wind_dominance': _f(wind.sum() / (total.sum() + 1e-20)),
-        'envelope_at': {str(k): _f(env[k], 9) for k in ti},
-        'envelope_median': _f(med, 9), 'envelope_p98': _f(np.percentile(env, 98), 9),
+        'envelope_at': {str(k): _f(env[k], 12) for k in ti},
+        'envelope_median': _f(med, 12), 'envelope_p98': _f(np.percentile(env, 98), 12),
         'snr_db': _f(snr_db),
         'acf_at': {str(k): _f(acf[k]) for k in (0, 1, 2, 26, 52, 78, 104, 156, 208, 300)},
         'rot_s': _f(rot_s), 'period_s': _f(period_s), 'confidence': _f(conf),
@@ -106,14 +113,32 @@ for label, fname, gains, whistle in SCENARIOS:
     write_wav(path, y, SR)
     clip = ac._read_wav(path)          # 讀回來：與 Dart 端同源
     r = ac.analyze_samples(clip)
+    stages = stage_dump(clip)
+    # **自我對帳。** `stage_dump` 為了掏出中間量而重寫了一次 `analyze_samples`
+    # 的前處理，那是一份重複的程式——`acoustics.py` 改了而這裡沒跟上，就會靜靜
+    # 寫出一份錯的參考值，然後 Flutter 端紅在一個看不出原因的數字上。
+    # （實際發生過一次：一個順手的字串取代把 savgol 窗長從 9 改成 12。）
+    # 所以凡是兩邊都算得出來的量，這裡逐項比對，不一致就直接爆掉。
+    for key, got in [('snr_db', r.envelope_snr_db),
+                     ('confidence', r.periodicity_confidence),
+                     ('blade_pass_hz', r.blade_pass_hz),
+                     ('rotor_hz', r.rotor_hz),
+                     ('wind_dominance', r.wind_dominance)]:
+        mine, theirs = stages[key], _f(got)
+        if mine != theirs:
+            raise SystemExit(
+                f'{label}: stage_dump 的 {key} 與 analyze_samples 不一致'
+                f'（{mine} vs {theirs}）——stage_dump 已與 acoustics.py 漂開，'
+                f'先對齊再重跑，不要寫出這份夾具')
+
     ent = {
         'wav': fname, 'wav_bytes': os.path.getsize(path),
         'clip': {'sample_rate': clip.sample_rate, 'n_samples': len(clip.samples),
                  'duration_s': _f(clip.duration_s),
-                 'sample_at': {str(k): _f(clip.samples[k], 9)
+                 'sample_at': {str(k): _f(clip.samples[k], 12)
                                for k in (0, 1, 100, 8000, len(clip.samples) // 2,
                                          len(clip.samples) - 1)}},
-        'stages': stage_dump(clip),
+        'stages': stages,
         'result': {
             'usable': bool(r.usable), 'n_notes': len(r.notes),
             'rpm_from_audio': _f(r.rpm_from_audio), 'blade_pass_hz': _f(r.blade_pass_hz),
@@ -121,10 +146,10 @@ for label, fname, gains, whistle in SCENARIOS:
             'am_depth_db': _f(r.am_depth_db), 'asymmetry_db': _f(r.asymmetry_db),
             'wind_dominance': _f(r.wind_dominance), 'envelope_snr_db': _f(r.envelope_snr_db),
             'n_passes': len(r.pass_times_s),
-            'pass_times_s': [_f(v, 3) for v in r.pass_times_s],
+            'pass_times_s': [_f(v, 6) for v in r.pass_times_s],
             'blades': [{'index': b.index, 'n_passes': b.n_passes,
                         'band_level_db': _f(b.band_level_db), 'high_band_ratio': _f(b.high_band_ratio),
-                        'tonal_freq_hz': _f(b.tonal_freq_hz, 3),
+                        'tonal_freq_hz': _f(b.tonal_freq_hz, 6),
                         'tonal_prominence_db': _f(b.tonal_prominence_db),
                         'tonal_exclusive': bool(b.tonal_exclusive)} for b in r.blades],
             'comparisons': {c['metric']: {'z': _f(c['z'], 4), 'flagged': bool(c['flagged']),
@@ -136,7 +161,7 @@ for label, fname, gains, whistle in SCENARIOS:
         },
         'truth': {'rpm': truth['rpm'], 'blade_pass_hz': _f(truth['blade_pass_hz']),
                   'n_passes': len(truth['pass_times_s']),
-                  'pass_times_s': [_f(v, 3) for v in truth['pass_times_s']],
+                  'pass_times_s': [_f(v, 6) for v in truth['pass_times_s']],
                   'broadband_gain_db': {str(k): v for k, v in truth['broadband_gain_db'].items()},
                   'whistle': {str(k): v for k, v in truth['whistle'].items()}},
     }

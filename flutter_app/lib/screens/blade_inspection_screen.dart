@@ -1,13 +1,17 @@
 import 'dart:io';
 
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:path/path.dart' as p;
+import 'package:path_provider/path_provider.dart';
 import 'package:uuid/uuid.dart';
 
 import '../models/wt_asset.dart';
 import '../models/wt_capture_session.dart';
 import '../models/wt_detection.dart';
+import '../services/blade_acoustic_service.dart';
 import '../services/blade_analysis_service.dart';
+import '../services/blade_audio_decode.dart';
 import '../services/blade_report_builder.dart';
 import '../services/blade_report_export.dart';
 import '../services/connectivity_service.dart';
@@ -98,6 +102,14 @@ class _BladeInspectionScreenState extends State<BladeInspectionScreen> {
     );
     if (media == null || media.isEmpty) return;
 
+    await _commitMedia(asset, sessionId, media, advance: true);
+  }
+
+  /// 存檔 + 更新畫面。照片與音軌走同一條路——GPS、標題、風機狀態的沿用規則
+  /// 只該有一份，各寫一次的話補拍音軌會把上次的定位覆蓋掉。
+  Future<void> _commitMedia(
+      WtAsset asset, String sessionId, List<WtMedia> media,
+      {bool advance = false}) async {
     final here = await LocationService().getCurrentPosition();
     final session = WtCaptureSession(
       sessionId: sessionId,
@@ -113,8 +125,95 @@ class _BladeInspectionScreenState extends State<BladeInspectionScreen> {
     if (!mounted) return;
     setState(() {
       _session = session;
-      _step = 2;
+      if (advance) _step = 2;
     });
+  }
+
+  /// 附加一段音軌（規格 §5.4 音軌）。
+  ///
+  /// 只收 WAV：裝置上沒有純 Dart 的 AAC/MP3 解碼器，而現場要的是離線可用。
+  /// 手機內建錄音程式多半可以選 WAV／PCM；選不了的話這裡會明講。
+  ///
+  /// **當場就驗一次**，不等到分析步驟：解不開、太短、風噪主導都要在人還站在
+  /// 風機旁邊、還能重錄的時候講。這與照片的品質閘門是同一個道理。
+  Future<void> _attachAudio() async {
+    final asset = _asset;
+    if (asset == null) return;
+    final sessionId = _session?.sessionId ?? _uuid.v4();
+
+    final picked = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: const ['wav'],
+      withData: true,
+    );
+    if (picked == null || picked.files.isEmpty) return;
+    final file = picked.files.first;
+    final bytes = file.bytes;
+    if (bytes == null) {
+      _snack('讀不到這個檔案，請改從「檔案」App 選一次', error: true);
+      return;
+    }
+
+    setState(() {
+      _busy = true;
+      _progress = '正在檢查音軌…';
+    });
+    try {
+      final probe = BladeAudioDecode.decodeWav(bytes);
+      if (!probe.ok) {
+        _snack(probe.message, error: true);
+        return;
+      }
+      final clip = probe.clip!;
+      if (BladeAcousticService.tooShort(clip)) {
+        _snack('音軌只有 ${clip.durationS.toStringAsFixed(1)} 秒，太短。'
+            '要切分三片得涵蓋 2–3 圈轉動（12 rpm 約 15 秒）', error: true);
+        return;
+      }
+
+      final saved = await _saveAudio(bytes, file.name, sessionId);
+      // 先跑一次分析只為了給現場一句話：不可用就當場說，別讓人回去才知道
+      final quick = BladeAcousticService.analyzeSamples(clip);
+      final media = <WtMedia>[
+        ...(_session?.media ?? const []),
+        WtMedia(
+          path: saved.path,
+          kind: WtMediaKind.audio,
+          view: WtMediaView.other,
+          qualityJson: {
+            'ok': quick.usable,
+            'duration_s': clip.durationS,
+            'sample_rate': clip.sampleRate,
+            if (quick.notes.isNotEmpty) 'notes': quick.notes,
+          },
+        ),
+      ];
+      await _commitMedia(asset, sessionId, media);
+      if (!mounted) return;
+      _snack(quick.usable
+          ? '音軌可用：量到轉速 ${quick.rpmFromAudio.toStringAsFixed(1)} rpm'
+          : '音軌存下來了，但目前不可用：${quick.notes.first}');
+    } catch (e) {
+      if (mounted) _snack('音軌處理失敗：$e', error: true);
+    } finally {
+      if (mounted) {
+        setState(() {
+          _busy = false;
+          _progress = null;
+        });
+      }
+    }
+  }
+
+  /// 複製到 App 目錄。`file_picker` 給的可能是系統快取檔，會被清掉。
+  Future<File> _saveAudio(
+      List<int> bytes, String name, String sessionId) async {
+    final docs = await getApplicationDocumentsDirectory();
+    final dir = Directory(p.join(docs.path, 'blade_audio', sessionId));
+    if (!await dir.exists()) await dir.create(recursive: true);
+    final ext = p.extension(name).isEmpty ? '.wav' : p.extension(name);
+    final target = File(p.join(dir.path, '${_uuid.v4()}$ext'));
+    return target.writeAsBytes(bytes);
   }
 
   // ── 第三步：分析 ────────────────────────────────────────────
@@ -124,7 +223,7 @@ class _BladeInspectionScreenState extends State<BladeInspectionScreen> {
     if (session == null) return;
     setState(() {
       _busy = true;
-      _progress = '正在分析分區段照…';
+      _progress = '正在分析（照片與音軌）…';
     });
     try {
       // 廠區常常有 AP 沒 uplink，所以先探可達性再決定要不要等 AI
@@ -135,8 +234,7 @@ class _BladeInspectionScreenState extends State<BladeInspectionScreen> {
         session: session,
         useAi: online,
       );
-      await _db.replaceWtDetections(
-          session.sessionId, WtLayer.surface, outcome.detections);
+      await _db.replaceWtDetections(session.sessionId, outcome.detections);
       session.status = WtSessionStatus.analyzed;
       await _db.saveWtSession(session);
       if (!mounted) return;
@@ -370,12 +468,30 @@ class _BladeInspectionScreenState extends State<BladeInspectionScreen> {
             label: Text(_session == null ? '開始拍攝' : '繼續拍攝／補拍'),
           ),
         ),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: OutlinedButton.icon(
+            onPressed: _busy ? null : _attachAudio,
+            icon: const Icon(Icons.upload_file),
+            label: const Text('附加音軌（選用）'),
+          ),
+        ),
+        const Padding(
+          padding: EdgeInsets.fromLTRB(16, 4, 16, 0),
+          child: Text(
+            '音軌用來比三片的噪音——缺陷葉片的聲音會以葉片通過的週期出現，'
+            '所以切成三份互比就指得出是哪一片。錄 15 秒以上（要涵蓋 2–3 圈），'
+            '站到下風處、格式選 WAV／PCM。轉速也由音軌算，不必另外量。',
+            style: TextStyle(fontSize: 12),
+          ),
+        ),
         if (_session != null)
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
             child: Text(
-              '已拍 ${_session!.media.length} 張，其中 '
-              '${_session!.usableMediaCount} 張可用於量測。',
+              '已拍 ${_session!.photoCount} 張照片，其中 '
+              '${_session!.usableMediaCount} 張可用於量測'
+              '${_session!.audioCount > 0 ? '；音軌 ${_session!.audioCount} 段' : ''}。',
             ),
           ),
         if (_session != null)
@@ -390,6 +506,48 @@ class _BladeInspectionScreenState extends State<BladeInspectionScreen> {
     );
   }
 
+  /// 這個場次的素材各自對得上哪一層。**照實說**：現場靠這句話決定要不要回頭補拍，
+  /// 寫死一句「只跑表面層」在幾何層與音軌都接上之後就變成謊。
+  String _coverageText(WtCaptureSession? session) {
+    final usable = session?.usableMediaCount ?? 0;
+    if (session == null) return '還沒有素材。';
+    final segment = session.media
+        .where((m) =>
+            m.kind == WtMediaKind.photo &&
+            m.view == WtMediaView.segment &&
+            m.qualityOk == true)
+        .length;
+    final whole = session.media
+        .where((m) =>
+            m.kind == WtMediaKind.photo &&
+            (m.view == WtMediaView.front || m.view == WtMediaView.side) &&
+            m.qualityOk == true)
+        .length;
+    final audio = session.usableAudioCount;
+    final video = session.media.where((m) => m.kind == WtMediaKind.video).length;
+
+    final will = <String>[];
+    if (segment > 0) will.add('表面層（$segment 張分區段照）');
+    if (whole > 0) will.add('幾何層（$whole 張整機照，三片剪影互比）');
+    if (audio > 0) will.add('動態層（$audio 段音軌，逐片噪音與轉速）');
+
+    if (will.isEmpty) {
+      return usable == 0 && audio == 0
+          ? '沒有通過拍攝品質閘門的素材，分析不會產生任何量測值。'
+              '回上一步重拍——把不可信的畫面算出數字比沒有數字更糟。'
+          : '目前的素材沒有對應的分析層。';
+    }
+    final missing = <String>[];
+    if (segment == 0) missing.add('表面層要分區段照（5x 長焦）');
+    if (whole == 0) missing.add('幾何層要整機照');
+    if (audio == 0) missing.add('動態層要一段 15 秒以上的音軌');
+    if (video > 0) {
+      missing.add('影片會保存但目前解不了幀（需原生解碼），轉速改由音軌取得');
+    }
+    return '本次會跑：${will.join('、')}。'
+        '${missing.isEmpty ? '' : '\n未涵蓋：${missing.join('；')}。沒跑不等於沒問題。'}';
+  }
+
   Widget _analyzeStep() {
     final session = _session;
     final usable = session?.usableMediaCount ?? 0;
@@ -400,14 +558,12 @@ class _BladeInspectionScreenState extends State<BladeInspectionScreen> {
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
           child: Card(
-            color: usable == 0 ? Colors.orange.shade50 : Colors.blue.shade50,
+            color: usable == 0 && (session?.usableAudioCount ?? 0) == 0
+                ? Colors.orange.shade50
+                : Colors.blue.shade50,
             child: Padding(
               padding: const EdgeInsets.all(12),
-              child: Text(usable == 0
-                  ? '沒有通過拍攝品質閘門的照片，分析不會產生任何量測值。'
-                      '回上一步重拍——把不可信的畫面算出數字比沒有數字更糟。'
-                  : '$usable 張照片可用於量測。本次只跑表面層（前緣輪廓粗糙度）；'
-                      '幾何層與動態層還沒在 App 端實作，照片會保存下來供日後補跑。'),
+              child: Text(_coverageText(session)),
             ),
           ),
         ),

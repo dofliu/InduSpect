@@ -368,4 +368,75 @@ void main() {
     expect(det.metricJson, isEmpty);
     expect(det.bboxJson, isEmpty);
   });
+
+  test('音軌媒體不需要 migration：JSON 往返得回來，舊列也照樣讀', () {
+    final session = WtCaptureSession(
+      sessionId: 'sess-audio',
+      assetId: 'WTG-01',
+      media: [
+        WtMedia(path: '/tmp/seg.jpg', qualityJson: const {'ok': true}),
+        WtMedia(
+            path: '/tmp/rec.wav',
+            kind: WtMediaKind.audio,
+            view: WtMediaView.other,
+            qualityJson: const {'ok': true, 'duration_s': 18.0}),
+        WtMedia(path: '/tmp/clip.mp4', kind: WtMediaKind.video),
+      ],
+    );
+    final back = WtCaptureSession.fromMap(session.toMap());
+    expect(back.media.map((m) => m.kind).toList(),
+        [WtMediaKind.photo, WtMediaKind.audio, WtMediaKind.video]);
+    expect(back.audioCount, 1);
+    expect(back.photoCount, 1);
+    expect(back.usableAudioCount, 1);
+    expect(back.usableMediaCount, 1,
+        reason: '「幾張可用於量測」只算照片——音軌不是「張」也不走同一組閘門');
+
+    // 舊列（kind 只有 photo/video）照樣讀得起來，這是不需要 migration 的理由
+    final legacy = WtMedia.fromJson(const {'path': '/tmp/a.jpg', 'kind': 'photo'});
+    expect(legacy.kind, WtMediaKind.photo);
+    // 認不出的值退回預設，不會丟例外
+    final unknown = WtMedia.fromJson(const {'path': '/tmp/a', 'kind': 'hologram'});
+    expect(unknown.kind, WtMediaKind.photo);
+  });
+
+  test('重新分析會清掉整個場次的待確認偵測，但不動人已簽核的', () async {
+    final db = await openWithService(dbPath, 5);
+    final svc = DatabaseService();
+    svc.attachDatabaseForTesting(db);
+    // singleton 的狀態會外洩到其他測試，所以一定要卸下；
+    // 也要先關掉 DB，否則外層 tearDown 刪暫存目錄時檔案還開著
+    addTearDown(() async {
+      svc.attachDatabaseForTesting(null);
+      await db.close();
+    });
+    WtDetection det(String id, WtLayer layer, WtHumanStatus status) =>
+        WtDetection(
+          detectionId: id,
+          sessionId: 'sess-1',
+          layer: layer,
+          severity: 2,
+          humanStatus: status,
+        );
+
+    // 第一輪：三層各一筆待確認 + 一筆人工已確認
+    await svc.replaceWtDetections('sess-1', [
+      det('a', WtLayer.surface, WtHumanStatus.pending),
+      det('b', WtLayer.geometry, WtHumanStatus.pending),
+      det('c', WtLayer.dynamic_, WtHumanStatus.pending),
+      det('d', WtLayer.geometry, WtHumanStatus.confirmed),
+    ]);
+    expect((await svc.getWtDetections('sess-1')).length, 4);
+
+    // 第二輪只剩表面層有發現。**其他層的舊待確認必須消失**——
+    // 上一輪標記過、這一輪不再標記的發現留在報告上，是憑空多出來的「異常」。
+    await svc.replaceWtDetections(
+        'sess-1', [det('a', WtLayer.surface, WtHumanStatus.pending)]);
+    final after = await svc.getWtDetections('sess-1');
+    expect(after.map((d) => d.detectionId).toSet(), {'a', 'd'});
+    expect(
+        after.firstWhere((d) => d.detectionId == 'd').humanStatus,
+        WtHumanStatus.confirmed,
+        reason: '人已簽核的不能被重新分析吃掉——那等於推翻簽核');
+  });
 }

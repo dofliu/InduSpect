@@ -128,8 +128,22 @@ class WtCaptureSession {
   List<WtMedia> mediaOfView(WtMediaView view) =>
       media.where((m) => m.view == view).toList();
 
-  /// 通過品質閘門的媒體數。分析只能用這些。
-  int get usableMediaCount => media.where((m) => m.qualityOk == true).length;
+  /// 通過品質閘門的**照片**數。畫面上寫的是「幾張可用於量測」，
+  /// 而音軌不是「張」也不走同一組閘門——把它算進來會讓那個數字對不上照片張數。
+  int get usableMediaCount => media
+      .where((m) => m.kind == WtMediaKind.photo && m.qualityOk == true)
+      .length;
+
+  int get photoCount =>
+      media.where((m) => m.kind == WtMediaKind.photo).length;
+
+  int get audioCount =>
+      media.where((m) => m.kind == WtMediaKind.audio).length;
+
+  /// 品質閘門放行的音軌數（不可用的音軌照樣留著，理由與照片相同）
+  int get usableAudioCount => media
+      .where((m) => m.kind == WtMediaKind.audio && m.qualityOk == true)
+      .length;
 
   Map<String, dynamic> toMap() {
     final map = <String, dynamic>{

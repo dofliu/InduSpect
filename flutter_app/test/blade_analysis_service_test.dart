@@ -260,8 +260,12 @@ void main() {
       expect(d.first.severity, 2, reason: '警告級，不給不合格');
       expect(d.first.metricJson['rpm_from_audio'], 12.4);
       expect(out.notes.join(), contains('12.4 rpm'));
-      expect(out.buildSummary(), contains('動態層'));
-      expect(out.buildSummary(), isNot(contains('未進行')));
+      // 這個場次只有音軌，所以表面層與幾何層**確實**沒跑——摘要照實說是對的。
+      // （先前這裡斷言不出現「未進行」，那是我把「動態層跑了」錯當成「全都跑了」。）
+      expect(out.buildSummary(), startsWith('本次分析範圍：動態層'));
+      expect(out.buildSummary(), contains('表面層'));
+      expect(out.buildSummary(), contains('未進行'));
+      expect(out.buildSummary(), contains('沒進行不等於沒問題'));
     });
 
     test('動態層：音軌不可用時也留一筆（無 severity），不會被讀成「聲音沒問題」',
