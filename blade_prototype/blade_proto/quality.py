@@ -18,6 +18,8 @@ from dataclasses import dataclass, field
 
 import numpy as np
 
+from .segmentation import find_second_rotor
+
 
 # 地平線以上、非天空像素占該區域的比例。整台風機對著天空拍只有幾個百分點；超過就
 # 表示雲層/建物/地形進了遮罩。這條**只發警告不拒收**——見 assess_capture 內的說明。
@@ -26,6 +28,9 @@ MAX_MASK_FRAC = 0.15
 # 正確定位時 ≤12%；抓到地物、電線或別台風機當葉片時會跳到 23% 以上，而且沒有中間值。
 # 這是整個閘門唯一真正有鑑別力的條件：75 張真實照片上它零誤放行。
 MAX_RADIUS_SPREAD = 0.15
+# 第二個轉子的半徑相對主風機的比例，超過就發**取景歧義警告**（不拒收，見 assess_capture）。
+# 0.5 = 「大小相當」，警告不需要拒收那種精度。
+SECOND_ROTOR_WARN_RATIO = 0.5
 # 前景太少代表風機根本沒被分出來（白葉片對上亮雲天空）。
 MIN_MASK_FRAC = 0.0015
 
@@ -62,6 +67,8 @@ def assess_capture(
     max_mask_frac: float = MAX_MASK_FRAC,
     min_mask_frac: float = MIN_MASK_FRAC,
     max_radius_spread: float = MAX_RADIUS_SPREAD,
+    second_rotor_ratio: float = SECOND_ROTOR_WARN_RATIO,
+    check_second_rotor: bool = True,
 ) -> CaptureVerdict:
     """判斷一張全機照能不能拿來做幾何互比。
 
@@ -123,6 +130,24 @@ def assess_capture(
         if below:
             reasons.append(f"第 {'、'.join(str(i + 1) for i in below)} 片的葉尖落在地平線以下："
                            "抓到的不是葉片，請重拍")
+
+    # 取景歧義：畫面裡有第二個轉子時，演算法有可能乾淨地鎖上「不是操作者要量的那一台」。
+    # 這一條**只發警告不拒收**，理由是量出來的：75 張真實照片上閘門本來就沒有誤放行
+    # ——multi 照片全部被上面的半徑離散規則擋下（兩台等大同框時三片候選會混到兩台身上，
+    # 半徑自然不一致），所以再加一條拒收只有代價沒有收益：ratio > 0.5 會擋掉 8 張正確
+    # 放行中的 2 張。詳見 REAL_IMAGE_VALIDATION.md §6。警告則零代價，而且講的是事實。
+    if check_second_rotor and seg is not None and radii:
+        r2, n2 = find_second_rotor(seg.mask, structure, getattr(seg, "horizon_y", None))
+        r1 = float(np.median(radii))
+        metrics["second_rotor_radius_px"] = round(r2, 1)
+        metrics["second_rotor_arms"] = n2
+        if r1 > 1.0:
+            ratio = r2 / r1
+            metrics["second_rotor_ratio"] = round(ratio, 3)
+            if ratio >= second_rotor_ratio:
+                warnings.append(
+                    f"畫面裡還有另一個轉子，半徑約為主風機的 {ratio * 100:.0f}%："
+                    "請確認量到的是要量的那一台；風場的風機外觀相同，量錯對象不會有任何徵兆")
 
     if not structure.tower_found:
         warnings.append("沒有找到塔架：塔架傾斜與六點鐘方位判讀不可用（幾何互比仍可進行）")

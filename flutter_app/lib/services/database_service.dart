@@ -4,6 +4,9 @@ import 'package:flutter/foundation.dart';
 import '../models/template_inspection_record.dart';
 import '../models/photo_sync_task.dart';
 import '../models/form_inspection_record.dart';
+import '../models/wt_asset.dart';
+import '../models/wt_capture_session.dart';
+import '../models/wt_detection.dart';
 
 class DatabaseService {
   static final DatabaseService _instance = DatabaseService._internal();
@@ -24,7 +27,7 @@ class DatabaseService {
 
     return await openDatabase(
       path,
-      version: 4,
+      version: 5,
       onCreate: onCreate,
       onUpgrade: onUpgrade,
     );
@@ -88,6 +91,7 @@ class DatabaseService {
 
     // 表單檢測紀錄表（v3）
     await _createFormInspectionRecordsTable(db);
+    await _createBladeTables(db);
   }
 
   Future<void> _createFormInspectionRecordsTable(Database db) async {
@@ -166,6 +170,79 @@ class DatabaseService {
         'ALTER TABLE form_inspection_records ADD COLUMN standard_judgments TEXT',
       );
     }
+
+    // v5: 風力機葉片檢測（BLADE_INSPECTION_SPEC.md §7）
+    // 純新增三張表，既有三張表完全不動——葉片是資產驅動、定檢是表單驅動，
+    // 兩者不共用資料模型。舊使用者升級後這三張表是空的，功能自然從零開始。
+    if (oldVersion < 5) {
+      await _createBladeTables(db);
+    }
+  }
+
+  /// 葉片檢測的三張表（v5）。資產 → 拍攝作業 → 偵測結果。
+  Future<void> _createBladeTables(Database db) async {
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS wt_assets (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        asset_id TEXT UNIQUE NOT NULL,
+        site_name TEXT,
+        model TEXT,
+        hub_height_m REAL,
+        rotor_diameter_m REAL,
+        capture_points TEXT,
+        created_at TEXT NOT NULL
+      )
+    ''');
+
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS wt_capture_sessions (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        session_id TEXT UNIQUE NOT NULL,
+        asset_id TEXT NOT NULL,
+        title TEXT,
+        captured_at TEXT NOT NULL,
+        turbine_state TEXT,
+        latitude REAL,
+        longitude REAL,
+        weather_note TEXT,
+        inspector TEXT,
+        media TEXT,
+        status TEXT NOT NULL,
+        report_path TEXT,
+        pending_share INTEGER NOT NULL DEFAULT 0,
+        updated_at TEXT NOT NULL
+      )
+    ''');
+
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS wt_detections (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        detection_id TEXT UNIQUE NOT NULL,
+        session_id TEXT NOT NULL,
+        layer TEXT NOT NULL,
+        blade TEXT,
+        zone TEXT,
+        defect_class TEXT,
+        severity INTEGER,
+        confidence REAL,
+        metric_json TEXT,
+        bbox_json TEXT,
+        media_path TEXT,
+        source TEXT NOT NULL,
+        human_status TEXT NOT NULL,
+        human_note TEXT,
+        ai_description TEXT,
+        created_at TEXT NOT NULL
+      )
+    ''');
+
+    // 查詢一律以 asset / session 為軸（列出某台風機的歷次作業、某次作業的所有發現）
+    await db.execute(
+        'CREATE INDEX IF NOT EXISTS idx_wt_session_asset ON wt_capture_sessions(asset_id)');
+    await db.execute(
+        'CREATE INDEX IF NOT EXISTS idx_wt_session_status ON wt_capture_sessions(status)');
+    await db.execute(
+        'CREATE INDEX IF NOT EXISTS idx_wt_detection_session ON wt_detections(session_id)');
   }
 
   Future<int> saveRecord(TemplateInspectionRecord record) async {
@@ -688,5 +765,179 @@ class DatabaseService {
   Future<void> clearAllFormRecords() async {
     final db = await database;
     await db.delete('form_inspection_records');
+  }
+
+  // ─────────────────────────── 葉片檢測（v5）───────────────────────────
+
+  /// 新增或更新風機資產。`asset_id` 是現場編號、UNIQUE，所以用 replace
+  /// ——同一台風機重複建立時視為更新，不會長出兩筆。
+  Future<int> saveWtAsset(WtAsset asset) async {
+    final db = await database;
+    final map = asset.toMap();
+    if (asset.id != null) {
+      await db.update('wt_assets', map, where: 'id = ?', whereArgs: [asset.id]);
+      return asset.id!;
+    }
+    return db.insert('wt_assets', map,
+        conflictAlgorithm: ConflictAlgorithm.replace);
+  }
+
+  Future<WtAsset?> getWtAsset(String assetId) async {
+    final db = await database;
+    final rows = await db.query('wt_assets',
+        where: 'asset_id = ?', whereArgs: [assetId], limit: 1);
+    return rows.isEmpty ? null : WtAsset.fromMap(rows.first);
+  }
+
+  Future<List<WtAsset>> getAllWtAssets() async {
+    final db = await database;
+    final rows = await db.query('wt_assets', orderBy: 'asset_id ASC');
+    return rows.map(WtAsset.fromMap).toList();
+  }
+
+  /// 刪除資產時連帶刪掉它的作業與偵測結果。
+  /// SQLite 的外鍵預設不啟用，所以手動級聯——留下孤兒作業比刪掉更糟，
+  /// 那些作業在 UI 上會找不到所屬資產而永遠顯示不出來。
+  Future<void> deleteWtAsset(String assetId) async {
+    final db = await database;
+    final sessions = await db.query('wt_capture_sessions',
+        columns: ['session_id'], where: 'asset_id = ?', whereArgs: [assetId]);
+    await db.transaction((txn) async {
+      for (final row in sessions) {
+        await txn.delete('wt_detections',
+            where: 'session_id = ?', whereArgs: [row['session_id']]);
+      }
+      await txn
+          .delete('wt_capture_sessions', where: 'asset_id = ?', whereArgs: [assetId]);
+      await txn.delete('wt_assets', where: 'asset_id = ?', whereArgs: [assetId]);
+    });
+  }
+
+  /// 新增或更新拍攝作業。永遠以當前時間覆寫 `updated_at`，不 mutate 傳入物件
+  /// （同 `saveFormRecord`，Issue #17 的教訓）。
+  Future<int> saveWtSession(WtCaptureSession session) async {
+    final db = await database;
+    final map = session.toMap();
+    map['updated_at'] = DateTime.now().toIso8601String();
+    if (session.id != null) {
+      await db.update('wt_capture_sessions', map,
+          where: 'id = ?', whereArgs: [session.id]);
+      return session.id!;
+    }
+    return db.insert('wt_capture_sessions', map,
+        conflictAlgorithm: ConflictAlgorithm.replace);
+  }
+
+  Future<WtCaptureSession?> getWtSession(String sessionId) async {
+    final db = await database;
+    final rows = await db.query('wt_capture_sessions',
+        where: 'session_id = ?', whereArgs: [sessionId], limit: 1);
+    return rows.isEmpty ? null : WtCaptureSession.fromMap(rows.first);
+  }
+
+  /// 列出拍攝作業。給 assetId 就只列該台風機的歷次作業（跨次比對用）。
+  Future<List<WtCaptureSession>> getWtSessions({
+    String? assetId,
+    WtSessionStatus? status,
+    int? limit,
+  }) async {
+    final db = await database;
+    final where = <String>[];
+    final args = <dynamic>[];
+    if (assetId != null) {
+      where.add('asset_id = ?');
+      args.add(assetId);
+    }
+    if (status != null) {
+      where.add('status = ?');
+      args.add(status.name);
+    }
+    final rows = await db.query(
+      'wt_capture_sessions',
+      where: where.isEmpty ? null : where.join(' AND '),
+      whereArgs: args.isEmpty ? null : args,
+      orderBy: 'captured_at DESC',
+      limit: limit,
+    );
+    return rows.map(WtCaptureSession.fromMap).toList();
+  }
+
+  Future<List<WtCaptureSession>> getWtSessionsPendingShare() async {
+    final db = await database;
+    final rows = await db.query('wt_capture_sessions',
+        where: 'pending_share = 1', orderBy: 'updated_at ASC');
+    return rows.map(WtCaptureSession.fromMap).toList();
+  }
+
+  Future<void> deleteWtSession(String sessionId) async {
+    final db = await database;
+    await db.transaction((txn) async {
+      await txn
+          .delete('wt_detections', where: 'session_id = ?', whereArgs: [sessionId]);
+      await txn.delete('wt_capture_sessions',
+          where: 'session_id = ?', whereArgs: [sessionId]);
+    });
+  }
+
+  /// 寫入一批偵測結果。一次分析會產生多筆，用 transaction 避免中途失敗留下半套。
+  Future<void> saveWtDetections(List<WtDetection> detections) async {
+    if (detections.isEmpty) return;
+    final db = await database;
+    await db.transaction((txn) async {
+      for (final d in detections) {
+        await txn.insert('wt_detections', d.toMap(),
+            conflictAlgorithm: ConflictAlgorithm.replace);
+      }
+    });
+  }
+
+  /// 更新單筆偵測的人工確認狀態。這是稽核依據，只改人工欄位，不動演算法數值。
+  Future<void> updateWtDetectionHumanStatus(
+    String detectionId,
+    WtHumanStatus status, {
+    String? note,
+  }) async {
+    final db = await database;
+    await db.update(
+      'wt_detections',
+      {'human_status': status.name, if (note != null) 'human_note': note},
+      where: 'detection_id = ?',
+      whereArgs: [detectionId],
+    );
+  }
+
+  Future<List<WtDetection>> getWtDetections(String sessionId, {WtLayer? layer}) async {
+    final db = await database;
+    final where = <String>['session_id = ?'];
+    final args = <dynamic>[sessionId];
+    if (layer != null) {
+      where.add('layer = ?');
+      args.add(layer.name);
+    }
+    final rows = await db.query('wt_detections',
+        where: where.join(' AND '), whereArgs: args, orderBy: 'created_at ASC');
+    return rows.map(WtDetection.fromMap).toList();
+  }
+
+  /// 替換某次作業某一層的偵測結果（重新分析時用）。
+  /// 只刪演算法產出的那一層，**保留其他層與人工已確認的紀錄**——
+  /// 重跑幾何層不該把表面層的人工簽核一起清掉。
+  Future<void> replaceWtDetections(
+    String sessionId,
+    WtLayer layer,
+    List<WtDetection> detections,
+  ) async {
+    final db = await database;
+    await db.transaction((txn) async {
+      await txn.delete(
+        'wt_detections',
+        where: 'session_id = ? AND layer = ? AND human_status = ?',
+        whereArgs: [sessionId, layer.name, WtHumanStatus.pending.name],
+      );
+      for (final d in detections) {
+        await txn.insert('wt_detections', d.toMap(),
+            conflictAlgorithm: ConflictAlgorithm.replace);
+      }
+    });
   }
 }

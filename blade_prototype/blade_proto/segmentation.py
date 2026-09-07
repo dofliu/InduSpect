@@ -658,6 +658,47 @@ def _initial_hub(mask: np.ndarray, dt: np.ndarray, y_cut: int):
     return best[0], best[1], None
 
 
+def find_second_rotor(
+    mask: np.ndarray,
+    structure: "TurbineStructure",
+    horizon_y: int | None = None,
+    min_pixels: int = 200,
+) -> tuple[float, int]:
+    """把已定位風機的元件拿掉，在剩下的遮罩上再找一次轉子。
+
+    回答的是「畫面裡有沒有**第二個轉子**」，不是「有沒有第二個色塊」。這個區別是量出來的：
+    單看「不屬於已定位結構的最大元件」完全分不開單台與多台照片（single 的比值 0.0–4.4、
+    multi 的 0.13–2.5），因為那個量被地面、樹線、遠景農田主導，不是第二台風機。
+    重跑一次結構定位才問得到正確的問題。
+
+    回傳 (第二個轉子的葉尖半徑, 找到的臂數)；找不到回傳 (0.0, 0)。
+    半徑要和主風機的比才有意義——遠處的他機半徑很小，等大同框的才接近 1。
+    """
+    h, w = mask.shape
+    rest = mask.copy()
+    if horizon_y is not None and 0 < horizon_y < h:
+        rest[horizon_y:, :] = 0
+    n, lab, _, _ = cv2.connectedComponentsWithStats(rest, connectivity=8)
+    own: set[int] = set()
+    for b in structure.blades:
+        inside = b.ys < rest.shape[0]
+        if inside.any():
+            own.update(np.unique(lab[b.ys[inside], b.xs[inside]]).tolist())
+    hx, hy = int(round(structure.hub[0])), int(round(structure.hub[1]))
+    if 0 <= hx < w and 0 <= hy < h:
+        own.add(int(lab[hy, hx]))
+    own.discard(0)
+    for i in own:
+        rest[lab == i] = 0
+    if int((rest > 0).sum()) < min_pixels:
+        return 0.0, 0
+    try:
+        st2 = find_structure(rest)
+    except ValueError:
+        return 0.0, 0
+    return max((b.tip_radius_px for b in st2.blades), default=0.0), len(st2.blades)
+
+
 def find_structure(
     mask: np.ndarray,
     hub_hint: tuple[float, float] | None = None,

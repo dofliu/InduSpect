@@ -1,0 +1,32 @@
+{
+ "blade_segment_clean.png": {
+  "le_over_te_rms_ratio": 0.935,
+  "top_rms_px": 0.108,
+  "bottom_rms_px": 0.115,
+  "top_inward_p95_px": 0.162,
+  "top_pit_count": 0,
+  "top_high_freq_ratio": 0.962,
+  "top_n_samples": 781,
+  "axis_angle_deg": 4.44,
+  "median_thickness_px": 249.8,
+  "size": [
+   800,
+   450
+  ]
+ },
+ "blade_segment_eroded.png": {
+  "le_over_te_rms_ratio": 5.202,
+  "top_rms_px": 0.6,
+  "bottom_rms_px": 0.115,
+  "top_inward_p95_px": 1.523,
+  "top_pit_count": 23,
+  "top_high_freq_ratio": 0.434,
+  "top_n_samples": 781,
+  "axis_angle_deg": 4.46,
+  "median_thickness_px": 249.8,
+  "size": [
+   800,
+   450
+  ]
+ }
+}
