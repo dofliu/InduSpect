@@ -12,6 +12,7 @@ import 'screens/guide_screen.dart';
 import 'screens/unified_history_screen.dart';
 import 'services/connectivity_service.dart';
 import 'services/photo_sync_service.dart';
+import 'services/blade_ai_retry_service.dart';
 import 'services/share_queue_service.dart';
 import 'utils/constants.dart';
 
@@ -39,8 +40,12 @@ void main() async {
   final photoSyncService = PhotoSyncService();
   await photoSyncService.initialize();
 
-  // 離線分享佇列
+  // 離線分享佇列（定檢 + 葉片）
   ShareQueueService().initialize();
+
+  // 葉片 AI 解讀的補跑佇列：離線時演算法先跑完、AI 掛在佇列裡，
+  // 連線恢復後把那一段補上（規格 §6）
+  BladeAiRetryService().initialize();
 
   runApp(const InduSpectApp());
 }

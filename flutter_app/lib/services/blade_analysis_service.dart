@@ -2,11 +2,13 @@ import 'dart:io';
 import 'dart:math' as math;
 import 'dart:typed_data';
 
+import 'package:flutter/foundation.dart' show compute;
 import 'package:path/path.dart' as p;
 
 import '../models/wt_capture_session.dart';
 import '../models/wt_detection.dart';
 import 'blade_ai_service.dart';
+import 'blade_geometry_compare.dart';
 import 'blade_surface_service.dart';
 
 /// 讀檔注入點（測試用假的、正式走 `dart:io`）
@@ -83,9 +85,9 @@ class BladeAnalysisOutcome {
   /// 會讓人以為整支葉片都查過了，實際上幾何層與動態層的 Dart 移植還沒做。
   String buildSummary() {
     final lines = <String>[
-      '本次分析範圍：表面層（前緣輪廓粗糙度）。'
-          '幾何層（三片互比）與動態層（轉速、葉尖偏移）尚未在 App 端實作，'
-          '本次**未進行**這兩層的分析——照片已保存，可日後補跑。',
+      '本次分析範圍：表面層（前緣輪廓粗糙度）與幾何層（三片剪影互比）。'
+          '動態層（轉速、葉尖軌跡、逐片聲音）需要轉動影片，尚未在 App 端實作，'
+          '本次**未進行**——影片若已拍攝會保存下來，可日後補跑。',
     ];
     if (notes.isNotEmpty) lines.add(notes.join('\n'));
     if (hasPendingAi) {
@@ -106,6 +108,10 @@ class BladeAnalysisService {
 
   static Future<Uint8List> _readFile(String path) => File(path).readAsBytes();
 
+  /// isolate 入口。像素運算不能擋 UI thread——幾何層一張圖約幾百毫秒。
+  static BladeGeometryOutcome _geometryIsolate(Uint8List bytes) =>
+      runGeometryPipeline(bytes);
+
   /// 分析一個拍攝場次。
   ///
   /// [useAi] 為 false（或 AI 呼叫失敗）時，演算法的結果照樣留下來，
@@ -119,6 +125,7 @@ class BladeAnalysisService {
     BladeBytesLoader? loadBytes,
     BladeImageAnalyzer? analyzer,
     BladeSurfaceAnalyzer? surface,
+    BladeGeometryAnalyzer? geometry,
   }) async {
     final read = loadBytes ?? _readFile;
     final run = surface ?? BladeSurfaceService.analyze;
@@ -127,13 +134,19 @@ class BladeAnalysisService {
     var analyzed = 0, skipped = 0;
 
     var notPhoto = 0, notSegment = 0, notUsable = 0;
+    final geometryMedia = <WtMedia>[];
     for (final m in session.media) {
       if (m.kind != WtMediaKind.photo) {
         notPhoto++;
         continue;
       }
       if (m.view != WtMediaView.segment) {
-        notSegment++;
+        // 正視／側視全機照走幾何層（三片剪影互比）
+        if (m.view == WtMediaView.front || m.view == WtMediaView.side) {
+          geometryMedia.add(m);
+        } else {
+          notSegment++;
+        }
         continue;
       }
       // 品質閘門沒過（或還沒分析過）的照片一律不進演算法。
@@ -225,10 +238,26 @@ class BladeAnalysisService {
           zoom: m.zoom,
           analyzer: analyzer,
         );
-        detections.add(_merge(base, ai));
+        detections.add(mergeAlgorithmAndAi(base, ai));
       } catch (_) {
         // 離線／額度用盡／回應壞掉：演算法的結果不能因此消失
         detections.add(algoDetection(WtDetectionSource.geminiOfflinePending));
+      }
+    }
+
+    // 幾何層：整機照的三片剪影互比
+    for (final m in geometryMedia) {
+      if (m.qualityOk != true) {
+        notUsable++;
+        continue;
+      }
+      final r = await _analyzeGeometry(
+          m, session.sessionId, read, notes, geometry: geometry);
+      if (r == null) {
+        skipped++;
+      } else {
+        analyzed++;
+        detections.addAll(r);
       }
     }
 
@@ -238,8 +267,7 @@ class BladeAnalysisService {
           '不是判定為正常）。');
     }
     if (notSegment > 0) {
-      notes.add('$notSegment 張整機／塔架照已保存，但整轉子幾何分析尚未在 App 端實作，'
-          '本次未分析。');
+      notes.add('$notSegment 張其他視角的照片已保存，但沒有對應的分析層，本次未分析。');
     }
     if (notPhoto > 0) {
       notes.add('$notPhoto 段影片已保存，動態層分析尚未在 App 端實作，本次未分析。');
@@ -253,14 +281,109 @@ class BladeAnalysisService {
     );
   }
 
-  /// 合併演算法與 AI 的判斷。
+  /// 幾何層：一張整機照 → 三片剪影互比。
+  ///
+  /// **拍攝閘門在互比之前**（`BladeStructureGate`）。這個順序是整個幾何層能不能用的
+  /// 關鍵：定位錯誤時 `findStructure` 一樣會回傳一個三葉結構、互比一樣會吐出數字，
+  /// 而那組數字自洽但完全錯。閘門不過就只留重拍指示，不產生任何幾何結論。
+  static Future<List<WtDetection>?> _analyzeGeometry(
+    WtMedia m,
+    String sessionId,
+    BladeBytesLoader read,
+    List<String> notes, {
+    BladeGeometryAnalyzer? geometry,
+  }) async {
+    Uint8List bytes;
+    try {
+      bytes = await read(m.path);
+    } catch (_) {
+      notes.add('${_shortPath(m.path)}：讀不到檔案，未納入幾何分析。');
+      return null;
+    }
+    final result = geometry == null
+        ? await compute(_geometryIsolate, bytes)
+        : await geometry(bytes);
+
+    if (!result.ok) {
+      notes.add('${_shortPath(m.path)}（整機照）：${result.reasons.join('；')}');
+      // 閘門拒收也是一筆要進報告的發現——現場需要知道「這張不能用」
+      return [
+        WtDetection(
+          detectionId: 'geo-$sessionId-${p.basename(m.path)}',
+          sessionId: sessionId,
+          layer: WtLayer.geometry,
+          defectClass: 'capture_quality',
+          severity: null,
+          metricJson: result.metrics,
+          mediaPath: m.path,
+          source: WtDetectionSource.algorithm,
+          aiDescription: result.reasons.join('；'),
+        )
+      ];
+    }
+    for (final wmsg in result.warnings) {
+      notes.add('${_shortPath(m.path)}（整機照）：$wmsg');
+    }
+
+    final out = <WtDetection>[];
+    for (final c in result.comparisons) {
+      if (!c.flagged) continue;
+      final idx = c.outlierIndex;
+      out.add(WtDetection(
+        detectionId: 'geo-$sessionId-${p.basename(m.path)}-${c.metric}',
+        sessionId: sessionId,
+        layer: WtLayer.geometry,
+        blade: idx >= 0 && idx < 3 ? ['A', 'B', 'C'][idx] : null,
+        defectClass: c.metric == 'tip_deflection_px'
+            ? 'tip_deflection'
+            : 'blade_mismatch',
+        // 三片互比只給「警告」級：它指出的是「這片與另兩片不一樣」，
+        // 而不一樣的原因可能是變形，也可能是那一片剛好被雲遮住一段。
+        // 要升級成不合格得靠近距離複檢，不是靠這張照片。
+        severity: 2,
+        confidence: null,
+        metricJson: {
+          ...result.metrics,
+          '${c.metric}_values': c.values,
+          '${c.metric}_deviation': c.outlierDeviation,
+          '${c.metric}_z': c.z,
+          if (c.metric == 'tip_deflection_px')
+            'tip_deflection_px': c.outlierDeviation,
+        },
+        mediaPath: m.path,
+        source: WtDetectionSource.algorithm,
+        aiDescription: '三片互比：${_metricLabel(c.metric)}與另兩片差 '
+            '${c.outlierDeviation.abs().toStringAsFixed(1)} px'
+            '（另兩片彼此差 ${c.othersSpread.abs().toStringAsFixed(1)} px，'
+            'z = ${c.z.toStringAsFixed(1)}）',
+      ));
+    }
+    if (out.isEmpty) {
+      notes.add('${_shortPath(m.path)}（整機照）：三片剪影互比未見離群'
+          '（${result.comparisons.length} 個量都在雜訊範圍內）。');
+    }
+    return out;
+  }
+
+  static const Map<String, String> _metricLabels = {
+    'tip_deflection_px': '葉尖偏移',
+    'radius_px': '葉片長度',
+    'mean_width_px': '平均弦寬',
+    'residual_rms_px': '形狀不規則度',
+  };
+
+  static String _metricLabel(String metric) => _metricLabels[metric] ?? metric;
+
+  /// 合併演算法與 AI 的判斷。**公開**是刻意的：AI 補跑佇列
+  /// （`blade_ai_retry_service.dart`）連線後會走同一條合併規則，
+  /// 各自寫一份的話「AI 只能往上加」這條規則會兩邊漂移。
   ///
   /// **演算法的 severity 是下限，AI 只能往上加。** 理由：severity 來自量到的
   /// 數值，AI 看的是同一張照片的縮圖，沒有理由推翻量測；但 AI 可能看到量測沒有
   /// 涵蓋的東西（LEP 整片翻起、雷擊燒痕），那時它可以把等級拉高。
   /// AI 認為是正常結構時**不刪掉這筆發現**，把它的理由寫進描述交給人工判斷——
   /// 篩檢工具寧可多留一筆待確認，不要少留一筆。
-  static WtDetection _merge(WtDetection algo, WtDetection ai) {
+  static WtDetection mergeAlgorithmAndAi(WtDetection algo, WtDetection ai) {
     final severity = algo.severity == null
         ? ai.severity
         : (ai.severity == null

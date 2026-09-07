@@ -4,6 +4,8 @@ import 'dart:typed_data';
 import 'package:flutter/foundation.dart' show compute;
 import 'package:image/image.dart' as img;
 
+import 'blade_image_ops.dart';
+
 /// 表面層分析（規格 §5.2）— `blade_prototype/blade_proto/surface.py` 的 Dart 對照實作。
 ///
 /// 輸入是**長焦分區段照**：一段葉片橫越畫面。這條路徑用的是原本的「邊緣取樣 + 逐列
@@ -174,7 +176,7 @@ class BladeSurfaceService {
     Uint8List bytes, {
     BladeSurfaceParams params = const BladeSurfaceParams(),
   }) {
-    final decoded = img.decodeImage(bytes);
+    final decoded = BladeImageOps.safeDecode(bytes);
     if (decoded == null) {
       return BladeSurfaceAnalysis.failed('無法讀取這張照片，請重新拍攝');
     }

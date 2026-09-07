@@ -194,7 +194,7 @@ flutter test
 flutter test test/form_inspection_record_test.dart
 ```
 
-### 測試清單（211 tests）
+### 測試清單（286 tests）
 
 | 檔案 | 數量 | 覆蓋範圍 |
 |------|------|---------|
@@ -207,9 +207,14 @@ flutter test test/form_inspection_record_test.dart
 | `form_inspection_record_test.dart` | 21 | Model: toMap/fromMap 往返、null 處理、舊格式相容、standardJudgments 持久化、copyWith 深拷貝 |
 | `database_service_test.dart` | 12 | DB CRUD: insert/update/delete、排序、limit、搜尋、GPS 持久化、UNIQUE 約束 |
 | `photo_service_test.dart` | 6 | 照片命名格式、序號補零、截斷、特殊字元 |
-| `blade_analysis_service_test.dart` | 18 | ★ 葉片分析編排：門檻表邊界、未驗過品質的照片不分析、未超門檻不進報告但存進 DB、AI 不得下砍演算法等級、離線不遺失結果、摘要明講未跑的層 |
+| `blade_geometry_compare_test.dart` | 17 | ★ 幾何層：三片輪廓逐項對照 Python、健康那台四個量都不標記、**單片注入 24 px 偏移要被標記且指對那一片**、離群判準要同時滿足 z 與「大於另兩片彼此差」、閘門拒收時互比一定為空 |
+| `blade_geometry_service_test.dart` | 15 | ★ 分割與結構定位逐階段對照 Python：色空間 → 天空模型場 → 距離與遮罩 → 輪轂/塔架/三片葉尖 |
+| `blade_trend_service_test.dart` | 15 | ★ 跨次趨勢：一個點不產生趨勢、下降不可被說成好轉、駁回的點留在線上、只比無因次比值 |
+| `blade_ai_retry_service_test.dart` | 11 | ★ AI 補跑佇列：不推翻已簽核的、失敗維持待補、同場次不做 N+1、批次上限 |
+| `blade_image_ops_test.dart` | 10 | ★ 影像運算逐項對照 OpenCV：網格中值（網格點逐位相同）、REFLECT_101 高斯、5×5 橢圓閉、連通元件、chamfer 距離變換（含最大值位置）、8-bit Lab |
+| `blade_analysis_service_test.dart` | 24 | ★ 葉片分析編排：門檻表邊界、未驗過品質的照片不分析、未超門檻不進報告但存進 DB、AI 不得下砍演算法等級、離線不遺失結果、摘要明講未跑的層 |
 | `blade_report_builder_test.dart` | 9 | ★ 葉片報告的立場：不輸出「合格」、零檢出明說代表什麼、演算法數值看得到、人工駁回的不列入但照片仍附上 |
-| `blade_capture_gate_test.dart` | 9 | ★ 葉片拍攝閘門：只擋讀不到檔與整張過暗；模糊/過亮/死白降為提醒（儀表門檻套天空畫面會誤攔）、原始量全存供日後校準 |
+| `blade_capture_gate_test.dart` | 9 | ★ 葉片拍攝閘門（影像層）：只擋讀不到檔與整張過暗；模糊/過亮/死白降為提醒（儀表門檻套天空畫面會誤攔）、原始量全存供日後校準 |
 | `blade_surface_service_test.dart` | 8 | ★ 表面層 Dart 對照 Python 原型：前後緣比判定一致、凹坑/p95、分 zone 定位侵蝕落在哪一段、cm 換算、失敗要給補救方式 |
 | `blade_ai_service_test.dart` | 8 | ★ 葉片 AI：正常結構清單一定在 prompt 裡、演算法數值不被 AI 覆蓋、severity/confidence 值域夾回、失敗往上丟 |
 | `database_migration_test.dart` | 6 | SQLite v3→v4 與 v4→v5 真實 onUpgrade 升級路徑（standard_judgments 欄位；葉片三表 + 既有紀錄不動 + round-trip + 壞 JSON 容錯） |
@@ -300,6 +305,55 @@ flutter build apk --debug
 ---
 
 ## 變更紀錄
+
+### 2026-09-07（葉片模組 Phase 1 缺口補完 + Phase 2 幾何層）
+
+**Phase 1 的兩個缺口**（同日盤點、同日補完）：
+
+- **AI 補跑佇列** `blade_ai_retry_service.dart`：離線時偵測標成 `geminiOfflinePending`，
+  原本沒有任何東西在連線後把 AI 那一段補完。三條不可退化的規則：只補
+  `human_status = pending` 的（在 SQL 層就擋掉，不靠呼叫端記得）、合併走
+  `BladeAnalysisService.mergeAlgorithmAndAi`（與線上分析同一條，各寫一份會漂移）、
+  失敗一律維持待補不寫半套。
+- **跨次趨勢** `blade_trend_service.dart` + `blade_history_screen.dart`：
+  **只比無因次的前緣/後緣 rms 比**。`rms_px` 受距離與焦段影響，站遠一點同一片葉片的
+  px 值就變小，那個變化與侵蝕無關；比值是同一張照片內互比出來的，是唯一跨次可比的
+  數字。一個點不產生趨勢（`delta` 回 null 而不是 0）、比值下降不可被說成好轉、
+  人工駁回的點留在線上並標記。
+- 葉片報告接進離線分享佇列（`getWtSessionsPendingShare()` 原本零呼叫端）。
+
+**Phase 2 幾何層 Dart 移植**（`segmentation.py` + `geometry.py` + `quality.py`）：
+
+整機照現在會真的被量測（三片剪影互比），不再只是「保存下來」。
+
+- **中值改成網格模式**是這批唯一的行為改變。逐像素大核中值在手機上跑不動——即使用
+  Perreault 的雙層直方圖，1024×820×3 仍約 1.4G 次 bin 運算。改成只在 step=16 的網格點
+  上算**真**中值 + 雙線性內插（約 64M 次）。這不是近似中值：網格點算的是真正的中值。
+  真實照片代價：設計範圍內輪轂命中 23/30 → 22/30。
+  **降工作尺度是更糟的選擇**（1024 → 512/384/256 掉到 20/19/18，而且時間幾乎沒省，
+  瓶頸在結構定位不在中值）。`segmentation.py` 因此新增 `grid_step` 參數當對照基準。
+- **色空間必須是 OpenCV 的 8-bit Lab**（L×2.55、a/b+128），不能用表面層那個未縮放的
+  CIE Lab：局部模型的 `minScale = 1.2` 是那個空間裡的絕對下限，而大核中值必須跑在
+  uint8 上。換空間等於悄悄改門檻。
+- **距離變換用 OpenCV 的 5×5 chamfer 近似而非精確 EDT**：chamfer 有約 2% 各向異性
+  誤差、精確版沒有，但 Python 用的是 chamfer，而輪轂靠 DT 最大值定位——兩邊用不同的
+  距離就對照不起來。要換的話兩邊一起換並重跑真實語料。
+- **高斯的邊界是 REFLECT_101**（OpenCV 濾波預設）而不是 clamp；`medianBlur` 例外，
+  那個用 REPLICATE。這是逐項對照時抓到的：clamp 在外圈幾個像素會與 Python 差開，
+  而那正是遮罩邊界所在。
+- **拍攝閘門在三片互比之前，且拒收時不算互比。** 定位錯誤時 `findStructure` 一樣回傳
+  三葉結構、互比一樣吐出一組自洽但完全錯的數字。閘門的門檻與 Python 相同，而哪些
+  條件拒收、哪些只警告是量出來的（三片半徑離散是唯一真正有鑑別力的拒收條件）。
+- 互比標記的發現一律 **severity 2（警告）**，不給不合格：它指出「這片與另兩片不一樣」，
+  原因可能是變形也可能是那片剛好被雲遮住一段，要升級得靠近距離複檢。
+
+**跨語言耦合（新增，會咬人）**：改 `surface.py` / `segmentation.py` / `geometry.py` /
+`quality.py` 之後必須重跑 `blade_prototype/scripts/make_*_fixture.py`，
+否則 Flutter 的交叉驗證測試會紅。三支產生器：`make_image_ops_fixture.py`（逐項對照
+OpenCV）、`make_geometry_fixture.py`（逐階段 + 健康/偏移兩組情境）、
+`subset_pdf_font.py`（既有）。
+
+測試 211 → 286（葉片相關 +75），blade_prototype 76 → 78。
 
 ### 2026-09-07（葉片模組 Phase 1 — App 化，表面層）
 

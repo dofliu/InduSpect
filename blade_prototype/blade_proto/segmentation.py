@@ -159,12 +159,66 @@ def fit_sky_model(img_bgr: np.ndarray, border_frac: float = 0.06, mode: str = "r
     return SkyModel(coeffs.astype(np.float32), (1.0 / scale).astype(np.float32))
 
 
+def _grid_coords(n: int, step: int) -> np.ndarray:
+    """0, step, 2*step, ... 並確保含最後一個索引（末段不等距，內插用真座標處理）。"""
+    xs = list(range(0, n, step))
+    if xs[-1] != n - 1:
+        xs.append(n - 1)
+    return np.array(xs, dtype=np.int32)
+
+
+def _interp_from_grid(coarse: np.ndarray, xs: np.ndarray, ys: np.ndarray,
+                      w: int, h: int) -> np.ndarray:
+    """依**真實網格座標**做雙線性內插回 (h, w, c)。
+
+    不用 `cv2.resize`：它假設等距網格，而 `_grid_coords` 的最後一段通常較短。
+    """
+    def weights(coords: np.ndarray, n: int):
+        idx = np.searchsorted(coords, np.arange(n), side="right") - 1
+        idx = np.clip(idx, 0, len(coords) - 2)
+        lo, hi = coords[idx], coords[idx + 1]
+        return idx, ((np.arange(n) - lo) / np.maximum(hi - lo, 1)).astype(np.float32)
+
+    ix, tx = weights(xs, w)
+    iy, ty = weights(ys, h)
+    top = coarse[iy][:, ix] * (1 - tx)[None, :, None] + coarse[iy][:, ix + 1] * tx[None, :, None]
+    bot = coarse[iy + 1][:, ix] * (1 - tx)[None, :, None] + coarse[iy + 1][:, ix + 1] * tx[None, :, None]
+    return (top * (1 - ty)[:, None, None] + bot * ty[:, None, None]).astype(np.float32)
+
+
+def _median_field(lab_u8: np.ndarray, k: int, grid_step: int) -> np.ndarray:
+    """大核中值場。`grid_step > 1` 時只在網格點上取值再雙線性內插。
+
+    **這是 App 端（Dart）實際跑的模式。** 網格點的中值不受「有沒有算鄰居」影響，
+    所以這裡用快的 `cv2.medianBlur` 算完整場再取樣，數值與「只算網格點」完全相同；
+    Dart 端只算網格點是為了成本（見下），不改變結果。
+
+    為什麼 Dart 需要網格：真 2D 大核中值即使用 Perreault 的雙層直方圖，每個輸出像素
+    仍要把兩個行直方圖（16 粗 + 256 細）加減進核直方圖，約 544 次 bin 運算；
+    1024×820×3 ≈ 1.4G 次，手機上跑不動。只算網格點時，沿 x 每步只加減 `grid_step`
+    個 column（每 column k px），總量降到約 64M 次——差 20 倍以上。
+
+    代價（75 張真實照片實測，設計範圍內 30 張的輪轂命中）：
+    逐像素 23/30、step=8 22/30、**step=16 22/30**、step=24 23/30、step=32 21/30。
+    差異不是單調的，是個別照片在「誤差 ≤ 對角線 5%」門檻兩側翻動——場確實是低頻的。
+    相對地，把 `work_side` 從 1024 降到 512/384/256 會掉到 20/19/18，而且時間幾乎沒省
+    （瓶頸在結構定位不在中值），所以**寧可網格化也不要降工作尺度**。
+    """
+    if grid_step <= 1:
+        return cv2.medianBlur(lab_u8, k).astype(np.float32)
+    h, w = lab_u8.shape[:2]
+    full = cv2.medianBlur(lab_u8, k).astype(np.float32)
+    xs, ys = _grid_coords(w, grid_step), _grid_coords(h, grid_step)
+    return _interp_from_grid(full[np.ix_(ys, xs)], xs, ys, w, h)
+
+
 def fit_local_sky(
     img_bgr: np.ndarray,
     kernel_frac: float = DEFAULT_LOCAL_KERNEL_FRAC,
     work_side: int = DEFAULT_LOCAL_WORK_SIDE,
     min_scale: float = DEFAULT_LOCAL_MIN_SCALE,
     scale_gain: float = 4.0,
+    grid_step: int = 1,
 ) -> LocalSkyModel:
     """估局部天空模型：背景 = Lab 的大核中值，尺度 = |殘差| 的同核中值。
 
@@ -175,6 +229,10 @@ def fit_local_sky(
 
     scale_gain：|殘差| 要量化成 uint8 才能用 OpenCV 的大核中值（O(1) 直方圖法），
     ×4 再除回來，讓 0–64 Lab 單位的殘差有 0.25 的解析度。
+
+    grid_step：中值只在 step 間隔的網格點上取值再雙線性內插（見 `_median_field`）。
+    預設 1（逐像素，原型用）；**App 端用 16**——那是手機跑得動的唯一形式，
+    代價是 30 張真實照片的輪轂命中 23 → 22。
     """
     h, w = img_bgr.shape[:2]
     s = min(1.0, work_side / max(h, w))
@@ -184,10 +242,10 @@ def fit_local_sky(
     lab = cv2.cvtColor(small, cv2.COLOR_BGR2Lab)  # uint8：medianBlur 的大核只支援 8U
     k = int(round(kernel_frac * max(lab.shape[:2]))) | 1  # 必須是奇數
     k = int(max(5, min(k, 255)))  # OpenCV 的 medianBlur 上限
-    bg = cv2.medianBlur(lab, k).astype(np.float32)
+    bg = _median_field(lab, k, grid_step)
     resid = lab.astype(np.float32) - bg
     absr = np.clip(np.abs(resid) * scale_gain, 0, 255).astype(np.uint8)
-    scale = cv2.medianBlur(absr, k).astype(np.float32) / scale_gain * 1.4826
+    scale = _median_field(absr, k, grid_step) / scale_gain * 1.4826
     return LocalSkyModel(bg=bg, scale=np.maximum(scale, min_scale),
                          kernel_px=k, min_scale=float(min_scale))
 

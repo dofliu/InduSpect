@@ -8,8 +8,9 @@ import '../services/connectivity_service.dart';
 
 /// 離線分享佇列服務
 ///
-/// 監聽網路連線狀態，當恢復連線時自動處理
-/// 標記為 pendingShare 的表單檢測紀錄。
+/// 監聽網路連線狀態，當恢復連線時自動處理標記為 pendingShare 的紀錄——
+/// **定檢表單與葉片作業兩種都處理**（葉片作業的欄位語意刻意做成一樣：
+/// `pending_share` + `report_path`，就是為了共用這條佇列，不另寫一套）。
 class ShareQueueService {
   static final ShareQueueService _instance = ShareQueueService._internal();
   factory ShareQueueService() => _instance;
@@ -35,11 +36,20 @@ class ShareQueueService {
     });
   }
 
-  /// 處理所有待分享的紀錄
+  /// 處理所有待分享的紀錄（定檢 + 葉片）
   Future<void> processPendingShares() async {
     if (_isProcessing) return;
     _isProcessing = true;
 
+    try {
+      await _processFormRecords();
+      await _processBladeSessions();
+    } finally {
+      _isProcessing = false;
+    }
+  }
+
+  Future<void> _processFormRecords() async {
     try {
       final pendingRecords = await _dbService.getFormRecordsPendingShare();
 
@@ -75,8 +85,41 @@ class ShareQueueService {
       }
     } catch (e) {
       debugPrint('處理待分享佇列失敗: $e');
-    } finally {
-      _isProcessing = false;
+    }
+  }
+
+  /// 葉片作業的待分享。與定檢同一套規則：檔案不存在**不標記完成**，
+  /// 等使用者重新匯出——把不存在的檔案標成已分享，使用者會以為客戶收到了。
+  Future<void> _processBladeSessions() async {
+    try {
+      final pending = await _dbService.getWtSessionsPendingShare();
+      for (final session in pending) {
+        try {
+          final path = session.reportPath;
+          if (path == null) {
+            // 沒產生過報告就沒有東西可分享，標記完成以免無限重試
+            await _dbService.markWtShareComplete(session.sessionId);
+            debugPrint('葉片作業無報告路徑，跳過: ${session.sessionId}');
+            continue;
+          }
+          final file = File(path);
+          if (!await file.exists()) {
+            debugPrint('葉片報告已不存在，跳過分享: $path');
+            continue;
+          }
+          await FileSaveService.saveAndShare(
+            bytes: await file.readAsBytes(),
+            fileName: p.basename(path),
+          );
+          await _dbService.markWtShareComplete(session.sessionId);
+          debugPrint('已完成待分享的葉片作業: ${session.sessionId}');
+        } catch (e) {
+          debugPrint('分享葉片作業失敗 (${session.sessionId}): $e');
+        }
+        await Future.delayed(const Duration(milliseconds: 500));
+      }
+    } catch (e) {
+      debugPrint('處理葉片待分享佇列失敗: $e');
     }
   }
 

@@ -42,11 +42,12 @@
 
 用一般手機在地面拍葉片，做「有沒有明顯壞掉、形狀有沒有跟另外兩片不一樣、轉起來有沒有異常」的篩檢。
 **與定檢表 pipeline 平行、不共用流程**（資產驅動 vs 表單驅動）。
-App 端已可跑完整流程（Phase 1，表面層）：主頁第三個入口
-「風機葉片檢測」→ 選風機 → 引導拍攝 → 演算法量測 → **人工確認** → PDF 報告。
+App 端已可跑完整流程（表面層 + 幾何層）：主頁第三個入口
+「風機葉片檢測」→ 選風機 → 引導拍攝 → 演算法量測 → **人工確認** → PDF 報告，
+並可看同一台風機的**歷次趨勢**。
 
 - 表面層：前緣侵蝕粗糙度、裂縫候選（長焦分區段照）— **App 端已實作**
-- 幾何層：三片葉片中心線曲率互比、後緣開裂、附加件缺失 — 原型完成，Dart 移植排 Phase 2
+- 幾何層：三片葉片中心線曲率互比、後緣開裂、附加件缺失 — **App 端已實作**
 - 動態層：轉速、三片葉尖軌跡一致性、六點鐘自動取幀（轉動影片）— 原型完成，排 Phase 3
 - 聲音層：逐片寬頻噪音（前緣侵蝕）、窄頻哨音（後緣裂縫）——指出「哪一片在叫」— 原型完成
 - 周邊層：塔架油漬、機艙罩破損
@@ -241,9 +242,9 @@ python -m blade_proto sensitivity --quick --out SENSITIVITY.md
 ## 測試
 
 ```bash
-cd flutter_app && flutter test                                              # 211 tests
+cd flutter_app && flutter test                                              # 286 tests
 cd backend && GEMINI_API_KEY=ci-fake-key pytest tests/ --asyncio-mode=auto  # 191 tests
-cd blade_prototype && pytest                                                # 76 tests
+cd blade_prototype && pytest                                                # 78 tests
 ```
 
 三者皆在 CI（`.github/workflows/ci.yml`）逐 PR 執行；`flutter analyze` 為硬性門檻（warning 級以上擋 PR）。

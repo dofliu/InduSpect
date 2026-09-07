@@ -1,3 +1,7 @@
+import 'dart:math' as math;
+
+import 'blade_geometry_service.dart';
+import 'blade_structure_service.dart';
 import 'image_quality_service.dart';
 
 /// 一張葉片照的拍攝品質判定。
@@ -88,5 +92,209 @@ class BladeCaptureGate {
       advisories: advisories,
       report: report,
     );
+  }
+}
+
+/// 整機照的結構判定（對照 `blade_prototype/blade_proto/quality.py`）。
+///
+/// 真實影像驗證量到的問題不是演算法偶爾算錯，而是它**算錯的時候看起來和算對的時候
+/// 一樣**：輪轂落在穀倉屋頂上、地平線殘塊被當成第三片葉片，`findStructure` 一樣回傳
+/// 一個三葉結構，三片互比一樣吐出一組數字。現場操作者看不出差別。
+///
+/// 這一層跑在結構定位之後、三片互比之前。它不判斷葉片好壞，只判斷**這張照片能不能
+/// 拿來判斷**；失敗時給的是「怎麼重拍」，不是「這台風機沒問題」。
+class BladeStructureVerdict {
+  /// false 時**不得**進行三片互比或產生幾何結論
+  final bool ok;
+
+  /// 拒收原因（含重拍建議）
+  final List<String> reasons;
+
+  /// 可用但要降權
+  final List<String> warnings;
+  final Map<String, dynamic> metrics;
+
+  const BladeStructureVerdict({
+    required this.ok,
+    this.reasons = const [],
+    this.warnings = const [],
+    this.metrics = const {},
+  });
+
+  Map<String, dynamic> toJson() => {
+        'ok': ok,
+        if (reasons.isNotEmpty) 'reasons': reasons,
+        if (warnings.isNotEmpty) 'warnings': warnings,
+        'metrics': metrics,
+      };
+}
+
+class BladeStructureGate {
+  BladeStructureGate._();
+
+  /// 地平線以上、非天空像素占該區域的比例上限。整台風機對著天空拍只有幾個百分點。
+  /// 這條**只發警告不拒收**——見下方說明。
+  static const double maxMaskFrac = 0.15;
+
+  /// 三片葉尖半徑的離散度上限。同一台風機三片等長，真實照片上正確定位時 ≤12%，
+  /// 抓到地物、電線或別台風機當葉片時會跳到 23% 以上，而且沒有中間值。
+  /// **這是整個閘門唯一真正有鑑別力的條件**：75 張真實照片上它零誤放行。
+  static const double maxRadiusSpread = 0.15;
+
+  /// 第二個轉子的半徑相對主風機的比例，超過就發**取景歧義警告**（不拒收）
+  static const double secondRotorWarnRatio = 0.5;
+
+  /// 前景太少代表風機根本沒被分出來（白葉片對上亮雲天空）
+  static const double minMaskFrac = 0.0015;
+
+  static BladeStructureVerdict judge({
+    BladeSegmentation? seg,
+    BladeStructure? structure,
+    String? error,
+    int nBladesExpected = 3,
+    bool checkSecondRotor = true,
+  }) {
+    final reasons = <String>[];
+    final warnings = <String>[];
+    final metrics = <String, dynamic>{};
+
+    if (error != null) {
+      reasons.add('結構定位失敗（$error）：多半是天空模型被雲層或前景物撐壞，'
+          '請找雲量少的時段、讓風機正對乾淨天空重拍');
+      return BladeStructureVerdict(
+          ok: false, reasons: reasons, warnings: warnings, metrics: metrics);
+    }
+
+    if (seg != null) {
+      // 只看地平線以上：結構定位本來就只用這一區，把地面算進來會讓
+      // 「風機拍得乾淨、但地面剛好入鏡」的照片被誤擋
+      final limit = seg.horizonY ?? seg.h;
+      var on = 0;
+      final area = limit * seg.w;
+      for (var i = 0; i < area; i++) {
+        if (seg.mask[i] != 0) on++;
+      }
+      final frac = area > 0 ? on / area : 1.0;
+      metrics['mask_area_frac'] = _round(seg.maskAreaFrac, 4);
+      metrics['sky_mask_frac'] = _round(frac, 4);
+      metrics['horizon_y'] = seg.horizonY;
+      if (frac < minMaskFrac) {
+        reasons.add('畫面上幾乎分不出風機（前景僅 '
+            '${(frac * 100).toStringAsFixed(2)}%）：白色葉片對上亮雲天空對比不足，'
+            '請換角度讓葉片背景是純天空');
+      } else if (frac > maxMaskFrac) {
+        // 只給警告不拒收：75 張真實照片的門檻掃描顯示，這條規則擋掉的錯誤案例
+        // 全部已經被下面的葉尖半徑規則擋掉，自己額外擋掉的只有一張正確案例
+        warnings.add('地平線以上的前景占 ${(frac * 100).toStringAsFixed(0)}%'
+            '（一般 <${(maxMaskFrac * 100).toStringAsFixed(0)}%）：'
+            '雲層、建物或地形可能被當成風機，判定結果請降權看待');
+      }
+    }
+
+    if (structure == null || !structure.ok) {
+      if (reasons.isEmpty) {
+        reasons.add(structure?.failure ?? '沒有結構定位結果');
+      }
+      return BladeStructureVerdict(
+          ok: false, reasons: reasons, warnings: warnings, metrics: metrics);
+    }
+
+    final n = structure.blades.length;
+    metrics['n_blades'] = n;
+    if (n != nBladesExpected) {
+      reasons.add('只定位到 $n 片葉片（應為 $nBladesExpected）：'
+          '可能有葉片正好貼在塔架上（六點鐘方位）或沒入雲層，'
+          '請等轉子轉到三片都離開塔架再拍');
+    }
+
+    final radii = structure.blades.map((b) => b.tipRadiusPx).toList();
+    metrics['tip_radii_px'] = radii.map((r) => _round(r, 1)).toList();
+    if (radii.length >= 2) {
+      final sp = _spread(radii);
+      metrics['tip_radius_spread'] = _round(sp, 3);
+      if (sp > maxRadiusSpread) {
+        reasons.add('三片葉尖半徑差 ${(sp * 100).toStringAsFixed(0)}%'
+            '（上限 ${(maxRadiusSpread * 100).toStringAsFixed(0)}%）：'
+            '同一台風機三片等長，差這麼多代表有一片其實是地物、電線或別台風機，'
+            '請重拍並確保只有一台風機在框內');
+      }
+    }
+
+    if (seg != null && seg.horizonY != null) {
+      final below = <int>[];
+      for (var i = 0; i < structure.blades.length; i++) {
+        if (structure.blades[i].tipY >= seg.horizonY!) below.add(i + 1);
+      }
+      if (below.isNotEmpty) {
+        reasons.add('第 ${below.join('、')} 片的葉尖落在地平線以下：'
+            '抓到的不是葉片，請重拍');
+      }
+    }
+
+    // 取景歧義：畫面裡有第二個轉子時，演算法有可能乾淨地鎖上「不是操作者要量的那一台」。
+    // 這一條**只發警告不拒收**，理由是量出來的：75 張真實照片上閘門本來就沒有誤放行
+    // （multi 照片全部被上面的半徑離散規則擋下），再加一條拒收只有代價沒有收益
+    // ——ratio > 0.5 會擋掉 8 張正確放行中的 2 張。
+    if (checkSecondRotor && seg != null && radii.isNotEmpty) {
+      final r = BladeStructureService.findSecondRotor(
+          seg.mask, seg.w, seg.h, structure,
+          horizonY: seg.horizonY);
+      final r1 = _median(radii);
+      metrics['second_rotor_radius_px'] = _round(r[0], 1);
+      metrics['second_rotor_arms'] = r[1].toInt();
+      if (r1 > 1.0) {
+        final ratio = r[0] / r1;
+        metrics['second_rotor_ratio'] = _round(ratio, 3);
+        if (ratio >= secondRotorWarnRatio) {
+          warnings.add('畫面裡還有另一個轉子，半徑約為主風機的 '
+              '${(ratio * 100).toStringAsFixed(0)}%：請確認量到的是要量的那一台；'
+              '風場的風機外觀相同，量錯對象不會有任何徵兆');
+        }
+      }
+    }
+
+    if (!structure.towerFound) {
+      warnings.add('沒有找到塔架：塔架傾斜與六點鐘方位判讀不可用（幾何互比仍可進行）');
+    }
+    if (!structure.hubRefined) {
+      warnings.add('輪轂只有初估、未經葉片軸線精修：葉尖偏移量的精度會下降');
+    }
+    for (final note in structure.notes) {
+      if (note.contains('超過上限') || note.contains('共線')) {
+        warnings.add('結構定位提示：$note');
+      }
+    }
+
+    return BladeStructureVerdict(
+      ok: reasons.isEmpty,
+      reasons: reasons,
+      warnings: warnings,
+      metrics: metrics,
+    );
+  }
+
+  static double _spread(List<double> v) {
+    if (v.length < 2) return double.nan;
+    final med = _median(v);
+    if (med <= 1e-6) return double.infinity;
+    var lo = v.first, hi = v.first;
+    for (final x in v) {
+      if (x < lo) lo = x;
+      if (x > hi) hi = x;
+    }
+    return (hi - lo) / med;
+  }
+
+  static double _median(List<double> v) {
+    final s = List<double>.from(v)..sort();
+    final n = s.length;
+    if (n == 0) return double.nan;
+    return n.isOdd ? s[n ~/ 2] : (s[n ~/ 2 - 1] + s[n ~/ 2]) / 2.0;
+  }
+
+  static double _round(double v, int digits) {
+    if (!v.isFinite) return v;
+    final f = math.pow(10, digits);
+    return (v * f).round() / f;
   }
 }

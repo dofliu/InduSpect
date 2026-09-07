@@ -1,0 +1,295 @@
+{
+ "_readme": [
+  "幾何層 Dart 移植的交叉驗證參考值。由 blade_prototype 在 blade_front_scene.png 上量出。",
+  "天空模型用 grid_step=16（App 端的模式）。改動 segmentation.py 後要重跑",
+  "scripts/make_geometry_fixture.py，否則 Flutter 的交叉驗證測試會紅。"
+ ],
+ "size": [
+  384,
+  512
+ ],
+ "grid_step": 16,
+ "kernel_px": 103,
+ "lab8_samples": {
+  "0,0": [
+   168,
+   122,
+   101
+  ],
+  "192,0": [
+   172,
+   123,
+   102
+  ],
+  "383,511": [
+   227,
+   126,
+   119
+  ],
+  "128,256": [
+   233,
+   128,
+   126
+  ],
+  "192,256": [
+   219,
+   129,
+   127
+  ],
+  "10,502": [
+   221,
+   125,
+   119
+  ],
+  "374,10": [
+   154,
+   124,
+   95
+  ]
+ },
+ "bg_samples": {
+  "0,0": [
+   169.0,
+   122.0,
+   101.0
+  ],
+  "192,0": [
+   174.0,
+   122.0,
+   103.0
+  ],
+  "383,511": [
+   227.0,
+   125.0,
+   119.0
+  ],
+  "128,256": [
+   200.0,
+   123.0,
+   111.0
+  ],
+  "192,256": [
+   199.0,
+   123.0,
+   111.0
+  ],
+  "10,502": [
+   221.8,
+   124.625,
+   118.4
+  ],
+  "374,10": [
+   155.225,
+   123.0,
+   97.0
+  ]
+ },
+ "scale_samples": {
+  "0,0": [
+   1.483,
+   1.2,
+   1.2
+  ],
+  "192,0": [
+   1.2,
+   1.483,
+   1.2
+  ],
+  "383,511": [
+   1.2,
+   1.483,
+   1.2
+  ],
+  "128,256": [
+   1.853,
+   1.483,
+   1.2
+  ],
+  "192,256": [
+   4.077,
+   1.483,
+   1.483
+  ],
+  "10,502": [
+   1.2,
+   1.2,
+   1.2
+  ],
+  "374,10": [
+   1.566,
+   1.483,
+   1.483
+  ]
+ },
+ "dist_samples": {
+  "0,0": 0.674,
+  "192,0": 1.982,
+  "383,511": 0.674,
+  "128,256": 22.016,
+  "192,256": 12.526,
+  "10,502": 0.89,
+  "374,10": 1.699
+ },
+ "threshold": 7.0,
+ "mask_area_frac": 0.03732,
+ "horizon_y": null,
+ "hub": [
+  192.01,
+  214.87
+ ],
+ "hub_radius_px": 7.8,
+ "hub_refined": true,
+ "tower_found": true,
+ "tower_angle_deg": -0.016,
+ "tower_width_px": 11.0,
+ "n_blades": 3,
+ "blades": [
+  {
+   "tip_radius_px": 160.88,
+   "tip_angle_deg": 90.36,
+   "area": 1490
+  },
+  {
+   "tip_radius_px": 161.31,
+   "tip_angle_deg": 209.78,
+   "area": 1432
+  },
+  {
+   "tip_radius_px": 160.94,
+   "tip_angle_deg": 329.73,
+   "area": 1397
+  }
+ ],
+ "profiles": [
+  {
+   "axis_angle_deg": 89.96,
+   "radius_px": 159.9,
+   "bend_coeff": 0.00162,
+   "tip_deflection_px": 0.259,
+   "residual_rms_px": 0.1184,
+   "mean_width_px": 9.188,
+   "n_contaminated_bins": 0
+  },
+  {
+   "axis_angle_deg": 210.01,
+   "radius_px": 160.61,
+   "bend_coeff": -0.0021,
+   "tip_deflection_px": -0.338,
+   "residual_rms_px": 0.1141,
+   "mean_width_px": 9.201,
+   "n_contaminated_bins": 0
+  },
+  {
+   "axis_angle_deg": 329.91,
+   "radius_px": 159.96,
+   "bend_coeff": 0.00137,
+   "tip_deflection_px": 0.219,
+   "residual_rms_px": 0.1044,
+   "mean_width_px": 9.007,
+   "n_contaminated_bins": 1
+  }
+ ],
+ "comparison": {
+  "n_blades": 3,
+  "any_flagged": false,
+  "metrics": {
+   "tip_deflection_px": {
+    "z": 0.384,
+    "others_spread": 0.0405,
+    "outlier_deviation": -0.5767,
+    "flagged": false
+   },
+   "radius_px": {
+    "z": 0.228,
+    "others_spread": 0.0639,
+    "outlier_deviation": 0.6846,
+    "flagged": false
+   },
+   "mean_width_px": {
+    "z": 0.125,
+    "others_spread": 0.0125,
+    "outlier_deviation": -0.1875,
+    "flagged": false
+   },
+   "residual_rms_px": {
+    "z": 0.016,
+    "others_spread": 0.0042,
+    "outlier_deviation": -0.0119,
+    "flagged": false
+   }
+  }
+ },
+ "capture_verdict": {
+  "ok": true,
+  "n_reasons": 0,
+  "n_warnings": 0,
+  "tip_radius_spread": 0.003,
+  "sky_mask_frac": 0.0373,
+  "second_rotor_ratio": 0.0
+ },
+ "truth": {
+  "hub": [
+   192.0,
+   215.04
+  ],
+  "rotor_radius_px": 160.0,
+  "mask_area_frac": 0.04462
+ },
+ "deflected": {
+  "_note": "第二片注入 900 cm 葉尖偏移（24 px @ 37.5 cm/px）；不存 PNG，只存數值",
+  "profiles": [
+   {
+    "axis_angle_deg": 89.99,
+    "radius_px": 158.521,
+    "tip_deflection_px": 0.349,
+    "residual_rms_px": 0.1362,
+    "mean_width_px": 9.1671
+   },
+   {
+    "axis_angle_deg": 220.48,
+    "radius_px": 162.537,
+    "tip_deflection_px": 23.7623,
+    "residual_rms_px": 0.1488,
+    "mean_width_px": 8.8727
+   },
+   {
+    "axis_angle_deg": 329.92,
+    "radius_px": 161.327,
+    "tip_deflection_px": -0.0528,
+    "residual_rms_px": 0.1023,
+    "mean_width_px": 9.0081
+   }
+  ],
+  "any_flagged": true,
+  "metrics": {
+   "tip_deflection_px": {
+    "z": 15.743,
+    "outlier_index": 1,
+    "outlier_deviation": 23.6142,
+    "others_spread": 0.4019,
+    "flagged": true
+   },
+   "radius_px": {
+    "z": 1.137,
+    "outlier_index": 0,
+    "outlier_deviation": -3.4112,
+    "others_spread": 1.2097,
+    "flagged": false
+   },
+   "mean_width_px": {
+    "z": 0.151,
+    "outlier_index": 0,
+    "outlier_deviation": 0.2267,
+    "others_spread": 0.1354,
+    "flagged": false
+   },
+   "residual_rms_px": {
+    "z": 0.054,
+    "outlier_index": 2,
+    "outlier_deviation": -0.0402,
+    "others_spread": 0.0126,
+    "flagged": false
+   }
+  }
+ }
+}
