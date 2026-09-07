@@ -16,7 +16,7 @@
 cd blade_prototype
 python3 -m venv .venv && . .venv/bin/activate
 pip install -r requirements.txt
-pytest            # 61 tests，約 3 分鐘（聲學測試較慢）
+pytest            # 67 tests，約 3 分鐘（聲學測試較慢）
 ```
 
 ## 三種輸入、三個指令
@@ -85,6 +85,7 @@ python -m blade_proto report --asset WTG-07 --still still.json --still-overlay s
 | `dynamics.py` | 正視：每幀分割 + 結構 → 葉尖 (角度, 半徑) → 角度連續性配到三條軌跡（缺測用角速度預測補）→ 展開角度回歸得轉速 → \|角度−270°\| 局部極小 = 六點鐘幀（葉片被塔架遮住，為內插值）→ 三片半徑中位數互比。側視（`--view side`）：三葉尖共線、角度無意義，改追蹤向下葉片的投影長度，局部極大 + 拋物線精修 = 六點鐘幀，相鄰通過間隔 = 1/3 圈得轉速。兩者皆有線上輪轂中位數濾波處理離群幀 | §5.4 |
 | `acoustics.py` | 音軌 → STFT → 分析頻帶包絡；包絡自相關求轉子/葉片通過週期（含諧波歧義判別）、定相位切成三片；逐片平均頻譜 → 寬頻位準（方向性互比）與窄頻峰突出量（僅單片出現才算哨音）；風噪與訊噪比可用性守門 | §5.4 音軌 |
 | `quality.py` | **拍攝品質閘門**：結構定位之後、三片互比之前擋一道。拒收條件為定位丟例外、前景 < 0.15%（白葉片對亮雲天空對比不足）、葉片數 ≠ 3、三片葉尖半徑離散 > 15%（同型三片必等長，差這麼多代表有一片是地物/電線/別台風機）、葉尖落在地平線以下；前景占比過高、找不到塔架、輪轂未精修則只發警告。門檻由 75 張真實照片掃描而得，零誤放行 | 交付安全 |
+| `scripts/make_validation_report.py` | **真實影像驗證的圖文報告產生器**：吃 `validate_real_images.py` 的輸出，排出摘要磚、天空條件命中率圖表、天空×取景交叉表、逐個失敗模式的前後疊圖對照、閘門門檻掃描表、逐張結果與影像授權附錄；`--pdf` 可直接列印成 A4 PDF | 交付物 |
 | `report.py` / `charts.py` | 圖文報告：把數值排成 HTML（區段、統計磚、數值表、待確認欄）＋內嵌 SVG 圖表。無外部相依、無 JS；照片以 base64 內嵌 | 交付物 |
 | `synth.py` | 參數化風機（60 m 葉片、4 m 根弦、塔架、機艙、預彎），正視/側視/分區段/影片；`SceneSpec.for_scale()` 依感光元件像素數與 cm/px 建場景，轉子塞不進畫面會拒絕 | 測試夾具 |
 
@@ -144,8 +145,14 @@ python -m blade_proto sensitivity --out SENSITIVITY.md           # ~10 分鐘，
 ```bash
 python scripts/fetch_real_images.py    --out real_images --limit 45   # Openverse，只收 CC0/BY/BY-SA
 python scripts/validate_real_images.py --dir real_images              # 逐張疊圖 + results.json
+python scripts/make_validation_report.py \
+  --corpus real_images --after real_images/_out \
+  --out validation.html --pdf validation.pdf                          # 圖文報告（可列印）
 ```
 
 影像不進版控（`.gitignore`），版控裡只有 `data/real_image_labels.json`（75 張的人工標註：
 分類、輪轂座標、天空條件、取景、現場干擾）與腳本，任何人重跑一次即可重現。
-結果與失敗案例集見 **`REAL_IMAGE_VALIDATION.md`**。
+結果與失敗案例集見 **`REAL_IMAGE_VALIDATION.md`**（文字版）；
+`make_validation_report.py` 會把同一批數字排成**圖文報告**——每個失敗模式配一組
+「改動前 / 改動後」疊圖對照，A4 約 26 頁。多給一組 `--before`（改動前程式碼的 validate
+輸出）就會排出前後對照，只給一組就是單一狀態報告。

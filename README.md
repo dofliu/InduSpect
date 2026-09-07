@@ -211,7 +211,7 @@ python -m blade_proto sensitivity --quick --out SENSITIVITY.md
 ```bash
 cd flutter_app && flutter test                                              # 155 tests
 cd backend && GEMINI_API_KEY=ci-fake-key pytest tests/ --asyncio-mode=auto  # 191 tests
-cd blade_prototype && pytest                                                # 61 tests
+cd blade_prototype && pytest                                                # 67 tests
 ```
 
 三者皆在 CI（`.github/workflows/ci.yml`）逐 PR 執行；`flutter analyze` 為硬性門檻（warning 級以上擋 PR）。

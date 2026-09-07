@@ -213,7 +213,14 @@ cd blade_prototype
 pip install -r requirements.txt
 python scripts/fetch_real_images.py   --out real_images   --limit 45   # 依 data/real_image_labels.json 的 id 對照
 python scripts/validate_real_images.py --dir real_images --out real_images/_out
+# 圖文報告（本文件的圖文版，含逐個失敗模式的疊圖）
+python scripts/make_validation_report.py --corpus real_images --after real_images/_out \
+  --out validation.html --pdf validation.pdf
 ```
+
+要重現**改動前後對照**，得先把 `blade_proto/segmentation.py` 退回修 `find_horizon` 與塔軸走訪
+之前的版本再跑一次 validate，然後把兩個輸出目錄分別餵給 `--before` / `--after`；
+`make_validation_report.py` 的 docstring 有完整指令。
 
 `real_images/` 已在 `.gitignore`；`_out/` 內含逐張疊圖（洋紅 = 遮罩、綠 = 演算法輪轂、
 黃圈 = 人工標註輪轂、青 = 葉尖）與 `results.json`。Openverse 的搜尋結果會隨時間變動，
