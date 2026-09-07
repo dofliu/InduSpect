@@ -2496,6 +2496,8 @@ class _FormInspectionScreenState extends State<FormInspectionScreen> {
     try {
       final reportBytes = utf8.encode(_summaryReport!);
       final reportName = '${_fileName?.replaceAll(RegExp(r'\.\w+$'), '') ?? 'inspection'}_report.txt';
+      // 同上：匯出動作，離線照樣開面板（而且這份 txt 沒有寫到磁碟，
+      // 擋掉的話使用者什麼都拿不到）
       await FileSaveService.saveAndShare(
         bytes: Uint8List.fromList(reportBytes),
         fileName: reportName,
@@ -2562,6 +2564,9 @@ class _FormInspectionScreenState extends State<FormInspectionScreen> {
       final outputPath = p.join(dir.path, PdfReportService.suggestedFileName(data));
       await File(outputPath).writeAsBytes(bytes);
 
+      // 這是**匯出**動作不是交付動作，所以離線也照樣開分享面板：面板上「儲存到
+      // 檔案」／AirDrop 這些目的地離線可用，擋掉等於拿掉功能，而 PDF 寫在 app
+      // 文件目錄裡使用者自己拿不到。離線佇列只套在交付動作（_shareFile）上。
       await FileSaveService.saveAndShare(bytes: bytes, fileName: p.basename(outputPath));
     } catch (e) {
       if (mounted) {

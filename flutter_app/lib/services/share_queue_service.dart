@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:io';
-import 'dart:typed_data';
 
 import 'package:flutter/foundation.dart';
 import 'package:path/path.dart' as p;
@@ -8,15 +7,6 @@ import 'package:path/path.dart' as p;
 import '../services/connectivity_service.dart';
 import '../services/database_service.dart';
 import '../services/file_save_service.dart';
-
-/// 實際把檔案送出去的動作。
-///
-/// 抽成 typedef 是為了測得到：`FileSaveService.saveAndShare` 是 static，
-/// 測試時沒有縫可以換，於是整條「恢復網路後自動分享」在單元測試裡碰不到。
-typedef ShareSink = Future<void> Function({
-  required Uint8List bytes,
-  required String fileName,
-});
 
 /// 一次佇列處理的結果。
 ///

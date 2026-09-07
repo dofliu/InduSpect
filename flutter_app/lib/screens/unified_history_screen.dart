@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:path/path.dart' as p;
 import '../models/form_inspection_record.dart';
+import '../services/connectivity_service.dart';
 import '../services/database_service.dart';
 import '../services/file_save_service.dart';
 import '../services/pdf_report_service.dart';
@@ -509,11 +510,28 @@ class _UnifiedHistoryScreenState extends State<UnifiedHistoryScreen> {
     }
   }
 
+  /// 重新分享。離線時**不開分享面板**，改標記待分享交給離線佇列——
+  /// 面板離線也開得起來，但使用者選了 email 之後那封信會卡在寄件匣，
+  /// 而 app 完全不知道。這一條剛好是佇列的原生契約：它讀的就是
+  /// `pending_share` + `filled_document_path`。
   Future<void> _reshareFile(FormInspectionRecord record) async {
     if (record.filledDocumentPath == null) return;
     try {
       final file = File(record.filledDocumentPath!);
       if (await file.exists()) {
+        if (!await ConnectivityService().checkConnection()) {
+          await _dbService.saveFormRecord(record.copyWith(pendingShare: true));
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('目前離線，已排入待分享（恢復網路後自動送出）'),
+                backgroundColor: Colors.orange,
+              ),
+            );
+            await _loadRecords();
+          }
+          return;
+        }
         await FileSaveService.saveAndShare(
           bytes: await file.readAsBytes(),
           fileName: p.basename(file.path),

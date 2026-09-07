@@ -194,7 +194,7 @@ flutter test
 flutter test test/form_inspection_record_test.dart
 ```
 
-### 測試清單（459 tests）
+### 測試清單（463 tests）
 
 | 檔案 | 數量 | 覆蓋範圍 |
 |------|------|---------|
@@ -204,6 +204,7 @@ flutter test test/form_inspection_record_test.dart
 | `image_quality_service_test.dart` | 14 | ★ 拍照品質閘門：模糊/過暗/過曝/反光/無法解碼、門檻可調、跨解析度一致性（合成影像） |
 | `connectivity_probe_test.dart` | 14 | ★ 可達性探測：介面×可達性決策矩陣、快取 TTL、forceProbe、逾時與例外 |
 | `inspection_item_state_test.dart` | 28 | displayValue/verdict 邏輯（含法規標準判定優先序）、controller 生命週期；★ **恢復連線後的補判**（Issue #43）：只挑還卡在「待判定」的、已有判定不重跑、`unknown` 不算待判定 |
+| `blade_report_export_test.dart` | 4 | ★ **葉片報告的離線交付**（Issue #43）：離線標記待分享而不開分享面板、上線才真的送出、`share: false` 不問連線；含「離線匯出 → 恢復連線 → 佇列真的送出」整條路 |
 | `share_queue_service_test.dart` | 14 | ★ **離線分享佇列**（Issue #43）：檔案不存在時**不標記完成**（定檢與葉片各一條）、無匯出路徑才標記完成、分享失敗不中斷佇列也不標記、上線事件觸發／斷線不觸發、重入守門、dispose 後不再觸發 |
 | `form_inspection_record_test.dart` | 21 | Model: toMap/fromMap 往返、null 處理、舊格式相容、standardJudgments 持久化、copyWith 深拷貝 |
 | `database_service_test.dart` | 18 | DB CRUD: insert/update/delete、排序、limit、搜尋、GPS 持久化、UNIQUE 約束；★ **分頁載入**（Issue #43）：limit/offset 不重疊不漏、翻頁不打亂 created_at DESC、超界回空、搜尋也支援分頁 |
@@ -450,6 +451,39 @@ N×3 次 jsonDecode 全部壓在 main isolate 上。
 **沒做的**：把「待判定」持久化（要 DB migration，而這個狀態只在 Tier 0 asset
 載不起來時出現，屬安裝完整性問題），以及第一項的五步流程端到端 widget 測試
 （那會變成大量測自己寫的假件，而不是測產品）。
+
+#### 四、把所有 `saveAndShare` 呼叫端點過一遍
+
+同一個查法（「這個服務有沒有人叫它」／「這個欄位有沒有人寫它」）在第一項的
+流程上又抓到一個**已經出貨的缺口**：
+
+`blade_report_export.dart` 的註解寫著「`pendingShare` 由呼叫端依連線狀態決定
+——這裡不猜」，而**兩個呼叫端都沒有決定**。全 app 沒有任何地方把葉片作業的
+`pendingShare` 設為 true，於是 `getWtSessionsPendingShare()` 永遠回空、
+離線佇列的葉片那半從來沒被觸發過、`blade_history_screen` 的「待分享」標籤
+也永遠不會出現。上一批寫「葉片報告接進離線分享佇列」時，接的是**讀**的那一端，
+寫的那一端沒有接上。
+
+政策因此搬進 `exportAndShare`：離線就標記待分享、不開分享面板，回傳
+`(path, shared)` 讓呼叫端的提示說對（「恢復網路後自動分享」而不是「已分享」）。
+同時開三個外部邊界的縫（`isOnline` / `outputDir` / `shareSink`）讓它測得到——
+`getApplicationDocumentsDirectory()` 在單元測試裡會炸，但 `PdfReportService.build`
+本身測得起來，所以只要換掉檔案位置就能測整條。其中一條測試把
+「離線匯出 → 恢復連線 → 佇列真的送出」整條走完。
+
+`unified_history_screen._reshareFile`（定檢的「重新分享」）同樣沒有離線處理，
+而它剛好是佇列的原生契約（`pending_share` + `filled_document_path`），
+所以改成離線時標記待分享。
+
+**同時修正了一個我自己一開始改錯的地方。** 一度把 `_exportPdfReport` 與
+`_shareReport` 也擋成「離線不開分享面板」，那是錯的：那兩個是**匯出**動作不是
+交付動作，分享面板上「儲存到檔案」／AirDrop 這些目的地離線可用，擋掉等於拿掉
+功能，而 PDF 寫在 app 文件目錄裡使用者自己拿不到。規則是**離線佇列只套在交付
+動作上**（`_shareFile`、`_reshareFile`、葉片報告），匯出動作照樣開面板。
+兩處各留一段註解說明為什麼刻意不擋，免得下一個人再「修」一次。
+
+沒動的兩處：`blade_dataset_export`（訓練語料 zip，是資料收集工具不是交付）與
+`auto_fill_screen`（隱藏的舊流程）。
 
 #### 還是需要實機的兩項
 

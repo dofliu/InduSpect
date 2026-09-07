@@ -209,7 +209,7 @@ class _BladeAssetHistoryScreenState extends State<BladeAssetHistoryScreen> {
     setState(() => _busy = true);
     try {
       final detections = await _db.getWtDetections(session.sessionId);
-      final path = await BladeReportExport.exportAndShare(
+      final r = await BladeReportExport.exportAndShare(
         asset: widget.asset,
         session: session,
         // 人工駁回的不列進報告；`buildData` 也會再擋一次
@@ -219,8 +219,13 @@ class _BladeAssetHistoryScreenState extends State<BladeAssetHistoryScreen> {
         db: _db,
       );
       if (mounted) {
+        // 離線時報告已排進佇列而不是已送出——提示要說對，不然使用者以為客戶收到了
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('已重新匯出：${p.basename(path)}')),
+          SnackBar(
+            content: Text(r.shared
+                ? '已重新匯出：${p.basename(r.path)}'
+                : '目前離線，已重新匯出並排入待分享（恢復網路後自動送出）'),
+          ),
         );
       }
     } catch (e) {

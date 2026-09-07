@@ -369,14 +369,19 @@ class _BladeInspectionScreenState extends State<BladeInspectionScreen> {
       _progress = '正在產生 PDF…';
     });
     try {
-      final path = await BladeReportExport.exportAndShare(
+      final r = await BladeReportExport.exportAndShare(
         asset: asset,
         session: session,
         detections: _detections,
         summary: _outcome?.buildSummary(),
         db: _db,
       );
-      if (mounted) _snack('報告已產生：${p.basename(path)}');
+      if (mounted) {
+        // 離線時只是排進佇列，別說成「已分享」
+        _snack(r.shared
+            ? '報告已產生：${p.basename(r.path)}'
+            : '報告已產生（目前離線，恢復網路後自動分享）：${p.basename(r.path)}');
+      }
     } catch (e) {
       if (mounted) _snack('PDF 產生失敗：$e', error: true);
     } finally {
