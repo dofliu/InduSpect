@@ -13,6 +13,8 @@ import 'package:flutter_test/flutter_test.dart';
 void main() {
   final pubspec = File('pubspec.yaml').readAsStringSync();
 
+  final depLine = RegExp(r'^  ([a-z0-9_]+):');
+
   /// 取出某個 section 底下的相依名稱，順序即檔案順序。
   List<String> depsIn(String section) {
     final keys = <String>[];
@@ -24,7 +26,7 @@ void main() {
         current = trimmed.substring(0, trimmed.length - 1);
         continue;
       }
-      final match = RegExp(r'^  ([a-z0-9_]+):').firstMatch(line);
+      final match = depLine.firstMatch(line);
       if (match != null && current == section) {
         keys.add(match.group(1)!);
       }
@@ -54,11 +56,11 @@ void main() {
 
   group('相依宣告完整性', () {
     test('lib/ 裡 import 的每個 package 都在 pubspec 宣告過', () {
+      final packageRef = RegExp(r'package:([a-z0-9_]+)/');
       final imported = <String>{};
       for (final entity in Directory('lib').listSync(recursive: true)) {
         if (entity is! File || !entity.path.endsWith('.dart')) continue;
-        for (final m
-            in RegExp(r'package:([a-z0-9_]+)/').allMatches(entity.readAsStringSync())) {
+        for (final m in packageRef.allMatches(entity.readAsStringSync())) {
           imported.add(m.group(1)!);
         }
       }
