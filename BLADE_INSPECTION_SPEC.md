@@ -277,7 +277,13 @@ CREATE TABLE wt_detections (
 | `services/blade_capture_gate.dart` | 葉片照專用拍攝品質判定（`ImageQualityService` 的門檻是以儀表近拍校準的，天空為主的畫面會誤攔） | ✅ Phase 1 |
 | `services/blade_ai_service.dart` | §5.5/§6，葉片專用 prompt + 值域夾回 | ✅ Phase 1 |
 | `services/blade_report_builder.dart` | 組 PDF 章節，交給 `pdf_report_service.dart` | ✅ Phase 1 |
-| `services/blade_geometry_service.dart` | §5.3 幾何層（三片互比）。需要局部天空模型（大核中值），Dart 移植排在 Phase 2 | ⏳ Phase 2 |
+| `services/blade_image_ops.dart` | OpenCV 對照的影像運算：8-bit Lab、**網格大核中值**、REFLECT_101 高斯、5×5 橢圓閉、連通元件、chamfer 距離變換 | ✅ Phase 2 |
+| `services/blade_geometry_service.dart` | §5.1 分割：局部天空模型、遮罩清理、地平線 | ✅ Phase 2 |
+| `services/blade_structure_service.dart` | §5.3 結構定位：輪轂／塔架／三片葉片、第二個轉子 | ✅ Phase 2 |
+| `services/blade_geometry_compare.dart` | §5.3 三片剪影互比 + `runGeometryPipeline`（分割→結構→閘門→互比） | ✅ Phase 2 |
+| `services/blade_trend_service.dart` | 跨次趨勢（只比無因次的前後緣 rms 比） | ✅ Phase 1+ |
+| `services/blade_ai_retry_service.dart` | AI 解讀補跑佇列 | ✅ Phase 1+ |
+| `screens/blade_history_screen.dart` | 歷史與趨勢 | ✅ Phase 1+ |
 | `services/blade_dynamics_service.dart` | §5.4（影片逐幀需原生解碼，見 §12） | ⏳ Phase 3 |
 
 **取像方式的取捨（Phase 1 實作時修正規格）**：原本寫「`camera` 預覽 + 上次剪影半透明疊圖」，實作時改為**系統相機（`image_picker`）+ 拍照前看上次同格位照片**。理由：§3.1/§5.2 的整套物理前提建立在「主鏡頭最高像素模式 + 5x 光學長焦」上，而 Flutter `camera` plugin 只拿得到邏輯相機——鏡頭切換（5x 望遠）與最高像素模式都碰不到，`ResolutionPreset.max` 給的是支援的預設值而非感光元件全解析度。用 App 內預覽能疊即時輪廓線，代價是失去這次量測賴以成立的解析度與焦段。取景重複性改由「上次照片對照 + GPS 導回拍攝點（< 15 m 才算回到原點）」達成。若日後要即時疊圖，得先確認 plugin 能否指定物理鏡頭。
@@ -303,7 +309,8 @@ CREATE TABLE wt_detections (
 | ↳ 取景歧義（已完成 2026-09-07） | 閘門加「畫面裡還有另一個轉子」檢查（`find_second_rotor`：拿掉已定位風機的元件後在剩餘遮罩上再跑一次結構定位） | **量測後決定做成警告而非拒收**：閘門在 75 張上已是零誤放行，加拒收只會擋掉 8 張正確放行中的 2 張。過程記在 `REAL_IMAGE_VALIDATION.md` §6 | — |
 | **Phase 1 MVP**（已完成 2026-09-07） | SQLite v5 三張表 + 三個 model；表面層 Dart 移植（對照 Python 原型交叉驗證）；分析編排層（門檻表單一來源、AI 只能往上調等級）；葉片專用 AI prompt（正常結構清單）；葉片拍攝閘門；引導拍攝／人工確認／報告三個畫面 + dashboard 入口 | 可交付的 Level 1 篩檢 App（表面層）。**幾何層與動態層明寫「本次未進行」**，不讓「未檢出異常」被讀成「整支葉片都查過了」 | 3–4 週 |
 | ↳ Phase 1 已知缺口 | ①`geminiOfflinePending` 無補跑機制（離線存下來但連線後不會跑完 AI 解讀）；②無歷史／趨勢畫面，`getWtSessionsPendingShare()` 零呼叫端（葉片報告還沒接離線分享佇列） | 都不影響單次篩檢的正確性，但②是「Phase 1 只交付得出單次篩檢」的實際原因 | 小 |
-| **Phase 2 幾何** | 引導拍照疊圖、三片互比、歷史基線、六點鐘取幀 | 變形/開裂/附加件缺失 | 3–4 週 |
+| **Phase 2 幾何**（已完成 2026-09-07） | `segmentation.py`+`geometry.py`+`quality.py` 的 Dart 移植；中值改網格模式（逐像素在手機跑不動）；拍攝閘門接在互比之前；整機照接進分析編排 | 三片剪影互比可在 App 端跑。**中值網格化的代價是輪轂命中 23/30 → 22/30**；降工作尺度更差（512/384/256 → 20/19/18） | 3–4 週 |
+| ↳ 六點鐘取幀、歷史基線 | 需要影片（動態層）或多次到場的資料累積 | — | ⏳ |
 | **Phase 3 動態** | 影片葉尖追蹤、轉速、軌跡一致性、逐片聲音 | 不平衡與聲音異常篩檢 | 4 週 |
 | **Phase 4 學習** | 健康樣本異常偵測 TFLite、資料累積後微調偵測器 | 精度提升、離線初判 | 視資料量 |
 
@@ -386,6 +393,8 @@ Phase 1 與 2 的順序可依 Phase 0 結果對調：若幾何層實測明顯比
 | 風吹葉片擺動被當變形 | 影片取多幀中位；記錄風速；同時段三片互比自然抵消 |
 | 塗裝接縫、LEP 帶被當裂縫 | prompt 列為正常結構；三片互比（三片都有 = 設計特徵） |
 | 影片逐幀在 Flutter 端處理成本高 | Phase 0 先 Python 驗證；App 端用原生 MediaCodec/AVFoundation 抽幀 plugin，或先做「上傳影片、後端處理」 |
+| **靜態照的像素運算在 Flutter 端成本高**（Phase 2 實測） | 大核中值改成**只在 step=16 網格點上算真中值 + 雙線性內插**（1.4G → 64M 次 bin 運算）。代價已量：輪轂命中 23/30 → 22/30。降工作尺度是更糟的選擇（512/384/256 → 20/19/18，而且時間幾乎沒省——瓶頸在結構定位不在中值） |
+| **Dart 與 Python 兩套實作漂移** | 三支夾具產生器（`scripts/make_image_ops_fixture.py`、`make_geometry_fixture.py`）把 Python 的答案凍結進 `flutter_app/test/assets/`，Flutter 端逐階段對照。改 Python 後不重跑 → Flutter 測試紅，這是刻意的 |
 | 使用者把「未偵測到」當合格 | UI 強制人工確認狀態；報告明示「AI 初判」 |
 | 沒有健康公差資料 | Phase 0 累積；門檻可依機型覆寫 |
 | 停機/協調風機成本 | 怠速取幀路線降低對操作的依賴 |

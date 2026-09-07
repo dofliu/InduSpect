@@ -16,6 +16,21 @@ import 'package:image/image.dart' as img;
 class BladeImageOps {
   BladeImageOps._();
 
+  // ------------------------------------------------------------ 解碼
+
+  /// 安全解碼。**`img.decodeImage` 會丟例外，不是只回 null**——
+  /// 位元組太短時它在 GIF 的格式嗅探裡就 `RangeError` 了（讀字串讀過界）。
+  /// 現場的檔案可能被截斷、可能根本不是影像，而這條路徑的承諾是「明確失敗、
+  /// 不丟例外」，所以解碼一定要包起來。
+  static img.Image? safeDecode(Uint8List bytes) {
+    if (bytes.length < 16) return null; // 連格式標頭都不夠
+    try {
+      return img.decodeImage(bytes);
+    } catch (_) {
+      return null;
+    }
+  }
+
   // ------------------------------------------------------------ 色彩
 
   /// 影像 → OpenCV 相容的 8-bit Lab，交錯排列（L,a,b）。

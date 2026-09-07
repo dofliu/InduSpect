@@ -257,12 +257,21 @@ void main() {
       expect(out.metrics['rotor_radius_px'], isNotNull);
     });
 
-    test('讀不到的位元組 → 明確失敗，不丟例外', () {
-      final out = runGeometryPipeline(Uint8List.fromList([1, 2, 3]));
-      expect(out.ok, isFalse);
-      expect(out.reasons.join(), contains('重新拍攝'));
-      expect(out.comparisons, isEmpty,
-          reason: '拒收時不能有互比結果——那組數字會自洽但完全錯');
+    test('壞掉的位元組 → 明確失敗，不丟例外', () {
+      // `img.decodeImage` 對很短的位元組**會丟 RangeError**（在 GIF 的格式嗅探裡
+      // 讀字串讀過界），不是只回 null。這條測試就是為此存在的——
+      // 現場的檔案可能被截斷，而這條路徑的承諾是「明確失敗」。
+      for (final bad in [
+        <int>[1, 2, 3],
+        <int>[],
+        List<int>.filled(40, 7),
+      ]) {
+        final out = runGeometryPipeline(Uint8List.fromList(bad));
+        expect(out.ok, isFalse, reason: '長度 ${bad.length}');
+        expect(out.reasons.join(), contains('重新拍攝'));
+        expect(out.comparisons, isEmpty,
+            reason: '拒收時不能有互比結果——那組數字會自洽但完全錯');
+      }
     });
   });
 }

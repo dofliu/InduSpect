@@ -118,7 +118,15 @@ class ImageQualityService {
     Uint8List bytes, {
     ImageQualityThresholds thresholds = const ImageQualityThresholds(),
   }) {
-    final decoded = img.decodeImage(bytes);
+    // decodeImage **會丟例外**而不只是回 null（位元組太短時在 GIF 格式嗅探裡
+    // 就 RangeError）。這支服務對外承諾的是「無法解碼 → undecodable」，
+    // 現場的檔案可能被截斷，所以解碼要包起來。
+    img.Image? decoded;
+    try {
+      decoded = bytes.length < 16 ? null : img.decodeImage(bytes);
+    } catch (_) {
+      decoded = null;
+    }
     if (decoded == null) return ImageQualityReport.undecodable();
 
     final small = _downscale(decoded, analysisMaxSide);

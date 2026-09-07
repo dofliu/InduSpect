@@ -5,6 +5,7 @@ import 'package:image/image.dart' as img;
 
 import 'blade_capture_gate.dart';
 import 'blade_geometry_service.dart';
+import 'blade_image_ops.dart';
 import 'blade_structure_service.dart';
 
 /// 單片葉片的輪廓（對照 `geometry.py::BladeProfile`）。
@@ -676,7 +677,7 @@ BladeGeometryOutcome runGeometryPipeline(
   BladeGeometryParams params = const BladeGeometryParams(),
   double noiseFloorPx = 1.5,
 }) {
-  final decoded = img.decodeImage(bytes);
+  final decoded = BladeImageOps.safeDecode(bytes);
   if (decoded == null) {
     return const BladeGeometryOutcome(
         ok: false, reasons: ['無法讀取這張照片，請重新拍攝']);

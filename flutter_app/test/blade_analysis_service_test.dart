@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:induspect_ai/models/wt_capture_session.dart';
 import 'package:induspect_ai/models/wt_detection.dart';
 import 'package:induspect_ai/services/blade_analysis_service.dart';
+import 'package:induspect_ai/services/blade_geometry_compare.dart';
 import 'package:induspect_ai/services/blade_ai_service.dart';
 import 'package:induspect_ai/services/blade_surface_service.dart';
 
@@ -64,10 +65,36 @@ void main() {
   WtCaptureSession session(List<WtMedia> media) =>
       WtCaptureSession(sessionId: 'sess-1', assetId: 'WTG-07', media: media);
 
+  /// 假的幾何層：閘門放行、四個量都不標記（健康那台）
+  BladeGeometryAnalyzer fakeGeometry({
+    bool ok = true,
+    List<String> reasons = const [],
+    List<MetricComparison> comparisons = const [],
+  }) =>
+      (Uint8List b) async => BladeGeometryOutcome(
+            ok: ok,
+            reasons: reasons,
+            metrics: const {'n_blades': 3},
+            comparisons: comparisons,
+          );
+
+  MetricComparison flagged(String metric, int index, double dev) =>
+      MetricComparison(
+        metric: metric,
+        values: const [0.0, 0.0, 20.0],
+        deviations: const [0.0, 0.0, 20.0],
+        outlierIndex: index,
+        outlierDeviation: dev,
+        othersSpread: 0.2,
+        z: 13.0,
+        flagged: true,
+      );
+
   Future<BladeAnalysisOutcome> run(
     List<WtMedia> media, {
     BladeSurfaceAnalyzer? surface,
     BladeImageAnalyzer? ai,
+    BladeGeometryAnalyzer? geometry,
     bool useAi = false,
   }) =>
       BladeAnalysisService.analyzeSession(
@@ -76,6 +103,7 @@ void main() {
         loadBytes: (_) async => bytes,
         surface: surface ?? fakeSurface(1.0),
         analyzer: ai,
+        geometry: geometry ?? fakeGeometry(),
       );
 
   group('門檻表', () {
@@ -116,16 +144,30 @@ void main() {
       expect(out.skippedCount, 1);
     });
 
-    test('整機照與影片保存但不分析，且在摘要裡講明', () async {
+    test('整機照走幾何層、影片仍未分析，摘要要講明動態層沒跑', () async {
       final out = await run([
         WtMedia(path: 'front.jpg', view: WtMediaView.front, qualityJson: const {'ok': true}),
         WtMedia(path: 'clip.mp4', kind: WtMediaKind.video, view: WtMediaView.front),
         segment('seg.jpg'),
       ]);
-      expect(out.analyzedCount, 1);
+      expect(out.analyzedCount, 2, reason: '分區段照 1 張 + 整機照 1 張');
       final summary = out.buildSummary();
-      expect(summary, contains('整轉子幾何分析尚未在 App 端實作'));
-      expect(summary, contains('動態層分析尚未在 App 端實作'));
+      expect(summary, contains('幾何層'));
+      expect(summary, contains('動態層'));
+      expect(summary, contains('未進行'), reason: '動態層要明寫沒跑');
+      expect(summary, contains('影片'));
+    });
+
+    test('沒過品質閘門的整機照不進幾何層', () async {
+      var called = 0;
+      await run(
+        [WtMedia(path: 'front.jpg', view: WtMediaView.front)],
+        geometry: (b) async {
+          called++;
+          return const BladeGeometryOutcome(ok: true);
+        },
+      );
+      expect(called, 0, reason: '`qualityOk` 是 null（沒驗過），不能當成驗過了');
     });
 
     test('讀不到檔案時留下紀錄，不靜靜跳過', () async {
@@ -251,6 +293,74 @@ void main() {
       final out = await run([segment('a.jpg')], surface: fakeSurface(5.2));
       expect(out.detections.single.humanStatus, WtHumanStatus.pending);
       expect(out.detections.single.needsConfirmation, isTrue);
+    });
+  });
+
+  group('幾何層（整機照）', () {
+    test('閘門拒收也產生一筆偵測——現場要知道「這張不能用」', () async {
+      final out = await run(
+        [WtMedia(path: 'front.jpg', view: WtMediaView.front, qualityJson: const {'ok': true})],
+        geometry: fakeGeometry(
+            ok: false, reasons: const ['三片葉尖半徑差 37%：請重拍']),
+      );
+      final d = out.detections.single;
+      expect(d.layer, WtLayer.geometry);
+      expect(d.defectClass, 'capture_quality');
+      expect(d.severity, isNull, reason: '拒收不是缺陷等級，是「量不到」');
+      expect(d.aiDescription, contains('請重拍'));
+      expect(out.reportable, isEmpty, reason: '沒有 severity 就不進報告列表');
+      expect(out.buildSummary(), contains('請重拍'));
+    });
+
+    test('互比標記 → 一筆警告級發現，指對是哪一片', () async {
+      final out = await run(
+        [WtMedia(path: 'front.jpg', view: WtMediaView.front, qualityJson: const {'ok': true})],
+        geometry: fakeGeometry(
+            comparisons: [flagged('tip_deflection_px', 2, 20.0)]),
+      );
+      final d = out.detections.single;
+      expect(d.layer, WtLayer.geometry);
+      expect(d.defectClass, 'tip_deflection');
+      expect(d.blade, 'C', reason: 'outlierIndex 2 → 第三片');
+      expect(d.severity, 2,
+          reason: '三片互比只給警告：不一樣的原因可能是雲遮住一段，'
+              '要升級成不合格得靠近距離複檢');
+      expect(d.metricJson['tip_deflection_px'], 20.0);
+      expect(d.aiDescription, contains('葉尖偏移'));
+      expect(out.reportable, hasLength(1));
+    });
+
+    test('互比沒有離群時不產生發現，但摘要要說「量過了」', () async {
+      final out = await run(
+        [WtMedia(path: 'front.jpg', view: WtMediaView.front, qualityJson: const {'ok': true})],
+        geometry: fakeGeometry(comparisons: const []),
+      );
+      expect(out.detections, isEmpty);
+      expect(out.buildSummary(), contains('未見離群'));
+    });
+
+    test('多個量同時標記 → 每個量各一筆', () async {
+      final out = await run(
+        [WtMedia(path: 'front.jpg', view: WtMediaView.front, qualityJson: const {'ok': true})],
+        geometry: fakeGeometry(comparisons: [
+          flagged('tip_deflection_px', 0, 20.0),
+          flagged('radius_px', 1, -15.0),
+        ]),
+      );
+      expect(out.detections, hasLength(2));
+      expect(out.detections.map((d) => d.defectClass).toSet(),
+          {'tip_deflection', 'blade_mismatch'});
+      expect(out.detections.map((d) => d.detectionId).toSet(), hasLength(2),
+          reason: 'detectionId 要含量名，否則兩筆會互相覆蓋');
+    });
+
+    test('側視照也走幾何層', () async {
+      final out = await run(
+        [WtMedia(path: 'side.jpg', view: WtMediaView.side, qualityJson: const {'ok': true})],
+        geometry: fakeGeometry(comparisons: [flagged('radius_px', 0, 9.0)]),
+      );
+      expect(out.analyzedCount, 1);
+      expect(out.detections.single.layer, WtLayer.geometry);
     });
   });
 

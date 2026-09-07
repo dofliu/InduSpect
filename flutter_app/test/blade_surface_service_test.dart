@@ -148,6 +148,18 @@ void main() {
     expect(bad.leOverTeRmsRatio, isNull);
   });
 
+  test('極短或截斷的位元組也不丟例外（decodeImage 在這裡會 RangeError）', () {
+    for (final bad in [
+      Uint8List.fromList([1, 2, 3]),
+      Uint8List(0),
+      Uint8List.fromList(List<int>.filled(40, 7)),
+    ]) {
+      final r = BladeSurfaceService.analyzeSync(bad);
+      expect(r.ok, isFalse, reason: '長度 ${bad.length}');
+      expect(r.failure, isNotNull);
+    }
+  });
+
   test('JSON 序列化：不合格時不得出現任何粗糙度數值', () {
     final bad = BladeSurfaceService.analyzeSync(
         _bytesOf('still not an image'));
