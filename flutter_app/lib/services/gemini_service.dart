@@ -86,6 +86,40 @@ class GeminiService {
     _initialized = true;
   }
 
+  /// 以自訂 prompt 分析一張影像，回傳解析後的 JSON map。
+  ///
+  /// 給葉片模組用（規格 §6：新增葉片專用 prompt，**不動**現有定檢 prompt）。
+  /// 領域知識（prompt 內容、結果對應到 `WtDetection`）留在
+  /// `blade_ai_service.dart`，這裡只負責呼叫與取 JSON。
+  ///
+  /// 失敗時丟例外由呼叫端處理——葉片模組要把失敗排進離線佇列，
+  /// 吞掉例外會讓那筆分析悄悄消失。
+  Future<Map<String, dynamic>> analyzeImageWithPrompt({
+    required String prompt,
+    required Uint8List imageBytes,
+    String mimeType = 'image/jpeg',
+  }) async {
+    if (!_initialized) init();
+
+    final response = await _flashModel.generateContent([
+      Content.multi([TextPart(prompt), DataPart(mimeType, imageBytes)])
+    ]).timeout(AppConstants.apiTimeout);
+
+    var text = '';
+    if (response.candidates.isNotEmpty) {
+      for (final part in response.candidates.first.content.parts) {
+        if (part is TextPart) text += part.text;
+      }
+    }
+    if (text.isEmpty) text = response.text?.trim() ?? '';
+    if (text.isEmpty) throw Exception('AI 沒有回應內容');
+
+    final decoded = jsonDecode(_extractJson(text));
+    if (decoded is Map<String, dynamic>) return decoded;
+    if (decoded is Map) return decoded.cast<String, dynamic>();
+    throw Exception('AI 回應不是預期的 JSON 物件');
+  }
+
   /// 提取 JSON 內容（處理混合回應）
   String _extractJson(String responseText) {
     responseText = responseText.trim();

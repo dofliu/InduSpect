@@ -60,7 +60,7 @@ lib/
 
 ---
 
-## 資料庫 Schema (SQLite v4)
+## 資料庫 Schema (SQLite v5)
 
 ### form_inspection_records（核心表）
 
@@ -87,13 +87,35 @@ lib/
 
 索引：`status`, `created_at`, `title`
 
+### 葉片模組三張表（v5 新增，`BLADE_INSPECTION_SPEC.md` §7）
+
+葉片檢測是**資產驅動**（跟著一台風機累積歷次紀錄），定檢是**表單驅動**（跟著一張定檢表），
+兩者的生命週期不同，所以是三張獨立新表而不是掛在既有表上。既有三張表一欄未動。
+
+| 表 | 主鍵 | 說明 |
+|----|------|------|
+| `wt_assets` | `asset_id` (TEXT UNIQUE) | 一台風機。現場編號、風場、機型、輪轂高、轉子直徑、拍攝點（JSON array：名稱 + GPS + 相機朝向） |
+| `wt_capture_sessions` | `session_id` (TEXT UNIQUE) | 一次到場。`asset_id` 外參、GPS、風機狀態（停機/怠速/運轉）、天氣、媒體清單（JSON array：路徑 + 視角 + 倍率 + 葉片 + 區段 + 前緣側 + 品質判定）、狀態、報告路徑、待分享旗標 |
+| `wt_detections` | `detection_id` (TEXT UNIQUE) | 一筆發現。`session_id` 外參、層（surface/geometry/dynamic/periphery）、葉片、區段、缺陷類別、severity 1–5、confidence、演算法數值（JSON）、bbox（JSON）、照片、來源（algorithm/gemini/geminiOfflinePending）、**人工確認狀態**與備註 |
+
+索引：`wt_capture_sessions(asset_id)`、`wt_capture_sessions(captured_at)`、`wt_detections(session_id)`
+
+幾個對 Flutter 端有影響的約定：
+
+- **`WtMedia.qualityOk` 未分析時回 `null`，不可當成通過。** 判斷一律用 `!= true`。
+- **`human_status` 預設 `pending`。** 演算法與 AI 都只是初判，沒有人簽過的發現不具效力；
+  報告每一列都帶「待確認」欄。
+- **重新分析只刪該層 `human_status = 'pending'` 的列**（`replaceWtDetections`），
+  人工已簽核的與其他層不受影響。
+- SQLite 預設不開外鍵，所以 `deleteWtAsset` / `deleteWtSession` 手動串聯刪除。
+
 ### Migration 路徑
 - v1 → v2：新增 `photo_sync_tasks` 表
 - v2 → v3：新增 `form_inspection_records` 表
 - v3 → v4：`form_inspection_records` 新增 `standard_judgments` 欄（判定持久化，Issue #44）
-
-> 葉片模組（`BLADE_INSPECTION_SPEC.md`）規劃的 v5 為**三張獨立新表**
-> （`wt_assets` / `wt_capture_sessions` / `wt_detections`），資產驅動、不動既有三表。
+- v4 → v5：新增 `wt_assets` / `wt_capture_sessions` / `wt_detections` 三張表 + 索引。
+  **只新增、不改既有欄位**，舊使用者升級後這三張表是空的（migration 測試以 v4 歷史
+  schema 快照驗證既有定檢紀錄一字未動）。
 
 ---
 
@@ -157,7 +179,7 @@ flutter test
 flutter test test/form_inspection_record_test.dart
 ```
 
-### 測試清單（155 tests）
+### 測試清單（211 tests）
 
 | 檔案 | 數量 | 覆蓋範圍 |
 |------|------|---------|
@@ -170,7 +192,12 @@ flutter test test/form_inspection_record_test.dart
 | `form_inspection_record_test.dart` | 21 | Model: toMap/fromMap 往返、null 處理、舊格式相容、standardJudgments 持久化、copyWith 深拷貝 |
 | `database_service_test.dart` | 12 | DB CRUD: insert/update/delete、排序、limit、搜尋、GPS 持久化、UNIQUE 約束 |
 | `photo_service_test.dart` | 6 | 照片命名格式、序號補零、截斷、特殊字元 |
-| `database_migration_test.dart` | 2 | SQLite v3→v4 真實 onUpgrade 升級路徑（standard_judgments 欄位） |
+| `blade_analysis_service_test.dart` | 18 | ★ 葉片分析編排：門檻表邊界、未驗過品質的照片不分析、未超門檻不進報告但存進 DB、AI 不得下砍演算法等級、離線不遺失結果、摘要明講未跑的層 |
+| `blade_report_builder_test.dart` | 9 | ★ 葉片報告的立場：不輸出「合格」、零檢出明說代表什麼、演算法數值看得到、人工駁回的不列入但照片仍附上 |
+| `blade_capture_gate_test.dart` | 9 | ★ 葉片拍攝閘門：只擋讀不到檔與整張過暗；模糊/過亮/死白降為提醒（儀表門檻套天空畫面會誤攔）、原始量全存供日後校準 |
+| `blade_surface_service_test.dart` | 8 | ★ 表面層 Dart 對照 Python 原型：前後緣比判定一致、凹坑/p95、分 zone 定位侵蝕落在哪一段、cm 換算、失敗要給補救方式 |
+| `blade_ai_service_test.dart` | 8 | ★ 葉片 AI：正常結構清單一定在 prompt 裡、演算法數值不被 AI 覆蓋、severity/confidence 值域夾回、失敗往上丟 |
+| `database_migration_test.dart` | 6 | SQLite v3→v4 與 v4→v5 真實 onUpgrade 升級路徑（standard_judgments 欄位；葉片三表 + 既有紀錄不動 + round-trip + 壞 JSON 容錯） |
 | `widget_test.dart` | 1 | App smoke test（sqflite ffi + mock prefs + dotenv testLoad） |
 
 ### 測試依賴
@@ -259,6 +286,56 @@ flutter build apk --debug
 
 ## 變更紀錄
 
+### 2026-09-07（葉片模組 Phase 1 — App 化，表面層）
+
+規格 §9 的 Phase 1 落地。**表面層排在幾何層之前**是刻意的：表面層走的是原本的逐列
+天空模型（長焦分區段照），不需要幾何層那顆大核中值，Dart 移植可行；局部天空模型
+留在 Phase 2。
+
+- **SQLite v4 → v5**：`wt_assets` / `wt_capture_sessions` / `wt_detections` 三張新表 +
+  三個索引（詳見上方 Schema 章節）。既有三張定檢表一欄未動。
+- **`blade_surface_service.dart`**：`surface.py` 的 Dart 對照實作，跑在 `compute()`
+  isolate 裡。與 Python 逐 zone 對照到小數第三位一致（`test/assets/blade_segment_reference.json`
+  存原型量到的數值）。兩個移植期間抓到的坑：
+  - **OpenCV 的 8-bit Lab 與真 CIE Lab 差約 2.55×**。比值型的 5.5σ 門檻轉移得過來，
+    但 MAD 的絕對下限要換算（0.75 → 0.3），否則門檻會被悄悄收緊。
+  - **旋轉的反向映射符號**：寫錯會把 +20° 的線轉成 40°（傾角加倍）而不是 0°。
+    degree-3 基線會把傾角吸收掉，所以這個錯誤自己不會浮出來——加了
+    `residualAxisAngleDeg` 與斷言把它釘住。
+- **`blade_analysis_service.dart`**（編排層）：門檻表（前後緣 rms 比 5.0 / 2.0 / 1.5
+  → severity 5 / 4 / 2）與原型 `report.py` 同一組數值，寫在一個地方。
+  - 未過品質閘門的照片不進演算法，判斷用 `qualityOk != true`（`null` 是「還沒驗過」）。
+  - 未超門檻的量測值**存進 DB 但不進報告**：那是下次複拍比趨勢的依據，可是把
+    「比值 0.93、未超門檻」印成一列「待判定」會讓報告看起來有懸而未決的事項。
+  - **演算法的 severity 是下限，AI 只能往上加**；AI 說「這是正常結構」時不刪掉發現，
+    把理由寫進描述交給人工。
+  - 摘要**明寫幾何層與動態層「本次未進行」**——只寫「未檢出異常」會被讀成
+    「整支葉片都查過了」。
+- **`blade_capture_gate.dart`**：規格原本計畫「給 `image_quality_service` 加遮罩參數」，
+  實作時改為**不動它、另寫一支重新決定哪些條件該擋**。那組門檻是以儀表近拍校準的，
+  葉片照大半是天空，三個量都會偏（Laplacian 變異數是整張平均、藍天 180–230、
+  陰天白空 240+ 直接踩到 `maxBrightness = 228`）。只擋讀不到檔與整張過暗，其餘降為提醒。
+  模糊降為提醒的理由是**失敗方向安全**：邊緣模糊後輪廓變平滑 → 殘差變小 →
+  前後緣比變小 → 漏判而不是誤判。四個原始量全存進 `qualityJson`，供日後拿真實照片重新定門檻。
+- **`blade_ai_service.dart`**：葉片專用 prompt（正常結構清單、演算法數值標為事實、
+  保守判斷、JSON schema）、severity/confidence 值域夾回、失敗往上丟讓呼叫端排佇列。
+  `gemini_service.dart` 只加一個 `analyzeImageWithPrompt`，現有定檢 prompt 一字未動。
+- **三個畫面**：`blade_inspection_screen.dart`（五步流程，第四步人工確認不可跳過）、
+  `blade_capture_guide_screen.dart`（格位清單 + 上次同格位照片對照 + GPS 導回拍攝點）、
+  `dashboard_screen.dart` 第三個入口。
+- **取像方式修正規格**：原計畫用 `camera` 即時預覽疊剪影，改為**系統相機
+  （`image_picker`）**。Flutter `camera` plugin 只拿得到邏輯相機，5x 望遠鏡頭切換與
+  最高像素模式都碰不到（`ResolutionPreset.max` 是支援的預設值，不是感光元件全解析度），
+  而 §3.1/§5.2 的物理前提正是建立在那兩件事上。取景重複性改由「上次照片對照 + GPS
+  導回拍攝點（< 15 m）」達成。**照片一律原尺寸保存**，不走 `PhotoService.compressPhoto`
+  （降到 1280×960 等於丟掉 4.8 cm/px 的量測前提）。
+- **葉片報告不輸出「合格」**：`blade_report_builder.dart` 的 `allowedVerdicts` 只有
+  不合格/警告/待判定；零檢出寫「本次未檢出超出門檻的異常。這不等於葉片沒有問題…」。
+  人工駁回的發現不列成項目，但**照片照樣附進報告**——駁回的是「這是缺陷」這個判斷，
+  不是「這張照片存在」這件事。
+- 測試 155 → 211（葉片相關 +52：表面層 8、報告 9、AI 8、編排 18、拍攝閘門 9，
+  migration 2 → 6）。
+
 ### 2026-09-06（風力機葉片模組 Phase 0 — 獨立功能）
 
 **追加：聲音層 + 圖文報告**（同日）
@@ -283,13 +360,13 @@ flutter build apk --debug
   正視整轉子在 12 MP 橫幅需 ≥ 4.8 cm/px 才塞得進畫面，此時 50 cm 葉尖偏移可分辨、
   25 cm 不行；側視垂掛葉片直幅 2.5–3.5 cm/px 可用；5x 長焦在 50 m 可分辨 1 cm 深的前緣凹坑。
   **整轉子幾何靠主鏡頭高像素模式，不靠長焦**（長焦塞不進整個轉子）。
-- **對 Flutter 端的影響（尚未實作，Phase 1 起）**：
-  - DB 需升 v5，新增三張獨立表（見上方 Migration 路徑註記）
-  - `image_quality_service.dart` 需支援「只在葉片遮罩內評估曝光」——往上拍必然帶大片天空，
-    現行 `maxOverexposedRatio` 會把好照片誤判為過曝
-  - 葉片為安全關鍵項目，**不得沿用 `_mapAIResultToField` 的「無異常即 pass」**：
-    沒偵測到異常不等於沒有異常，正常項應保留「待人工確認」
-  - 全解析度原圖不可沿用現行 quality 85 + 縮圖
+- **對 Flutter 端的影響**（四項均已於 2026-09-07 Phase 1 處理，做法見該條）：
+  - ✅ DB 升 v5，新增三張獨立表
+  - ✅ 曝光誤判：**沒有**改 `image_quality_service.dart` 加遮罩，改為另寫
+    `blade_capture_gate.dart` 重新決定哪些條件該擋（遮罩要先分割，而分割正是
+    要被閘門守的那一步，順序上倒過來了）
+  - ✅ 不沿用「無異常即 pass」：`human_status` 預設 `pending`，報告不輸出「合格」
+  - ✅ 全解析度原圖不壓縮：拍攝流程不走 `PhotoService.compressPhoto`
 
 ### 2026-09-04（後端 SDK 汰換 — LAUNCH_PLAN P1）
 

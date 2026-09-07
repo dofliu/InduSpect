@@ -267,20 +267,28 @@ CREATE TABLE wt_detections (
 
 沿用 repo 現有的平面目錄慣例（`screens/`、`services/`、`models/`），不另開 feature 資料夾。
 
-| 新增檔案 | 用途 |
-|----------|------|
-| `screens/blade_inspection_screen.dart` | 入口：選資產 → 引導拍攝 → 分析 → 人工確認 → 報告 |
-| `screens/blade_capture_guide_screen.dart` | `camera` 預覽 + 上次剪影半透明疊圖 + GPS 導回拍攝點 |
-| `models/wt_asset.dart`, `models/wt_capture_session.dart`, `models/wt_detection.dart` | §7 |
-| `services/blade_segmentation_service.dart` | §5.1 |
-| `services/blade_geometry_service.dart` | §5.3 |
-| `services/blade_dynamics_service.dart` | §5.4（影片逐幀需原生解碼，見 §12） |
-| `services/blade_ai_service.dart` | §5.5/§6，包 `GeminiService` |
-| `services/blade_report_builder.dart` | 組 PDF 章節，交給 `pdf_report_service.dart` |
+| 檔案 | 用途 | 狀態 |
+|------|------|------|
+| `screens/blade_inspection_screen.dart` | 入口：選資產 → 引導拍攝 → 分析 → 人工確認 → 報告 | ✅ Phase 1 |
+| `screens/blade_capture_guide_screen.dart` | 格位清單式引導拍攝：上次同格位照片對照 + GPS 導回拍攝點 + 拍攝品質判定 | ✅ Phase 1（見下方取捨） |
+| `models/wt_asset.dart`, `models/wt_capture_session.dart`, `models/wt_detection.dart` | §7 | ✅ Phase 1 |
+| `services/blade_surface_service.dart` | §5.2 表面層：`surface.py` 的 Dart 對照實作（分割、PCA 軸、sub-pixel 邊緣、robust 基線、凹坑/高頻/分 zone/紋理） | ✅ Phase 1 |
+| `services/blade_analysis_service.dart` | 編排：挑可分析的照片 → 演算法 → 門檻 → AI 解讀 → `WtDetection`；門檻表的單一來源 | ✅ Phase 1 |
+| `services/blade_capture_gate.dart` | 葉片照專用拍攝品質判定（`ImageQualityService` 的門檻是以儀表近拍校準的，天空為主的畫面會誤攔） | ✅ Phase 1 |
+| `services/blade_ai_service.dart` | §5.5/§6，葉片專用 prompt + 值域夾回 | ✅ Phase 1 |
+| `services/blade_report_builder.dart` | 組 PDF 章節，交給 `pdf_report_service.dart` | ✅ Phase 1 |
+| `services/blade_geometry_service.dart` | §5.3 幾何層（三片互比）。需要局部天空模型（大核中值），Dart 移植排在 Phase 2 | ⏳ Phase 2 |
+| `services/blade_dynamics_service.dart` | §5.4（影片逐幀需原生解碼，見 §12） | ⏳ Phase 3 |
 
-**重用不改**：`location_service.dart`、`connectivity_service.dart`、`share_queue_service.dart`、`image_quality_service.dart`（加遮罩參數）、`pdf_report_service.dart`、`database_service.dart`（加 v5 migration）。
+**取像方式的取捨（Phase 1 實作時修正規格）**：原本寫「`camera` 預覽 + 上次剪影半透明疊圖」，實作時改為**系統相機（`image_picker`）+ 拍照前看上次同格位照片**。理由：§3.1/§5.2 的整套物理前提建立在「主鏡頭最高像素模式 + 5x 光學長焦」上，而 Flutter `camera` plugin 只拿得到邏輯相機——鏡頭切換（5x 望遠）與最高像素模式都碰不到，`ResolutionPreset.max` 給的是支援的預設值而非感光元件全解析度。用 App 內預覽能疊即時輪廓線，代價是失去這次量測賴以成立的解析度與焦段。取景重複性改由「上次照片對照 + GPS 導回拍攝點（< 15 m 才算回到原點）」達成。若日後要即時疊圖，得先確認 plugin 能否指定物理鏡頭。
 
-**主頁**：`dashboard_screen.dart` 加第三個入口「風機葉片檢測」。
+**照片一律原尺寸保存**，不走 `PhotoService.compressPhoto`（那條路降到 1280×960，等於把 4.8 cm/px 的量測前提丟掉）。
+
+**重用不改**：`location_service.dart`、`connectivity_service.dart`（用 `checkConnection()` 而非 `isOnline`——廠區常有 AP 沒 uplink）、`share_queue_service.dart`、`pdf_report_service.dart`、`file_save_service.dart`、`database_service.dart`（加 v5 migration）。
+
+`image_quality_service.dart` 原本計畫「加遮罩參數」，實作時改為**不動它、另寫 `blade_capture_gate.dart` 重新決定哪些條件該擋**：那組門檻是以儀表近拍校準的，葉片照的畫面大半是天空，Laplacian 變異數（整張平均）、平均亮度與死白占比三個量都會偏，直接套用會誤攔好照片。詳見該檔的 doc comment。
+
+**主頁**：`dashboard_screen.dart` 加第三個入口「風機葉片檢測」（✅ 已加）。
 
 ---
 
@@ -292,7 +300,8 @@ CREATE TABLE wt_detections (
 | ↳ 原型（已完成 2026-09-06） | `blade_prototype/`：分割與結構定位、三片互比、前緣粗糙度、影片轉速/六點鐘取幀、合成影像靈敏度分析、**圖文報告產生器**（`case` 指令一次跑完並輸出單一自帶內容 HTML，可列印成 PDF）、**逐片聲音異常**（音軌 STFT + 通過週期切分）；61 pytest | 外業前的理論上限與拍攝協定修正（§3.1 註）；報告版面已可直接給客戶看 | — |
 | ↳ 真實影像驗證（已完成 2026-09-06） | 75 張公開 CC 授權真實照片跑分割與結構定位，人工標註輪轂座標與現場條件；修好地面/塔架相連與塔軸走訪兩個 bug（範圍內命中 10/30 → 14/30），新增拍攝品質閘門 `quality.py`（零誤放行） | 找出「天空模型是唯一真正的瓶頸」：晴空 12/14、有雲 1/13 | — |
 | ↳ 補分割（已完成 2026-09-07） | 天空模型換成**局部模型**（大核中值背景 + 同核局部尺度，`sky_mode="local"`）；門檻同時對真實語料與合成夾具兩組獨立測試集取；連帶修好輪轂精修守門的尺規（`4×hub_r` → 轉子半徑） | 命中 14/30 → **23/30**、有雲 1/13 → **10/13**、遮罩全空 4 → **0**、holdout 1/11 → **8/11**；閘門放行 2 → 8 張且全部真正可用 | — |
-| **Phase 1 MVP** | 資產 + 拍攝作業 + 靜態照表面層候選 + Gemini 裁切解讀 + 人工確認 + PDF | 可交付的 Level 1 篩檢 App | 3–4 週 |
+| ↳ 取景歧義（已完成 2026-09-07） | 閘門加「畫面裡還有另一個轉子」檢查（`find_second_rotor`：拿掉已定位風機的元件後在剩餘遮罩上再跑一次結構定位） | **量測後決定做成警告而非拒收**：閘門在 75 張上已是零誤放行，加拒收只會擋掉 8 張正確放行中的 2 張。過程記在 `REAL_IMAGE_VALIDATION.md` §6 | — |
+| **Phase 1 MVP**（已完成 2026-09-07） | SQLite v5 三張表 + 三個 model；表面層 Dart 移植（對照 Python 原型交叉驗證）；分析編排層（門檻表單一來源、AI 只能往上調等級）；葉片專用 AI prompt（正常結構清單）；葉片拍攝閘門；引導拍攝／人工確認／報告三個畫面 + dashboard 入口 | 可交付的 Level 1 篩檢 App（表面層）。**幾何層與動態層明寫「本次未進行」**，不讓「未檢出異常」被讀成「整支葉片都查過了」 | 3–4 週 |
 | **Phase 2 幾何** | 引導拍照疊圖、三片互比、歷史基線、六點鐘取幀 | 變形/開裂/附加件缺失 | 3–4 週 |
 | **Phase 3 動態** | 影片葉尖追蹤、轉速、軌跡一致性、逐片聲音 | 不平衡與聲音異常篩檢 | 4 週 |
 | **Phase 4 學習** | 健康樣本異常偵測 TFLite、資料累積後微調偵測器 | 精度提升、離線初判 | 視資料量 |
@@ -302,10 +311,14 @@ Phase 1 與 2 的順序可依 Phase 0 結果對調：若幾何層實測明顯比
 **Phase 1 的前置工作**：~~先把天空模型換掉~~ → **已於 2026-09-07 完成**（局部天空模型，
 不需要訓練資料）。有雲的照片現在進得了管線：命中 1/13 → 10/13。
 
-**新的第一順位**：拍攝品質閘門缺「畫面裡有幾台風機」的檢查。分割變好之後，多台同框的
-照片會被乾淨地鎖上其中一台，三片互比的數值自洽，但那不一定是操作者要量的那一台
-（75 張裡 5 張）。做法：以「另一個結構的表觀大小 > 已定位轉子的 50%」為條件加一道取景
-歧義警告，門檻照同一套流程在語料上掃過再定。App 端仍然只對通過品質閘門的照片出判定。
+~~**新的第一順位**：拍攝品質閘門缺「畫面裡有幾台風機」的檢查~~ → **已完成（2026-09-07）**，
+但結論與原本設想不同：量到閘門本來就沒有誤放行（multi 照片全被半徑離散規則擋下），
+所以做成**警告**而非拒收——加拒收會擋掉 8 張正確放行中的 2 張，換來零安全收益。
+詳見 `blade_prototype/REAL_IMAGE_VALIDATION.md` §6。
+
+**接下來是 Phase 1（App 化）**：本規格 §9 把表面層排在幾何層之前是對的——表面層走的是
+原本的逐列天空模型（長焦分區段照），不需要大核中值，Dart 移植可行；幾何層的局部天空
+模型留在 Phase 2。App 端仍然只對通過品質閘門的照片出判定。
 
 ---
 

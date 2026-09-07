@@ -3,9 +3,12 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:induspect_ai/models/form_inspection_record.dart';
+import 'package:induspect_ai/models/wt_asset.dart';
+import 'package:induspect_ai/models/wt_capture_session.dart';
+import 'package:induspect_ai/models/wt_detection.dart';
 import 'package:induspect_ai/services/database_service.dart';
 
-/// SQLite v3 → v4 migration 測試（Issue #44：法規判定持久化）
+/// SQLite migration 測試：v3 → v4（Issue #44 法規判定持久化）與 v4 → v5（葉片檢測三張表）
 ///
 /// 以「歷史 v3 schema 快照」建庫（migration 測試必須固定舊 schema，
 /// 不可由現行程式碼生成），再以 DatabaseService 真實的 onUpgrade 升級，
@@ -147,5 +150,222 @@ void main() {
     expect(restored.warningCount, 1);
 
     await db.close();
+  });
+  // ───────────────────── v4 → v5：葉片檢測三張表 ─────────────────────
+
+  /// 歷史 v4 schema 快照（2026-08 時期，只有定檢的三張表）。
+  /// migration 測試必須固定舊 schema，不可由現行程式碼生成。
+  Future<Database> openV4Snapshot(String path) {
+    return databaseFactoryFfi.openDatabase(
+      path,
+      options: OpenDatabaseOptions(
+        version: 4,
+        onCreate: (db, version) async {
+          await db.execute('''
+            CREATE TABLE form_inspection_records (
+              id INTEGER PRIMARY KEY AUTOINCREMENT,
+              record_id TEXT UNIQUE NOT NULL,
+              title TEXT NOT NULL,
+              source_file_name TEXT,
+              template_json TEXT,
+              filled_data TEXT NOT NULL,
+              ai_results TEXT,
+              standard_judgments TEXT,
+              summary_report TEXT,
+              filled_document_path TEXT,
+              status TEXT NOT NULL,
+              latitude REAL,
+              longitude REAL,
+              location_name TEXT,
+              photo_paths TEXT,
+              created_at TEXT NOT NULL,
+              updated_at TEXT NOT NULL,
+              pending_share INTEGER DEFAULT 0
+            )
+          ''');
+        },
+      ),
+    );
+  }
+
+  Future<Database> openWithService(String path, int version) {
+    final svc = DatabaseService();
+    return databaseFactoryFfi.openDatabase(
+      path,
+      options: OpenDatabaseOptions(
+        version: version,
+        onCreate: svc.onCreate,
+        onUpgrade: svc.onUpgrade,
+      ),
+    );
+  }
+
+  test('v4 → v5 升級：新增葉片三張表，既有定檢紀錄完全不受影響', () async {
+    final v4 = await openV4Snapshot(dbPath);
+    await v4.insert('form_inspection_records', {
+      'record_id': 'legacy-form-1',
+      'title': '升級前的定檢紀錄',
+      'filled_data': '{"f1":"ok"}',
+      'standard_judgments': '{"f1":{"judgment":"pass"}}',
+      'status': 'completed',
+      'created_at': DateTime.now().toIso8601String(),
+      'updated_at': DateTime.now().toIso8601String(),
+    });
+    await v4.close();
+
+    final v5 = await openWithService(dbPath, 5);
+
+    // 三張新表都在
+    final tables = (await v5.rawQuery(
+            "SELECT name FROM sqlite_master WHERE type='table'"))
+        .map((r) => r['name'])
+        .toList();
+    expect(tables, containsAll(['wt_assets', 'wt_capture_sessions', 'wt_detections']));
+
+    // 既有定檢紀錄一字未動——葉片是資產驅動、獨立建表，不該碰到定檢的資料
+    final rows = await v5.query('form_inspection_records',
+        where: 'record_id = ?', whereArgs: ['legacy-form-1']);
+    expect(rows.length, 1);
+    final legacy = FormInspectionRecord.fromMap(rows.first);
+    expect(legacy.title, '升級前的定檢紀錄');
+    expect(legacy.standardJudgments['f1']['judgment'], 'pass');
+
+    await v5.close();
+  });
+
+  test('全新安裝（v5 onCreate）即包含葉片三張表與定檢三張表', () async {
+    final db = await openWithService(dbPath, 5);
+    final tables = (await db.rawQuery(
+            "SELECT name FROM sqlite_master WHERE type='table'"))
+        .map((r) => r['name'])
+        .toList();
+    expect(
+        tables,
+        containsAll([
+          'template_inspection_records',
+          'photo_sync_tasks',
+          'form_inspection_records',
+          'wt_assets',
+          'wt_capture_sessions',
+          'wt_detections',
+        ]));
+    await db.close();
+  });
+
+  test('葉片資料 round-trip：資產 → 作業 → 偵測，JSON 欄位不失真', () async {
+    final db = await openWithService(dbPath, 5);
+
+    final asset = WtAsset(
+      assetId: 'WTG-07',
+      siteName: '彰濱風場',
+      model: 'V150-4.2',
+      hubHeightM: 105,
+      rotorDiameterM: 150,
+      capturePoints: const [
+        WtCapturePoint(
+            name: 'front', latitude: 24.1, longitude: 120.4, headingDeg: 315),
+        WtCapturePoint(name: 'side', latitude: 24.101, longitude: 120.402),
+      ],
+    );
+    await db.insert('wt_assets', asset.toMap());
+    final aRows = await db.query('wt_assets', where: 'asset_id = ?', whereArgs: ['WTG-07']);
+    final a = WtAsset.fromMap(aRows.first);
+    expect(a.siteName, '彰濱風場');
+    expect(a.rotorRadiusM, 75.0);
+    expect(a.capturePoints.length, 2);
+    expect(a.capturePoint('front')!.headingDeg, 315);
+    expect(a.capturePoint('side')!.hasLocation, isTrue);
+    expect(a.capturePoint('nope'), isNull);
+
+    final session = WtCaptureSession(
+      sessionId: 'sess-1',
+      assetId: 'WTG-07',
+      title: 'WTG-07 2026-09-20',
+      turbineState: WtTurbineState.stopped,
+      inspector: '王大明',
+      media: [
+        WtMedia(
+          path: '/tmp/seg1.jpg',
+          view: WtMediaView.segment,
+          zoom: 5.0,
+          bladePosition: 'A',
+          zone: 'mid',
+          leadingEdge: 'top',
+          qualityJson: const {'ok': true, 'sharpness': 142.0},
+        ),
+        WtMedia(path: '/tmp/front.jpg', view: WtMediaView.front, zoom: 1.0),
+      ],
+    );
+    await db.insert('wt_capture_sessions', session.toMap());
+    final sRows = await db
+        .query('wt_capture_sessions', where: 'session_id = ?', whereArgs: ['sess-1']);
+    final s = WtCaptureSession.fromMap(sRows.first);
+    expect(s.turbineState, WtTurbineState.stopped);
+    expect(s.media.length, 2);
+    expect(s.media.first.zone, 'mid');
+    expect(s.media.first.qualityOk, isTrue);
+    expect(s.media.last.qualityOk, isNull, reason: '尚未分析 → 不可當成合格');
+    expect(s.usableMediaCount, 1);
+    expect(s.mediaOfView(WtMediaView.front).length, 1);
+
+    final detection = WtDetection(
+      detectionId: 'det-1',
+      sessionId: 'sess-1',
+      layer: WtLayer.surface,
+      blade: 'A',
+      zone: 'mid_LE',
+      defectClass: 'leading_edge_erosion',
+      severity: 3,
+      confidence: 0.71,
+      metricJson: const {'le_over_te_rms_ratio': 5.2, 'inward_p95_px': 1.5},
+      bboxJson: const {'x': 10, 'y': 20, 'w': 300, 'h': 40},
+      mediaPath: '/tmp/seg1.jpg',
+    );
+    await db.insert('wt_detections', detection.toMap());
+    final dRows =
+        await db.query('wt_detections', where: 'detection_id = ?', whereArgs: ['det-1']);
+    final d = WtDetection.fromMap(dRows.first);
+    expect(d.layer, WtLayer.surface);
+    expect(d.metricJson['le_over_te_rms_ratio'], 5.2);
+    expect(d.bboxJson['w'], 300);
+    expect(d.source, WtDetectionSource.algorithm);
+    expect(d.needsConfirmation, isTrue, reason: '演算法初判必須待人工確認');
+
+    await db.close();
+  });
+
+  test('壞掉的 JSON 欄位不會讓整筆紀錄讀不出來', () async {
+    // 既有 model 的慣例：解析失敗回空集合，紀錄本身還在
+    final asset = WtAsset.fromMap({
+      'asset_id': 'WTG-BAD',
+      'capture_points': '{不是合法 JSON',
+      'created_at': 'not-a-date',
+    });
+    expect(asset.assetId, 'WTG-BAD');
+    expect(asset.capturePoints, isEmpty);
+
+    final session = WtCaptureSession.fromMap({
+      'session_id': 'sess-bad',
+      'asset_id': 'WTG-BAD',
+      'media': '[[[',
+      'status': '不存在的狀態',
+      'captured_at': '',
+      'updated_at': '',
+    });
+    expect(session.media, isEmpty);
+    expect(session.status, WtSessionStatus.draft, reason: '未知 enum 值退回預設');
+
+    final det = WtDetection.fromMap({
+      'detection_id': 'det-bad',
+      'session_id': 'sess-bad',
+      'layer': 'surface',
+      'source': 'algorithm',
+      'human_status': 'pending',
+      'metric_json': 'null',
+      'bbox_json': '',
+      'created_at': '',
+    });
+    expect(det.metricJson, isEmpty);
+    expect(det.bboxJson, isEmpty);
   });
 }

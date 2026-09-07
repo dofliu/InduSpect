@@ -4,27 +4,35 @@
 所以這裡的每個案例都對應一種真實照片上量到的失敗模式。
 """
 
+import cv2
 import numpy as np
 import pytest
 
 from blade_proto.quality import CaptureVerdict, assess_capture
 from blade_proto.segmentation import (SegmentationResult, SkyModel, find_horizon,
-                                      find_structure, segment_turbine)
+                                      find_second_rotor, find_structure, segment_turbine)
 from blade_proto.synth import SceneSpec, render_front
 
 
 class _Blade:
-    def __init__(self, r, tip=(0.0, 0.0)):
+    """假葉片。`xs`/`ys` 是真結構會有的像素索引——第二轉子檢查要靠它認出「哪些元件
+    是已定位的風機自己」，所以 stub 也得有，不能讓安全檢查因為缺屬性而被跳過。"""
+
+    def __init__(self, r, tip=(0.0, 0.0), pixels=None):
         self.tip_radius_px = r
         self.tip_xy = tip
+        px = pixels if pixels is not None else [(int(tip[0]), int(tip[1]))]
+        self.xs = np.array([p[0] for p in px], dtype=np.int64)
+        self.ys = np.array([p[1] for p in px], dtype=np.int64)
 
 
 class _Structure:
-    def __init__(self, radii, tips=None, tower=True, refined=True, notes=()):
+    def __init__(self, radii, tips=None, tower=True, refined=True, notes=(), hub=(150.0, 60.0)):
         tips = tips or [(0.0, 0.0)] * len(radii)
         self.blades = [_Blade(r, t) for r, t in zip(radii, tips)]
         self.tower_found = tower
         self.hub_refined = refined
+        self.hub = hub
         self.notes = list(notes)
 
 
@@ -144,3 +152,70 @@ def test_verdict_serialises_for_the_report():
     d = v.to_dict()
     assert set(d) == {"ok", "reasons", "warnings", "metrics"}
     assert isinstance(d["metrics"]["tip_radii_px"], list)
+
+
+# ------------------------------------------------------------ 取景歧義（第二個轉子）
+
+
+def _two_turbine_mask(h=400, w=700, second_scale=1.0):
+    """兩台風機的遮罩：左邊是主風機，右邊按 second_scale 縮放。"""
+    m = np.zeros((h, w), np.uint8)
+
+    def turbine(cx, r, tower_h):
+        cv2.circle(m, (cx, 120), max(4, int(r * 0.09)), 255, -1)          # 機艙
+        for ang in (90, 210, 330):                                        # 三片
+            t = np.deg2rad(ang)
+            cv2.line(m, (cx, 120), (int(cx + r * np.cos(t)), int(120 - r * np.sin(t))),
+                     255, max(2, int(r * 0.05)))
+        cv2.line(m, (cx, 120), (cx, 120 + tower_h), 255, max(3, int(r * 0.07)))
+
+    turbine(180, 90, 240)
+    if second_scale > 0:
+        turbine(520, int(90 * second_scale), int(240 * second_scale))
+    return m
+
+
+def test_second_rotor_is_found_only_when_a_second_turbine_is_there():
+    for scale, expect in ((0.0, False), (1.0, True)):
+        mask = _two_turbine_mask(second_scale=scale)
+        st = find_structure(mask)
+        r2, n2 = find_second_rotor(mask, st)
+        assert (n2 > 0) is expect, f"second_scale={scale} 得到 n2={n2}"
+        if expect:
+            r1 = float(np.median([b.tip_radius_px for b in st.blades]))
+            assert r2 / r1 > 0.5, f"等大的第二台應該量到相當的半徑，得到 {r2}/{r1}"
+
+
+def test_framing_ambiguity_is_a_warning_not_a_rejection():
+    """量出來的結論：閘門本來就沒有誤放行（multi 照片全被半徑離散擋下），
+    所以再加一條拒收只會擋掉正確案例。警告零代價，而且講的是事實。"""
+    mask = _two_turbine_mask(second_scale=1.0)
+    st = find_structure(mask)
+    v = assess_capture(_seg(mask), st)
+    assert v.ok, v.reasons                       # 不因為取景歧義而拒收
+    assert any("另一個轉子" in w for w in v.warnings)
+    assert "確認量到的是要量的那一台" in " ".join(v.warnings)
+    assert v.metrics["second_rotor_ratio"] >= 0.5
+
+
+def test_no_framing_warning_for_a_lone_turbine():
+    mask = _two_turbine_mask(second_scale=0.0)
+    v = assess_capture(_seg(mask), find_structure(mask))
+    assert not any("另一個轉子" in w for w in v.warnings)
+    assert v.metrics["second_rotor_arms"] == 0
+
+
+def test_distant_other_turbine_does_not_trigger_the_warning():
+    """遠處的他機是合法取景（75 張裡很多張都有）——半徑遠小於主風機，不該警告。"""
+    mask = _two_turbine_mask(second_scale=0.25)
+    v = assess_capture(_seg(mask), find_structure(mask))
+    assert v.metrics["second_rotor_ratio"] < 0.5
+    assert not any("另一個轉子" in w for w in v.warnings)
+
+
+def test_second_rotor_check_can_be_skipped_for_cost():
+    """它要多跑一次結構定位；逐幀分析影片時呼叫端可以關掉。"""
+    mask = _two_turbine_mask(second_scale=1.0)
+    v = assess_capture(_seg(mask), find_structure(mask), check_second_rotor=False)
+    assert "second_rotor_ratio" not in v.metrics
+    assert not any("另一個轉子" in w for w in v.warnings)
