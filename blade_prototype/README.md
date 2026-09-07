@@ -5,10 +5,27 @@
 1. **外業前**：用合成影像量化「在什麼尺度能分辨多大的異常」（`sensitivity`），決定拍攝協定。
 2. **外業後**：直接跑真實照片與影片，回答 Phase 0 的「能做到哪」。
 3. **Phase 1+**：Dart 移植的對照實作（演算法全部是 numpy / OpenCV 基本運算，無深度學習）。
-   表面層已於 2026-09-07 移植進 App（`flutter_app/lib/services/blade_surface_service.dart`），
-   兩邊**逐 zone 對照到小數第三位一致**，參考值凍結在
-   `flutter_app/test/assets/blade_segment_reference.json`。改這裡的 `surface.py`
-   要一併重跑那份參考值，否則 Flutter 的交叉驗證測試會紅。
+   表面層、幾何層與**聲音層**都已移植進 App（2026-09-07）。參考值凍結在
+   `flutter_app/test/assets/`，由 `scripts/make_*_fixture.py` 產生。
+   **改了被移植的 .py 就要重跑對應的產生器**，否則 Flutter 的交叉驗證測試會紅
+   ——那是刻意的：
+
+   | 改了這支 | 重跑這個 | 凍結的參考值 |
+   |---|---|---|
+   | `surface.py` | （見 §Dart 移植） | `blade_segment_reference.json` |
+   | `segmentation.py` / `geometry.py` / `quality.py` | `scripts/make_geometry_fixture.py` | `blade_geometry_reference.json` + `blade_front_scene.png` |
+   | （OpenCV 基本運算的語意） | `scripts/make_image_ops_fixture.py` | `blade_image_ops_reference.json` |
+   | `acoustics.py` | `scripts/make_acoustic_fixture.py` | `blade_acoustic_reference.json` + 兩段 WAV |
+
+   `make_acoustic_fixture.py` 會**自我對帳**：它為了掏出中間量重寫了一次
+   `analyze_samples` 的前處理，那份重複本來就是漂移來源，所以凡是兩邊都算得出來的量
+   （snr、週期信賴度、blade_pass_hz、rotor_hz、風噪占比）逐項比對，不一致就直接爆掉、
+   不寫檔。（實際擋下過一次：一個順手的字串取代把 savgol 窗長從 9 改成 12。）
+
+   **`dynamics.py` 刻意沒有移植。** 它的三個輸出裡，轉速已由聲音層取得
+   （包絡自相關，夾具上與真值差 0.1%，不必解一張幀）、三片半徑一致性已由幾何層在
+   單張整機照上做；唯一剩下的六點鐘取幀需要原生解碼，App 端留成注入點。
+   它在原型裡仍然有用——影片的地面實測、以及驗證聲音層算出來的轉速。
 
 > ⚠️ **先讀 `REAL_IMAGE_VALIDATION.md`。** 75 張真實照片的實測是這個模組所有數字的
 > 現實檢查。原本「天空有雲就整個垮掉」（命中 1/13、4 張遮罩全空）的瓶頸已於
@@ -96,6 +113,9 @@ python -m blade_proto report --asset WTG-07 --still still.json --still-overlay s
 | `dynamics.py` | 正視：每幀分割 + 結構 → 葉尖 (角度, 半徑) → 角度連續性配到三條軌跡（缺測用角速度預測補）→ 展開角度回歸得轉速 → \|角度−270°\| 局部極小 = 六點鐘幀（葉片被塔架遮住，為內插值）→ 三片半徑中位數互比。側視（`--view side`）：三葉尖共線、角度無意義，改追蹤向下葉片的投影長度，局部極大 + 拋物線精修 = 六點鐘幀，相鄰通過間隔 = 1/3 圈得轉速。兩者皆有線上輪轂中位數濾波處理離群幀 | §5.4 |
 | `acoustics.py` | 音軌 → STFT → 分析頻帶包絡；包絡自相關求轉子/葉片通過週期（含諧波歧義判別）、定相位切成三片；逐片平均頻譜 → 寬頻位準（方向性互比）與窄頻峰突出量（僅單片出現才算哨音）；風噪與訊噪比可用性守門 | §5.4 音軌 |
 | `quality.py` | **拍攝品質閘門**：結構定位之後、三片互比之前擋一道。拒收條件為定位丟例外、前景 < 0.15%（白葉片對亮雲天空對比不足）、葉片數 ≠ 3、三片葉尖半徑離散 > 15%（同型三片必等長，差這麼多代表有一片是地物/電線/別台風機）、葉尖落在地平線以下；前景占比過高、找不到塔架、輪轂未精修、**畫面裡有第二個轉子**則只發警告。門檻由 75 張真實照片掃描而得，零誤放行零誤攔截 | 交付安全 |
+| `scripts/make_acoustic_fixture.py` | **聲音層 Dart 移植的交叉驗證夾具**：兩段合成音軌（healthy／第 2 片 +4 dB 侵蝕 + 第 3 片 1800 Hz 哨音）寫成 16-bit WAV，加上 `analyze_samples` 的逐階段中間量。參考值**從寫出去的 WAV 讀回來之後才算**（含 int16 量化），與 Dart 端輸入同源；含與 `acoustics.py` 的自我對帳守門 | Dart 交叉驗證 |
+| `scripts/make_geometry_fixture.py` | 幾何層的同類夾具：一張 384×512 合成正視圖 + 逐階段參考值 + 「單片注入 900 cm 葉尖偏移」的數值情境（驗標記真的會觸發） | Dart 交叉驗證 |
+| `scripts/make_image_ops_fixture.py` | OpenCV 基本運算的逐項參考值（網格中值、REFLECT_101 高斯、5×5 橢圓閉、連通元件、chamfer 距離變換、8-bit Lab），輸入由公式重建而非影像檔 | Dart 交叉驗證 |
 | `scripts/make_validation_report.py` | **真實影像驗證的圖文報告產生器**：吃 `validate_real_images.py` 的輸出，排出摘要磚、天空條件命中率圖表、天空×取景交叉表、逐個失敗模式的前後疊圖對照、閘門門檻掃描表、逐張結果與影像授權附錄；`--pdf` 可直接列印成 A4 PDF | 交付物 |
 | `report.py` / `charts.py` | 圖文報告：把數值排成 HTML（區段、統計磚、數值表、待確認欄）＋內嵌 SVG 圖表。無外部相依、無 JS；照片以 base64 內嵌 | 交付物 |
 | `synth.py` | 參數化風機（60 m 葉片、4 m 根弦、塔架、機艙、預彎），正視/側視/分區段/影片；`SceneSpec.for_scale()` 依感光元件像素數與 cm/px 建場景，轉子塞不進畫面會拒絕 | 測試夾具 |

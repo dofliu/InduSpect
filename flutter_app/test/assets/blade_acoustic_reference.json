@@ -115,8 +115,8 @@
     "188": 0.000749527422,
     "375": 0.00012262582
    },
-   "wind_sum": 0.890718,
-   "total_sum": 1.197004,
+   "wind_sum": 0.890717557593,
+   "total_sum": 1.197004135734,
    "wind_dominance": 0.744122372683,
    "envelope_at": {
     "0": 0.013731863133,
@@ -202,7 +202,7 @@
    ],
    "comparisons": {
     "band_level_db": {
-     "z": 0.2106,
+     "z": 0.2106410446,
      "flagged": false,
      "outlier_index": 2,
      "outlier_deviation": 0.16851283568,
@@ -210,7 +210,7 @@
      "direction": "high"
     },
     "high_band_ratio": {
-     "z": 0.4489,
+     "z": 0.448914795464,
      "flagged": false,
      "outlier_index": 2,
      "outlier_deviation": 0.008978295909,
@@ -225,11 +225,11 @@
    "n_passes": 7,
    "pass_times_s": [
     0.35,
-    1.183333,
-    2.016667,
+    1.183333333333,
+    2.016666666667,
     2.85,
-    3.683333,
-    4.516667,
+    3.683333333333,
+    4.516666666667,
     5.35
    ],
    "broadband_gain_db": {},
@@ -326,8 +326,8 @@
     "188": 0.000749584698,
     "375": 0.000122566939
    },
-   "wind_sum": 0.893896,
-   "total_sum": 1.283905,
+   "wind_sum": 0.89389585533,
+   "total_sum": 1.283904518409,
    "wind_dominance": 0.696232346341,
    "envelope_at": {
     "0": 0.013730341621,
@@ -413,7 +413,7 @@
    ],
    "comparisons": {
     "band_level_db": {
-     "z": 3.9726,
+     "z": 3.972645770307,
      "flagged": true,
      "outlier_index": 1,
      "outlier_deviation": 3.178116616246,
@@ -421,7 +421,7 @@
      "direction": "high"
     },
     "high_band_ratio": {
-     "z": 5.0812,
+     "z": 5.081197237629,
      "flagged": true,
      "outlier_index": 1,
      "outlier_deviation": 0.101623944753,
@@ -436,11 +436,11 @@
    "n_passes": 7,
    "pass_times_s": [
     0.35,
-    1.183333,
-    2.016667,
+    1.183333333333,
+    2.016666666667,
     2.85,
-    3.683333,
-    4.516667,
+    3.683333333333,
+    4.516666666667,
     5.35
    ],
    "broadband_gain_db": {
