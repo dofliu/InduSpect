@@ -1,8 +1,6 @@
 import 'dart:math' as math;
 import 'dart:typed_data';
 
-import 'package:image/image.dart' as img;
-
 import 'blade_capture_gate.dart';
 import 'blade_geometry_service.dart';
 import 'blade_image_ops.dart';

@@ -52,11 +52,11 @@
 
 ## 測試
 ```bash
-flutter test          # 全部 279 tests（widget_test 已修復，不再排除）
+flutter test          # 全部 286 tests（widget_test 已修復，不再排除）
 cd backend && GEMINI_API_KEY=ci-fake-key pytest tests/ --asyncio-mode=auto   # 191 pytest
 cd blade_prototype && pip install -r requirements.txt && pytest              # 78 tests（葉片原型，合成影像/音軌夾具）
 ```
-Flutter 279 tests / 後端 191 pytest / 葉片原型 78 pytest 全綠（2026-09-07 CI 實測）。DB 測試使用 `sqflite_common_ffi` in-memory。標準資料為單一來源：改 `backend/app/data/inspection_standards.py` 後必須跑 `python backend/scripts/export_standards.py` 重新匯出 JSON（有同步守門測試）。
+Flutter 286 tests / 後端 191 pytest / 葉片原型 78 pytest 全綠（2026-09-07 CI 實測）。DB 測試使用 `sqflite_common_ffi` in-memory。標準資料為單一來源：改 `backend/app/data/inspection_standards.py` 後必須跑 `python backend/scripts/export_standards.py` 重新匯出 JSON（有同步守門測試）。
 
 ## 已知問題追蹤
 - GitHub Issues #14-#19 已全數修復並關閉（2026-04-16）

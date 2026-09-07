@@ -194,7 +194,7 @@ flutter test
 flutter test test/form_inspection_record_test.dart
 ```
 
-### 測試清單（279 tests）
+### 測試清單（286 tests）
 
 | 檔案 | 數量 | 覆蓋範圍 |
 |------|------|---------|
@@ -212,7 +212,7 @@ flutter test test/form_inspection_record_test.dart
 | `blade_trend_service_test.dart` | 15 | ★ 跨次趨勢：一個點不產生趨勢、下降不可被說成好轉、駁回的點留在線上、只比無因次比值 |
 | `blade_ai_retry_service_test.dart` | 11 | ★ AI 補跑佇列：不推翻已簽核的、失敗維持待補、同場次不做 N+1、批次上限 |
 | `blade_image_ops_test.dart` | 10 | ★ 影像運算逐項對照 OpenCV：網格中值（網格點逐位相同）、REFLECT_101 高斯、5×5 橢圓閉、連通元件、chamfer 距離變換（含最大值位置）、8-bit Lab |
-| `blade_analysis_service_test.dart` | 18 | ★ 葉片分析編排：門檻表邊界、未驗過品質的照片不分析、未超門檻不進報告但存進 DB、AI 不得下砍演算法等級、離線不遺失結果、摘要明講未跑的層 |
+| `blade_analysis_service_test.dart` | 24 | ★ 葉片分析編排：門檻表邊界、未驗過品質的照片不分析、未超門檻不進報告但存進 DB、AI 不得下砍演算法等級、離線不遺失結果、摘要明講未跑的層 |
 | `blade_report_builder_test.dart` | 9 | ★ 葉片報告的立場：不輸出「合格」、零檢出明說代表什麼、演算法數值看得到、人工駁回的不列入但照片仍附上 |
 | `blade_capture_gate_test.dart` | 9 | ★ 葉片拍攝閘門（影像層）：只擋讀不到檔與整張過暗；模糊/過亮/死白降為提醒（儀表門檻套天空畫面會誤攔）、原始量全存供日後校準 |
 | `blade_surface_service_test.dart` | 8 | ★ 表面層 Dart 對照 Python 原型：前後緣比判定一致、凹坑/p95、分 zone 定位侵蝕落在哪一段、cm 換算、失敗要給補救方式 |
@@ -353,7 +353,7 @@ flutter build apk --debug
 OpenCV）、`make_geometry_fixture.py`（逐階段 + 健康/偏移兩組情境）、
 `subset_pdf_font.py`（既有）。
 
-測試 211 → 279（葉片相關 +68），blade_prototype 76 → 78。
+測試 211 → 286（葉片相關 +75），blade_prototype 76 → 78。
 
 ### 2026-09-07（葉片模組 Phase 1 — App 化，表面層）
 
