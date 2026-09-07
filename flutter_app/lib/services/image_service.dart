@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:image/image.dart' as img;
 import '../utils/constants.dart';
+import '../utils/image_decode.dart';
 
 // Web 平台不需要這些導入
 // 移動平台通過 if (!kIsWeb) 條件使用
@@ -33,8 +34,11 @@ class ImageService {
   /// 處理並保存圖片（內部方法）
   Future<String> _processAndSaveImage(Uint8List bytes) async {
     try {
-      // 解碼圖片
-      final image = img.decodeImage(bytes);
+      // 解碼圖片。用 safeDecodeImage 而不是 img.decodeImage：後者對截斷的檔案
+      // 會丟 RangeError，於是這個方法漏出去的是 RangeError 而不是下面那個
+      // 說得清楚的例外——呼叫端（inspection_provider 的拍照流程）看到的錯誤訊息
+      // 就變成一句看不懂的話。
+      final image = safeDecodeImage(bytes);
 
       if (image == null) {
         throw Exception('Failed to decode image');

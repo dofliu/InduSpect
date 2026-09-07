@@ -61,6 +61,11 @@ class BladeReportBuilder {
     'attachment_missing': '附加件缺失',
     'oil_stain': '塔身油污',
     'capture_quality': '拍攝品質不足',
+    'blade_noise': '單片寬頻噪音偏高',
+    'blade_noise_hf': '單片高頻能量偏高',
+    'blade_whistle': '單片窄頻哨音',
+    'tip_radius_mismatch': '葉尖半徑不一致（多幀）',
+    'audio_unusable': '音軌不可用',
   };
 
   /// 一筆偵測的顯示標題：「葉片 A · 中段前緣 · 前緣侵蝕」
@@ -89,6 +94,13 @@ class BladeReportBuilder {
     add('tip_deflection_px', '葉尖偏移', digits: 1, unit: ' px');
     add('tip_deflection_cm', '葉尖偏移', digits: 0, unit: ' cm');
     add('rpm', '轉速', digits: 1, unit: ' rpm');
+    add('rpm_from_audio', '音軌轉速', digits: 1, unit: ' rpm');
+    add('band_level_db_deviation', '寬頻位準高出', digits: 1, unit: ' dB');
+    add('high_band_ratio_deviation', '高頻占比高出', digits: 3);
+    add('tonal_freq_hz', '哨音頻率', digits: 0, unit: ' Hz');
+    add('tonal_prominence_db', '哨音突出', digits: 1, unit: ' dB');
+    add('tip_radius_deviation_px', '葉尖半徑差', digits: 1, unit: ' px');
+    add('envelope_snr_db', '包絡訊噪比', digits: 1, unit: ' dB');
     if (d.confidence != null) {
       bits.add('信賴度 ${(d.confidence! * 100).toStringAsFixed(0)}%');
     }
@@ -106,6 +118,17 @@ class BladeReportBuilder {
         return '三片同批同型，同一轉子位置的剪影應一致；偏差 ≥ 3× 量測雜訊底';
       case 'capture_quality':
         return '拍攝品質閘門：結構定位可信度不足，數值不可採信';
+      case 'blade_noise':
+      case 'blade_noise_hf':
+        return '三片每轉各通過觀測者一次，缺陷葉片的噪音以葉片通過週期出現；'
+            '依通過時刻切分音軌後三片互比，只有**偏高**才算徵兆';
+      case 'blade_whistle':
+        return '窄頻峰突出本地頻譜基線 ≥ 6 dB 且只在單片的通過視窗出現';
+      case 'tip_radius_mismatch':
+        return '同一片在多幀取中位（抵消風吹擺動）後與另兩片互比，'
+            '偏差 ≥ 3× 量測雜訊底';
+      case 'audio_unusable':
+        return '三重守門：轉動週期信賴度、包絡訊噪比、低頻（風噪）能量占比';
       default:
         return null;
     }

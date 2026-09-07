@@ -7,7 +7,11 @@ publish_to: 'none'
 version: 1.0.0+1
 
 environment:
-  sdk: '>=3.2.0 <4.0.0'
+  # 3.2 → 3.5：`record`（App 內錄音，聲音層的輸入）最低要 Dart ^3.5.0 / Flutter 3.24。
+  # 刻意選 record 6.x 而不是 7.x：後者要 Dart ^3.12 / Flutter 3.44，
+  # 那個下限會把還沒升級的開發環境擋在外面，而 6.x 已經有需要的 AudioEncoder.wav。
+  sdk: '>=3.5.0 <4.0.0'
+  flutter: '>=3.24.0'
 
 dependencies:
   flutter:
@@ -24,6 +28,10 @@ dependencies:
   # 相機和圖片
   image_picker: ^1.0.7
   camera: ^0.10.5+9
+
+  # 錄音（葉片動態層的音軌輸入）。**一定要錄成未壓縮 PCM/WAV**：
+  # 裝置上沒有純 Dart 的 AAC 解碼器，錄成 m4a 就離線分析不了。
+  record: ^6.2.1
 
   # AI 服務 - Google Generative AI
   google_generative_ai: ^0.4.6

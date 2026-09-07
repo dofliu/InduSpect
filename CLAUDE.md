@@ -37,6 +37,11 @@
 | `flutter_app/lib/services/blade_geometry_compare.dart` | ★ 三片剪影互比（`geometry.py` 移植）+ `runGeometryPipeline` |
 | `flutter_app/lib/services/blade_trend_service.dart` | ★ 跨次趨勢（**只比無因次的前後緣 rms 比**，px 值跨次不可比） |
 | `flutter_app/lib/services/blade_ai_retry_service.dart` | AI 解讀補跑佇列（只補 `human_status = pending` 的） |
+| `flutter_app/lib/services/blade_dsp.dart` | ★ 純 Dart DSP（FFT／STFT／自相關／savgol／medfilt）+ **葉片模組唯一一份**多項式擬合與中位數 |
+| `flutter_app/lib/services/blade_audio_decode.dart` | WAV 讀取（只支援 PCM，每種讀不了的情況都有可顯示的原因） |
+| `flutter_app/lib/services/blade_acoustic_service.dart` | ★ 逐片聲音異常（`acoustics.py` 的 Dart 對照）+ **三重守門**，不可用時不給數字 |
+| `flutter_app/lib/services/blade_dynamics_service.dart` | 動態層編排；**抽幀是注入點**（`BladeFrameExtractor`），原生解碼未接上 |
+| `flutter_app/lib/services/blade_audio_recorder.dart` | App 內錄音（`record` plugin 收在一處）+ **錄音參數的量測要求**（WAV／單聲道／自動增益與降噪一律關） |
 | `flutter_app/lib/screens/blade_history_screen.dart` | 葉片歷史與趨勢（資產驅動資料模型的兌現處） |
 | `flutter_app/lib/services/blade_ai_service.dart` | 葉片專用 AI prompt（正常結構清單）+ 值域夾回 |
 | `flutter_app/lib/services/blade_report_builder.dart` | 葉片報告（**不輸出「合格」**），交給 `pdf_report_service.dart` |
@@ -52,11 +57,11 @@
 
 ## 測試
 ```bash
-flutter test          # 全部 286 tests（widget_test 已修復，不再排除）
+flutter test          # 全部 406 tests（widget_test 已修復，不再排除）
 cd backend && GEMINI_API_KEY=ci-fake-key pytest tests/ --asyncio-mode=auto   # 191 pytest
-cd blade_prototype && pip install -r requirements.txt && pytest              # 78 tests（葉片原型，合成影像/音軌夾具）
+cd blade_prototype && pip install -r requirements.txt && pytest              # 81 tests（葉片原型，合成影像/音軌夾具）
 ```
-Flutter 286 tests / 後端 191 pytest / 葉片原型 78 pytest 全綠（2026-09-07 CI 實測）。DB 測試使用 `sqflite_common_ffi` in-memory。標準資料為單一來源：改 `backend/app/data/inspection_standards.py` 後必須跑 `python backend/scripts/export_standards.py` 重新匯出 JSON（有同步守門測試）。
+Flutter 406 tests / 後端 191 pytest / 葉片原型 81 pytest 全綠（2026-09-07 CI 實測）。DB 測試使用 `sqflite_common_ffi` in-memory。標準資料為單一來源：改 `backend/app/data/inspection_standards.py` 後必須跑 `python backend/scripts/export_standards.py` 重新匯出 JSON（有同步守門測試）。
 
 ## 已知問題追蹤
 - GitHub Issues #14-#19 已全數修復並關閉（2026-04-16）
@@ -67,6 +72,7 @@ Flutter 286 tests / 後端 191 pytest / 葉片原型 78 pytest 全綠（2026-09-
 - 後端 SDK 汰換（2026-09-04）：`google-generativeai`（已停止維護）→ `google-genai`；新增 `backend/app/services/gemini_client.py` 為唯一 Gemini 入口（延遲建立 client、依 key 快取），AI 呼叫一律走 `gemini_client.generate_text()`。相依鏈連帶升版 httpx/pydantic/fastapi。
 - PDF 報告輸出（2026-09-02）：LAUNCH_PLAN 第 5-8 週項目完成；`pdf_report_service.dart` 純 Dart 離線產生申報用 PDF（判定/法規依據/單位換算/AI 報告/照片附件），完成頁與歷史紀錄皆可匯出。字型子集重新產生用 `flutter_app/scripts/subset_pdf_font.py`
 - 葉片模組 Phase 1 App 化（2026-09-07）：SQLite **v5** 三張獨立表（`wt_assets`/`wt_capture_sessions`/`wt_detections`，既有定檢三表不動）、表面層 Dart 移植（與 Python 原型逐 zone 對照到小數第三位一致）、分析編排層、葉片專用 AI prompt、葉片拍攝閘門、三個畫面 + dashboard 第三個入口。三個**不可退化**的約定：①`WtMedia.qualityOk` 未分析時是 `null`，判斷一律用 `!= true`；②`human_status` 預設 `pending`，葉片報告**不輸出「合格」**；③演算法的 severity 是下限，AI 只能往上加不能往下砍。兩個規格修正：取像用系統相機（`camera` plugin 碰不到 5x 望遠與最高像素模式）、不給 `image_quality_service` 加遮罩而另寫 `blade_capture_gate.dart`（遮罩要先分割，而分割正是要被閘門守的那一步）
+- 解碼守門（2026-09-07）：`package:image` 的 `decodeImage` **會丟例外不只回 null**（短位元組在格式嗅探階段就 RangeError）。`lib/utils/image_decode.dart` 的 `safeDecodeImage` 是唯一入口，五處呼叫端全部走它；放在 `utils/` 是刻意的（定檢與葉片是兩條獨立功能線，不該為了一個 helper 互相 import）。實際影響是**診斷性不是崩潰**：`compressPhoto` 本來就有外層 try/catch 接得住，`image_service` 則是漏出 RangeError 而不是它自己寫的 `Exception('Failed to decode image')`
 - 葉片模組 Phase 2 幾何層 Dart 移植（2026-09-07）：`segmentation.py` + `geometry.py` + `quality.py` 移植完成，整機照現在會真的被量測（三片剪影互比）。**中值改成網格模式**是這批唯一的行為改變：逐像素大核中值在手機上跑不動（1024×820×3 約 1.4G 次 bin 運算），改成只在 step=16 的網格點上算真中值 + 雙線性內插（約 64M 次）；真實照片代價是設計範圍內輪轂命中 23/30 → 22/30。**降工作尺度是更糟的選擇**（512/384/256 → 20/19/18，而且時間幾乎沒省，瓶頸在結構定位不在中值）。三個不可退化的約定：①色空間必須是 OpenCV 的 8-bit Lab（`minScale = 1.2` 是那個空間的絕對下限）；②距離變換用 OpenCV 的 5×5 chamfer 近似而非精確 EDT（Python 用 chamfer，輪轂靠 DT 最大值定位，兩邊要一致）；③拍攝閘門在三片互比**之前**且拒收時不算互比。改 `surface.py`/`segmentation.py` 後要重跑 `blade_prototype/scripts/make_*_fixture.py`，否則 Flutter 交叉驗證會紅
 - 葉片模組 Phase 1 缺口已補（2026-09-07）：跨次趨勢畫面（只比無因次比值）、AI 補跑佇列（只補 `human_status = pending`，合併走與線上分析同一條規則）、葉片報告接進離線分享佇列
 - 葉片模組 Phase 1 **原始缺口紀錄**（2026-09-07 盤點，已於同日補完）：①`geminiOfflinePending` 的偵測沒有補跑機制——離線時存下來、畫面也標示了，但連線後沒有任何東西把 AI 解讀跑完（`share_queue_service` 有現成模式可沿用）；②沒有葉片歷史／趨勢畫面，`getWtSessions()` 只被用來拿上次照片（`limit: 1`）、`getWtSessionsPendingShare()` 零呼叫端，所以葉片報告也還沒接離線分享佇列。資產驅動資料模型的整個價值（跨次比對）目前沒有 UI
@@ -74,6 +80,14 @@ Flutter 286 tests / 後端 191 pytest / 葉片原型 78 pytest 全綠（2026-09-
 - 葉片模組天空模型汰換（2026-09-07）：`segmentation.py` 預設改為**局部天空模型**（`sky_mode="local"`：大核中值估背景 + 同核估局部尺度 + 門檻 7.0），取代原本「邊緣取樣逐列多項式 + 全域尺度」（仍保留給長焦分區段照）。假設從「整張天空單一漸層」改成「天空局部平滑」。真實照片輪轂命中 14/30 → **23/30**、有雲 1/13 → **10/13**、遮罩全空 4 → **0**、holdout 1/11 → **8/11**。門檻同時對真實語料與合成夾具兩組獨立測試集取；連帶修好輪轂精修守門的尺規（`4×hub_r` → 轉子半徑）。詳見 `blade_prototype/REAL_IMAGE_VALIDATION.md` §5
 - 葉片模組真實影像驗證（2026-09-06）：75 張公開 CC 授權真實風機照片實測分割與結構定位。修好「地面與塔架相連導致輪轂落在地面」與「塔軸走訪提早停住」兩個 bug（設計範圍內輪轂命中 10/30 → 14/30），新增 `blade_proto/quality.py` 拍攝品質閘門（零誤放行）。**關鍵發現：晴空無雲命中 12/14、有雲只有 1/13——天空模型是唯一真正的瓶頸，Phase 1 之前要先補**。詳見 `blade_prototype/REAL_IMAGE_VALIDATION.md`
 - 產品化 P0 批次 + Tier 0 離線判定（2026-08-31）：Issues #44/#45/#47 完成；判定引擎 Dart 化（離線判定取代「待判定」）、判定持久化（SQLite v4）、release 簽署/後端認證/模型 ID 汰換/CI 全量收緊。詳見 `LAUNCH_PLAN.md` 與 `flutter_app/DEVELOPMENT.md` 變更紀錄
+
+- 葉片模組 Phase 3 動態層（2026-09-07）：**聲音層完整移植**（`acoustics.py` → `blade_dsp.dart` + `blade_audio_decode.dart` + `blade_acoustic_service.dart`），逐片寬頻位準／高頻占比／窄頻哨音互比，轉速由包絡自相關取得（夾具上與真值差 0.1%）。三個不可退化的約定：①三重守門（週期信賴度／包絡訊噪比／低頻占比）任一不過就 `usable = false`，而**不可用時 `blades` 與 `comparisons` 是空的**，不是「全部正常」；②聲學量互比一律 `MetricDirection.high`——不限方向的話最安靜的那片會被標成前緣侵蝕；③兩層（聲音／動態）的葉片標籤用同一個規則（依通過六點鐘的先後循環），且都明寫不是實際葉片編號。
+  **影片那一半只做到接縫**：Flutter 沒有純 Dart 的 H.264 解碼器，抽幀留成 `BladeFrameExtractor` typedef，編排與判定用注入的抽幀器測到底。未接上時報告寫「裝置端抽幀尚未接上」而不是「未實作」。`dynamics.py` 的逐幀角度追蹤**刻意沒有移植**——轉速已由音軌取得、三片一致性已由幾何層取得，搬過來會是「跑不動又重複」。
+  移植期間發現兩件事：`compareMetric` 少了 `direction`（真缺口，已補）；`tonal_exclusive` 在手機取樣率下沒有真的驗過獨有性（Python 既有缺陷，**照原樣移植**並記在 SPEC §13，因此哨音只給 severity 2）。
+  驗證方式：先把 scipy 的慣例（STFT 縮放／savgol 邊緣／medfilt 邊界）在 Python 端釘死，再逐行轉寫，最後把整條 `analyzeSamples` 轉寫回 Python 對照——兩段夾具音軌上每個輸出都到機器精度一致。改 `acoustics.py` 後要重跑 `blade_prototype/scripts/make_acoustic_fixture.py`（該產生器會**自我對帳**，與 `acoustics.py` 漂開時直接爆掉不寫檔）
+- `replaceWtDetections` 跨層清除修正（2026-09-07）：原本只清傳進來那一層的 `pending`，但 `analyzeSession` 回傳的是整個場次三層的完整結果，於是上一輪標記過、這一輪不再標記的發現會留在報告上。改為清整個場次的 `pending`，`confirmed`/`rejected` 不動
+
+- 葉片聲音層兩個未決事項結案（2026-09-07）：①**`tonal_exclusive` 修好了**——原本的「只有這片有」複查在 ±3% 窄頻帶上重跑 9 點中值濾波，但手機取樣率下那個頻帶只有 4–5 個 bin，達不到需要的 13 個，複查回 NaN 被當成「另兩片沒有」，於是它等同「突出量 ≥ 6 dB」。改成讀各片**全頻帶**突出量在該頻率上的值。實測三片同頻哨音由 3 片誤判降到 0、兩片同頻由 2 降到 0，單片仍抓得到（共消 5 個誤報）。Python/Dart 同步改、夾具重跑（既有兩段夾具的值不變——它們沒有多片同頻的情況）。②**加入 `record: ^6.2.1`** 做 App 內錄音，專案 SDK 下限 `>=3.2.0` → `>=3.5.0`。**刻意不用 7.x**（要 Dart ^3.12/Flutter 3.44，下限太高）。錄音參數是量測要求：WAV／單聲道／44.1 kHz／**自動增益與降噪一律關**（自動增益會拆掉三片互比的基準、降噪削掉要量的寬頻噪音），有測試釘住。`file_picker` 保留為備援。iOS 的 `NSMicrophoneUsageDescription` 待 `ios/` 目錄建立時補
 
 ## 既有 error（已修復）
 - ~~`measurement.dart`: `sqrt` 未 import `dart:math`~~ → 已修復

@@ -4,6 +4,8 @@ import 'dart:typed_data';
 import 'package:flutter/foundation.dart' show compute;
 import 'package:image/image.dart' as img;
 
+import '../utils/image_decode.dart';
+
 /// 影像品質門檻（可調；建議依實機現場照片校準）
 ///
 /// [minSharpness] 為 Laplacian 響應的變異數。為使不同解析度可比較，
@@ -118,15 +120,9 @@ class ImageQualityService {
     Uint8List bytes, {
     ImageQualityThresholds thresholds = const ImageQualityThresholds(),
   }) {
-    // decodeImage **會丟例外**而不只是回 null（位元組太短時在 GIF 格式嗅探裡
-    // 就 RangeError）。這支服務對外承諾的是「無法解碼 → undecodable」，
-    // 現場的檔案可能被截斷，所以解碼要包起來。
-    img.Image? decoded;
-    try {
-      decoded = bytes.length < 16 ? null : img.decodeImage(bytes);
-    } catch (_) {
-      decoded = null;
-    }
+    // decodeImage **會丟例外**而不只是回 null（見 `safeDecodeImage` 的說明）。
+    // 這支服務對外承諾的是「無法解碼 → undecodable」，現場的檔案可能被截斷。
+    final decoded = safeDecodeImage(bytes);
     if (decoded == null) return ImageQualityReport.undecodable();
 
     final small = _downscale(decoded, analysisMaxSide);

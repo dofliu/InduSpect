@@ -7,7 +7,9 @@ import 'package:path/path.dart' as p;
 
 import '../models/wt_capture_session.dart';
 import '../models/wt_detection.dart';
+import 'blade_acoustic_service.dart';
 import 'blade_ai_service.dart';
+import 'blade_dynamics_service.dart';
 import 'blade_geometry_compare.dart';
 import 'blade_surface_service.dart';
 
@@ -67,11 +69,17 @@ class BladeAnalysisOutcome {
   /// 沒有納入分析的照片數（未過品質閘門、非分區段照、分割失敗）
   final int skippedCount;
 
+  /// 這次**實際跑過**的層。摘要要據實說哪一層沒跑，而「沒跑」有三種很不一樣的
+  /// 原因（沒拍那種素材／拍了但不能用／功能還沒接上），不能都寫成「未實作」。
+  /// 從 `detections` 反推做不到：一層跑完而且沒發現，是不會留下任何偵測的。
+  final Set<WtLayer> layersRun;
+
   const BladeAnalysisOutcome({
     required this.detections,
     required this.notes,
     required this.analyzedCount,
     required this.skippedCount,
+    this.layersRun = const {},
   });
 
   List<WtDetection> get reportable =>
@@ -82,12 +90,28 @@ class BladeAnalysisOutcome {
       detections.any((d) => d.source == WtDetectionSource.geminiOfflinePending);
 
   /// 報告摘要。**明講這次跑了哪一層、沒跑哪一層**——只寫「未檢出異常」
-  /// 會讓人以為整支葉片都查過了，實際上幾何層與動態層的 Dart 移植還沒做。
+  /// 會讓人以為整支葉片都查過了。
   String buildSummary() {
+    const names = {
+      WtLayer.surface: '表面層（前緣輪廓粗糙度）',
+      WtLayer.geometry: '幾何層（三片剪影互比）',
+      WtLayer.dynamic_: '動態層（音軌逐片噪音、轉速）',
+    };
+    final ran = names.entries
+        .where((e) => layersRun.contains(e.key))
+        .map((e) => e.value)
+        .toList();
+    final missing = names.entries
+        .where((e) => !layersRun.contains(e.key))
+        .map((e) => e.value)
+        .toList();
     final lines = <String>[
-      '本次分析範圍：表面層（前緣輪廓粗糙度）與幾何層（三片剪影互比）。'
-          '動態層（轉速、葉尖軌跡、逐片聲音）需要轉動影片，尚未在 App 端實作，'
-          '本次**未進行**——影片若已拍攝會保存下來，可日後補跑。',
+      ran.isEmpty
+          ? '本次沒有任何一層完成分析。這**不代表葉片正常**，只代表沒有可用的素材。'
+          : '本次分析範圍：${ran.join('、')}。'
+              '${missing.isEmpty ? '' : '${missing.join('、')}本次**未進行**'
+                  '（缺對應素材，或素材未通過品質閘門）——'
+                  '沒進行不等於沒問題。'}',
     ];
     if (notes.isNotEmpty) lines.add(notes.join('\n'));
     if (hasPendingAi) {
@@ -112,6 +136,11 @@ class BladeAnalysisService {
   static BladeGeometryOutcome _geometryIsolate(Uint8List bytes) =>
       runGeometryPipeline(bytes);
 
+  /// isolate 入口。一段 30 秒 48 kHz 的音軌約 6 千萬次浮點運算（STFT 為主），
+  /// 在手機上是幾百毫秒——不到幾何層那麼貴，但足以讓畫面掉幀。
+  static BladeAcousticResult _acousticIsolate(Uint8List bytes) =>
+      BladeAcousticService.analyzeBytes(bytes);
+
   /// 分析一個拍攝場次。
   ///
   /// [useAi] 為 false（或 AI 呼叫失敗）時，演算法的結果照樣留下來，
@@ -126,18 +155,27 @@ class BladeAnalysisService {
     BladeImageAnalyzer? analyzer,
     BladeSurfaceAnalyzer? surface,
     BladeGeometryAnalyzer? geometry,
+    BladeAcousticAnalyzer? acoustic,
+    BladeFrameExtractor? frameExtractor,
   }) async {
     final read = loadBytes ?? _readFile;
     final run = surface ?? BladeSurfaceService.analyze;
     final detections = <WtDetection>[];
     final notes = <String>[];
     var analyzed = 0, skipped = 0;
+    final layersRun = <WtLayer>{};
 
-    var notPhoto = 0, notSegment = 0, notUsable = 0;
+    var notSegment = 0, notUsable = 0;
     final geometryMedia = <WtMedia>[];
+    final audioMedia = <WtMedia>[];
+    final videoMedia = <WtMedia>[];
     for (final m in session.media) {
-      if (m.kind != WtMediaKind.photo) {
-        notPhoto++;
+      if (m.kind == WtMediaKind.audio) {
+        audioMedia.add(m);
+        continue;
+      }
+      if (m.kind == WtMediaKind.video) {
+        videoMedia.add(m);
         continue;
       }
       if (m.view != WtMediaView.segment) {
@@ -177,6 +215,7 @@ class BladeAnalysisService {
         continue;
       }
       analyzed++;
+      layersRun.add(WtLayer.surface);
 
       if (m.leadingEdge == null) {
         // 前緣在畫面哪一側是拍攝者才知道的事，演算法猜不出來。
@@ -257,8 +296,74 @@ class BladeAnalysisService {
         skipped++;
       } else {
         analyzed++;
+        layersRun.add(WtLayer.geometry);
         detections.addAll(r);
       }
+    }
+
+    // 動態層。**音軌先跑**：它量到的葉片通過週期就是影片要在哪些時刻抽幀的依據，
+    // 反過來的話影片得自己從像素推轉速——那是原型裡最貴的一步，而音軌已經免費給了。
+    BladeAcousticResult? acousticResult;
+    for (final m in audioMedia) {
+      Uint8List bytes;
+      try {
+        bytes = await read(m.path);
+      } catch (_) {
+        skipped++;
+        notes.add('${_shortPath(m.path)}：讀不到音檔，未納入分析。');
+        continue;
+      }
+      final r = acoustic == null
+          ? await compute(_acousticIsolate, bytes)
+          : await acoustic(bytes);
+      acousticResult ??= r.usable ? r : null;
+      final det = _acousticDetections(r, m, session.sessionId, notes);
+      if (r.usable) {
+        analyzed++;
+        layersRun.add(WtLayer.dynamic_);
+      } else {
+        skipped++;
+      }
+      detections.addAll(det);
+    }
+
+    for (final m in videoMedia) {
+      if (frameExtractor == null) {
+        skipped++;
+        notes.add('${_shortPath(m.path)}：影片已保存，但**裝置端抽幀尚未接上**'
+            '（Flutter 沒有純 Dart 的 H.264 解碼器，需原生 MediaCodec／AVFoundation）。'
+            '轉速已由音軌取得；三片剪影互比請用整機照。');
+        continue;
+      }
+      if (acousticResult == null) {
+        skipped++;
+        notes.add('${_shortPath(m.path)}：沒有可用的音軌，因此不知道葉片通過週期，'
+            '無法決定在哪些時刻抽幀。動態層本次未進行。');
+        continue;
+      }
+      final periodS = 1.0 / acousticResult.bladePassHz;
+      final times = BladeDynamicsService.sixOclockTimes(
+        periodS: periodS,
+        phaseS: acousticResult.passTimesS.isEmpty
+            ? 0.0
+            : acousticResult.passTimesS.first,
+        durationS: acousticResult.durationS,
+      );
+      final r = await BladeDynamicsService.analyzeFrames(
+        videoPath: m.path,
+        atSeconds: times,
+        extract: frameExtractor,
+        geometry: geometry ?? ((b) => compute(_geometryIsolate, b)),
+      );
+      notes.addAll(r.notes.map((n) => '${_shortPath(m.path)}（影片）：$n'));
+      if (!r.ok) {
+        skipped++;
+        notes.add('${_shortPath(m.path)}（影片）：${r.reasons.join('；')}');
+        continue;
+      }
+      analyzed++;
+      layersRun.add(WtLayer.dynamic_);
+      detections.addAll(_dynamicsDetections(r, m, session.sessionId));
     }
 
     skipped += notUsable + notSegment;
@@ -269,15 +374,13 @@ class BladeAnalysisService {
     if (notSegment > 0) {
       notes.add('$notSegment 張其他視角的照片已保存，但沒有對應的分析層，本次未分析。');
     }
-    if (notPhoto > 0) {
-      notes.add('$notPhoto 段影片已保存，動態層分析尚未在 App 端實作，本次未分析。');
-    }
 
     return BladeAnalysisOutcome(
       detections: detections,
       notes: notes,
       analyzedCount: analyzed,
       skippedCount: skipped,
+      layersRun: layersRun,
     );
   }
 
@@ -365,11 +468,148 @@ class BladeAnalysisService {
     return out;
   }
 
+  /// 聲音層的偵測。
+  ///
+  /// **不可用時也產生一筆**（`audio_unusable`，無 severity）：現場需要知道
+  /// 「這段錄音不能用、為什麼、下次怎麼錄」，而不是在報告上什麼都看不到——
+  /// 那會被讀成「聲音沒問題」。
+  static List<WtDetection> _acousticDetections(BladeAcousticResult r, WtMedia m,
+      String sessionId, List<String> notes) {
+    final base = 'aco-$sessionId-${p.basename(m.path)}';
+    final shared = <String, dynamic>{
+      'rpm_from_audio': r.rpmFromAudio,
+      'blade_pass_hz': r.bladePassHz,
+      'periodicity_confidence': r.periodicityConfidence,
+      'envelope_snr_db': r.envelopeSnrDb,
+      'wind_dominance': r.windDominance,
+      'am_depth_db': r.amDepthDb,
+      'asymmetry_db': r.asymmetryDb,
+    };
+    notes.addAll(r.notes.map((n) => '${_shortPath(m.path)}（音軌）：$n'));
+
+    if (!r.usable) {
+      return [
+        WtDetection(
+          detectionId: '$base-unusable',
+          sessionId: sessionId,
+          layer: WtLayer.dynamic_,
+          defectClass: 'audio_unusable',
+          severity: null,
+          metricJson: shared,
+          mediaPath: m.path,
+          source: WtDetectionSource.algorithm,
+          aiDescription: r.notes.join('；'),
+        )
+      ];
+    }
+    if (r.rpmFromAudio.isFinite) {
+      notes.add('${_shortPath(m.path)}（音軌）：量到轉速 '
+          '${r.rpmFromAudio.toStringAsFixed(1)} rpm'
+          '（週期信賴度 ${r.periodicityConfidence.toStringAsFixed(2)}）。');
+    }
+
+    final out = <WtDetection>[];
+    for (final c in r.comparisons) {
+      if (!c.flagged) continue;
+      final idx = c.outlierIndex;
+      final label = idx >= 0 && idx < 3 ? ['A', 'B', 'C'][idx] : null;
+      final hf = c.metric == 'high_band_ratio';
+      out.add(WtDetection(
+        detectionId: '$base-${c.metric}',
+        sessionId: sessionId,
+        layer: WtLayer.dynamic_,
+        blade: label,
+        defectClass: hf ? 'blade_noise_hf' : 'blade_noise',
+        // 警告級，不給不合格。理由與幾何層相同：它指出的是「這一片與另兩片不一樣」。
+        // 聲音還多一層不確定——路過的車輛、鳥、發電機都會落在某一片的視窗裡。
+        severity: 2,
+        metricJson: {
+          ...shared,
+          '${c.metric}_values': c.values,
+          '${c.metric}_deviation': c.outlierDeviation,
+          '${c.metric}_z': c.z,
+        },
+        mediaPath: m.path,
+        source: WtDetectionSource.algorithm,
+        aiDescription: hf
+            ? '葉片 $label 的高頻能量占比高出另兩片 '
+                '${c.outlierDeviation.abs().toStringAsFixed(3)}'
+                '（z = ${c.z.toStringAsFixed(1)}）：粗糙表面的徵兆'
+            : '葉片 $label 的寬頻噪音高出另兩片 '
+                '${c.outlierDeviation.abs().toStringAsFixed(1)} dB'
+                '（另兩片彼此差 ${c.othersSpread.abs().toStringAsFixed(1)} dB，'
+                'z = ${c.z.toStringAsFixed(1)}）：疑似前緣侵蝕',
+      ));
+    }
+    for (final b in r.blades) {
+      if (!b.tonalExclusive) continue;
+      out.add(WtDetection(
+        detectionId: '$base-tonal-${b.label}',
+        sessionId: sessionId,
+        layer: WtLayer.dynamic_,
+        blade: b.label,
+        defectClass: 'blade_whistle',
+        severity: 2,
+        metricJson: {
+          ...shared,
+          'tonal_freq_hz': b.tonalFreqHz,
+          'tonal_prominence_db': b.tonalProminenceDb,
+        },
+        mediaPath: m.path,
+        source: WtDetectionSource.algorithm,
+        aiDescription: '葉片 ${b.label} 在 '
+            '${b.tonalFreqHz.toStringAsFixed(0)} Hz 有突出 '
+            '${b.tonalProminenceDb.toStringAsFixed(1)} dB 的窄頻哨音，'
+            '疑似後緣損傷或破洞',
+      ));
+    }
+    if (out.isEmpty) {
+      notes.add('${_shortPath(m.path)}（音軌）：三片寬頻位準與高頻占比一致，'
+          '未見單片噪音異常。');
+    }
+    return out;
+  }
+
+  /// 動態層（影片多幀）的偵測。
+  static List<WtDetection> _dynamicsDetections(
+      BladeDynamicsResult r, WtMedia m, String sessionId) {
+    final c = r.radiusComparison;
+    if (c == null || !c.flagged) return const [];
+    final idx = c.outlierIndex;
+    return [
+      WtDetection(
+        detectionId: 'dyn-$sessionId-${p.basename(m.path)}-tip_radius',
+        sessionId: sessionId,
+        layer: WtLayer.dynamic_,
+        blade: idx >= 0 && idx < 3 ? ['A', 'B', 'C'][idx] : null,
+        defectClass: 'tip_radius_mismatch',
+        severity: 2,
+        metricJson: {
+          'frames_requested': r.framesRequested,
+          'frames_decoded': r.framesDecoded,
+          'frames_measured': r.framesMeasured,
+          'tip_radius_median_px': r.tipRadiusMedianPx,
+          'tip_radius_deviation_px': c.outlierDeviation,
+          'tip_radius_z': c.z,
+        },
+        mediaPath: m.path,
+        source: WtDetectionSource.algorithm,
+        aiDescription: '多幀取中位後，第 ${idx + 1} 順位通過六點鐘的葉片，'
+            '葉尖半徑與另兩片差 '
+            '${c.outlierDeviation.abs().toStringAsFixed(1)} px'
+            '（z = ${c.z.toStringAsFixed(1)}，${r.framesMeasured} 幀量得出來）',
+      )
+    ];
+  }
+
   static const Map<String, String> _metricLabels = {
     'tip_deflection_px': '葉尖偏移',
     'radius_px': '葉片長度',
     'mean_width_px': '平均弦寬',
     'residual_rms_px': '形狀不規則度',
+    'band_level_db': '寬頻噪音位準',
+    'high_band_ratio': '高頻能量占比',
+    'tip_radius_px': '葉尖半徑（多幀中位）',
   };
 
   static String _metricLabel(String metric) => _metricLabels[metric] ?? metric;

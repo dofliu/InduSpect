@@ -3,6 +3,8 @@ import 'dart:typed_data';
 
 import 'package:image/image.dart' as img;
 
+import '../utils/image_decode.dart';
+
 /// 幾何層需要的影像基本運算——OpenCV 有、`package:image` 沒有的那些。
 ///
 /// 全部對照 `blade_prototype/blade_proto/segmentation.py` 用到的 OpenCV 行為實作，
@@ -18,18 +20,10 @@ class BladeImageOps {
 
   // ------------------------------------------------------------ 解碼
 
-  /// 安全解碼。**`img.decodeImage` 會丟例外，不是只回 null**——
-  /// 位元組太短時它在 GIF 的格式嗅探裡就 `RangeError` 了（讀字串讀過界）。
-  /// 現場的檔案可能被截斷、可能根本不是影像，而這條路徑的承諾是「明確失敗、
-  /// 不丟例外」，所以解碼一定要包起來。
-  static img.Image? safeDecode(Uint8List bytes) {
-    if (bytes.length < 16) return null; // 連格式標頭都不夠
-    try {
-      return img.decodeImage(bytes);
-    } catch (_) {
-      return null;
-    }
-  }
+  /// 安全解碼。實作在 `utils/image_decode.dart`——定檢那條線也要用同一份，
+  /// 而從那邊 import 葉片模組的檔案只為了拿一個 helper 會把兩條功能線黏起來。
+  /// 這裡留一個轉呼叫，讓葉片端的呼叫點不必知道它搬去哪了。
+  static img.Image? safeDecode(Uint8List bytes) => safeDecodeImage(bytes);
 
   // ------------------------------------------------------------ 色彩
 

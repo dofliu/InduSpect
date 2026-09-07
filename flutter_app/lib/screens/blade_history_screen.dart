@@ -416,19 +416,27 @@ class _BladeAssetHistoryScreenState extends State<BladeAssetHistoryScreen> {
         child: SizedBox(
           width: 56,
           height: 56,
+          // 非照片的媒體不能走 `Image.file`：那條路會落到 errorBuilder，
+          // 於是一段好好的音軌在畫面上顯示成「圖片壞了」。
           child: media.kind == WtMediaKind.video
               ? ColoredBox(
                   color: Colors.black12,
                   child: const Center(child: Icon(Icons.burst_mode, size: 20)),
                 )
-              : Image.file(
-                  File(media.path),
-                  fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => ColoredBox(
-                    color: Colors.grey.shade300,
-                    child: const Icon(Icons.broken_image, size: 18),
-                  ),
-                ),
+              : media.kind == WtMediaKind.audio
+                  ? ColoredBox(
+                      color: Colors.black12,
+                      child: const Center(
+                          child: Icon(Icons.insert_drive_file, size: 20)),
+                    )
+                  : Image.file(
+                      File(media.path),
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => ColoredBox(
+                        color: Colors.grey.shade300,
+                        child: const Icon(Icons.broken_image, size: 18),
+                      ),
+                    ),
         ),
       );
 

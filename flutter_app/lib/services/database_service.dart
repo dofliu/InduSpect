@@ -21,6 +21,15 @@ class DatabaseService {
     return _database!;
   }
 
+  /// 測試用：塞一個已開好的 DB 進來，跳過 `getDatabasesPath()`。傳 null 卸下。
+  ///
+  /// 這個檔案的測試慣例是「直接操作 DB、不透過 singleton」（避免測試互相干擾），
+  /// 但那樣驗不到**方法本身**——只能在測試裡把同一段 SQL 再寫一次，
+  /// 於是方法改了測試不會紅。所以留這個縫給少數必須驗方法語意的情況
+  /// （例如 `replaceWtDetections` 清哪些列）。用完請 `addTearDown` 卸下。
+  @visibleForTesting
+  void attachDatabaseForTesting(Database? db) => _database = db;
+
   Future<Database> _initDatabase() async {
     final dbPath = await getDatabasesPath();
     final path = join(dbPath, 'induspect_template.db');
@@ -924,15 +933,20 @@ class DatabaseService {
   /// 重跑幾何層不該把表面層的人工簽核一起清掉。
   Future<void> replaceWtDetections(
     String sessionId,
-    WtLayer layer,
     List<WtDetection> detections,
   ) async {
     final db = await database;
     await db.transaction((txn) async {
+      // **清掉這個場次所有待確認的偵測，不分層。** 原本只清傳進來的那一層，
+      // 但 `analyzeSession` 一次回傳的是整個場次（表面／幾何／動態）的完整結果，
+      // 所以只清一層會讓上一輪標記過、這一輪不再標記的發現留在報告上——
+      // 那是憑空多出來的「異常」。
+      //
+      // 只清 `pending`：人已經確認或駁回的不能被重新分析吃掉，那等於推翻簽核。
       await txn.delete(
         'wt_detections',
-        where: 'session_id = ? AND layer = ? AND human_status = ?',
-        whereArgs: [sessionId, layer.name, WtHumanStatus.pending.name],
+        where: 'session_id = ? AND human_status = ?',
+        whereArgs: [sessionId, WtHumanStatus.pending.name],
       );
       for (final d in detections) {
         await txn.insert('wt_detections', d.toMap(),

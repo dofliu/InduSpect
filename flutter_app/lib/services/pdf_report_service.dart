@@ -12,6 +12,7 @@ import 'package:pdf/widgets.dart' as pw;
 import '../models/form_inspection_record.dart';
 import '../models/inspection_template.dart';
 import '../models/template_field.dart';
+import '../utils/image_decode.dart';
 
 /// PDF 報告中的單一檢測項目
 class PdfReportItem {
@@ -673,7 +674,10 @@ class PdfReportService {
 
   /// 純函式：解碼 → 等比縮小 → JPEG q75；無法解碼回傳 null
   static Uint8List? _downscaleToJpeg(Uint8List bytes) {
-    final decoded = img.decodeImage(bytes);
+    // 外層的 `loadPhotoForPdf` 有 try/catch，所以這裡本來就不會炸；
+    // 改用 safeDecodeImage 是讓「無法解碼」在 isolate 內就回 null，
+    // 而不是丟一個例外穿過 isolate 邊界再被外面接住。
+    final decoded = safeDecodeImage(bytes);
     if (decoded == null) return null;
     var image = img.bakeOrientation(decoded);
     final longest = image.width > image.height ? image.width : image.height;

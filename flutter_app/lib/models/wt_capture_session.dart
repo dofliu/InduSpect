@@ -6,8 +6,12 @@ enum WtTurbineState { stopped, idling, running, unknown }
 /// 拍攝作業的處理狀態
 enum WtSessionStatus { draft, analyzed, confirmed, shared }
 
-/// 一張照片／一段影片
-enum WtMediaKind { photo, video }
+/// 一張照片／一段影片／一段音軌。
+///
+/// `audio` 是動態層（規格 §5.4 音軌）的輸入。**不需要 schema migration**：
+/// media 是 session 列裡的 JSON，而 `_enumOf` 對認不出的值會退回預設，
+/// 所以舊列（只有 photo/video）照樣讀得起來。
+enum WtMediaKind { photo, video, audio }
 
 /// 拍攝視角。`front`/`side` 是全機照（幾何層，Phase 2）；
 /// `segment` 是長焦分區段照（表面層，Phase 1 的主力）。
@@ -124,8 +128,22 @@ class WtCaptureSession {
   List<WtMedia> mediaOfView(WtMediaView view) =>
       media.where((m) => m.view == view).toList();
 
-  /// 通過品質閘門的媒體數。分析只能用這些。
-  int get usableMediaCount => media.where((m) => m.qualityOk == true).length;
+  /// 通過品質閘門的**照片**數。畫面上寫的是「幾張可用於量測」，
+  /// 而音軌不是「張」也不走同一組閘門——把它算進來會讓那個數字對不上照片張數。
+  int get usableMediaCount => media
+      .where((m) => m.kind == WtMediaKind.photo && m.qualityOk == true)
+      .length;
+
+  int get photoCount =>
+      media.where((m) => m.kind == WtMediaKind.photo).length;
+
+  int get audioCount =>
+      media.where((m) => m.kind == WtMediaKind.audio).length;
+
+  /// 品質閘門放行的音軌數（不可用的音軌照樣留著，理由與照片相同）
+  int get usableAudioCount => media
+      .where((m) => m.kind == WtMediaKind.audio && m.qualityOk == true)
+      .length;
 
   Map<String, dynamic> toMap() {
     final map = <String, dynamic>{

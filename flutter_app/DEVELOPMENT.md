@@ -194,7 +194,7 @@ flutter test
 flutter test test/form_inspection_record_test.dart
 ```
 
-### 測試清單（286 tests）
+### 測試清單（406 tests）
 
 | 檔案 | 數量 | 覆蓋範圍 |
 |------|------|---------|
@@ -207,10 +207,18 @@ flutter test test/form_inspection_record_test.dart
 | `form_inspection_record_test.dart` | 21 | Model: toMap/fromMap 往返、null 處理、舊格式相容、standardJudgments 持久化、copyWith 深拷貝 |
 | `database_service_test.dart` | 12 | DB CRUD: insert/update/delete、排序、limit、搜尋、GPS 持久化、UNIQUE 約束 |
 | `photo_service_test.dart` | 6 | 照片命名格式、序號補零、截斷、特殊字元 |
+| `image_decode_test.dart` | 5 | ★ `safeDecodeImage`：`decodeImage` **會丟例外不只回 null**（短位元組在格式嗅探階段就 RangeError），驗真影像解得回來、極短/非影像/截斷都回 null 不丟例外 |
+| `photo_decode_guard_test.dart` | 4 | ★ 兩個照片服務在無法解碼時交出**自己文件寫的結果**：`compressPhoto` 回原始位元組、`ImageService` 丟「Failed to decode image」而不是漏出 RangeError |
 | `blade_geometry_compare_test.dart` | 17 | ★ 幾何層：三片輪廓逐項對照 Python、健康那台四個量都不標記、**單片注入 24 px 偏移要被標記且指對那一片**、離群判準要同時滿足 z 與「大於另兩片彼此差」、閘門拒收時互比一定為空 |
 | `blade_geometry_service_test.dart` | 15 | ★ 分割與結構定位逐階段對照 Python：色空間 → 天空模型場 → 距離與遮罩 → 輪轂/塔架/三片葉尖 |
 | `blade_trend_service_test.dart` | 15 | ★ 跨次趨勢：一個點不產生趨勢、下降不可被說成好轉、駁回的點留在線上、只比無因次比值 |
 | `blade_ai_retry_service_test.dart` | 11 | ★ AI 補跑佇列：不推翻已簽核的、失敗維持待補、同場次不做 N+1、批次上限 |
+| `blade_dsp_test.dart` | 19 | ★ DSP 逐項對照 scipy：STFT 的**縮放/邊界補零/padded 三者都要對**、週期性 Hann（窗和恰為 n/2）、自寫 FFT、savgol 係數、medfilt **用零填補不是 REPLICATE**（斜坡是能分辨的最短案例）、numpy 的 `round` 是半數取偶 |
+| `blade_audio_decode_test.dart` | 17 | ★ WAV 讀取：夾具逐點對照 Python、四種位元深度（24-bit 走「補低位元組當 int32」與 Python 同尾數）、多聲道取平均、fmt 前插別的區塊、data 長度為 0／超出檔案、**每一種讀不了的情況都有可顯示的原因且不丟例外** |
+| `blade_acoustic_service_test.dart` | 23 | ★ 聲音層：兩段夾具**兩個方向都測**（healthy 不誤報／eroded 真的報且報在對的那一片）、ACF 諧波歧義解對（差三倍就是把 3P 當 1P）、三重守門（靜音／白噪／風噪主導）不可用時**不給逐片數字** |
+| `blade_dynamics_service_test.dart` | 18 | ★ 動態層：抽幀注入所以整條編排測得到、朝下葉片的 25° 容差邊界、**缺測的幀不占標籤位置**（否則後面全部錯位）、不以內插值充當量測、每片不足 2 幀就不互比 |
+| `blade_audio_recorder_test.dart` | 17 | ★ 錄音流程（plugin 收在一處，流程全測得到）：**裝置不支援 WAV 時不開始錄**（不然會靜靜錄成壓縮格式，等分析才發現解不開）、權限／編碼器的檢查順序、plugin 回 null 時退回指定路徑、放棄會刪檔；另有一組**釘住錄音參數**（WAV／單聲道／自動增益與降噪全關）的測試 |
+| `metric_direction_test.dart` | 8 | ★ 互比方向性：偏低不標記但 **z 照樣算完**、兩片往相反方向偏時 high 模式要抓最吵的而不是偏離最多的、早退路徑也要帶著 direction |
 | `blade_image_ops_test.dart` | 10 | ★ 影像運算逐項對照 OpenCV：網格中值（網格點逐位相同）、REFLECT_101 高斯、5×5 橢圓閉、連通元件、chamfer 距離變換（含最大值位置）、8-bit Lab |
 | `blade_analysis_service_test.dart` | 24 | ★ 葉片分析編排：門檻表邊界、未驗過品質的照片不分析、未超門檻不進報告但存進 DB、AI 不得下砍演算法等級、離線不遺失結果、摘要明講未跑的層 |
 | `blade_report_builder_test.dart` | 9 | ★ 葉片報告的立場：不輸出「合格」、零檢出明說代表什麼、演算法數值看得到、人工駁回的不列入但照片仍附上 |
@@ -306,9 +314,170 @@ flutter build apk --debug
 
 ## 變更紀錄
 
+### 2026-09-07（解碼守門收斂到一處）
+
+`package:image` 的 `decodeImage` **會丟例外，不只回 null**——位元組太短時在格式
+嗅探階段就 `RangeError`（GIF 的 `isValidFile` 讀字串讀過界），那時連格式都還沒判斷
+出來。所以 `decodeImage(bytes) == null` 只擋得住「格式認得出來但內容壞掉」，
+擋不住「檔案根本不完整」，而後者才是現場會遇到的（外接儲存寫一半被拔掉、複製中斷、
+從相簿選到非影像檔）。
+
+新增 `lib/utils/image_decode.dart` 的 `safeDecodeImage`，五處呼叫端全部改用它。
+放在 `utils/` 而不是任何一個 service 裡是刻意的：定檢與葉片是兩條獨立的功能線，
+從其中一條 import 另一條的檔案只為了拿一個 helper 會把兩者黏起來。
+`BladeImageOps.safeDecode` 留成轉呼叫，葉片端的呼叫點不必知道它搬去哪了。
+
+**兩處的實際影響比原本記的小，這裡更正**：
+
+| 呼叫端 | 原本會怎樣 | 改了什麼 |
+|---|---|---|
+| `image_service._processAndSaveImage` | 有 try/catch 但 `rethrow`，所以漏出去的是 `RangeError` 而不是它自己寫的 `Exception('Failed to decode image')` | 呼叫端（`inspection_provider` 的拍照流程）現在看得懂錯在哪 |
+| `photo_service.compressPhoto` | **本來就不會崩潰**——整段包在 try/catch 裡，`catch (e)` 連 `Error` 一起接，會回原始位元組 | 紀錄從「Compress failed: RangeError…」變成「Failed to decode」，那才是實際發生的事 |
+| `pdf_report_service._downscaleToJpeg` | 外層 `loadPhotoForPdf` 有 try/catch，安全 | 「無法解碼」在 isolate 內就回 null，不必丟例外穿過 isolate 邊界 |
+| `image_quality_service` / `blade_surface_service` | 前一批已修 | 改用共用的那份，本地 try/catch 刪掉 |
+
+所以這一筆修的是**診斷性與紀錄準確度**，不是崩潰。測試 286 → 295。
+
 ### 2026-09-07（葉片模組 Phase 1 缺口補完 + Phase 2 幾何層）
 
 **Phase 1 的兩個缺口**（同日盤點、同日補完）：
+
+### 2026-09-07 — 聲音層兩個未決事項結案
+
+#### 一、`tonal_exclusive` 修好了（真的驗獨有性）
+
+原本的「只有這片有」複查是在 ±3% 的窄頻帶上**再跑一次** 9 點中值濾波。那是錯的：
+手機常見取樣率下那個頻帶只有 4–5 個 bin（48 kHz / nperseg 2048 → bin 間距 23 Hz，
+1800 Hz 的 ±3% 是 108 Hz），達不到中值濾波要求的 13 個，於是一律回 NaN 而被呼叫端
+當成「另兩片在這個頻率沒有東西」。結果它退化成「突出量 ≥ 6 dB」，
+**完全沒有驗過獨有性**——鋸齒尾緣等設計特徵、路過的車輛、地面的發電機會在每一片的
+視窗裡留下同一根峰，然後被報成單片缺陷，於是有人去拆錯的葉片。
+
+改成讀各片**全頻帶**突出量頻譜（`med_bins=25`，本來就為了找自己的峰算過一次）
+在該頻率上的值。Python 與 Dart 同步改，新增 `_tonal_excess` / `_excess_at`
+（Dart：`tonalExcess` / `excessAtFrequency`，**公開**所以測得到）。
+
+合成音軌實測：
+
+| 案例 | 舊做法判為獨有 | 新做法 | 正確答案 |
+|---|---|---|---|
+| 健康（無哨音） | 0 | 0 | 0 |
+| 單片哨音 | 1 | 1 | 1 |
+| **兩片同頻哨音** | **2** | **0** | 0 |
+| **三片同頻哨音** | **3** | **0** | 0 |
+
+共消掉 5 個誤報，單片哨音仍然抓得到。門檻沒有重新校準：修的是複查那一步，
+峰本身的判準（6 dB）沒動。severity 維持 2，但理由換了——不再是「複查形同虛設」，
+而是手機地面錄音本身就是 Level 1 篩檢。
+
+既有兩段夾具的參考值**完全不變**（它們沒有多片同頻的情況），所以原有的交叉驗證
+仍然有效；改動的那條路另外用轉寫對照補驗（三片／兩片同頻，Python 與 Dart 一致）。
+
+#### 二、加入 `record` 做 App 內錄音
+
+`record: ^6.2.1`，專案 SDK 下限 `>=3.2.0` → `>=3.5.0`，並宣告 `flutter: >=3.24.0`。
+**刻意不用 7.x**：它要 Dart `^3.12.0` / Flutter 3.44，那個下限會把還沒升級的開發
+環境擋在外面，而 6.x 已經有需要的 `AudioEncoder.wav`（已下載 package 逐項確認 API，
+沒有靠記憶）。
+
+錄音參數是**量測要求不是偏好**，寫在 `BladeRecordingSpec` 並有測試釘住：
+
+- **未壓縮 WAV**：裝置上沒有純 Dart 的 AAC 解碼器，錄成 m4a 就離線分析不了。
+  而且**開始錄之前先問 `isEncoderSupported`**——不問的話裝置可能靜靜錄成壓縮格式，
+  等到分析才發現解不開，那時人已經離開現場了。
+- **44.1 kHz 而不是 16 kHz**：分析頻帶上限 8 kHz，16 kHz 取樣的 Nyquist **剛好**是
+  8 kHz，抗鋸齒濾波器在那裡就開始滾降，會把 2–8 kHz 的高頻占比量偏。
+- **自動增益／降噪／回音消除全部關掉**：自動增益會在錄音過程中改變增益，把「同一段
+  錄音裡三片互比」的基準拆掉；降噪削掉的正是要量的寬頻噪音（前緣侵蝕的徵兆）；
+  回音消除為語音設計會扭曲頻譜。
+- **歷次錄音要用同一個取樣率**：`nperSegFor` 由「32 ms 視窗」推出分析窗長，
+  取樣率變了 bin 間距就變、窄頻峰的基線估計跟著變。取樣率已存進 `qualityJson`。
+
+plugin 的 API 只出現在 `RecordPluginAudioRecorder` 一處，流程（權限、編碼器支援、
+長度提示、收尾、放棄時刪檔）全部用假的錄音器測到底——這個環境沒有實機，
+plugin 本身驗不了，但萬一 API 對不上，要改的也只有那一個檔案裡的那幾行。
+
+錄音與「附加音軌」共用**同一條**驗證與存檔路徑（`_ingestAudio`）：錄音只是換一個
+來源，不該長出第二套判定。`file_picker` 那條路保留為備援（裝置不支援 WAV、
+或用專業錄音機時）。
+
+Android 已加 `RECORD_AUDIO`。**iOS 的 `NSMicrophoneUsageDescription` 待 `ios/`
+目錄建立時補**——目前 repo 只有 android/web/windows。
+
+---
+
+### 2026-09-07 — 葉片模組 Phase 3：動態層（聲音層完整、影片留接縫）
+
+`acoustics.py`（484 行）的 Dart 對照實作。測試 295 → 384。
+
+**先講一個範圍判斷：`dynamics.py` 沒有整套搬過來。** 原型那 424 行的三個輸出，
+兩個現在有更好的來源：
+
+| 原型的輸出 | App 端誰負責 |
+|---|---|
+| 轉速（逐幀角度追蹤 + 回歸） | **聲音層**。包絡自相關量到的 rpm 在夾具上與真值差 0.1%，而且不必解一張幀 |
+| 三片半徑一致性 | **幾何層**（Phase 2）。單張整機照就是三片剪影互比 |
+| 六點鐘取幀、轉向 | 只有這個真的需要解幀 |
+
+把逐幀追蹤搬過來會是「跑不動（Python 就 190–320 ms/幀）又跟已有的兩層重複」。
+所以動態層做的是影片**唯一多給的東西**：多幀取中位，抵消風吹擺動。
+
+**抽幀留成注入點。** Flutter 沒有純 Dart 的 H.264／HEVC 解碼器，抽幀一定要走原生
+（Android MediaCodec、iOS AVAssetImageGenerator）——那是沒有實機就驗不了的
+platform channel，所以不押一個猜的實作。編排與判定用注入的抽幀器測到底（18 條）。
+未接上時報告寫「裝置端抽幀尚未接上」而不是「未實作」：「沒拍」與「拍了但解不了」
+對現場是兩件不同的事。
+
+**新增四支**（`blade_dsp` / `blade_audio_decode` / `blade_acoustic_service` /
+`blade_dynamics_service`），三個不可退化的約定：
+
+1. **三重守門**（週期信賴度／包絡訊噪比／低頻占比）任一不過就 `usable = false`，
+   而**不可用時 `blades` 與 `comparisons` 是空的**，不是「全部正常」。
+2. **聲學量互比一律 `MetricDirection.high`**。不限方向的話最安靜的那片會被標成
+   前緣侵蝕——結論剛好反過來。
+3. **兩層的葉片標籤同一個規則**（依通過六點鐘的先後循環），且都明寫不是實際葉片編號。
+
+**驗證方式：先在 Python 端把慣例釘死，再轉寫。** STFT 的縮放、savgol 的邊緣處理、
+medfilt 的邊界填補各有好幾種說得通的慣例，猜錯不會報錯，只會讓最後一個數字對不上。
+所以先寫一份「打算在 Dart 裡怎麼實作」的 Python 版（顯式迴圈、顯式正規化）對照 scipy：
+
+    STFT |Z| 3.5e-16 / band energy 1.5e-17 / savgol 3.5e-17
+    medfilt 0（逐位相同）/ ACF 1.1e-15 / mod_depth 逐位相同
+
+再把整條 `analyzeSamples` 轉寫回 Python 對照 `acoustics.py`，兩段夾具音軌上
+**每個輸出都到機器精度一致**。夾具參考值**從寫出去的 WAV 讀回來之後才算**
+（含 int16 量化），與 Dart 端輸入同源。改 `acoustics.py` 後要重跑
+`blade_prototype/scripts/make_acoustic_fixture.py`——該產生器會**自我對帳**
+（它為了掏出中間量重寫了一次前處理，那份重複本來就是漂移來源），
+與 `acoustics.py` 漂開時直接爆掉不寫檔。
+
+**移植期間發現的兩件事**：
+
+1. **`compareMetric` 少了 `direction`**（真缺口，已補）。幾何層只用 `both` 所以
+   之前沒露出來。有方向時「離群者」也改成最高（最低）那片而不是離中位數最遠那片，
+   兩片往相反方向偏時這兩者不同。
+2. **`tonal_exclusive` 沒有真的驗過獨有性**（Python 既有缺陷，**照原樣移植**）。
+   ±3% 的窄頻帶在手機取樣率下只有 4–5 個 bin，達不到 9 點中值濾波要的 13 個，
+   複查回 NaN 被當成「另兩片沒有」。實際等同「突出量 ≥ 6 dB」。因此哨音只給
+   severity 2 不越級主張。修法與取捨記在 SPEC §13 第 6 項。
+
+**順手修一個既有的 bug**：`replaceWtDetections` 原本只清傳進來那一層的 `pending`，
+但 `analyzeSession` 回傳的是整個場次三層的完整結果——上一輪標記過、這一輪不再標記
+的發現會留在報告上，那是憑空多出來的「異常」。改為清整個場次的 `pending`，
+`confirmed`/`rejected` 不動（那等於推翻簽核）。Phase 2 就有這個問題，動態層讓它
+變成三層。
+
+**音軌的取用**：用既有的 `file_picker`（只收 WAV），沒有加新相依——`record` plugin
+的 App 內錄音 UX 更好，但要 Dart SDK `^3.3.0` 而本專案宣告 `>=3.2.0`，
+在無法實機驗證的批次裡賭相依解析不划算（SPEC §13 第 7 項）。附加時**當場就驗一次**：
+解不開、太短、風噪主導都要在人還站在風機旁、還能重錄的時候講。
+
+分析步驟那張卡片原本寫死「本次只跑表面層；幾何層與動態層還沒實作」——幾何層
+Phase 2 就做完了，那句話已經是**假的**。改成依場次素材照實列出會跑哪幾層。
+
+---
+
+### 2026-09-07 — 葉片模組 Phase 1 缺口補完
 
 - **AI 補跑佇列** `blade_ai_retry_service.dart`：離線時偵測標成 `geminiOfflinePending`，
   原本沒有任何東西在連線後把 AI 那一段補完。三條不可退化的規則：只補

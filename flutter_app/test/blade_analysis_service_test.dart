@@ -3,7 +3,9 @@ import 'dart:typed_data';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:induspect_ai/models/wt_capture_session.dart';
 import 'package:induspect_ai/models/wt_detection.dart';
+import 'package:induspect_ai/services/blade_acoustic_service.dart';
 import 'package:induspect_ai/services/blade_analysis_service.dart';
+import 'package:induspect_ai/services/blade_dynamics_service.dart';
 import 'package:induspect_ai/services/blade_geometry_compare.dart';
 import 'package:induspect_ai/services/blade_ai_service.dart';
 import 'package:induspect_ai/services/blade_surface_service.dart';
@@ -78,6 +80,31 @@ void main() {
             comparisons: comparisons,
           );
 
+  BladeProfile _profile(int index, double axisDeg, double radius) => BladeProfile(
+        index: index,
+        axisAngleDeg: axisDeg,
+        radiusPx: radius,
+        u: Float64List(4),
+        center: Float64List(4),
+        edgeLo: Float64List(4),
+        edgeHi: Float64List(4),
+        width: Float64List(4),
+        bendCoeff: 0.0,
+        tipDeflectionPx: 0.0,
+        residualRmsPx: 0.0,
+        meanWidthPx: 10.0,
+        tipX: 0.0,
+        tipY: 0.0,
+        nContaminatedBins: 0,
+      );
+
+  /// 正下方（六點鐘）的那一片
+  BladeProfile downProfile(double radius) => _profile(0, 270.0, radius);
+
+  /// 不在正下方的其他兩片
+  BladeProfile sideProfile(int index, double axisDeg) =>
+      _profile(index, axisDeg, 300.0);
+
   MetricComparison flagged(String metric, int index, double dev) =>
       MetricComparison(
         metric: metric,
@@ -95,6 +122,8 @@ void main() {
     BladeSurfaceAnalyzer? surface,
     BladeImageAnalyzer? ai,
     BladeGeometryAnalyzer? geometry,
+    BladeAcousticAnalyzer? acoustic,
+    BladeFrameExtractor? frameExtractor,
     bool useAi = false,
   }) =>
       BladeAnalysisService.analyzeSession(
@@ -104,7 +133,58 @@ void main() {
         surface: surface ?? fakeSurface(1.0),
         analyzer: ai,
         geometry: geometry ?? fakeGeometry(),
+        acoustic: acoustic,
+        frameExtractor: frameExtractor,
       );
+
+  /// 假的聲學結果。只填測試會看的欄位，其餘給 NaN——真實情況下不可用時
+  /// 那些欄位本來就是 NaN。
+  BladeAcousticResult acousticResult({
+    required bool usable,
+    double rpm = double.nan,
+    double bladePassHz = double.nan,
+    double durationS = 8.0,
+    List<double> passTimes = const [],
+    List<double>? levels,
+    int? whistleAt,
+    List<String> notes = const [],
+  }) {
+    final lv = levels ?? const [double.nan, double.nan, double.nan];
+    return BladeAcousticResult(
+      sampleRate: 16000,
+      durationS: durationS,
+      bladePassHz: bladePassHz,
+      rotorHz: double.nan,
+      rpmFromAudio: rpm,
+      periodicityConfidence: usable ? 0.8 : 0.0,
+      amDepthDb: double.nan,
+      asymmetryDb: double.nan,
+      windDominance: 0.5,
+      envelopeSnrDb: 6.0,
+      usable: usable,
+      passTimesS: passTimes,
+      notes: notes,
+      blades: usable
+          ? List<BladeAcousticBlade>.generate(
+              3,
+              (i) => BladeAcousticBlade(
+                    index: i,
+                    nPasses: 2,
+                    bandLevelDb: lv[i],
+                    highBandRatio: 0.6,
+                    tonalFreqHz: whistleAt == i ? 1800.0 : double.nan,
+                    tonalProminenceDb: whistleAt == i ? 11.0 : double.nan,
+                    tonalExclusive: whistleAt == i,
+                  ))
+          : const [],
+      comparisons: usable
+          ? [
+              BladeGeometryCompare.compareMetric('band_level_db', lv, 0.8,
+                  direction: MetricDirection.high)
+            ]
+          : const [],
+    );
+  }
 
   group('門檻表', () {
     test('與原型的 5.0 / 2.0 / 1.5 一致，邊界含等於', () {
@@ -144,18 +224,170 @@ void main() {
       expect(out.skippedCount, 1);
     });
 
-    test('整機照走幾何層、影片仍未分析，摘要要講明動態層沒跑', () async {
+    test('沒接上抽幀時，影片明寫「裝置端抽幀尚未接上」而不是「未實作」', () async {
       final out = await run([
         WtMedia(path: 'front.jpg', view: WtMediaView.front, qualityJson: const {'ok': true}),
         WtMedia(path: 'clip.mp4', kind: WtMediaKind.video, view: WtMediaView.front),
         segment('seg.jpg'),
       ]);
       expect(out.analyzedCount, 2, reason: '分區段照 1 張 + 整機照 1 張');
+      expect(out.layersRun, {WtLayer.surface, WtLayer.geometry});
       final summary = out.buildSummary();
       expect(summary, contains('幾何層'));
       expect(summary, contains('動態層'));
       expect(summary, contains('未進行'), reason: '動態層要明寫沒跑');
-      expect(summary, contains('影片'));
+      expect(summary, contains('抽幀'),
+          reason: '「沒拍」與「拍了但解不了」對現場是兩件不同的事');
+    });
+
+    test('動態層：音軌可用時產生逐片發現，並把轉速寫進備註', () async {
+      final out = await run(
+        [WtMedia(path: 'rec.wav', kind: WtMediaKind.audio)],
+        acoustic: (_) async => acousticResult(
+          usable: true,
+          rpm: 12.4,
+          levels: const [0.0, 4.0, 0.2],
+        ),
+      );
+      expect(out.layersRun, contains(WtLayer.dynamic_));
+      expect(out.analyzedCount, 1);
+      final d = out.detections
+          .where((x) => x.defectClass == 'blade_noise')
+          .toList();
+      expect(d.length, 1);
+      expect(d.first.blade, 'B', reason: 'index 1 → 葉片 B');
+      expect(d.first.layer, WtLayer.dynamic_);
+      expect(d.first.severity, 2, reason: '警告級，不給不合格');
+      expect(d.first.metricJson['rpm_from_audio'], 12.4);
+      expect(out.notes.join(), contains('12.4 rpm'));
+      // 這個場次只有音軌，所以表面層與幾何層**確實**沒跑——摘要照實說是對的。
+      // （先前這裡斷言不出現「未進行」，那是我把「動態層跑了」錯當成「全都跑了」。）
+      expect(out.buildSummary(), startsWith('本次分析範圍：動態層'));
+      expect(out.buildSummary(), contains('表面層'));
+      expect(out.buildSummary(), contains('未進行'));
+      expect(out.buildSummary(), contains('沒進行不等於沒問題'));
+    });
+
+    test('動態層：音軌不可用時也留一筆（無 severity），不會被讀成「聲音沒問題」',
+        () async {
+      final out = await run(
+        [WtMedia(path: 'rec.wav', kind: WtMediaKind.audio)],
+        acoustic: (_) async => acousticResult(
+            usable: false, notes: const ['風噪主導，建議站到下風處並加防風罩重錄']),
+      );
+      expect(out.layersRun, isNot(contains(WtLayer.dynamic_)));
+      expect(out.skippedCount, 1);
+      final d = out.detections.single;
+      expect(d.defectClass, 'audio_unusable');
+      expect(d.severity, isNull, reason: '無 severity → 不進報告的發現列表');
+      expect(d.aiDescription, contains('防風罩'));
+      expect(out.reportable, isEmpty);
+    });
+
+    test('動態層：三片一致時不產生發現，但要說「比過了」', () async {
+      final out = await run(
+        [WtMedia(path: 'rec.wav', kind: WtMediaKind.audio)],
+        acoustic: (_) async =>
+            acousticResult(usable: true, levels: const [0.0, 0.1, 0.2]),
+      );
+      expect(out.detections, isEmpty);
+      expect(out.notes.join(), contains('未見單片噪音異常'));
+    });
+
+    test('動態層：獨有哨音各自一筆，且 detectionId 不互相覆蓋', () async {
+      final out = await run(
+        [WtMedia(path: 'rec.wav', kind: WtMediaKind.audio)],
+        acoustic: (_) async => acousticResult(
+          usable: true,
+          levels: const [0.0, 4.0, 0.2],
+          whistleAt: 1,
+        ),
+      );
+      final ids = out.detections.map((d) => d.detectionId).toSet();
+      expect(ids.length, out.detections.length, reason: 'id 不能重複');
+      expect(
+          out.detections.where((d) => d.defectClass == 'blade_whistle').length,
+          1);
+    });
+
+    test('影片：有抽幀但沒有可用音軌 → 不知道週期，明講沒跑', () async {
+      final out = await run(
+        [WtMedia(path: 'clip.mp4', kind: WtMediaKind.video)],
+        frameExtractor: (_, __) async => bytes,
+      );
+      expect(out.layersRun, isNot(contains(WtLayer.dynamic_)));
+      expect(out.notes.join(), contains('葉片通過週期'));
+    });
+
+    test('影片：音軌先跑並把週期交給抽幀，動態層才成立', () async {
+      final asked = <double>[];
+      final out = await run(
+        [
+          WtMedia(path: 'rec.wav', kind: WtMediaKind.audio),
+          WtMedia(path: 'clip.mp4', kind: WtMediaKind.video),
+        ],
+        acoustic: (_) async => acousticResult(
+          usable: true,
+          rpm: 24.0,
+          bladePassHz: 1.2,
+          durationS: 6.0,
+          passTimes: const [0.35],
+          levels: const [0.0, 0.1, 0.2],
+        ),
+        frameExtractor: (path, at) async {
+          asked.add(at);
+          return bytes;
+        },
+      );
+      expect(asked, isNotEmpty, reason: '抽幀時刻要由音軌的週期決定');
+      expect(asked.first, closeTo(0.35, 1e-9));
+      // 1.2 Hz → 週期 0.833 s，6 秒內共 7 次通過
+      expect(asked.length, 7);
+      expect(out.layersRun, contains(WtLayer.dynamic_),
+          reason: '音軌那一半成立了');
+      // 這個假的幾何層不回輪廓，所以影片那一半量不到朝下的葉片——
+      // 而它必須把「為什麼量不到」講出來，不能靜靜跳過
+      expect(out.notes.join(), contains('朝下的葉片'));
+    });
+
+    test('影片：音軌給週期、幾何層給輪廓時，整條鏈產生葉尖半徑發現', () async {
+      // 三片輪流通過六點鐘，第 2 順位短 40 px
+      final radii = [300.0, 260.0, 300.0, 301.0, 261.0, 299.0];
+      var call = 0;
+      final out = await run(
+        [
+          WtMedia(path: 'rec.wav', kind: WtMediaKind.audio),
+          WtMedia(path: 'clip.mp4', kind: WtMediaKind.video),
+        ],
+        acoustic: (_) async => acousticResult(
+          usable: true,
+          rpm: 24.0,
+          bladePassHz: 1.2,
+          durationS: 5.2,
+          passTimes: const [0.1],
+          levels: const [0.0, 0.1, 0.2],
+        ),
+        frameExtractor: (_, __) async => bytes,
+        geometry: (_) async {
+          final r = radii[call % radii.length];
+          call++;
+          return BladeGeometryOutcome(ok: true, profiles: [
+            downProfile(r),
+            sideProfile(1, 30.0),
+            sideProfile(2, 150.0),
+          ]);
+        },
+      );
+      final d = out.detections
+          .where((x) => x.defectClass == 'tip_radius_mismatch')
+          .toList();
+      expect(d.length, 1);
+      expect(d.first.layer, WtLayer.dynamic_);
+      expect(d.first.blade, 'B', reason: '第 2 順位');
+      expect(d.first.severity, 2);
+      expect(d.first.metricJson['frames_measured'], 7);
+      expect(out.notes.join(), contains('聲音層'),
+          reason: '兩層的葉片標籤規則要在報告上對得起來');
     });
 
     test('沒過品質閘門的整機照不進幾何層', () async {
