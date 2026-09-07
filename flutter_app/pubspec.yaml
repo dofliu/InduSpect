@@ -17,18 +17,22 @@ environment:
   flutter: '>=3.27.0'
 
 dependencies:
-  flutter:
-    sdk: flutter
-
   # 依字母排序（`sort_pub_dependencies` 是本專案自己打開的規則）。原本是依用途分組，
   # 但排序之後分組註解會掛到錯的相依上，所以「為什麼需要它」改成貼在各自那一行。
+  # `flutter:` / `flutter_test:` 這兩個 sdk 相依也算在排序裡（linter 不看空行分段），
+  # 所以它們不在各段最上面而是排在字母位置上 —— 搬回慣例的最上面會讓 lint 再紅。
   archive: ^3.6.1 # zip 打包（訓練語料匯出）
   cached_network_image: ^3.3.1
-  camera: ^0.10.5+9 # 只用於定檢流程；葉片檢測刻意走系統相機（碰不到 5x 望遠）
+  # camera 目前 lib/ 裡沒有任何 import：定檢與葉片都走 image_picker（系統相機），
+  # 葉片是刻意的（camera plugin 碰不到 5x 望遠與最高像素模式）。留著是還沒確認
+  # 移掉對 Android 建置無影響，沒有實機可驗之前不動它。
+  camera: ^0.10.5+9
   connectivity_plus: ^5.0.2 # 只用來探介面；可達性要用 ConnectivityService.checkConnection
   dio: ^5.4.0
   excel: ^4.0.6 # 定檢表解析
   file_picker: ^8.0.0 # 定檢表上傳、音軌選檔
+  flutter:
+    sdk: flutter
   flutter_dotenv: ^5.1.0
   flutter_svg: ^2.0.9
   geocoding: ^3.0.0
@@ -52,11 +56,11 @@ dependencies:
   uuid: ^4.3.3 # sessionId / detectionId
 
 dev_dependencies:
-  flutter_test:
-    sdk: flutter
   build_runner: ^2.4.8
   flutter_launcher_icons: ^0.13.1
   flutter_lints: ^3.0.1
+  flutter_test:
+    sdk: flutter
   sqflite_common_ffi: ^2.3.0 # DB 測試用 in-memory
 
 flutter_launcher_icons:
