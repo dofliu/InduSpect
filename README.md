@@ -41,20 +41,27 @@
 ### 獨立模組：風力機葉片地面目視檢測
 
 用一般手機在地面拍葉片，做「有沒有明顯壞掉、形狀有沒有跟另外兩片不一樣、轉起來有沒有異常」的篩檢。
-**與定檢表 pipeline 平行、不共用流程**（資產驅動 vs 表單驅動），目前為 Phase 0 演算法原型。
+**與定檢表 pipeline 平行、不共用流程**（資產驅動 vs 表單驅動）。
+App 端已可跑完整流程（Phase 1，表面層）：主頁第三個入口
+「風機葉片檢測」→ 選風機 → 引導拍攝 → 演算法量測 → **人工確認** → PDF 報告。
 
-- 表面層：前緣侵蝕粗糙度、裂縫候選（長焦分區段照）
-- 幾何層：三片葉片中心線曲率互比、後緣開裂、附加件缺失
-- 動態層：轉速、三片葉尖軌跡一致性、六點鐘自動取幀（轉動影片）
-- 聲音層：逐片寬頻噪音（前緣侵蝕）、窄頻哨音（後緣裂縫）——指出「哪一片在叫」
+- 表面層：前緣侵蝕粗糙度、裂縫候選（長焦分區段照）— **App 端已實作**
+- 幾何層：三片葉片中心線曲率互比、後緣開裂、附加件缺失 — 原型完成，Dart 移植排 Phase 2
+- 動態層：轉速、三片葉尖軌跡一致性、六點鐘自動取幀（轉動影片）— 原型完成，排 Phase 3
+- 聲音層：逐片寬頻噪音（前緣侵蝕）、窄頻哨音（後緣裂縫）——指出「哪一片在叫」— 原型完成
 - 周邊層：塔架油漬、機艙罩破損
-- 交付物：圖文檢測報告（單一自帶內容 HTML，含疊圖、圖表、數值表與「待人工確認」欄）
+- 交付物：App 端 PDF 報告；原型端圖文檢測報告（單一自帶內容 HTML，含疊圖、圖表、數值表）
+
+報告**不輸出「合格」判定**，而且會明寫這次跑了哪一層、沒跑哪一層——手機地面拍攝屬
+Level 1 篩檢，「未檢出異常」不等於「整支葉片都查過了」。所有發現預設為「待人工確認」。
 
 規格見 [`BLADE_INSPECTION_SPEC.md`](BLADE_INSPECTION_SPEC.md)，原型與可偵測門檻見 [`blade_prototype/`](blade_prototype/)。
 
 > 目前狀態：75 張公開真實照片實測。原本「有雲就整個垮掉」（命中 1/13）的天空模型瓶頸已
 > 換成**局部天空模型**解決——整體輪轂命中 **23/30**、有雲 **10/13**、遮罩全空 4 → 0。
-> 逆光仍是硬限制。實測結果與失敗案例見
+> 逆光仍是硬限制。**還沒有真實手機拍的葉片語料**，所以葉片拍攝閘門目前刻意保守
+> （只擋讀不到檔與整張過暗），原始量測值全部存進 DB 供外業回來重新定門檻。
+> 實測結果與失敗案例見
 > [`blade_prototype/REAL_IMAGE_VALIDATION.md`](blade_prototype/REAL_IMAGE_VALIDATION.md)。
 
 ### 目前隱藏的功能
@@ -212,9 +219,9 @@ python -m blade_proto sensitivity --quick --out SENSITIVITY.md
 ## 測試
 
 ```bash
-cd flutter_app && flutter test                                              # 155 tests
+cd flutter_app && flutter test                                              # 211 tests
 cd backend && GEMINI_API_KEY=ci-fake-key pytest tests/ --asyncio-mode=auto  # 191 tests
-cd blade_prototype && pytest                                                # 71 tests
+cd blade_prototype && pytest                                                # 76 tests
 ```
 
 三者皆在 CI（`.github/workflows/ci.yml`）逐 PR 執行；`flutter analyze` 為硬性門檻（warning 級以上擋 PR）。
