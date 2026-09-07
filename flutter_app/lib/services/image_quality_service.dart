@@ -4,6 +4,8 @@ import 'dart:typed_data';
 import 'package:flutter/foundation.dart' show compute;
 import 'package:image/image.dart' as img;
 
+import '../utils/image_decode.dart';
+
 /// 影像品質門檻（可調；建議依實機現場照片校準）
 ///
 /// [minSharpness] 為 Laplacian 響應的變異數。為使不同解析度可比較，
