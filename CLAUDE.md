@@ -59,11 +59,11 @@
 
 ## 測試
 ```bash
-flutter test          # 全部 439 tests（widget_test 已修復，不再排除）
+flutter test          # 全部 459 tests（widget_test 已修復，不再排除）
 cd backend && GEMINI_API_KEY=ci-fake-key pytest tests/ --asyncio-mode=auto   # 191 pytest
 cd blade_prototype && pip install -r requirements.txt && pytest              # 81 tests（葉片原型，合成影像/音軌夾具）
 ```
-Flutter 439 tests / 後端 191 pytest / 葉片原型 81 pytest 全綠（2026-09-07 CI 實測）。DB 測試使用 `sqflite_common_ffi` in-memory。標準資料為單一來源：改 `backend/app/data/inspection_standards.py` 後必須跑 `python backend/scripts/export_standards.py` 重新匯出 JSON（有同步守門測試）。
+Flutter 459 tests / 後端 191 pytest / 葉片原型 81 pytest 全綠（2026-09-07 CI 實測）。DB 測試使用 `sqflite_common_ffi` in-memory。標準資料為單一來源：改 `backend/app/data/inspection_standards.py` 後必須跑 `python backend/scripts/export_standards.py` 重新匯出 JSON（有同步守門測試）。
 
 ## 已知問題追蹤
 - GitHub Issues #14-#19 已全數修復並關閉（2026-04-16）
@@ -97,6 +97,7 @@ Flutter 439 tests / 後端 191 pytest / 葉片原型 81 pytest 全綠（2026-09-
 
 - Issue #43 可自動化的兩項（2026-09-07）：①**lint 清理 102 → 6**。`flutter analyze` 本來就綠（CI 的門檻是 warning 以上），但 102 條 info 會把真正該看的訊息埋掉。其中 3 條 `use_build_context_synchronously` 是**真的潛在崩潰**（await 後才用 context）不是風格問題；`withOpacity` → `withValues` 連帶把 Flutter 下限提到 **3.27**（`withValues` 是 3.27 才有的——用 framework 自己的 `cupertino/colors.dart` 在 3.27 用了它、3.24 沒有來確認，不是憑印象）。刻意**留下 6 條**：`WillPopScope`→`PopScope`（`onWillPop` 是 async 而 `canPop` 必須同步，要重構）、Radio→`RadioGroup`（結構性遷移且要 Flutter 3.32）、`dart:html`（web 不是產品目標）。②**歷史列表分頁**：`ListView.builder` 本來就只建可見項目，所以卡的**不是滾動而是載入**——`FormInspectionRecord.fromMap` 每列要 `jsonDecode` 三個欄位，而列表上的「已填 N 項／異常 N 項」正是從那些欄位算出來的，省不掉解析只能限量。改成一頁 30 筆、捲到底再載（`itemBuilder` 同一幀會被呼叫多次，所以有重入守門，否則同一頁會抓好幾遍）
   **Issue #43 的另外兩項（實機完整流程、離線→恢復網路）沒有實機做不了**，issue 仍開著
+- Issue #43 第二項回頭補（2026-09-07）：「離線→恢復網路」不只是沒實機驗過。①**自動分享那一半沒測過**——`ShareQueueService` 是 singleton + static 分享動作，三個邊界都沒縫，於是「把不存在的檔案標成已分享」（使用者會以為客戶收到了報告）沒有任何地方擋。沿用 `ConnectivityService` 的 `@visibleForTesting` 覆寫慣例開縫，`processPendingShares()` 改為回傳 `ShareQueueOutcome`，14 條測試守的是**什麼情況下不准標記完成**。②**「待判定」重新判定那一半根本沒實作**——畫面提示寫著「恢復網路後可重新判定」，但全 app 唯一的連線監聽是分享佇列。補上 `_watchConnectivityForRejudge()`，判斷抽成頂層純函式 `shouldRejudgeOnReconnect` / `rejudgeTargets` 才測得到。`pendingOnly` 只挑還卡在「待判定」的：本地引擎與後端讀同一份標準資料，重跑已判過的只會無聲換掉使用者看過的判定
 
 ## 既有 error（已修復）
 - ~~`measurement.dart`: `sqrt` 未 import `dart:math`~~ → 已修復

@@ -288,4 +288,88 @@ void main() {
       expect(verdictColor('已填寫'), Colors.green);
     });
   });
+
+  // Issue #43「離線 → 恢復網路 → 待判定項目重新判定」的後半段。
+  // 原本畫面提示寫著「恢復網路後可重新判定」，但沒有任何程式碼做那件事。
+  group('恢復連線後的補判', () {
+    InspectionItemState item({
+      String id = 'f1',
+      Map<String, dynamic>? aiResult,
+      Map<String, dynamic>? standardJudgment,
+      bool pending = false,
+    }) =>
+        InspectionItemState(
+          fieldId: id,
+          label: '絕緣電阻',
+          fieldType: 'number',
+          aiResult: aiResult,
+          standardJudgment: standardJudgment,
+          standardJudgmentPending: pending,
+        );
+
+    test('沒有待判定項目時不重跑', () {
+      expect(shouldRejudgeOnReconnect(const <InspectionItemState>[]), isFalse);
+      expect(
+        shouldRejudgeOnReconnect([
+          item(id: 'a', standardJudgment: const {'judgment': 'pass'}),
+          item(id: 'b'),
+        ]),
+        isFalse,
+      );
+    });
+
+    test('有任何一項待判定就重跑', () {
+      expect(
+        shouldRejudgeOnReconnect([
+          item(id: 'a', standardJudgment: const {'judgment': 'pass'}),
+          item(id: 'b', pending: true),
+        ]),
+        isTrue,
+      );
+    });
+
+    test('★ 目標只有待判定的，已經有判定結果的不重跑', () {
+      final judged = item(id: 'judged', standardJudgment: const {'judgment': 'fail'});
+      final waiting = item(id: 'waiting', pending: true);
+      final untouched = item(id: 'untouched');
+
+      final targets = rejudgeTargets([judged, waiting, untouched]);
+
+      expect(targets.map((i) => i.fieldId), ['waiting'],
+          reason: '本地引擎與後端讀同一份標準資料，重跑只會無聲換掉使用者看過的判定');
+    });
+
+    test('匹配不到標準（unknown）不算待判定，也不重跑', () {
+      // unknown 代表標準庫裡沒有這一項；兩邊標準相同，再問一次還是 unknown
+      final unknown = item(id: 'u', standardJudgment: const {'judgment': 'unknown'});
+
+      expect(unknown.judgmentCode, isNull);
+      expect(rejudgeTargets([unknown]), isEmpty);
+      expect(shouldRejudgeOnReconnect([unknown]), isFalse);
+    });
+
+    test('多個待判定時全部進目標，且維持原順序', () {
+      final a = item(id: 'a', pending: true);
+      final b = item(id: 'b', standardJudgment: const {'judgment': 'pass'});
+      final c = item(id: 'c', pending: true);
+
+      expect(rejudgeTargets([a, b, c]).map((i) => i.fieldId), ['a', 'c']);
+    });
+
+    test('補判成功後 verdict 由「待判定」變成標準判定', () {
+      final target = item(
+        id: 'x',
+        pending: true,
+        aiResult: const {'is_anomaly': false},
+      );
+      expect(target.verdict, '待判定');
+
+      // 補判寫回的兩件事（與 _runStandardJudgment 成功分支一致）
+      target.standardJudgment = const {'judgment': 'fail', 'standard_text': '≥ 1'};
+      target.standardJudgmentPending = false;
+
+      expect(target.verdict, '不合格');
+      expect(rejudgeTargets([target]), isEmpty, reason: '補判完就不該再是目標');
+    });
+  });
 }

@@ -158,6 +158,23 @@ class InspectionItemState {
   }
 }
 
+/// 恢復連線後要不要重跑法規判定：有項目還卡在「待判定」才值得重跑。
+///
+/// 抽成頂層函式是為了測得到——`_runStandardJudgment` 本身要打後端也要
+/// `setState`，在單元測試裡碰不到，於是「恢復網路後重新判定」這條承諾
+/// （畫面上的提示就是這樣寫的）沒有任何地方驗得到。
+bool shouldRejudgeOnReconnect(Iterable<InspectionItemState> items) =>
+    items.any((i) => i.standardJudgmentPending);
+
+/// 重跑判定的目標：只挑還卡在「待判定」的項目。
+///
+/// **已經有判定結果的不重跑。** 本地 Tier 0 引擎與後端讀的是同一份標準資料
+/// （`export_standards.py` 匯出），重跑不會得到不一樣的結果，只會在使用者
+/// 已經看過判定之後無聲地換掉它。`judgment = unknown`（匹配不到標準）也不重跑，
+/// 同樣的理由：兩邊標準相同，再問一次還是匹配不到。
+List<InspectionItemState> rejudgeTargets(Iterable<InspectionItemState> items) =>
+    items.where((i) => i.standardJudgmentPending).toList();
+
 /// 依判定結果回傳對應顏色（不合格紅、警告橘、待判定灰、其餘綠）
 Color verdictColor(String verdict) {
   switch (verdict) {
@@ -218,6 +235,12 @@ class _FormInspectionScreenState extends State<FormInspectionScreen> {
   // 法規標準判定進行中
   bool _isJudging = false;
 
+  // 恢復連線後重新判定「待判定」項目的訂閱。
+  // 這是 Issue #43「離線 → 恢復網路」的後半段：原本畫面提示寫著
+  // 「恢復網路後可重新判定」，但**沒有任何程式碼做那件事**，
+  // 而 standardJudgmentPending 只活在記憶體裡。
+  StreamSubscription<bool>? _connectivitySub;
+
   // 批次分析進度追蹤
   bool _isBatchAnalyzing = false;
   int _batchTotal = 0;
@@ -230,16 +253,32 @@ class _FormInspectionScreenState extends State<FormInspectionScreen> {
   void initState() {
     super.initState();
     _initGemini();
+    _watchConnectivityForRejudge();
   }
 
   @override
   void dispose() {
+    _connectivitySub?.cancel();
     _titleController.dispose();
     // 釋放所有檢測項目的 controller
     for (final item in _inspectionItems) {
       item.manualController.dispose();
     }
     super.dispose();
+  }
+
+  /// 恢復連線時把還卡在「待判定」的量測項目重新判定。
+  ///
+  /// 「待判定」只在**本地 Tier 0 引擎也失敗**（asset 缺失等）時才會出現，
+  /// 所以少見；但那正是唯一「連上網才判得出來」的情況——這時後端是唯一出路。
+  void _watchConnectivityForRejudge() {
+    _connectivitySub?.cancel();
+    _connectivitySub = ConnectivityService().onConnectivityChanged.listen((isOnline) {
+      if (!isOnline || !mounted) return;
+      if (_isJudging) return;
+      if (!shouldRejudgeOnReconnect(_inspectionItems)) return;
+      _runStandardJudgment(pendingOnly: true);
+    });
   }
 
   void _initGemini() {
@@ -913,8 +952,21 @@ class _FormInspectionScreenState extends State<FormInspectionScreen> {
   /// 離線或失敗時，相關項目標記為「待判定」（standardJudgmentPending）。
   ///
   /// [onlyItem] 不為 null 時僅判定該項目，否則判定所有含數值讀數的項目。
-  Future<void> _runStandardJudgment({InspectionItemState? onlyItem}) async {
-    final source = onlyItem != null ? [onlyItem] : _inspectionItems;
+  ///
+  /// [pendingOnly] 為 true 時只重判還卡在「待判定」的項目（恢復連線後的補判）。
+  Future<void> _runStandardJudgment({
+    InspectionItemState? onlyItem,
+    bool pendingOnly = false,
+  }) async {
+    final List<InspectionItemState> source;
+    if (onlyItem != null) {
+      source = [onlyItem];
+    } else if (pendingOnly) {
+      source = rejudgeTargets(_inspectionItems);
+    } else {
+      source = _inspectionItems;
+    }
+    if (source.isEmpty) return;
 
     final readings = <Map<String, dynamic>>[];
     final targets = <InspectionItemState>[];
@@ -950,11 +1002,19 @@ class _FormInspectionScreenState extends State<FormInspectionScreen> {
             .map((e) => Map<String, dynamic>.from(e as Map))
             .toList();
         // 後端保證 judgments 與輸入 readings 同序
-        for (int i = 0; i < targets.length && i < judgments.length; i++) {
+        final applied = targets.length < judgments.length
+            ? targets.length
+            : judgments.length;
+        for (int i = 0; i < applied; i++) {
           targets[i].standardJudgment = judgments[i];
           targets[i].standardJudgmentPending = false;
         }
         _saveDraft();
+        if (pendingOnly && applied > 0) {
+          // 補判要說出來：「待判定」無聲變成合格，使用者會以為自己看錯了
+          _showNotice('已恢復連線，$applied 個「待判定」項目已完成判定',
+              color: Colors.blueGrey);
+        }
       } else {
         // 離線或後端失敗 → Tier 0 本地判定引擎（內建法規標準庫），
         // 僅在本地引擎也失敗時才標記「待判定」

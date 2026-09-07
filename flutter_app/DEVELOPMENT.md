@@ -194,7 +194,7 @@ flutter test
 flutter test test/form_inspection_record_test.dart
 ```
 
-### 測試清單（439 tests）
+### 測試清單（459 tests）
 
 | 檔案 | 數量 | 覆蓋範圍 |
 |------|------|---------|
@@ -203,7 +203,8 @@ flutter test test/form_inspection_record_test.dart
 | `ocr_reading_parser_test.dart` | 21 | ★ Tier 1a OCR 讀值解析：誤讀修正、雜訊過濾、最佳讀值優先序 |
 | `image_quality_service_test.dart` | 14 | ★ 拍照品質閘門：模糊/過暗/過曝/反光/無法解碼、門檻可調、跨解析度一致性（合成影像） |
 | `connectivity_probe_test.dart` | 14 | ★ 可達性探測：介面×可達性決策矩陣、快取 TTL、forceProbe、逾時與例外 |
-| `inspection_item_state_test.dart` | 22 | displayValue/verdict 邏輯（含法規標準判定優先序）、controller 生命週期 |
+| `inspection_item_state_test.dart` | 28 | displayValue/verdict 邏輯（含法規標準判定優先序）、controller 生命週期；★ **恢復連線後的補判**（Issue #43）：只挑還卡在「待判定」的、已有判定不重跑、`unknown` 不算待判定 |
+| `share_queue_service_test.dart` | 14 | ★ **離線分享佇列**（Issue #43）：檔案不存在時**不標記完成**（定檢與葉片各一條）、無匯出路徑才標記完成、分享失敗不中斷佇列也不標記、上線事件觸發／斷線不觸發、重入守門、dispose 後不再觸發 |
 | `form_inspection_record_test.dart` | 21 | Model: toMap/fromMap 往返、null 處理、舊格式相容、standardJudgments 持久化、copyWith 深拷貝 |
 | `database_service_test.dart` | 18 | DB CRUD: insert/update/delete、排序、limit、搜尋、GPS 持久化、UNIQUE 約束；★ **分頁載入**（Issue #43）：limit/offset 不重疊不漏、翻頁不打亂 created_at DESC、超界回空、搜尋也支援分頁 |
 | `photo_service_test.dart` | 6 | 照片命名格式、序號補零、截斷、特殊字元 |
@@ -413,10 +414,48 @@ N×3 次 jsonDecode 全部壓在 main isolate 上。
 6 條 DB 測試釘住：limit/offset 不重疊不漏、翻頁不打亂 `created_at DESC`、
 超界回空清單、不給 limit 時行為不變、搜尋的分頁與排序一致。
 
+#### 三、離線 → 恢復網路：一半沒測、一半沒實作
+
+回頭確認第二個驗收項目時發現，它不只是「沒有實機驗過」：
+
+**自動分享那一半是沒測過。** `ShareQueueService` 是 singleton，分享動作是
+`FileSaveService.saveAndShare`（static），連線來源是另一個 singleton——三個邊界
+都沒有縫，所以整條「恢復網路 → 清佇列」在單元測試裡碰不到，一條測試都沒有。
+而它錯的方式是靜默的：**把不存在的檔案標成已分享**，使用者會以為客戶收到了報告，
+而畫面上再也不會提醒他重送。
+
+改法是沿用專案既有的慣例（`ConnectivityService` 的 `probeOverride` /
+`interfaceCheckOverride`）：在 singleton 上開 `@visibleForTesting` 的覆寫欄位
+（連線來源、啟動檢查、分享動作、兩次分享之間的間隔），加一個 `resetForTesting()`。
+同時把 `processPendingShares()` 從 `void` 改成回傳 `ShareQueueOutcome`
+（shared / skippedMissingFile / clearedWithoutFile / failed）——原本只有
+`debugPrint`，「有沒有誤標成已分享」沒有東西可以斷言。14 條測試守住的重點不是
+「分享有沒有成功」，是**什麼情況下不准標記完成**。
+
+**「待判定」重新判定那一半根本沒實作。** 畫面提示寫著「恢復網路後可重新判定」，
+但 `standardJudgmentPending` 只被設定與顯示，全 app 唯一的連線監聽是分享佇列，
+沒有任何程式碼重跑判定；而且那個旗標只活在記憶體裡。
+
+補上 `_watchConnectivityForRejudge()`：上線時若有項目還卡在「待判定」就重跑
+`_runStandardJudgment(pendingOnly: true)`。兩個判斷抽成頂層純函式
+（`shouldRejudgeOnReconnect` / `rejudgeTargets`）才測得到——`_runStandardJudgment`
+要打後端也要 `setState`。
+
+`pendingOnly` 刻意**只挑還卡在「待判定」的**：本地 Tier 0 引擎與後端讀的是同一份
+標準資料（`export_standards.py` 匯出），已經判過的重跑不會得到不一樣的結果，
+只會在使用者看過判定之後無聲地換掉它。`judgment = unknown`（匹配不到標準）同理，
+再問一次還是匹配不到，所以也不算待判定。補判成功會出提示——「待判定」無聲變成
+合格，使用者會以為自己看錯了。
+
+**沒做的**：把「待判定」持久化（要 DB migration，而這個狀態只在 Tier 0 asset
+載不起來時出現，屬安裝完整性問題），以及第一項的五步流程端到端 widget 測試
+（那會變成大量測自己寫的假件，而不是測產品）。
+
 #### 還是需要實機的兩項
 
 實機完整流程（上傳 Excel → 一鍵檢測 → 判定回填 → 匯出 → 分享）與離線→恢復網路的
-情境，這個環境做不了，issue 仍開著。
+情境，這個環境做不了，issue 仍開著——**但「恢復網路」那一項現在至少有實作也有
+測試**，實機要驗的是真實的網路切換與系統分享面板，不再是「有沒有寫」。
 
 ---
 
