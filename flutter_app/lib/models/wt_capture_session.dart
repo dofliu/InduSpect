@@ -6,8 +6,12 @@ enum WtTurbineState { stopped, idling, running, unknown }
 /// 拍攝作業的處理狀態
 enum WtSessionStatus { draft, analyzed, confirmed, shared }
 
-/// 一張照片／一段影片
-enum WtMediaKind { photo, video }
+/// 一張照片／一段影片／一段音軌。
+///
+/// `audio` 是動態層（規格 §5.4 音軌）的輸入。**不需要 schema migration**：
+/// media 是 session 列裡的 JSON，而 `_enumOf` 對認不出的值會退回預設，
+/// 所以舊列（只有 photo/video）照樣讀得起來。
+enum WtMediaKind { photo, video, audio }
 
 /// 拍攝視角。`front`/`side` 是全機照（幾何層，Phase 2）；
 /// `segment` 是長焦分區段照（表面層，Phase 1 的主力）。

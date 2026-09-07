@@ -2,6 +2,7 @@ import 'dart:math' as math;
 import 'dart:typed_data';
 
 import 'blade_capture_gate.dart';
+import 'blade_dsp.dart';
 import 'blade_geometry_service.dart';
 import 'blade_image_ops.dart';
 import 'blade_structure_service.dart';
@@ -75,6 +76,22 @@ class BladeProfile {
 }
 
 /// 一個量的三片互比結果（對照 `geometry.py::MetricComparison`）
+/// 哪個方向才算缺陷徵兆。
+///
+/// 幾何量（葉尖偏移、弦寬）兩個方向都是異常，所以預設 [both]。聲學量不是：
+/// 某片的寬頻位準比另兩片**低**不代表它有問題，若不限方向，最安靜的那片
+/// 會被標成前緣侵蝕——那是完全反過來的結論。
+enum MetricDirection {
+  both('both'),
+  high('high'),
+  low('low');
+
+  const MetricDirection(this.wire);
+
+  /// 與 `geometry.py` 的字串值相同，讓兩邊的 JSON 對得起來
+  final String wire;
+}
+
 class MetricComparison {
   final String metric;
   final List<double> values;
@@ -93,6 +110,10 @@ class MetricComparison {
   final double z;
   final bool flagged;
 
+  /// 哪個方向算異常。存進結果是刻意的：報告上「z = 4 但沒標記」看起來像 bug，
+  /// 除非看得到它是被方向性擋掉的。
+  final MetricDirection direction;
+
   const MetricComparison({
     required this.metric,
     required this.values,
@@ -102,6 +123,7 @@ class MetricComparison {
     required this.othersSpread,
     required this.z,
     required this.flagged,
+    this.direction = MetricDirection.both,
   });
 
   Map<String, dynamic> toJson() => {
@@ -112,6 +134,7 @@ class MetricComparison {
         'others_spread': othersSpread,
         'z': z,
         'flagged': flagged,
+        'direction': direction.wire,
       };
 }
 
@@ -378,12 +401,17 @@ class BladeGeometryCompare {
 
   /// 三片互比：離群者 = 離中位數最遠者；同時要求它與另外兩片的差距明顯大於
   /// 另外兩片彼此差。NaN 一律不參與。
+  ///
+  /// [direction] 不是 [MetricDirection.both] 時，離群者改取**最高（或最低）那片**
+  /// 而不是離中位數最遠那片。兩片往相反方向偏時這個差別是關鍵：
+  /// high 模式要抓最吵的，不是偏離最多的。
   static MetricComparison compareMetric(
     String name,
     List<double> values,
     double noiseFloor, {
     double zThresh = 3.0,
     double spreadRatio = 2.0,
+    MetricDirection direction = MetricDirection.both,
   }) {
     final finite = <int>[];
     for (var i = 0; i < values.length; i++) {
@@ -399,17 +427,22 @@ class BladeGeometryCompare {
         othersSpread: double.nan,
         z: double.nan,
         flagged: false,
+        direction: direction,
       );
     }
     final fv = finite.map((i) => values[i]).toList();
     final med = _median(fv);
     final dev = values.map((v) => v - med).toList();
     var j = 0;
-    var bestAbs = -1.0;
+    var best = -double.infinity;
     for (var i = 0; i < fv.length; i++) {
-      final a = (fv[i] - med).abs();
-      if (a > bestAbs) {
-        bestAbs = a;
+      final score = switch (direction) {
+        MetricDirection.high => fv[i],
+        MetricDirection.low => -fv[i],
+        MetricDirection.both => (fv[i] - med).abs(),
+      };
+      if (score > best) {
+        best = score;
         j = i;
       }
     }
@@ -424,7 +457,14 @@ class BladeGeometryCompare {
         : others.reduce((a, b) => a + b) / others.length;
     final devK = others.isEmpty ? dev[k] : values[k] - othersMean;
     final z = devK.abs() / math.max(noiseFloor, 1e-9);
-    final flagged = z >= zThresh && devK.abs() >= spreadRatio * spread;
+    var flagged = z >= zThresh && devK.abs() >= spreadRatio * spread;
+    // 方向不對就不算徵兆。**這一步在 z 算完之後**：z 照樣回報，
+    // 只是不標記——現場看到「差很多但沒報」時，那個 z 是唯一的線索。
+    if (direction == MetricDirection.high && devK <= 0) {
+      flagged = false;
+    } else if (direction == MetricDirection.low && devK >= 0) {
+      flagged = false;
+    }
     return MetricComparison(
       metric: name,
       values: values,
@@ -434,6 +474,7 @@ class BladeGeometryCompare {
       othersSpread: spread,
       z: z,
       flagged: flagged,
+      direction: direction,
     );
   }
 
@@ -489,21 +530,12 @@ class BladeGeometryCompare {
     return lo;
   }
 
-  static double _percentile(Float64List a, double q) {
-    final s = Float64List.fromList(a)..sort();
-    if (s.isEmpty) return double.nan;
-    final pos = (q / 100.0) * (s.length - 1);
-    final i = pos.floor(), f = pos - i;
-    if (i + 1 >= s.length) return s[s.length - 1];
-    return s[i] * (1 - f) + s[i + 1] * f;
-  }
+  // 這幾個數值 helper 的實作在 `blade_dsp.dart`。**同一個模組不留兩份同樣的數學**
+  // ——聲音層與幾何層都要用擬合與中位數，各寫一份的話兩邊會慢慢漂開，
+  // 而那種漂移不會讓測試紅，只會讓兩層的判定基準悄悄不一致。
+  static double _percentile(Float64List a, double q) => BladeDsp.percentile(a, q);
 
-  static double _median(List<double> v) {
-    final s = List<double>.from(v)..sort();
-    final n = s.length;
-    if (n == 0) return double.nan;
-    return n.isOdd ? s[n ~/ 2] : (s[n ~/ 2 - 1] + s[n ~/ 2]) / 2.0;
-  }
+  static double _median(List<double> v) => BladeDsp.median(v);
 
   /// 線性內插填掉 NaN（對照 `geometry.py::_fill_nan`）
   static void _fillNan(List<double> a) {
@@ -573,68 +605,12 @@ class BladeGeometryCompare {
     return _polyfit(Float64List.fromList(x), y, keep, 2);
   }
 
-  /// 正規方程 + 高斯消去的多項式擬合。係數由高次到低次（numpy 順序）。
   static List<double> _polyfit(
-      Float64List x, List<double> y, List<bool> keep, int deg) {
-    final m = deg + 1;
-    final a = List<List<double>>.generate(m, (_) => List<double>.filled(m, 0.0));
-    final b = List<double>.filled(m, 0.0);
-    for (var i = 0; i < y.length; i++) {
-      if (!keep[i] || y[i].isNaN) continue;
-      final pw = List<double>.filled(m, 1.0);
-      for (var j = 1; j < m; j++) {
-        pw[j] = pw[j - 1] * x[i];
-      }
-      for (var r = 0; r < m; r++) {
-        for (var c = 0; c < m; c++) {
-          a[r][c] += pw[r] * pw[c];
-        }
-        b[r] += pw[r] * y[i];
-      }
-    }
-    // 高斯消去（部分樞軸）
-    for (var col = 0; col < m; col++) {
-      var piv = col;
-      for (var r = col + 1; r < m; r++) {
-        if (a[r][col].abs() > a[piv][col].abs()) piv = r;
-      }
-      if (a[piv][col].abs() < 1e-12) continue;
-      if (piv != col) {
-        final tr = a[piv];
-        a[piv] = a[col];
-        a[col] = tr;
-        final tb = b[piv];
-        b[piv] = b[col];
-        b[col] = tb;
-      }
-      for (var r = col + 1; r < m; r++) {
-        final f = a[r][col] / a[col][col];
-        if (f == 0) continue;
-        for (var c = col; c < m; c++) {
-          a[r][c] -= f * a[col][c];
-        }
-        b[r] -= f * b[col];
-      }
-    }
-    final sol = List<double>.filled(m, 0.0);
-    for (var r = m - 1; r >= 0; r--) {
-      var s = b[r];
-      for (var c = r + 1; c < m; c++) {
-        s -= a[r][c] * sol[c];
-      }
-      sol[r] = a[r][r].abs() < 1e-12 ? 0.0 : s / a[r][r];
-    }
-    // sol 是 [c0, c1, ... cdeg]（低次到高次）→ 反轉成 numpy 順序
-    return sol.reversed.toList();
-  }
+          Float64List x, List<double> y, List<bool> keep, int deg) =>
+      BladeDsp.polyfit(x, y, keep, deg);
 
-  static double _polyval(List<double> coeffs, double x) {
-    var v = 0.0;
-    for (final c in coeffs) {
-      v = v * x + c;
-    }
-    return v;
-  }
+  static double _polyval(List<double> coeffs, double x) =>
+      BladeDsp.polyval(coeffs, x);
 }
 
 class _SeriesFit {
@@ -653,12 +629,18 @@ class BladeGeometryOutcome {
   final Map<String, dynamic> metrics;
   final List<MetricComparison> comparisons;
 
+  /// 抽出來的三片輪廓。動態層要用它們的軸線角度與半徑（挑出「這一幀哪片朝下」），
+  /// 而互比本身用不到，所以放在這裡而不是另跑一次管線——重跑一次分割與結構定位
+  /// 是這條路上最貴的一步。[ok] 為 false 時是空的。
+  final List<BladeProfile> profiles;
+
   const BladeGeometryOutcome({
     required this.ok,
     this.reasons = const [],
     this.warnings = const [],
     this.metrics = const {},
     this.comparisons = const [],
+    this.profiles = const [],
   });
 }
 
@@ -707,5 +689,6 @@ BladeGeometryOutcome runGeometryPipeline(
           profiles.fold<int>(0, (a, pr) => a + pr.nContaminatedBins),
     },
     comparisons: cmp.comparisons,
+    profiles: profiles,
   );
 }
