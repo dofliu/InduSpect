@@ -194,7 +194,7 @@ flutter test
 flutter test test/form_inspection_record_test.dart
 ```
 
-### 測試清單（435 tests）
+### 測試清單（439 tests）
 
 | 檔案 | 數量 | 覆蓋範圍 |
 |------|------|---------|
@@ -227,6 +227,7 @@ flutter test test/form_inspection_record_test.dart
 | `blade_surface_service_test.dart` | 8 | ★ 表面層 Dart 對照 Python 原型：前後緣比判定一致、凹坑/p95、分 zone 定位侵蝕落在哪一段、cm 換算、失敗要給補救方式 |
 | `blade_ai_service_test.dart` | 8 | ★ 葉片 AI：正常結構清單一定在 prompt 裡、演算法數值不被 AI 覆蓋、severity/confidence 值域夾回、失敗往上丟 |
 | `database_migration_test.dart` | 6 | SQLite v3→v4 與 v4→v5 真實 onUpgrade 升級路徑（standard_judgments 欄位；葉片三表 + 既有紀錄不動 + round-trip + 壞 JSON 容錯） |
+| `pubspec_test.dart` | 4 | ★ pubspec 守門：相依依字母排序（**含 `flutter:` / `flutter_test:` 兩個 sdk 相依**，linter 不看空行分段）、sdk 相依沒被搬回各段最上面、lib/ 裡 import 得到的每個 package 都宣告過（手動重排時掉過 `uuid`） |
 | `widget_test.dart` | 1 | App smoke test（sqflite ffi + mock prefs + dotenv testLoad） |
 
 ### 測試依賴
@@ -370,6 +371,20 @@ Issue #43 是 `[needs-human]` 的追蹤型 issue，四個驗收項目裡兩項�
 所以照它排。原本依用途分組並附註解，排序後那些註解會掛到錯的相依上，
 因此把「為什麼需要它」改成貼在各自那一行。排完發現漏掉 `uuid`（會直接編不過），
 是靠「相依名稱集合比對」抓回來的——這種整段重寫一定要有對帳步驟。
+
+**排序這件事第一版沒排乾淨**：`flutter:` / `flutter_test:` 兩個 sdk 相依按慣例
+留在各段最上面，而 **linter 不看空行分段**——整個 section 就是一份平的清單，
+所以 lint 直接紅在下一個相依那一行（`pubspec.yaml:25` 的 `archive`、
+`:57` 的 `build_runner`）。CI analyze 實測是 8 issues 而不是預期的 6，
+差的就是這兩條。把 sdk 相依搬到它們的字母位置（`file_picker` 與 `flutter_dotenv`
+之間、`flutter_lints` 與 `sqflite_common_ffi` 之間）才真的是 6。
+
+教訓是**「排序」不能只靠肉眼看起來對**，所以補了 `test/pubspec_test.dart`：
+兩個守門都對應到實際犯過的錯——排序（含 sdk 相依、且 sdk 相依不能搬回最上面）、
+以及「lib/ 裡 import 得到的 package 都必須宣告」（掉 `uuid` 那次 analyze 抓不到，
+只有建置才會炸）。順手修掉 `camera` 的錯註解：`lib/` 裡其實**沒有任何**
+`package:camera` import，取像全部走 `image_picker`（系統相機）；沒有實機可驗
+移除相依對 Android 建置的影響之前不動它，只把狀態寫清楚。
 
 **刻意留下 6 條**，理由是它們都是行為性的遷移而我沒有實機可驗：
 
