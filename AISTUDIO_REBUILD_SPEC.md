@@ -3,6 +3,13 @@
 > **用途**：此文件供 Google AI Studio 從零開始重建 InduSpect，並發布為 Android App。
 > **語言**：UI 介面與 AI 回應使用**繁體中文**，程式碼以英文撰寫。
 > **最後更新**：2026-05-28
+>
+> ⚠️ **此文件是 2026-05-28 的凍結快照，不隨主線更新。** 之後主線新增的東西它都沒有：
+> Tier 0 離線法規判定引擎（`standards_engine.dart`）、離線 OCR 讀值解析、拍照品質閘門、
+> 連線可達性探測、申報用 PDF 報告、SQLite v4（判定持久化）與 v5（葉片三表）、
+> 以及整個風機葉片檢測模組。要照這份重建，等於重建 5 月的版本。
+> **現況以 `flutter_app/DEVELOPMENT.md` 與 `CLAUDE.md` 為準**；
+> 葉片模組見 `BLADE_INSPECTION_SPEC.md`。
 
 ---
 

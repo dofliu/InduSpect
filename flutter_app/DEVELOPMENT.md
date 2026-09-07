@@ -6,22 +6,27 @@
 
 ## 架構總覽
 
-InduSpect 聚焦於 **2 個核心功能**：
+定檢主線聚焦於 **2 個核心功能**，另有一條**平行的獨立流程**：
 
 1. **完整檢測 Pipeline**：上傳/匯入定檢表 → 引導拍照 → AI 辨識 → 自動回填原始格式文件 → AI 摘要報告 → PDF 申報報告 → 分享/傳送（離線暫存）
 2. **歷史紀錄**：含 GPS 定位、可編輯標題、搜尋功能
+3. **風機葉片檢測**（2026-09-07 起）：**資產驅動**——主鍵是某台風機而不是某張表單，
+   價值在跨次比對。不共用定檢的資料模型與流程，共用 GPS／PDF／DB／連線探測。
 
 ```
-┌─ DashboardScreen ──────────────────────────┐
-│  ┌──────────────┐  ┌───────────────────┐   │
-│  │ 開始檢測      │  │ 歷史紀錄           │   │
-│  │ (FormInsp.)  │  │ (UnifiedHistory)  │   │
-│  └──────┬───────┘  └───────┬───────────┘   │
-│         │                  │               │
-│  ┌──────▼──────────────────▼───────────┐   │
-│  │       最近檢測 (SQLite FutureBuilder) │   │
-│  └─────────────────────────────────────┘   │
-└────────────────────────────────────────────┘
+┌─ DashboardScreen ────────────────────────────────────────────────┐
+│  ┌──────────────┐  ┌───────────────────┐  ┌──────────────────┐   │
+│  │ 開始檢測      │  │ 歷史紀錄           │  │ 風機葉片檢測      │   │
+│  │ (FormInsp.)  │  │ (UnifiedHistory)  │  │ (BladeInsp.)     │   │
+│  └──────┬───────┘  └───────┬───────────┘  └────────┬─────────┘   │
+│         │                  │                       │            │
+│  ┌──────▼──────────────────▼──────────┐            │            │
+│  │       最近檢測 (SQLite FutureBuilder) │            │            │
+│  └────────────────────────────────────┘            │            │
+│         表單驅動 form_inspection_records    資產驅動 wt_assets     │
+│                                            / wt_capture_sessions │
+│                                            / wt_detections       │
+└──────────────────────────────────────────────────────────────────┘
 ```
 
 ### 核心檔案結構
@@ -29,17 +34,22 @@ InduSpect 聚焦於 **2 個核心功能**：
 ```
 lib/
 ├── models/
-│   ├── form_inspection_record.dart   # 表單檢測紀錄 (SQLite v3)
+│   ├── form_inspection_record.dart   # 表單檢測紀錄（定檢主線）
 │   ├── inspection_template.dart      # 表單模板結構
 │   ├── template_field.dart           # 模板欄位定義
-│   └── analysis_result.dart          # AI 分析結果
+│   ├── analysis_result.dart          # AI 分析結果
+│   ├── wt_asset.dart                 # 葉片：一台風機（含拍攝點 GPS）
+│   ├── wt_capture_session.dart       # 葉片：一次到場（含媒體清單與品質判定）
+│   └── wt_detection.dart             # 葉片：一筆發現（含人工確認狀態）
 ├── screens/
-│   ├── dashboard_screen.dart         # 主頁（2 入口 + 最近紀錄）
+│   ├── dashboard_screen.dart         # 主頁（3 入口 + 最近紀錄）
 │   ├── form_inspection_screen.dart   # ★ 核心：完整檢測流程（5 步驟）
 │   ├── unified_history_screen.dart   # 歷史紀錄（搜尋/編輯/刪除/重新分享）
-│   └── guided_capture_screen.dart    # 批次引導式拍照
+│   ├── guided_capture_screen.dart    # 批次引導式拍照
+│   ├── blade_inspection_screen.dart  # ★ 葉片：五步流程（選資產→拍攝→分析→人工確認→報告）
+│   └── blade_capture_guide_screen.dart # 葉片：格位清單式引導拍攝（系統相機、原尺寸）
 ├── services/
-│   ├── database_service.dart         # SQLite CRUD（v3：含 form_inspection_records）
+│   ├── database_service.dart         # SQLite CRUD（v5：定檢三表 + 葉片三表）
 │   ├── gemini_service.dart           # Gemini AI 分析 + 摘要報告
 │   ├── location_service.dart         # GPS 一次性定位 + 反向地理編碼
 │   ├── standards_engine.dart         # ★ Tier 0 離線法規判定引擎（56 條標準內嵌）
@@ -51,7 +61,12 @@ lib/
 │   ├── connectivity_service.dart     # 連線監聽 + /health 可達性探測
 │   ├── file_save_service.dart        # 平台適應的檔案分享
 │   ├── photo_service.dart            # 照片命名與管理
-│   └── backend_api_service.dart      # 後端 API（表單回填）
+│   ├── backend_api_service.dart      # 後端 API（表單回填）
+│   ├── blade_surface_service.dart    # ★ 葉片表面層：前緣粗糙度（surface.py 的 Dart 對照）
+│   ├── blade_analysis_service.dart   # ★ 葉片分析編排 + 門檻表單一來源
+│   ├── blade_capture_gate.dart       # 葉片照專用拍攝品質判定（天空為主的畫面）
+│   ├── blade_ai_service.dart         # 葉片專用 AI prompt（正常結構清單）
+│   └── blade_report_builder.dart     # 葉片報告（不輸出「合格」）→ pdf_report_service
 └── providers/
     ├── settings_provider.dart        # API Key & 模型設定
     ├── inspection_provider.dart      # 檢測狀態管理
@@ -335,6 +350,20 @@ flutter build apk --debug
   不是「這張照片存在」這件事。
 - 測試 155 → 211（葉片相關 +52：表面層 8、報告 9、AI 8、編排 18、拍攝閘門 9，
   migration 2 → 6）。
+
+**Phase 1 的已知缺口**（實作完盤點出來的，不是設計上的取捨）：
+
+1. **`geminiOfflinePending` 沒有補跑機制。** 離線時偵測會標成「AI 解讀待補」並存進 DB，
+   畫面上也標示出來了，但**沒有任何東西在連線後把它跑完**。`share_queue_service`
+   有現成的佇列模式可沿用（`ConnectivityService` 的 onlineStream + 啟動時掃一次）。
+   目前的實際行為：那筆偵測永遠只有演算法的數值，除非使用者手動重新分析整個場次。
+2. **沒有葉片歷史紀錄／趨勢畫面。** `getWtSessions()` 目前只被呼叫一次而且是 `limit: 1`
+   （拿上次的照片當取景參考）；`getWtSessionsPendingShare()` **零呼叫端**，
+   所以葉片報告也還沒接上離線分享佇列。資料模型做成資產驅動的整個理由是跨次比對
+   （LAUNCH_PLAN §5.6：「價值在跨次比對出新增的東西」），而那個價值現在沒有 UI 可以看：
+   未超門檻的量測值有存下來，但沒有畫面把同一台風機同一格位的歷次 rms 比排在一起。
+
+兩者都不影響單次篩檢的正確性，但第 2 項是「Phase 1 只交付得出單次篩檢」的實際原因。
 
 ### 2026-09-06（風力機葉片模組 Phase 0 — 獨立功能）
 

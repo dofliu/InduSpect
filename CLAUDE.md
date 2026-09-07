@@ -14,7 +14,7 @@
 |------|------|
 | `flutter_app/lib/screens/form_inspection_screen.dart` | ★ 核心：5 步驟檢測流程 |
 | `flutter_app/lib/screens/unified_history_screen.dart` | 歷史紀錄 |
-| `flutter_app/lib/screens/dashboard_screen.dart` | 主頁（2 入口） |
+| `flutter_app/lib/screens/dashboard_screen.dart` | 主頁（3 入口：檢測／歷史／葉片） |
 | `flutter_app/lib/models/form_inspection_record.dart` | 檢測紀錄 model |
 | `flutter_app/lib/services/database_service.dart` | SQLite v3 CRUD |
 | `flutter_app/lib/services/location_service.dart` | GPS 定位 |
@@ -60,6 +60,7 @@ Flutter 211 tests / 後端 191 pytest / 葉片原型 76 pytest 全綠（2026-09-
 - 後端 SDK 汰換（2026-09-04）：`google-generativeai`（已停止維護）→ `google-genai`；新增 `backend/app/services/gemini_client.py` 為唯一 Gemini 入口（延遲建立 client、依 key 快取），AI 呼叫一律走 `gemini_client.generate_text()`。相依鏈連帶升版 httpx/pydantic/fastapi。
 - PDF 報告輸出（2026-09-02）：LAUNCH_PLAN 第 5-8 週項目完成；`pdf_report_service.dart` 純 Dart 離線產生申報用 PDF（判定/法規依據/單位換算/AI 報告/照片附件），完成頁與歷史紀錄皆可匯出。字型子集重新產生用 `flutter_app/scripts/subset_pdf_font.py`
 - 葉片模組 Phase 1 App 化（2026-09-07）：SQLite **v5** 三張獨立表（`wt_assets`/`wt_capture_sessions`/`wt_detections`，既有定檢三表不動）、表面層 Dart 移植（與 Python 原型逐 zone 對照到小數第三位一致）、分析編排層、葉片專用 AI prompt、葉片拍攝閘門、三個畫面 + dashboard 第三個入口。三個**不可退化**的約定：①`WtMedia.qualityOk` 未分析時是 `null`，判斷一律用 `!= true`；②`human_status` 預設 `pending`，葉片報告**不輸出「合格」**；③演算法的 severity 是下限，AI 只能往上加不能往下砍。兩個規格修正：取像用系統相機（`camera` plugin 碰不到 5x 望遠與最高像素模式）、不給 `image_quality_service` 加遮罩而另寫 `blade_capture_gate.dart`（遮罩要先分割，而分割正是要被閘門守的那一步）
+- 葉片模組 Phase 1 **已知缺口**（2026-09-07 盤點，尚未修）：①`geminiOfflinePending` 的偵測沒有補跑機制——離線時存下來、畫面也標示了，但連線後沒有任何東西把 AI 解讀跑完（`share_queue_service` 有現成模式可沿用）；②沒有葉片歷史／趨勢畫面，`getWtSessions()` 只被用來拿上次照片（`limit: 1`）、`getWtSessionsPendingShare()` 零呼叫端，所以葉片報告也還沒接離線分享佇列。資產驅動資料模型的整個價值（跨次比對）目前沒有 UI
 - 葉片模組取景歧義（2026-09-07）：`find_second_rotor` 找畫面裡的第二個轉子，做成**警告不是拒收**——閘門在 75 張上已零誤放行，加拒收只會擋掉 8 張正確放行中的 2 張。過程記在 `REAL_IMAGE_VALIDATION.md` §6
 - 葉片模組天空模型汰換（2026-09-07）：`segmentation.py` 預設改為**局部天空模型**（`sky_mode="local"`：大核中值估背景 + 同核估局部尺度 + 門檻 7.0），取代原本「邊緣取樣逐列多項式 + 全域尺度」（仍保留給長焦分區段照）。假設從「整張天空單一漸層」改成「天空局部平滑」。真實照片輪轂命中 14/30 → **23/30**、有雲 1/13 → **10/13**、遮罩全空 4 → **0**、holdout 1/11 → **8/11**。門檻同時對真實語料與合成夾具兩組獨立測試集取；連帶修好輪轂精修守門的尺規（`4×hub_r` → 轉子半徑）。詳見 `blade_prototype/REAL_IMAGE_VALIDATION.md` §5
 - 葉片模組真實影像驗證（2026-09-06）：75 張公開 CC 授權真實風機照片實測分割與結構定位。修好「地面與塔架相連導致輪轂落在地面」與「塔軸走訪提早停住」兩個 bug（設計範圍內輪轂命中 10/30 → 14/30），新增 `blade_proto/quality.py` 拍攝品質閘門（零誤放行）。**關鍵發現：晴空無雲命中 12/14、有雲只有 1/13——天空模型是唯一真正的瓶頸，Phase 1 之前要先補**。詳見 `blade_prototype/REAL_IMAGE_VALIDATION.md`
