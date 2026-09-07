@@ -9,6 +9,7 @@ import os
 import numpy as np
 import pytest
 
+from blade_proto import acoustics as ac
 from blade_proto.acoustics import (
     AudioClip, analyze_audio, analyze_samples, find_ffmpeg, load_audio,
 )
@@ -73,6 +74,53 @@ def test_whistle_is_attributed_to_the_right_blade(blade, freq):
     assert exclusive[0].index == blade
     assert abs(exclusive[0].tonal_freq_hz - freq) / freq < 0.05
     assert exclusive[0].tonal_prominence_db > 8.0
+
+
+@pytest.mark.parametrize("n_shared", [2, 3])
+def test_shared_tone_is_not_attributed_to_a_single_blade(n_shared):
+    """**三片（或兩片）在同一頻率都有哨音時，一片都不該被判為獨有。**
+
+    這是 `tonal_exclusive` 存在的理由：設計特徵（鋸齒尾緣、VG 板）、路過的車輛、
+    地面的發電機都會在每一片的視窗裡留下同一根峰。指成單片缺陷會讓人去拆錯的葉片。
+
+    這條測試釘住的是一個真實的修正：原本的複查是在 ±3% 的窄頻帶上**再跑一次**
+    9 點中值濾波，但手機常見取樣率下那個頻帶只有 4–5 個 bin，達不到中值濾波要求的
+    13 個，於是一律回 NaN 而被當成「另兩片沒有」。實測舊做法在這兩個案例上分別把
+    3 片與 2 片都判成獨有（共 5 個誤報）。改成讀全頻帶基線在該頻率上的突出量後
+    降到 0，而單片哨音仍然抓得到。
+    """
+    whistle = {i: (1400.0, 0.03) for i in range(n_shared)}
+    res, _ = _run(whistle=whistle)
+    assert res.usable, res.notes
+    # 每一片都要真的量到那根峰（否則這條測試等於什麼都沒驗）
+    hit = [b for b in res.blades
+           if np.isfinite(b.tonal_freq_hz)
+           and abs(b.tonal_freq_hz - 1400.0) / 1400.0 < 0.05
+           and b.tonal_prominence_db > 6.0]
+    assert len(hit) == n_shared, [
+        (b.index, b.tonal_freq_hz, b.tonal_prominence_db) for b in res.blades]
+    assert not any(b.tonal_exclusive for b in res.blades), \
+        "同一頻率多片都有，就不是「只有這片」"
+
+
+def test_excess_at_reads_the_requested_frequency_not_the_peak():
+    """`_excess_at` 讀的是**指定頻率**上的突出量，不是頻帶內的最大值。
+
+    也順便釘住它不再依賴窄頻中值：帶寬只有幾個 bin 時舊做法回 NaN，
+    新做法照樣給得出數字。
+    """
+    f = np.arange(0, 8001, 25.0)
+    spec_db = np.zeros_like(f)
+    spec_db[np.argmin(np.abs(f - 1400.0))] = 20.0   # 只有 1400 Hz 有一根峰
+    peak_f, peak_db = ac._tonal_peak(spec_db, f, ac.BAND_LO_HZ, ac.BAND_HI_HZ)
+    assert abs(peak_f - 1400.0) < 26.0
+    assert peak_db > 15.0
+    # 峰所在的頻率讀得到；別的頻率讀到的是基線附近
+    assert ac._excess_at(spec_db, f, 1400.0, ac.BAND_LO_HZ, ac.BAND_HI_HZ) > 15.0
+    assert abs(ac._excess_at(spec_db, f, 3000.0, ac.BAND_LO_HZ, ac.BAND_HI_HZ)) < 1.0
+    # 頻帶太窄（bin 數不足中值濾波）時明確回 NaN，不要假裝有答案
+    assert not np.isfinite(
+        ac._excess_at(spec_db, f, 1400.0, 1360.0, 1440.0))
 
 
 def test_erosion_and_whistle_on_different_blades_are_both_found():

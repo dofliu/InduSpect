@@ -1,4 +1,6 @@
+import 'dart:async';
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
@@ -12,6 +14,7 @@ import '../models/wt_detection.dart';
 import '../services/blade_acoustic_service.dart';
 import '../services/blade_analysis_service.dart';
 import '../services/blade_audio_decode.dart';
+import '../services/blade_audio_recorder.dart';
 import '../services/blade_report_builder.dart';
 import '../services/blade_report_export.dart';
 import '../services/connectivity_service.dart';
@@ -154,6 +157,77 @@ class _BladeInspectionScreenState extends State<BladeInspectionScreen> {
       return;
     }
 
+    await _ingestAudio(bytes, file.name, sessionId, asset);
+  }
+
+  /// **App 內錄音**（規格 §5.4 音軌）。
+  ///
+  /// 與「附加音軌」共用同一條驗證與存檔路徑——錄音只是換一個來源，
+  /// 不該長出第二套判定。錄音參數（未壓縮 WAV、關掉自動增益／降噪）由
+  /// `BladeRecordingSpec` 決定，理由寫在那裡：那三個開了就量不到要量的東西。
+  Future<void> _recordAudio() async {
+    final asset = _asset;
+    if (asset == null) return;
+    final sessionId = _session?.sessionId ?? _uuid.v4();
+
+    final controller = BladeRecordingController();
+    // 先開始再開對話框：權限與編碼器的問題要直接講，不要包在一個錄音畫面裡
+    final tmpDir = await getApplicationDocumentsDirectory();
+    final tmp = p.join(tmpDir.path, 'blade_audio', 'rec-${_uuid.v4()}.wav');
+    await Directory(p.dirname(tmp)).create(recursive: true);
+
+    final started = await controller.start(tmp);
+    if (!started.ok) {
+      await controller.dispose();
+      if (mounted) _snack(started.message, error: true);
+      return;
+    }
+    if (!mounted) {
+      await controller.cancel();
+      await controller.dispose();
+      return;
+    }
+
+    final keep = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => _RecordDialog(controller: controller),
+    );
+
+    if (keep != true) {
+      await controller.cancel();
+      await controller.dispose();
+      return;
+    }
+    final stopped = await controller.stop();
+    await controller.dispose();
+    if (!stopped.ok) {
+      if (mounted) _snack(stopped.message, error: true);
+      return;
+    }
+    Uint8List bytes;
+    try {
+      bytes = await File(stopped.path!).readAsBytes();
+    } catch (e) {
+      if (mounted) _snack('讀不回剛錄的檔案：$e', error: true);
+      return;
+    }
+    await _ingestAudio(bytes, p.basename(stopped.path!), sessionId, asset);
+    // 錄音的暫存檔已經複製進場次目錄，原檔不留
+    try {
+      final f = File(stopped.path!);
+      if (await f.exists()) await f.delete();
+    } catch (_) {
+      // 刪不掉不影響結果
+    }
+  }
+
+  /// 音軌的**唯一**驗證與存檔路徑（錄音與選檔共用）。
+  ///
+  /// 當場就驗一次，不等到分析步驟：解不開、太短、風噪主導都要在人還站在風機旁、
+  /// 還能重錄的時候講。
+  Future<void> _ingestAudio(
+      Uint8List bytes, String name, String sessionId, WtAsset asset) async {
     setState(() {
       _busy = true;
       _progress = '正在檢查音軌…';
@@ -171,7 +245,7 @@ class _BladeInspectionScreenState extends State<BladeInspectionScreen> {
         return;
       }
 
-      final saved = await _saveAudio(bytes, file.name, sessionId);
+      final saved = await _saveAudio(bytes, name, sessionId);
       // 先跑一次分析只為了給現場一句話：不可用就當場說，別讓人回去才知道
       final quick = BladeAcousticService.analyzeSamples(clip);
       final media = <WtMedia>[
@@ -183,6 +257,7 @@ class _BladeInspectionScreenState extends State<BladeInspectionScreen> {
           qualityJson: {
             'ok': quick.usable,
             'duration_s': clip.durationS,
+            // 取樣率要存：跨次比較的基準會隨它變（見 BladeRecordingSpec）
             'sample_rate': clip.sampleRate,
             if (quick.notes.isNotEmpty) 'notes': quick.notes,
           },
@@ -469,19 +544,28 @@ class _BladeInspectionScreenState extends State<BladeInspectionScreen> {
           ),
         ),
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
+          child: FilledButton.icon(
+            onPressed: _busy ? null : _recordAudio,
+            icon: const Icon(Icons.mic),
+            label: const Text('錄音軌（選用）'),
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
           child: OutlinedButton.icon(
             onPressed: _busy ? null : _attachAudio,
             icon: const Icon(Icons.upload_file),
-            label: const Text('附加音軌（選用）'),
+            label: const Text('改用既有的 WAV 檔'),
           ),
         ),
         const Padding(
           padding: EdgeInsets.fromLTRB(16, 4, 16, 0),
           child: Text(
             '音軌用來比三片的噪音——缺陷葉片的聲音會以葉片通過的週期出現，'
-            '所以切成三份互比就指得出是哪一片。錄 15 秒以上（要涵蓋 2–3 圈），'
-            '站到下風處、格式選 WAV／PCM。轉速也由音軌算，不必另外量。',
+            '所以切成三份互比就指得出是哪一片。錄 15 秒以上（要涵蓋 2–3 圈）、'
+            '站到下風處、手機不要包在口袋裡。轉速也由音軌算，不必另外量。'
+            '歷次錄音請用同一個取樣率，否則跨次比較的基準會變。',
             style: TextStyle(fontSize: 12),
           ),
         ),
@@ -854,6 +938,85 @@ class _AssetDialogState extends State<_AssetDialog> {
           ),
         ],
       );
+}
+
+/// 錄音中的對話框：只顯示已錄多久，以及停止／放棄。
+///
+/// 錄音**在開對話框之前就開始了**（權限與編碼器的問題要直接講，不要包在一個
+/// 錄音畫面裡），所以這裡不負責啟動，只負責計時與收尾。
+class _RecordDialog extends StatefulWidget {
+  const _RecordDialog({required this.controller});
+
+  final BladeRecordingController controller;
+
+  @override
+  State<_RecordDialog> createState() => _RecordDialogState();
+}
+
+class _RecordDialogState extends State<_RecordDialog> {
+  Timer? _tick;
+
+  @override
+  void initState() {
+    super.initState();
+    _tick = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (mounted) setState(() {});
+    });
+  }
+
+  @override
+  void dispose() {
+    _tick?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final e = widget.controller.elapsed;
+    final enough = widget.controller.reachedRecommended;
+    final need = BladeRecordingSpec.recommendedMin.inSeconds;
+    return AlertDialog(
+      title: const Text('錄音中'),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            '${e.inMinutes}:${(e.inSeconds % 60).toString().padLeft(2, '0')}',
+            style: const TextStyle(fontSize: 40, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 8),
+          // 不足建議長度時給的是提示不是禁止：現場可能只有那幾秒，
+          // 而分析層自己會判「不可用」並說原因
+          Text(
+            enough
+                ? '長度足夠。要更穩可以再錄久一點。'
+                : '建議至少 $need 秒（要涵蓋 2–3 圈轉動才切得出三片）。',
+            style: TextStyle(
+              fontSize: 13,
+              color: enough ? Colors.green.shade800 : Colors.orange.shade800,
+            ),
+          ),
+          const SizedBox(height: 12),
+          const Text(
+            '站到下風處、背對風向，手機拿穩不要遮住麥克風。'
+            '錄的是整台風機的聲音，不必對著某一片。',
+            style: TextStyle(fontSize: 12),
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context, false),
+          child: const Text('放棄'),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.pop(context, true),
+          child: const Text('停止並檢查'),
+        ),
+      ],
+    );
+  }
 }
 
 class _NoteDialog extends StatefulWidget {

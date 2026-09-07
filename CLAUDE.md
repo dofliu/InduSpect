@@ -41,6 +41,7 @@
 | `flutter_app/lib/services/blade_audio_decode.dart` | WAV 讀取（只支援 PCM，每種讀不了的情況都有可顯示的原因） |
 | `flutter_app/lib/services/blade_acoustic_service.dart` | ★ 逐片聲音異常（`acoustics.py` 的 Dart 對照）+ **三重守門**，不可用時不給數字 |
 | `flutter_app/lib/services/blade_dynamics_service.dart` | 動態層編排；**抽幀是注入點**（`BladeFrameExtractor`），原生解碼未接上 |
+| `flutter_app/lib/services/blade_audio_recorder.dart` | App 內錄音（`record` plugin 收在一處）+ **錄音參數的量測要求**（WAV／單聲道／自動增益與降噪一律關） |
 | `flutter_app/lib/screens/blade_history_screen.dart` | 葉片歷史與趨勢（資產驅動資料模型的兌現處） |
 | `flutter_app/lib/services/blade_ai_service.dart` | 葉片專用 AI prompt（正常結構清單）+ 值域夾回 |
 | `flutter_app/lib/services/blade_report_builder.dart` | 葉片報告（**不輸出「合格」**），交給 `pdf_report_service.dart` |
@@ -56,11 +57,11 @@
 
 ## 測試
 ```bash
-flutter test          # 全部 384 tests（widget_test 已修復，不再排除）
+flutter test          # 全部 406 tests（widget_test 已修復，不再排除）
 cd backend && GEMINI_API_KEY=ci-fake-key pytest tests/ --asyncio-mode=auto   # 191 pytest
-cd blade_prototype && pip install -r requirements.txt && pytest              # 78 tests（葉片原型，合成影像/音軌夾具）
+cd blade_prototype && pip install -r requirements.txt && pytest              # 81 tests（葉片原型，合成影像/音軌夾具）
 ```
-Flutter 384 tests / 後端 191 pytest / 葉片原型 78 pytest 全綠（2026-09-07 CI 實測）。DB 測試使用 `sqflite_common_ffi` in-memory。標準資料為單一來源：改 `backend/app/data/inspection_standards.py` 後必須跑 `python backend/scripts/export_standards.py` 重新匯出 JSON（有同步守門測試）。
+Flutter 406 tests / 後端 191 pytest / 葉片原型 81 pytest 全綠（2026-09-07 CI 實測）。DB 測試使用 `sqflite_common_ffi` in-memory。標準資料為單一來源：改 `backend/app/data/inspection_standards.py` 後必須跑 `python backend/scripts/export_standards.py` 重新匯出 JSON（有同步守門測試）。
 
 ## 已知問題追蹤
 - GitHub Issues #14-#19 已全數修復並關閉（2026-04-16）
@@ -85,6 +86,8 @@ Flutter 384 tests / 後端 191 pytest / 葉片原型 78 pytest 全綠（2026-09-
   移植期間發現兩件事：`compareMetric` 少了 `direction`（真缺口，已補）；`tonal_exclusive` 在手機取樣率下沒有真的驗過獨有性（Python 既有缺陷，**照原樣移植**並記在 SPEC §13，因此哨音只給 severity 2）。
   驗證方式：先把 scipy 的慣例（STFT 縮放／savgol 邊緣／medfilt 邊界）在 Python 端釘死，再逐行轉寫，最後把整條 `analyzeSamples` 轉寫回 Python 對照——兩段夾具音軌上每個輸出都到機器精度一致。改 `acoustics.py` 後要重跑 `blade_prototype/scripts/make_acoustic_fixture.py`（該產生器會**自我對帳**，與 `acoustics.py` 漂開時直接爆掉不寫檔）
 - `replaceWtDetections` 跨層清除修正（2026-09-07）：原本只清傳進來那一層的 `pending`，但 `analyzeSession` 回傳的是整個場次三層的完整結果，於是上一輪標記過、這一輪不再標記的發現會留在報告上。改為清整個場次的 `pending`，`confirmed`/`rejected` 不動
+
+- 葉片聲音層兩個未決事項結案（2026-09-07）：①**`tonal_exclusive` 修好了**——原本的「只有這片有」複查在 ±3% 窄頻帶上重跑 9 點中值濾波，但手機取樣率下那個頻帶只有 4–5 個 bin，達不到需要的 13 個，複查回 NaN 被當成「另兩片沒有」，於是它等同「突出量 ≥ 6 dB」。改成讀各片**全頻帶**突出量在該頻率上的值。實測三片同頻哨音由 3 片誤判降到 0、兩片同頻由 2 降到 0，單片仍抓得到（共消 5 個誤報）。Python/Dart 同步改、夾具重跑（既有兩段夾具的值不變——它們沒有多片同頻的情況）。②**加入 `record: ^6.2.1`** 做 App 內錄音，專案 SDK 下限 `>=3.2.0` → `>=3.5.0`。**刻意不用 7.x**（要 Dart ^3.12/Flutter 3.44，下限太高）。錄音參數是量測要求：WAV／單聲道／44.1 kHz／**自動增益與降噪一律關**（自動增益會拆掉三片互比的基準、降噪削掉要量的寬頻噪音），有測試釘住。`file_picker` 保留為備援。iOS 的 `NSMicrophoneUsageDescription` 待 `ios/` 目錄建立時補
 
 ## 既有 error（已修復）
 - ~~`measurement.dart`: `sqrt` 未 import `dart:math`~~ → 已修復

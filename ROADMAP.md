@@ -20,7 +20,7 @@
 - **申報用 PDF 報告**：裝置端純 Dart 產生，離線可用，含照片與法規依據
 - **原格式回填**：後端可用時回填客戶原本 Excel/Word，不可用時降級 JSON 摘要
 - 歷史紀錄：GPS 定位、可編輯標題、搜尋、離線分享佇列
-- 工程面：CI 三軌全綠（Flutter 384 / 後端 191 / 葉片原型 78）、`flutter analyze` 硬性門檻、release 簽署、後端 API-Key 認證
+- 工程面：CI 三軌全綠（Flutter 406 / 後端 191 / 葉片原型 81）、`flutter analyze` 硬性門檻、release 簽署、後端 API-Key 認證
 
 **風力機葉片模組（獨立功能）**
 

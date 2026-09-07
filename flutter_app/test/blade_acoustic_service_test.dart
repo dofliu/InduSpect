@@ -140,6 +140,99 @@ void main() {
     });
   });
 
+  group('窄頻峰的突出量與獨有性', () {
+    /// 25 Hz 間距、0–8 kHz 的平坦頻譜，在 [peaks] 各插一根 [db] 的峰
+    ({Float64List freqs, Float64List specDb}) spectrum(
+        List<double> peaks, double db) {
+      const n = 321; // 0 .. 8000 Hz，25 Hz 一格
+      final freqs = Float64List(n);
+      final spec = Float64List(n);
+      for (var i = 0; i < n; i++) {
+        freqs[i] = i * 25.0;
+      }
+      for (final pf in peaks) {
+        var bi = 0;
+        var bd = double.infinity;
+        for (var i = 0; i < n; i++) {
+          final d = (freqs[i] - pf).abs();
+          if (d < bd) {
+            bd = d;
+            bi = i;
+          }
+        }
+        spec[bi] = db;
+      }
+      return (freqs: freqs, specDb: spec);
+    }
+
+    test('excessAtFrequency 讀的是指定頻率，不是頻帶內的最大值', () {
+      final sp = spectrum([1400.0], 20.0);
+      expect(
+          BladeAcousticService.excessAtFrequency(
+              sp.specDb, sp.freqs, 1400.0, 400.0, 8000.0),
+          greaterThan(15.0));
+      // 別的頻率讀到的是基線附近——這正是「另兩片在這個頻率沒有東西」該有的答案
+      expect(
+          BladeAcousticService.excessAtFrequency(
+                  sp.specDb, sp.freqs, 3000.0, 400.0, 8000.0)
+              .abs(),
+          lessThan(1.0));
+    });
+
+    test('**根本原因**：窄頻帶的 bin 數不足中值濾波時回 NaN', () {
+      final sp = spectrum([1400.0], 20.0);
+      // ±3% 的窄頻帶（1358–1442 Hz，25 Hz 間距 → 約 4 個 bin）
+      final narrow = BladeAcousticService.excessAtFrequency(
+          sp.specDb, sp.freqs, 1400.0, 1400.0 * 0.97, 1400.0 * 1.03);
+      expect(narrow.isNaN, isTrue,
+          reason: '舊版就是在這裡拿到 NaN，然後把它當成 0 dB——'
+              '於是獨有性複查等於沒做');
+      // 同一個頻率改用全頻帶基線就量得出來
+      expect(
+          BladeAcousticService.excessAtFrequency(
+              sp.specDb, sp.freqs, 1400.0, 400.0, 8000.0),
+          greaterThan(15.0));
+    });
+
+    test('tonalExcess 在頻帶過窄時回空，且明確區分「量不出來」與「沒有峰」', () {
+      final sp = spectrum([1400.0], 20.0);
+      expect(
+          BladeAcousticService.tonalExcess(sp.specDb, sp.freqs, 1390.0, 1410.0)
+              .isEmpty,
+          isTrue);
+      final full =
+          BladeAcousticService.tonalExcess(sp.specDb, sp.freqs, 400.0, 8000.0);
+      expect(full.isEmpty, isFalse);
+      expect(full.freqsHz.length, full.excessDb.length);
+    });
+
+    test('三片同頻時，相對另兩片的突出量差不足 → 不算獨有', () {
+      // 三片都有 1400 Hz 的 20 dB 峰
+      final sp = spectrum([1400.0], 20.0);
+      final own = BladeAcousticService.excessAtFrequency(
+          sp.specDb, sp.freqs, 1400.0, 400.0, 8000.0);
+      final other = BladeAcousticService.excessAtFrequency(
+          sp.specDb, sp.freqs, 1400.0, 400.0, 8000.0);
+      const p = BladeAcousticParams();
+      // 這是 analyzeSamples 裡獨有性判準的算式
+      expect(own >= p.tonalMinProminenceDb, isTrue, reason: '峰本身夠突出');
+      expect(own - other >= p.tonalMinProminenceDb / 2.0, isFalse,
+          reason: '但另一片同頻也有，就不是「只有這片」');
+    });
+
+    test('只有一片有時，差額足夠 → 算獨有', () {
+      final loud = spectrum([1400.0], 20.0);
+      final quiet = spectrum(const [], 0.0);
+      final own = BladeAcousticService.excessAtFrequency(
+          loud.specDb, loud.freqs, 1400.0, 400.0, 8000.0);
+      final other = BladeAcousticService.excessAtFrequency(
+          quiet.specDb, quiet.freqs, 1400.0, 400.0, 8000.0);
+      const p = BladeAcousticParams();
+      expect(own >= p.tonalMinProminenceDb, isTrue);
+      expect(own - other >= p.tonalMinProminenceDb / 2.0, isTrue);
+    });
+  });
+
   group('三重守門：不可用時不給看起來像數據的數字', () {
     BladeAcousticResult ofSamples(Float64List x, {int sr = 16000}) =>
         BladeAcousticService.analyzeSamples(

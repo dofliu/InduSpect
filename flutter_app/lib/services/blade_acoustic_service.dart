@@ -143,6 +143,22 @@ class BladeAcousticResult {
       comparisons.any((c) => c.flagged) || blades.any((b) => b.tonalExclusive);
 }
 
+/// 頻譜減去中值濾波基線之後的**突出量**，以及對應的頻率軸。
+///
+/// 拆出來是因為它有兩個用途：找自己那根最突出的峰，以及讀**另一片在同一頻率上**
+/// 的突出量。後者原本是在窄頻帶上重跑一次中值濾波，那是錯的（見
+/// [BladeAcousticService.excessAtFrequency]）。
+class BladeTonalExcess {
+  final Float64List freqsHz;
+  final Float64List excessDb;
+
+  const BladeTonalExcess(this.freqsHz, this.excessDb);
+
+  /// 頻帶內的 bin 數不足中值濾波所需時為 true。**要當成「量不出來」而不是
+  /// 「沒有峰」**——這兩者混淆正是舊版獨有性複查失效的原因。
+  bool get isEmpty => freqsHz.isEmpty;
+}
+
 /// 聲音層分析的注入點（測試不必進 isolate、也不必有真音檔）。
 ///
 /// 收位元組而不是路徑：檔案讀取已經由 `BladeBytesLoader` 抽掉了，
@@ -173,6 +189,9 @@ class BladeAcousticService {
   BladeAcousticService._();
 
   static const int defaultBlades = 3;
+
+  /// 窄頻峰的基線用多少點的中值濾波（與 `acoustics.py` 的 `med_bins` 相同）
+  static const int defaultTonalMedBins = 25;
 
   /// 短於這個長度不分析（與 Python 的 `sample_rate // 2` 相同）
   static bool tooShort(BladeAudioClip clip) =>
@@ -398,8 +417,8 @@ class BladeAcousticService {
         for (var k = 0; k < s.nFreq; k++) {
           specDb[k] = 20.0 * _log10(spec[k] + eps);
         }
-        final peak = _tonalPeak(
-            specDb, s.freqsHz, params.bandLoHz, params.bandHiHz, 25);
+        final peak = _tonalPeak(specDb, s.freqsHz, params.bandLoHz,
+            params.bandHiHz, defaultTonalMedBins);
         tonalF.add(peak.freqHz);
         tonalP.add(peak.prominenceDb);
       }
@@ -422,13 +441,10 @@ class BladeAcousticService {
             for (var k = 0; k < s.nFreq; k++) {
               od[k] = 20.0 * _log10(meanSpecs[o][k] + eps);
             }
-            final op = _tonalPeak(
-                od,
-                s.freqsHz,
-                math.max(params.bandLoHz, tf * 0.97),
-                math.min(params.bandHiHz, tf * 1.03),
-                9);
-            others.add(op.prominenceDb.isFinite ? op.prominenceDb : 0.0);
+            // 讀另一片在**同一個頻率**上的突出量（全頻帶基線，不重跑窄頻中值）
+            final op = excessAtFrequency(
+                od, s.freqsHz, tf, params.bandLoHz, params.bandHiHz);
+            others.add(op.isFinite ? op : 0.0);
           }
           exclusive = others.isNotEmpty &&
               tpDb - others.reduce(math.max) >=
@@ -569,32 +585,75 @@ class BladeAcousticService {
     return bestPhi / frameHz;
   }
 
-  /// 窄頻峰：頻譜減去中值濾波基線後的最大突出量。
-  static _TonalPeak _tonalPeak(Float64List specDb, Float64List freqs, double lo,
-      double hi, int medBins) {
+  /// 頻譜減去中值濾波基線 → 突出量。對照 `acoustics.py::_tonal_excess`。
+  static BladeTonalExcess tonalExcess(
+      Float64List specDb, Float64List freqs, double lo, double hi,
+      {int medBins = defaultTonalMedBins}) {
     final sel = <int>[];
     for (var k = 0; k < freqs.length; k++) {
       if (freqs[k] >= lo && freqs[k] <= hi) sel.add(k);
     }
     if (sel.length < medBins + 4) {
-      return const _TonalPeak(double.nan, double.nan);
+      return BladeTonalExcess(Float64List(0), Float64List(0));
     }
+    final fs = Float64List(sel.length);
     final ss = Float64List(sel.length);
     for (var i = 0; i < sel.length; i++) {
+      fs[i] = freqs[sel[i]];
       ss[i] = specDb[sel[i]];
     }
     final baseline =
         BladeDsp.medianFilter(ss, medBins.isOdd ? medBins : medBins + 1);
+    final excess = Float64List(sel.length);
+    for (var i = 0; i < sel.length; i++) {
+      excess[i] = ss[i] - baseline[i];
+    }
+    return BladeTonalExcess(fs, excess);
+  }
+
+  /// 窄頻峰：突出量最大處。
+  static _TonalPeak _tonalPeak(Float64List specDb, Float64List freqs, double lo,
+      double hi, int medBins) {
+    final e = tonalExcess(specDb, freqs, lo, hi, medBins: medBins);
+    if (e.isEmpty) return const _TonalPeak(double.nan, double.nan);
     var bestI = 0;
     var bestV = -double.infinity;
-    for (var i = 0; i < sel.length; i++) {
-      final e = ss[i] - baseline[i];
-      if (e > bestV) {
-        bestV = e;
+    for (var i = 0; i < e.excessDb.length; i++) {
+      if (e.excessDb[i] > bestV) {
+        bestV = e.excessDb[i];
         bestI = i;
       }
     }
-    return _TonalPeak(freqs[sel[bestI]], bestV);
+    return _TonalPeak(e.freqsHz[bestI], bestV);
+  }
+
+  /// **指定頻率**上的突出量（取最近的 bin）。用於「這根峰是不是只有這片有」。
+  ///
+  /// 原本的做法是在 ±3% 的窄頻帶上**再跑一次**中值濾波。那是錯的：手機常見取樣率下
+  /// ±3% 只有 4–5 個 bin（48 kHz / nperseg 2048 → bin 間距 23 Hz，1800 Hz 的 ±3%
+  /// 是 108 Hz），達不到 9 點中值濾波要求的 13 個 bin，於是一律回 NaN 而被呼叫端
+  /// 當成「另兩片在這個頻率沒有東西」。結果 `tonalExclusive` 退化成「突出量
+  /// ≥ 6 dB」，**完全沒有驗過獨有性**——三片同時有的哨音（鋸齒尾緣等設計特徵、
+  /// 路過的車輛、地面的發電機）會被報成單片缺陷，於是有人去拆錯的葉片。
+  ///
+  /// 全頻帶的基線本來就為了找自己的峰算過一次，直接讀那個頻率上的值就好。
+  /// 合成音軌實測（`blade_prototype`）：三片同頻哨音由舊做法的 3 片誤判成獨有降到
+  /// 0 片、兩片同頻由 2 片降到 0 片，而單片哨音仍然抓得到。
+  static double excessAtFrequency(
+      Float64List specDb, Float64List freqs, double freq, double lo, double hi,
+      {int medBins = defaultTonalMedBins}) {
+    final e = tonalExcess(specDb, freqs, lo, hi, medBins: medBins);
+    if (e.isEmpty || !freq.isFinite) return double.nan;
+    var bestI = 0;
+    var bestD = double.infinity;
+    for (var i = 0; i < e.freqsHz.length; i++) {
+      final d = (e.freqsHz[i] - freq).abs();
+      if (d < bestD) {
+        bestD = d;
+        bestI = i;
+      }
+    }
+    return e.excessDb[bestI];
   }
 
   /// 調變比例 → 峰谷差 dB

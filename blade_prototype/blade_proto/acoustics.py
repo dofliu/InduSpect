@@ -298,16 +298,48 @@ def _ratio_to_db(ratio: float) -> float:
     return float(20.0 * np.log10((1.0 + r) / (1.0 - r)))
 
 
-def _tonal_peak(spec_db: np.ndarray, f: np.ndarray, lo: float, hi: float, med_bins: int = 25):
-    """窄頻峰：頻譜減去中值濾波基線後的最大突出量。回傳 (頻率, 突出 dB)。"""
+def _tonal_excess(spec_db: np.ndarray, f: np.ndarray, lo: float, hi: float,
+                  med_bins: int = 25):
+    """頻譜減去中值濾波基線 → 突出量。回傳 (頻率陣列, 突出量陣列)。
+
+    頻帶內 bin 數不足中值濾波所需時回兩個空陣列（呼叫端要當成「量不出來」，
+    不是「沒有峰」）。
+    """
     sel = (f >= lo) & (f <= hi)
     if sel.sum() < med_bins + 4:
-        return float("nan"), float("nan")
+        return np.empty(0), np.empty(0)
     fs, ss = f[sel], spec_db[sel]
     baseline = signal.medfilt(ss, kernel_size=med_bins if med_bins % 2 else med_bins + 1)
-    excess = ss - baseline
+    return fs, ss - baseline
+
+
+def _tonal_peak(spec_db: np.ndarray, f: np.ndarray, lo: float, hi: float, med_bins: int = 25):
+    """窄頻峰：突出量最大處。回傳 (頻率, 突出 dB)。"""
+    fs, excess = _tonal_excess(spec_db, f, lo, hi, med_bins)
+    if len(fs) == 0:
+        return float("nan"), float("nan")
     k = int(np.argmax(excess))
     return float(fs[k]), float(excess[k])
+
+
+def _excess_at(spec_db: np.ndarray, f: np.ndarray, freq: float,
+               lo: float, hi: float, med_bins: int = 25) -> float:
+    """**指定頻率**上的突出量（取最近的 bin）。用於「這根峰是不是只有這片有」。
+
+    原本的做法是在 ±3% 的窄頻帶上**再跑一次**中值濾波。那是錯的：手機常見取樣率下
+    ±3% 只有 4–5 個 bin（48 kHz/nperseg 2048 → bin 間距 23 Hz，1800 Hz 的 ±3% 是
+    108 Hz），達不到 9 點中值濾波要求的 13 個 bin，於是一律回 NaN 而被呼叫端當成
+    「另兩片在這個頻率沒有東西」。結果 `tonal_exclusive` 退化成「突出量 ≥ 6 dB」，
+    完全沒有驗過獨有性——三片同時有的哨音（設計特徵、路過的車輛、發電機）
+    會被報成單片缺陷。
+
+    全頻帶的基線本來就為了找自己的峰算過一次，直接讀那個頻率上的值就好，
+    不需要窄頻中值。
+    """
+    fs, excess = _tonal_excess(spec_db, f, lo, hi, med_bins)
+    if len(fs) == 0 or not np.isfinite(freq):
+        return float("nan")
+    return float(excess[int(np.argmin(np.abs(fs - freq)))])
 
 
 def analyze_samples(
@@ -437,9 +469,9 @@ def analyze_samples(
                 for o in range(n_blades):
                     if o == b or not np.isfinite(mean_specs[o]).any():
                         continue
-                    _, op = _tonal_peak(20.0 * np.log10(mean_specs[o] + eps), f,
-                                        max(BAND_LO_HZ, tf * 0.97), min(BAND_HI_HZ, tf * 1.03),
-                                        med_bins=9)
+                    # 讀另一片在**同一個頻率**上的突出量（全頻帶基線，不重跑窄頻中值）
+                    op = _excess_at(20.0 * np.log10(mean_specs[o] + eps), f, tf,
+                                    BAND_LO_HZ, BAND_HI_HZ)
                     others.append(op if np.isfinite(op) else 0.0)
                 exclusive = bool(others) and tp_db - max(others) >= tonal_min_prominence_db / 2.0
             blades.append(BladeAcoustics(
