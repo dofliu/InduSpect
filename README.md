@@ -242,7 +242,7 @@ python -m blade_proto sensitivity --quick --out SENSITIVITY.md
 ## 測試
 
 ```bash
-cd flutter_app && flutter test                                              # 406 tests
+cd flutter_app && flutter test                                              # 429 tests
 cd backend && GEMINI_API_KEY=ci-fake-key pytest tests/ --asyncio-mode=auto  # 191 tests
 cd blade_prototype && pytest                                                # 81 tests
 ```
