@@ -350,7 +350,7 @@ class _BladeAssetHistoryScreenState extends State<BladeAssetHistoryScreen> {
                     padding:
                         const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                     decoration: BoxDecoration(
-                      color: Colors.red.withOpacity(0.12),
+                      color: Colors.red.withValues(alpha: 0.12),
                       borderRadius: BorderRadius.circular(4),
                     ),
                     child: const Text('上升',
@@ -479,14 +479,14 @@ class _BladeAssetHistoryScreenState extends State<BladeAssetHistoryScreen> {
           // 非照片的媒體不能走 `Image.file`：那條路會落到 errorBuilder，
           // 於是一段好好的音軌在畫面上顯示成「圖片壞了」。
           child: media.kind == WtMediaKind.video
-              ? ColoredBox(
+              ? const ColoredBox(
                   color: Colors.black12,
-                  child: const Center(child: Icon(Icons.burst_mode, size: 20)),
+                  child: Center(child: Icon(Icons.burst_mode, size: 20)),
                 )
               : media.kind == WtMediaKind.audio
-                  ? ColoredBox(
+                  ? const ColoredBox(
                       color: Colors.black12,
-                      child: const Center(
+                      child: Center(
                           child: Icon(Icons.insert_drive_file, size: 20)),
                     )
                   : Image.file(
@@ -634,7 +634,7 @@ class _TrendPainter extends CustomPainter {
         points.length == 1 ? 0 : size.width * i / (points.length - 1);
 
     final grid = Paint()
-      ..color = Colors.grey.withOpacity(0.35)
+      ..color = Colors.grey.withValues(alpha: 0.35)
       ..strokeWidth = 1;
     final label = TextPainter(textDirection: TextDirection.ltr);
     for (final t in _thresholds) {

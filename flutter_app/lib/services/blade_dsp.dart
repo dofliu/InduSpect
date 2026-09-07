@@ -291,7 +291,7 @@ class BladeDsp {
     // n = 11 時就已經是 9，再長也被 min 夾在 9。所以窗長恆為 9，
     // 不留「其他窗長」的分支——那條路永遠走不到，卻會看起來像測過了。
     const w = savgolMaxWindow;
-    final half = (w - 1) ~/ 2;
+    const half = (w - 1) ~/ 2;
     final out = Float64List(n);
     const c = savgol92;
     for (var i = half; i < n - half; i++) {

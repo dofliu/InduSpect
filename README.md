@@ -174,7 +174,7 @@ python -m blade_proto case --asset WTG-07 --still IMG_1234.JPG --edge IMG_1240.J
 
 ### Flutter App（`flutter_app/`，主要開發版本）
 
-- **框架**：Flutter 3.24+（Android / iOS）、Dart 3.5+
+- **框架**：Flutter 3.27+（Android / iOS）、Dart 3.5+
 - **AI**：`google_generative_ai`（Gemini Flash 圖像分析、Pro 報告生成），模型 ID 可在設定頁覆寫
 - **端側 ML**：`google_mlkit_text_recognition`（離線 OCR，含中文）
 - **本地儲存**：`sqflite`（SQLite v4，檢測紀錄與判定）+ `shared_preferences`（設定與偏好）
@@ -242,7 +242,7 @@ python -m blade_proto sensitivity --quick --out SENSITIVITY.md
 ## 測試
 
 ```bash
-cd flutter_app && flutter test                                              # 429 tests
+cd flutter_app && flutter test                                              # 435 tests
 cd backend && GEMINI_API_KEY=ci-fake-key pytest tests/ --asyncio-mode=auto  # 191 tests
 cd blade_prototype && pytest                                                # 81 tests
 ```

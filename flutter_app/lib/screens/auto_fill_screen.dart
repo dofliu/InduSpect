@@ -19,9 +19,9 @@ class AutoFillScreen extends StatefulWidget {
   final List<Map<String, dynamic>> inspectionResults;
 
   const AutoFillScreen({
-    Key? key,
+    super.key,
     required this.inspectionResults,
-  }) : super(key: key);
+  });
 
   @override
   State<AutoFillScreen> createState() => _AutoFillScreenState();
@@ -99,7 +99,7 @@ class _AutoFillScreenState extends State<AutoFillScreen> {
         color: Colors.white,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 4,
             offset: const Offset(0, 2),
           ),
@@ -341,7 +341,7 @@ class _AutoFillScreenState extends State<AutoFillScreen> {
             color: Colors.white,
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.1),
+                color: Colors.black.withValues(alpha: 0.1),
                 blurRadius: 4,
                 offset: const Offset(0, -2),
               ),
@@ -437,9 +437,9 @@ class _AutoFillScreenState extends State<AutoFillScreen> {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                     decoration: BoxDecoration(
-                      color: confidenceColor.withOpacity(0.1),
+                      color: confidenceColor.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: confidenceColor.withOpacity(0.5)),
+                      border: Border.all(color: confidenceColor.withValues(alpha: 0.5)),
                     ),
                     child: Text(
                       '${(confidence * 100).toInt()}%',
@@ -665,7 +665,7 @@ class _AutoFillScreenState extends State<AutoFillScreen> {
         return;
       }
 
-      final outputFileName = 'filled_${_fileName}';
+      final outputFileName = 'filled_$_fileName';
 
       // 使用跨平台的文件儲存服務
       await FileSaveService.saveAndShare(

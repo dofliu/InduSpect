@@ -11,79 +11,53 @@ environment:
   # 刻意選 record 6.x 而不是 7.x：後者要 Dart ^3.12 / Flutter 3.44，
   # 那個下限會把還沒升級的開發環境擋在外面，而 6.x 已經有需要的 AudioEncoder.wav。
   sdk: '>=3.5.0 <4.0.0'
-  flutter: '>=3.24.0'
+  # 3.24 → 3.27：`Color.withValues`（取代已棄用的 withOpacity）是 3.27 才有的。
+  # 查法不是憑印象：framework 自己的 cupertino/colors.dart 在 3.27.0 用了 withValues、
+  # 3.24.0 沒有——framework 只會在 API 存在之後才改用它。
+  flutter: '>=3.27.0'
 
 dependencies:
   flutter:
     sdk: flutter
 
-  # 狀態管理
-  provider: ^6.1.0
-
-  # 本地存儲
-  shared_preferences: ^2.2.0
-  sqflite: ^2.3.0
-  path_provider: ^2.1.0
-
-  # 相機和圖片
-  image_picker: ^1.0.7
-  camera: ^0.10.5+9
-
-  # 錄音（葉片動態層的音軌輸入）。**一定要錄成未壓縮 PCM/WAV**：
-  # 裝置上沒有純 Dart 的 AAC 解碼器，錄成 m4a 就離線分析不了。
-  record: ^6.2.1
-
-  # AI 服務 - Google Generative AI
-  google_generative_ai: ^0.4.6
-
-  # 網路請求
-  dio: ^5.4.0
-  http: ^1.2.0
-  connectivity_plus: ^5.0.2
-
-  # 圖片處理
-  image: ^4.1.7
-
-  # UI 組件
-  flutter_svg: ^2.0.9
+  # 依字母排序（`sort_pub_dependencies` 是本專案自己打開的規則）。原本是依用途分組，
+  # 但排序之後分組註解會掛到錯的相依上，所以「為什麼需要它」改成貼在各自那一行。
+  archive: ^3.6.1 # zip 打包（訓練語料匯出）
   cached_network_image: ^3.3.1
-
-  # 分享/匯出
-  share_plus: ^7.2.1
-
-  # 文件解析
-  excel: ^4.0.6
-  archive: ^3.6.1
-
-  # 工具
-  uuid: ^4.3.3
-  intl: ^0.19.0
-  path: ^1.8.3
-  file_picker: ^8.0.0
-
-  # 環境變量
+  camera: ^0.10.5+9 # 只用於定檢流程；葉片檢測刻意走系統相機（碰不到 5x 望遠）
+  connectivity_plus: ^5.0.2 # 只用來探介面；可達性要用 ConnectivityService.checkConnection
+  dio: ^5.4.0
+  excel: ^4.0.6 # 定檢表解析
+  file_picker: ^8.0.0 # 定檢表上傳、音軌選檔
   flutter_dotenv: ^5.1.0
-
-  # 權限處理
-  permission_handler: ^11.2.0
-
-  # GPS 定位
-  geolocator: ^11.0.0
+  flutter_svg: ^2.0.9
   geocoding: ^3.0.0
-
-  # 裝置端 OCR（Tier 1a：離線讀值備援，僅 Android/iOS 生效）
-  google_mlkit_text_recognition: ^0.17.1
-
-  # PDF 報告輸出（申報交付格式，純 Dart 離線產生）
-  pdf: ^3.11.0
+  geolocator: ^11.0.0 # GPS：歷史紀錄定位、導回上次拍攝點
+  google_generative_ai: ^0.4.6
+  google_mlkit_text_recognition: ^0.17.1 # Tier 1a 離線讀值備援（僅 Android/iOS）
+  http: ^1.2.0
+  image: ^4.1.7 # 影像運算；解碼一律走 utils/image_decode.dart 的 safeDecodeImage
+  image_picker: ^1.0.7
+  intl: ^0.19.0
+  path: ^1.8.3 # 路徑操作一律用它，不手動 split('/')
+  path_provider: ^2.1.0
+  pdf: ^3.11.0 # 申報用 PDF，純 Dart 離線產生
+  permission_handler: ^11.2.0
+  provider: ^6.1.0
+  record: ^6.2.1 # 葉片音軌錄音。**一定要錄成未壓縮 PCM/WAV**：裝置上沒有純 Dart 的
+  # AAC 解碼器，錄成 m4a 就離線分析不了。刻意用 6.x 不用 7.x（後者要 Dart ^3.12）
+  share_plus: ^7.2.1
+  shared_preferences: ^2.2.0
+  sqflite: ^2.3.0 # SQLite v5；migration 必須處理既有使用者升級路徑
+  uuid: ^4.3.3 # sessionId / detectionId
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
+  build_runner: ^2.4.8
   flutter_launcher_icons: ^0.13.1
   flutter_lints: ^3.0.1
-  build_runner: ^2.4.8
-  sqflite_common_ffi: ^2.3.0
+  sqflite_common_ffi: ^2.3.0 # DB 測試用 in-memory
 
 flutter_launcher_icons:
   android: true

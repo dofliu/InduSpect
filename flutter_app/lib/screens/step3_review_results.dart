@@ -79,7 +79,7 @@ class Step3ReviewResults extends StatelessWidget {
                 color: Colors.white,
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
+                    color: Colors.black.withValues(alpha: 0.1),
                     blurRadius: 4,
                     offset: const Offset(0, -2),
                   ),
@@ -109,7 +109,7 @@ class Step3ReviewResults extends StatelessWidget {
             Icon(
               Icons.check_circle_outline,
               size: 100,
-              color: AppColors.success.withOpacity(0.5),
+              color: AppColors.success.withValues(alpha: 0.5),
             ),
             const SizedBox(height: AppSpacing.lg),
             const Text(

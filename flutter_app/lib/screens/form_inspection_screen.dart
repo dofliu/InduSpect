@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
-import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:file_picker/file_picker.dart';
@@ -45,7 +44,7 @@ enum InspectionMode {
 /// 4. 預覽確認結果
 /// 5. 產生填好的原始格式表單
 class FormInspectionScreen extends StatefulWidget {
-  const FormInspectionScreen({Key? key}) : super(key: key);
+  const FormInspectionScreen({super.key});
 
   @override
   State<FormInspectionScreen> createState() => _FormInspectionScreenState();
@@ -1642,7 +1641,7 @@ class _FormInspectionScreenState extends State<FormInspectionScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('檢測進度', style: const TextStyle(fontWeight: FontWeight.bold)),
+              const Text('檢測進度', style: TextStyle(fontWeight: FontWeight.bold)),
               Text('$completed / $total 項 (${percentage.toStringAsFixed(0)}%)'),
             ],
           ),
@@ -1717,7 +1716,7 @@ class _FormInspectionScreenState extends State<FormInspectionScreen> {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(10),
         side: BorderSide(
-          color: item.isCompleted ? statusColor.withOpacity(0.3) : Colors.grey[300]!,
+          color: item.isCompleted ? statusColor.withValues(alpha: 0.3) : Colors.grey[300]!,
         ),
       ),
       child: Padding(
@@ -1789,7 +1788,7 @@ class _FormInspectionScreenState extends State<FormInspectionScreen> {
                 width: double.infinity,
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: vColor.withOpacity(0.08),
+                  color: vColor.withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Column(
@@ -1898,7 +1897,7 @@ class _FormInspectionScreenState extends State<FormInspectionScreen> {
         color: Colors.white,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 4,
             offset: const Offset(0, -2),
           ),
@@ -2005,8 +2004,8 @@ class _FormInspectionScreenState extends State<FormInspectionScreen> {
             width: double.infinity,
             padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 16),
             color: Colors.teal[50],
-            child: Row(
-              children: const [
+            child: const Row(
+              children: [
                 SizedBox(
                   width: 14,
                   height: 14,
@@ -2088,7 +2087,7 @@ class _FormInspectionScreenState extends State<FormInspectionScreen> {
             color: Colors.white,
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.1),
+                color: Colors.black.withValues(alpha: 0.1),
                 blurRadius: 4,
                 offset: const Offset(0, -2),
               ),
@@ -2176,7 +2175,7 @@ class _FormInspectionScreenState extends State<FormInspectionScreen> {
                   style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white)),
               const SizedBox(height: 4),
               Text('表單已儲存',
-                  style: TextStyle(fontSize: 14, color: Colors.white.withOpacity(0.9))),
+                  style: TextStyle(fontSize: 14, color: Colors.white.withValues(alpha: 0.9))),
               const SizedBox(height: 16),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -2218,11 +2217,11 @@ class _FormInspectionScreenState extends State<FormInspectionScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Row(
+                      const Row(
                         children: [
-                          const Icon(Icons.auto_awesome, color: Colors.amber, size: 20),
-                          const SizedBox(width: 8),
-                          const Text('AI 總結報告',
+                          Icon(Icons.auto_awesome, color: Colors.amber, size: 20),
+                          SizedBox(width: 8),
+                          Text('AI 總結報告',
                               style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                         ],
                       ),
@@ -2280,7 +2279,7 @@ class _FormInspectionScreenState extends State<FormInspectionScreen> {
                         item.displayValue ??
                         '';
                     return Card(
-                      color: vColor.withOpacity(0.08),
+                      color: vColor.withValues(alpha: 0.08),
                       margin: const EdgeInsets.only(bottom: 8),
                       child: ListTile(
                         leading: Icon(Icons.warning, color: vColor),
@@ -2312,7 +2311,7 @@ class _FormInspectionScreenState extends State<FormInspectionScreen> {
             color: Colors.white,
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.05),
+                color: Colors.black.withValues(alpha: 0.05),
                 blurRadius: 4,
                 offset: const Offset(0, -2),
               ),
@@ -2521,7 +2520,7 @@ class _FormInspectionScreenState extends State<FormInspectionScreen> {
         Text(value,
             style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: color)),
         Text(label,
-            style: TextStyle(fontSize: 12, color: color.withOpacity(0.9))),
+            style: TextStyle(fontSize: 12, color: color.withValues(alpha: 0.9))),
       ],
     );
   }

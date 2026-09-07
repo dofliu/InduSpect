@@ -13,7 +13,7 @@ import 'guided_capture_screen.dart';
 /// Step 4: 預覽回填結果，使用者可逐項確認或修改
 /// Step 5: 執行回填 + 匯出 + 儲存歷史
 class OneStopInspectionScreen extends StatefulWidget {
-  const OneStopInspectionScreen({Key? key}) : super(key: key);
+  const OneStopInspectionScreen({super.key});
 
   @override
   State<OneStopInspectionScreen> createState() =>
@@ -40,15 +40,15 @@ class _OneStopInspectionScreenState extends State<OneStopInspectionScreen> {
   bool _isAnalyzing = false;
 
   // Step 2: 量測讀數
-  List<Map<String, dynamic>> _readings = [];
+  final List<Map<String, dynamic>> _readings = [];
   List<Map<String, dynamic>> _photoTaskBindings = [];
 
   // Step 3: AI 判定結果
-  List<Map<String, dynamic>> _judgments = [];
-  List<Map<String, dynamic>> _mappings = [];
-  List<Map<String, dynamic>> _previousValues = [];
-  List<String> _warnings = [];
-  Map<String, dynamic> _summary = {};
+  final List<Map<String, dynamic>> _judgments = [];
+  final List<Map<String, dynamic>> _mappings = [];
+  final List<Map<String, dynamic>> _previousValues = [];
+  final List<String> _warnings = [];
+  final Map<String, dynamic> _summary = {};
   bool _isProcessing = false;
 
 
@@ -331,11 +331,11 @@ class _OneStopInspectionScreenState extends State<OneStopInspectionScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
+                  const Row(
                     children: [
-                      const Icon(Icons.camera_enhance, color: Colors.blue),
-                      const SizedBox(width: 8),
-                      const Text('引導式拍照',
+                      Icon(Icons.camera_enhance, color: Colors.blue),
+                      SizedBox(width: 8),
+                      Text('引導式拍照',
                           style: TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: 16,
@@ -574,7 +574,7 @@ class _OneStopInspectionScreenState extends State<OneStopInspectionScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
+                    const Text(
                       '判定結果摘要',
                       style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                     ),

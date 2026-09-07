@@ -59,11 +59,11 @@
 
 ## 測試
 ```bash
-flutter test          # 全部 429 tests（widget_test 已修復，不再排除）
+flutter test          # 全部 435 tests（widget_test 已修復，不再排除）
 cd backend && GEMINI_API_KEY=ci-fake-key pytest tests/ --asyncio-mode=auto   # 191 pytest
 cd blade_prototype && pip install -r requirements.txt && pytest              # 81 tests（葉片原型，合成影像/音軌夾具）
 ```
-Flutter 429 tests / 後端 191 pytest / 葉片原型 81 pytest 全綠（2026-09-07 CI 實測）。DB 測試使用 `sqflite_common_ffi` in-memory。標準資料為單一來源：改 `backend/app/data/inspection_standards.py` 後必須跑 `python backend/scripts/export_standards.py` 重新匯出 JSON（有同步守門測試）。
+Flutter 435 tests / 後端 191 pytest / 葉片原型 81 pytest 全綠（2026-09-07 CI 實測）。DB 測試使用 `sqflite_common_ffi` in-memory。標準資料為單一來源：改 `backend/app/data/inspection_standards.py` 後必須跑 `python backend/scripts/export_standards.py` 重新匯出 JSON（有同步守門測試）。
 
 ## 已知問題追蹤
 - GitHub Issues #14-#19 已全數修復並關閉（2026-04-16）
@@ -94,6 +94,9 @@ Flutter 429 tests / 後端 191 pytest / 葉片原型 81 pytest 全綠（2026-09-
 - 葉片 Phase 4 前置：訓練語料的累積與匯出（2026-09-07）。**Phase 4 的模型本身（PatchCore/TFLite）還做不了，卡在資料不是工程**：它的前提是「同一支手機、同一台風機」的健康 patch 記憶庫，而這樣的照片目前 0 張（既有 75 張公開語料是整機照，轉子占畫面 ≤ 1/3；標註的是輪轂座標與天空條件，沒有缺陷標註）。合成影像不能替代——那是循環驗證。
   所以先做**讓那件事變得可能**的部分：`blade_dataset_service.dart` 把第四步的 `humanStatus`（原本寫進 DB 就沒有出口）整理成自我描述的語料。三個不可退化的標記規則：①**標記來源是人不是演算法**——拿 severity 當標籤只會讓模型學會模仿演算法含它的誤報；②`humanClean` 同時要求「場次已簽核 + 這份媒體沒有成立的發現 + 照片過了品質閘門」，缺一就不是健康樣本（「演算法沒報」≠「人看過沒問題」，混用會讓記憶庫摻進漏檢的真缺陷，模型把缺陷學成正常且毫無徵兆）；③簽核過的場次裡若還有 `pending` 的發現，整份媒體退回 `unreviewed`——寧可少收一筆不要收一筆錯的。
   畫面上顯示「還差多少」：規格把 Phase 4 的估時寫成「視資料量」，而在此之前沒有任何地方看得到資料量
+
+- Issue #43 可自動化的兩項（2026-09-07）：①**lint 清理 102 → 6**。`flutter analyze` 本來就綠（CI 的門檻是 warning 以上），但 102 條 info 會把真正該看的訊息埋掉。其中 3 條 `use_build_context_synchronously` 是**真的潛在崩潰**（await 後才用 context）不是風格問題；`withOpacity` → `withValues` 連帶把 Flutter 下限提到 **3.27**（`withValues` 是 3.27 才有的——用 framework 自己的 `cupertino/colors.dart` 在 3.27 用了它、3.24 沒有來確認，不是憑印象）。刻意**留下 6 條**：`WillPopScope`→`PopScope`（`onWillPop` 是 async 而 `canPop` 必須同步，要重構）、Radio→`RadioGroup`（結構性遷移且要 Flutter 3.32）、`dart:html`（web 不是產品目標）。②**歷史列表分頁**：`ListView.builder` 本來就只建可見項目，所以卡的**不是滾動而是載入**——`FormInspectionRecord.fromMap` 每列要 `jsonDecode` 三個欄位，而列表上的「已填 N 項／異常 N 項」正是從那些欄位算出來的，省不掉解析只能限量。改成一頁 30 筆、捲到底再載（`itemBuilder` 同一幀會被呼叫多次，所以有重入守門，否則同一頁會抓好幾遍）
+  **Issue #43 的另外兩項（實機完整流程、離線→恢復網路）沒有實機做不了**，issue 仍開著
 
 ## 既有 error（已修復）
 - ~~`measurement.dart`: `sqrt` 未 import `dart:math`~~ → 已修復

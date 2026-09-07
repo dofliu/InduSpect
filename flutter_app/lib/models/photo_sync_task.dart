@@ -61,7 +61,7 @@ class PhotoSyncTask {
       'created_at': createdAt.toIso8601String(),
       'updated_at': updatedAt.toIso8601String(),
       'error_message': errorMessage,
-      'ai_result': aiResult != null ? aiResult.toString() : null,
+      'ai_result': aiResult?.toString(),
     };
   }
 

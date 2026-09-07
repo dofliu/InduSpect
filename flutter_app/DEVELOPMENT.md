@@ -194,7 +194,7 @@ flutter test
 flutter test test/form_inspection_record_test.dart
 ```
 
-### 測試清單（429 tests）
+### 測試清單（435 tests）
 
 | 檔案 | 數量 | 覆蓋範圍 |
 |------|------|---------|
@@ -205,7 +205,7 @@ flutter test test/form_inspection_record_test.dart
 | `connectivity_probe_test.dart` | 14 | ★ 可達性探測：介面×可達性決策矩陣、快取 TTL、forceProbe、逾時與例外 |
 | `inspection_item_state_test.dart` | 22 | displayValue/verdict 邏輯（含法規標準判定優先序）、controller 生命週期 |
 | `form_inspection_record_test.dart` | 21 | Model: toMap/fromMap 往返、null 處理、舊格式相容、standardJudgments 持久化、copyWith 深拷貝 |
-| `database_service_test.dart` | 12 | DB CRUD: insert/update/delete、排序、limit、搜尋、GPS 持久化、UNIQUE 約束 |
+| `database_service_test.dart` | 18 | DB CRUD: insert/update/delete、排序、limit、搜尋、GPS 持久化、UNIQUE 約束；★ **分頁載入**（Issue #43）：limit/offset 不重疊不漏、翻頁不打亂 created_at DESC、超界回空、搜尋也支援分頁 |
 | `photo_service_test.dart` | 6 | 照片命名格式、序號補零、截斷、特殊字元 |
 | `image_decode_test.dart` | 5 | ★ `safeDecodeImage`：`decodeImage` **會丟例外不只回 null**（短位元組在格式嗅探階段就 RangeError），驗真影像解得回來、極短/非影像/截斷都回 null 不丟例外 |
 | `photo_decode_guard_test.dart` | 4 | ★ 兩個照片服務在無法解碼時交出**自己文件寫的結果**：`compressPhoto` 回原始位元組、`ImageService` 丟「Failed to decode image」而不是漏出 RangeError |
@@ -342,6 +342,68 @@ flutter build apk --debug
 ### 2026-09-07（葉片模組 Phase 1 缺口補完 + Phase 2 幾何層）
 
 **Phase 1 的兩個缺口**（同日盤點、同日補完）：
+
+### 2026-09-07 — Issue #43 可自動化的兩項：lint 清理與歷史列表分頁
+
+Issue #43 是 `[needs-human]` 的追蹤型 issue，四個驗收項目裡兩項需要實機
+（完整流程、離線→恢復網路），另兩項有實質可做的內容。
+
+#### 一、lint 102 → 6
+
+`flutter analyze` 本來就是綠的——CI 的門檻是 warning 以上，而這 102 條全是 info。
+但 102 條雜訊會把真正該看的訊息埋掉：這一批裡有 3 條是**真的潛在崩潰**，
+在 100 條 `withOpacity` 之間根本看不見。
+
+**3 條 `use_build_context_synchronously` 不是風格問題**：
+
+| 位置 | 問題 | 修法 |
+|---|---|---|
+| `step1_upload_checklist._submitLogin` | `context` 是方法**參數**，遮蔽了 State 的 context，所以 State 的 `mounted` 守不到它 | 改用 `context.mounted` |
+| `datetime_field_input` | 兩個 picker 之間有 await，期間 widget 可能已被移除 | 加 `context.mounted` 守門，**放在 datetime 分支裡面**——外面那條「只選日期」的路完全沒用到 context，擋在分支外會把使用者選好的日期丟掉 |
+| `template_filling_screen._onWillPop` | 先 await 存草稿再拿 context 開對話框 | await 後加 `mounted` 守門 |
+
+`withOpacity` → `withValues`（36 處）連帶把 **Flutter 下限提到 3.27**：`withValues`
+是 3.27 才有的。這個版本不是憑印象——framework 自己的 `cupertino/colors.dart` 在
+3.27.0 用了 `withValues`、3.24.0 沒有，而 framework 只會在 API 存在之後才改用它。
+
+`sort_pub_dependencies` 是專案在 `analysis_options.yaml` 裡**自己打開**的規則，
+所以照它排。原本依用途分組並附註解，排序後那些註解會掛到錯的相依上，
+因此把「為什麼需要它」改成貼在各自那一行。排完發現漏掉 `uuid`（會直接編不過），
+是靠「相依名稱集合比對」抓回來的——這種整段重寫一定要有對帳步驟。
+
+**刻意留下 6 條**，理由是它們都是行為性的遷移而我沒有實機可驗：
+
+- `WillPopScope` → `PopScope`（1）：`onWillPop` 是 async 且會開確認對話框，
+  而 `PopScope` 的 `canPop` 必須同步決定——要重構那段互動邏輯。
+- Radio 的 `groupValue`/`onChanged` → `RadioGroup`（4）：結構性遷移，
+  而且 `RadioGroup` 要 Flutter 3.32，會再把下限推高。
+- `dart:html` → `package:web`（1）：web 不是產品目標（README 寫的是 Android/iOS）。
+
+#### 二、歷史列表分頁
+
+`ListView.builder` 本來就只建可見的項目，所以這個畫面卡的**不是滾動而是載入**：
+`FormInspectionRecord.fromMap` 每一列都要 `jsonDecode` 三個 JSON 欄位
+（`filled_data` / `ai_results` / `standard_judgments`），一次全載時 N 筆就是
+N×3 次 jsonDecode 全部壓在 main isolate 上。
+
+而那個解析**省不掉**：列表上的「已填 N 項」「異常 N 項」正是從那些欄位算出來的
+（`completedCount` = `filledData.length`、`anomalyCount` 掃 `aiResults`）。
+只查需要的欄位這條路走不通，所以改成限量：一頁 30 筆、捲到底再載。
+
+`searchFormRecords` 也補上 `limit`/`offset`——搜到很多筆時一次全載一樣會卡。
+
+一個容易漏的細節：`itemBuilder` 會在同一幀被呼叫多次，所以 `_loadMore` 要有**重入
+守門**，不然同一頁會被抓好幾遍、列表出現重複項目。
+
+6 條 DB 測試釘住：limit/offset 不重疊不漏、翻頁不打亂 `created_at DESC`、
+超界回空清單、不給 limit 時行為不變、搜尋的分頁與排序一致。
+
+#### 還是需要實機的兩項
+
+實機完整流程（上傳 Excel → 一鍵檢測 → 判定回填 → 匯出 → 分享）與離線→恢復網路的
+情境，這個環境做不了，issue 仍開著。
+
+---
 
 ### 2026-09-07 — Phase 4 前置：訓練語料的累積與匯出
 

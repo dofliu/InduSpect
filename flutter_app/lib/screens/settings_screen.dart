@@ -586,11 +586,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 const SizedBox(height: 16),
 
                 // 技術支援
-                Align(
+                const Align(
                   alignment: Alignment.centerLeft,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
-                    children: const [
+                    children: [
                       Text(
                         '技術支援：',
                         style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),

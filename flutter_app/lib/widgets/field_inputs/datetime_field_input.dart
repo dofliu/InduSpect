@@ -8,11 +8,11 @@ class DateTimeFieldInput extends StatelessWidget {
   final ValueChanged<String> onChanged;
 
   const DateTimeFieldInput({
-    Key? key,
+    super.key,
     required this.field,
     required this.value,
     required this.onChanged,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -29,6 +29,12 @@ class DateTimeFieldInput extends StatelessWidget {
         );
 
         if (pickedDate != null && field.fieldType == FieldType.datetime) {
+          // 兩個 picker 之間有 await：這期間 widget 可能已經被移除，再拿 context
+          // 去開第二個 picker 會炸。這是 StatelessWidget，沒有 State 的 mounted 可用，
+          // 要看 context 自己的。
+          // 守門放在**這個分支裡面**而不是分支外：下面「只選日期」那條路完全沒用到
+          // context，擋在外面會連它一起擋掉，把使用者選好的日期丟掉。
+          if (!context.mounted) return;
           final pickedTime = await showTimePicker(
             context: context,
             initialTime: TimeOfDay.fromDateTime(dateTime ?? DateTime.now()),

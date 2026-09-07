@@ -80,7 +80,7 @@ void main() {
             comparisons: comparisons,
           );
 
-  BladeProfile _profile(int index, double axisDeg, double radius) => BladeProfile(
+  BladeProfile makeProfile(int index, double axisDeg, double radius) => BladeProfile(
         index: index,
         axisAngleDeg: axisDeg,
         radiusPx: radius,
@@ -99,11 +99,11 @@ void main() {
       );
 
   /// 正下方（六點鐘）的那一片
-  BladeProfile downProfile(double radius) => _profile(0, 270.0, radius);
+  BladeProfile downProfile(double radius) => makeProfile(0, 270.0, radius);
 
   /// 不在正下方的其他兩片
   BladeProfile sideProfile(int index, double axisDeg) =>
-      _profile(index, axisDeg, 300.0);
+      makeProfile(index, axisDeg, 300.0);
 
   MetricComparison flagged(String metric, int index, double dev) =>
       MetricComparison(

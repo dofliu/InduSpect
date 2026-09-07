@@ -7,16 +7,16 @@ class DropdownFieldInput extends StatelessWidget {
   final ValueChanged<String> onChanged;
 
   const DropdownFieldInput({
-    Key? key,
+    super.key,
     required this.field,
     required this.value,
     required this.onChanged,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
     return DropdownButtonFormField<String>(
-      value: value?.toString(),
+      initialValue: value?.toString(),
       decoration: const InputDecoration(
         border: OutlineInputBorder(),
         contentPadding: EdgeInsets.symmetric(

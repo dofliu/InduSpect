@@ -13,13 +13,13 @@ class PhotoFieldInput extends StatefulWidget {
   final String? recordId; // For sync queue
 
   const PhotoFieldInput({
-    Key? key,
+    super.key,
     required this.field,
     required this.value,
     required this.onChanged,
     required this.onAIAnalysis,
     this.recordId,
-  }) : super(key: key);
+  });
 
   @override
   State<PhotoFieldInput> createState() => _PhotoFieldInputState();

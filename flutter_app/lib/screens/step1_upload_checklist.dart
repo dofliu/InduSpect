@@ -295,7 +295,7 @@ class _Step1UploadChecklistState extends State<Step1UploadChecklist> {
             color: Colors.white,
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.1),
+                color: Colors.black.withValues(alpha: 0.1),
                 blurRadius: 4,
                 offset: const Offset(0, -2),
               ),
@@ -330,7 +330,7 @@ class _Step1UploadChecklistState extends State<Step1UploadChecklist> {
     return Container(
       padding: const EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
-        color: AppColors.error.withOpacity(0.1),
+        color: AppColors.error.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Row(
@@ -358,7 +358,9 @@ class _Step1UploadChecklistState extends State<Step1UploadChecklist> {
       _emailController.text.trim(),
       _passwordController.text,
     );
-    if (inspection.errorMessage == null && mounted) {
+    // `context` 是這個方法的**參數**，遮蔽了 State 的 context，所以 State 的
+    // `mounted` 守不到它——要用那個 context 自己的 mounted 才是對的守門。
+    if (inspection.errorMessage == null && context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('登入成功，已載入最新任務')),
       );

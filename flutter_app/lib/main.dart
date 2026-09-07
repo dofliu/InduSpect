@@ -22,7 +22,7 @@ void main() async {
 
   // 載入環境變量
   try {
-    await dotenv.load(fileName: ".env");
+    await dotenv.load(fileName: '.env');
   } catch (e) {
     print('Warning: .env file not found. Please create one from .env.example');
   }

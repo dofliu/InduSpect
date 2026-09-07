@@ -20,14 +20,14 @@ class SectionCard extends StatefulWidget {
   final String? recordId;
 
   const SectionCard({
-    Key? key,
+    super.key,
     required this.section,
     required this.filledData,
     required this.onFieldChanged,
     required this.onAIAnalysis,
     this.initiallyExpanded = false,
     this.recordId,
-  }) : super(key: key);
+  });
 
   @override
   State<SectionCard> createState() => _SectionCardState();

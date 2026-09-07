@@ -53,7 +53,7 @@ class _QuickAnalysisScreenState extends State<QuickAnalysisScreen> {
             Icon(
               Icons.flash_on,
               size: 100,
-              color: AppColors.info.withOpacity(0.5),
+              color: AppColors.info.withValues(alpha: 0.5),
             ),
             const SizedBox(height: AppSpacing.lg),
             const Text(
@@ -272,8 +272,8 @@ class _QuickAnalysisScreenState extends State<QuickAnalysisScreen> {
         showDialog(
           context: context,
           builder: (context) => AlertDialog(
-            title: Row(
-              children: const [
+            title: const Row(
+              children: [
                 Icon(Icons.warning_amber_rounded, color: Colors.orange),
                 SizedBox(width: 12),
                 Text('提示'),
@@ -306,8 +306,8 @@ class _QuickAnalysisScreenState extends State<QuickAnalysisScreen> {
           showDialog(
             context: context,
             builder: (context) => AlertDialog(
-              title: Row(
-                children: const [
+              title: const Row(
+                children: [
                   Icon(Icons.error_outline, color: Colors.red),
                   SizedBox(width: 12),
                   Text('分析失敗'),

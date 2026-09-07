@@ -241,8 +241,11 @@ class InspectionTemplate {
     for (final field in getAllFields()) {
       final value = filledData[field.fieldId];
       if (value != null) {
-        if (value is String && value.isNotEmpty) count++;
-        else if (value is! String) count++;
+        if (value is String && value.isNotEmpty) {
+          count++;
+        } else if (value is! String) {
+          count++;
+        }
       }
     }
     return count;

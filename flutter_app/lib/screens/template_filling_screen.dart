@@ -13,10 +13,10 @@ class TemplateFillingScreen extends StatefulWidget {
   final TemplateInspectionRecord? existingRecord; // 恢復已存在的檢測記錄
 
   const TemplateFillingScreen({
-    Key? key,
+    super.key,
     required this.template,
     this.existingRecord,
-  }) : super(key: key);
+  });
 
   @override
   State<TemplateFillingScreen> createState() => _TemplateFillingScreenState();
@@ -280,6 +280,10 @@ class _TemplateFillingScreenState extends State<TemplateFillingScreen> {
     // 自動儲存草稿
     await _saveDraft(showMessage: false);
 
+    // 存草稿是 async 的，這期間畫面可能已經被關掉。不擋的話拿 context 開對話框會炸。
+    // 回 false（= 不 pop）在這裡是安全的：widget 都不在了，沒有 pop 可擋。
+    if (!mounted) return false;
+
     final result = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -377,7 +381,7 @@ class _TemplateFillingScreenState extends State<TemplateFillingScreen> {
         color: Colors.white,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 4,
             offset: const Offset(0, 2),
           ),
@@ -430,7 +434,7 @@ class _TemplateFillingScreenState extends State<TemplateFillingScreen> {
         color: Colors.white,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 4,
             offset: const Offset(0, -2),
           ),
