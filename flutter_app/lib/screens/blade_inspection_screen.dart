@@ -2,7 +2,6 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:path/path.dart' as p;
-import 'package:path_provider/path_provider.dart';
 import 'package:uuid/uuid.dart';
 
 import '../models/wt_asset.dart';
@@ -10,12 +9,12 @@ import '../models/wt_capture_session.dart';
 import '../models/wt_detection.dart';
 import '../services/blade_analysis_service.dart';
 import '../services/blade_report_builder.dart';
+import '../services/blade_report_export.dart';
 import '../services/connectivity_service.dart';
 import '../services/database_service.dart';
-import '../services/file_save_service.dart';
 import '../services/location_service.dart';
-import '../services/pdf_report_service.dart';
 import 'blade_capture_guide_screen.dart';
+import 'blade_history_screen.dart';
 
 /// 風機葉片檢測（規格 §8）。
 ///
@@ -197,25 +196,14 @@ class _BladeInspectionScreenState extends State<BladeInspectionScreen> {
       _progress = '正在產生 PDF…';
     });
     try {
-      final data = BladeReportBuilder.buildData(
+      final path = await BladeReportExport.exportAndShare(
         asset: asset,
         session: session,
         detections: _detections,
         summary: _outcome?.buildSummary(),
+        db: _db,
       );
-      final bytes = await PdfReportService.build(data);
-
-      final appDir = await getApplicationDocumentsDirectory();
-      final dir = Directory(p.join(appDir.path, 'induspect_exports'));
-      if (!await dir.exists()) await dir.create(recursive: true);
-      final name = PdfReportService.suggestedFileName(data);
-      final path = p.join(dir.path, name);
-      await File(path).writeAsBytes(bytes);
-
-      session.reportPath = path;
-      await _db.saveWtSession(session);
-      await FileSaveService.saveAndShare(bytes: bytes, fileName: name);
-      if (mounted) _snack('報告已產生：$name');
+      if (mounted) _snack('報告已產生：${p.basename(path)}');
     } catch (e) {
       if (mounted) _snack('PDF 產生失敗：$e', error: true);
     } finally {
@@ -242,6 +230,16 @@ class _BladeInspectionScreenState extends State<BladeInspectionScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('風機葉片檢測'),
+        actions: [
+          IconButton(
+            tooltip: '檢測歷史與趨勢',
+            icon: const Icon(Icons.history),
+            onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const BladeHistoryScreen()),
+            ),
+          ),
+        ],
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(4),
           child: LinearProgressIndicator(value: (_step + 1) / 5, minHeight: 4),

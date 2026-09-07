@@ -225,7 +225,7 @@ class BladeAnalysisService {
           zoom: m.zoom,
           analyzer: analyzer,
         );
-        detections.add(_merge(base, ai));
+        detections.add(mergeAlgorithmAndAi(base, ai));
       } catch (_) {
         // 離線／額度用盡／回應壞掉：演算法的結果不能因此消失
         detections.add(algoDetection(WtDetectionSource.geminiOfflinePending));
@@ -253,14 +253,16 @@ class BladeAnalysisService {
     );
   }
 
-  /// 合併演算法與 AI 的判斷。
+  /// 合併演算法與 AI 的判斷。**公開**是刻意的：AI 補跑佇列
+  /// （`blade_ai_retry_service.dart`）連線後會走同一條合併規則，
+  /// 各自寫一份的話「AI 只能往上加」這條規則會兩邊漂移。
   ///
   /// **演算法的 severity 是下限，AI 只能往上加。** 理由：severity 來自量到的
   /// 數值，AI 看的是同一張照片的縮圖，沒有理由推翻量測；但 AI 可能看到量測沒有
   /// 涵蓋的東西（LEP 整片翻起、雷擊燒痕），那時它可以把等級拉高。
   /// AI 認為是正常結構時**不刪掉這筆發現**，把它的理由寫進描述交給人工判斷——
   /// 篩檢工具寧可多留一筆待確認，不要少留一筆。
-  static WtDetection _merge(WtDetection algo, WtDetection ai) {
+  static WtDetection mergeAlgorithmAndAi(WtDetection algo, WtDetection ai) {
     final severity = algo.severity == null
         ? ai.severity
         : (ai.severity == null

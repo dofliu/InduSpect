@@ -940,4 +940,82 @@ class DatabaseService {
       }
     });
   }
+
+  /// 某台風機**所有場次**的偵測結果，供跨次趨勢比對用（規格 §7 資產驅動的理由）。
+  ///
+  /// 一次 join 拿完而不是逐場次查：一台風機拍十次、每次十幾筆，
+  /// 逐場次查會變成 N+1，而趨勢畫面一開就要全部。
+  Future<List<WtDetection>> getWtDetectionsForAsset(String assetId,
+      {WtLayer? layer}) async {
+    final db = await database;
+    final where = <String>['s.asset_id = ?'];
+    final args = <dynamic>[assetId];
+    if (layer != null) {
+      where.add('d.layer = ?');
+      args.add(layer.name);
+    }
+    final rows = await db.rawQuery(
+      'SELECT d.* FROM wt_detections d '
+      'JOIN wt_capture_sessions s ON d.session_id = s.session_id '
+      'WHERE ${where.join(' AND ')} '
+      'ORDER BY s.captured_at ASC, d.created_at ASC',
+      args,
+    );
+    return rows.map(WtDetection.fromMap).toList();
+  }
+
+  /// 等著補跑 AI 解讀的偵測（離線時演算法先跑完、AI 掛在佇列裡）。
+  ///
+  /// **只取 `human_status = pending`**：人工已經確認或駁回過的，
+  /// 不該被事後補跑的 AI 改掉等級——那等於推翻簽核。
+  Future<List<WtDetection>> getWtDetectionsPendingAi({int? limit}) async {
+    final db = await database;
+    final rows = await db.query(
+      'wt_detections',
+      where: 'source = ? AND human_status = ?',
+      whereArgs: [
+        WtDetectionSource.geminiOfflinePending.name,
+        WtHumanStatus.pending.name,
+      ],
+      orderBy: 'created_at ASC',
+      limit: limit,
+    );
+    return rows.map(WtDetection.fromMap).toList();
+  }
+
+  /// 覆寫一筆偵測（AI 補跑完之後用）。以 `detection_id` 為鍵，
+  /// `human_status` 與 `human_note` **不在更新範圍內**——那是人的欄位。
+  Future<void> updateWtDetectionAiResult(WtDetection d) async {
+    final db = await database;
+    // 借 toMap() 做序列化，不在這裡自己 jsonEncode——欄位格式只該有一個定義處
+    final map = d.toMap();
+    await db.update(
+      'wt_detections',
+      {
+        'defect_class': map['defect_class'],
+        'severity': map['severity'],
+        'confidence': map['confidence'],
+        'metric_json': map['metric_json'],
+        'source': map['source'],
+        'ai_description': map['ai_description'],
+      },
+      where: 'detection_id = ?',
+      whereArgs: [d.detectionId],
+    );
+  }
+
+  /// 葉片作業分享完成（同 `markFormShareComplete`，離線佇列共用一套語意）
+  Future<void> markWtShareComplete(String sessionId) async {
+    final db = await database;
+    await db.update(
+      'wt_capture_sessions',
+      {
+        'pending_share': 0,
+        'status': WtSessionStatus.shared.name,
+        'updated_at': DateTime.now().toIso8601String(),
+      },
+      where: 'session_id = ?',
+      whereArgs: [sessionId],
+    );
+  }
 }

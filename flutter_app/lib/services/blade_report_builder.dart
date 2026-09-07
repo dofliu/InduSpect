@@ -38,7 +38,9 @@ class BladeReportBuilder {
     WtLayer.periphery: '周邊',
   };
 
-  static const Map<String, String> _zoneLabel = {
+  /// zone key → 中文。**公開**：歷史／趨勢畫面要用同一組標籤，
+  /// 各寫一份的話報告與畫面上同一個格位會出現不同名字。
+  static const Map<String, String> zoneLabels = {
     'root': '根部段',
     'mid': '中段',
     'tip': '葉尖段',
@@ -66,7 +68,7 @@ class BladeReportBuilder {
     final parts = <String>[];
     if (d.blade != null) parts.add('葉片 ${d.blade}');
     final zone = d.zone;
-    if (zone != null) parts.add(_zoneLabel[zone] ?? zone);
+    if (zone != null) parts.add(zoneLabels[zone] ?? zone);
     parts.add(_defectLabel[d.defectClass] ?? d.defectClass ?? '未分類發現');
     return parts.join(' · ');
   }
