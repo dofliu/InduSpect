@@ -1,13 +1,22 @@
 """葉片/塔架分割與結構定位（§5.1 前處理）。
 
 流程：
-1. 由畫面邊緣（上緣 + 兩側上半）估天空顏色模型（Lab 空間、robust 中位數/MAD）
-2. 每個像素對天空模型的 Mahalanobis 距離 → Otsu 門檻 → 前景
-3. 形態學清理 + 連通元件過濾（去掉地面帶、小碎片）
+1. 估天空模型——**預設為局部模型**（`fit_local_sky`，見下），全機照用；
+   長焦分區段照改用邊緣取樣的逐列多項式模型（`fit_sky_model`）
+2. 每個像素對模型的 robust 標準化距離 → 固定門檻 → 前景
+3. 形態學清理 + 連通元件過濾（去掉小碎片）
 4. 結構：距離變換找輪轂（最厚處）→ 移除輪轂圓盤 → 塔架（碰底邊、最寬）→ 其餘為葉片
 5. 輪轂精修：各葉片外段軸線的最小平方交點
 
-門檻與模型在縮圖上估算（速度），套用在全解析度（幾何精度）。
+模型在縮圖上估算（速度），套用在全解析度（幾何精度）。
+
+**為什麼預設是局部模型**（2026-09-07，75 張真實照片實測，見 `REAL_IMAGE_VALIDATION.md`）：
+原本的「邊緣取樣 + 逐列多項式 + 全域 robust 尺度」假設整張天空是單一平滑漸層。
+真實天空有雲，兩個方向都會壞——雲被當成前景吃進遮罩，或者邊緣取樣帶裡的雲把全域
+尺度撐大到什麼都進不了遮罩（30 張設計範圍內的照片有 4 張直接「遮罩為空」）。
+局部模型改成假設「天空**局部**平滑」：雲塊是幾百像素的大面積漸變、葉片與塔架是幾十
+像素的細長結構，所以用一個比結構寬、比雲小的中值核估背景就能兩者分離。
+實測輪轂定位命中 14/30 → 24/30，有雲的情況 1/13 → 10/13，遮罩全空 4 → 0。
 """
 
 from __future__ import annotations
@@ -18,7 +27,19 @@ import cv2
 import numpy as np
 
 
-DEFAULT_DIST_THRESH = 5.5  # robust sigma 單位
+DEFAULT_DIST_THRESH = 5.5  # 逐列多項式模型的門檻，robust sigma 單位
+
+# 局部天空模型的參數。全部由 75 張真實照片掃描而得（set A 選、set B holdout 覆核）：
+# kernel_frac 0.16–0.24 × 門檻 7–11 是一整片高原（命中 14–17/19），取高原中心而非尖峰
+# ——19 張樣本的 argmax 會跳動，取中心才不是在擬合雜訊。
+DEFAULT_LOCAL_KERNEL_FRAC = 0.20   # 中值核邊長 / 工作尺度長邊：要 > 塔架寬、< 雲塊尺度
+# 門檻同時對兩組獨立的測試集取：真實照片（輪轂定位命中）與合成夾具（對已知真值的
+# 結構召回率 / 天空誤判率）。7.0 是唯一同時成立的點——真實命中 23/30（有雲 10/13）、
+# 合成結構召回 95.3%、天空誤判 0.02%。放寬到 9.0 真實命中只多 1 張，但合成結構召回
+# 掉到 77.7%（塔架下段融進亮天空時被切掉），對要從遮罩邊緣量幾何的管線不能接受。
+DEFAULT_LOCAL_THRESH = 7.0         # 局部 robust sigma 單位（與逐列模型的 5.5 不同尺規）
+DEFAULT_LOCAL_WORK_SIDE = 1024     # 估背景與尺度的工作尺度長邊
+DEFAULT_LOCAL_MIN_SCALE = 1.2      # 局部尺度下限（Lab 單位），純色無雲天空不會除以 0
 
 
 @dataclass
@@ -34,10 +55,25 @@ class SkyModel:
 
 
 @dataclass
+class LocalSkyModel:
+    """局部天空模型：背景與尺度都是**影像場**，不是參數化曲面。
+
+    兩個場都在工作尺度上算（中值濾波），套用時雙線性放大回全解析度——它們本來就是
+    低頻的（核邊長是畫面的 20%），放大不會失真；殘差則在全解析度上取，1–2 px 的葉尖
+    因此保得住。
+    """
+
+    bg: np.ndarray  # (h,w,3) float32，Lab 背景估計
+    scale: np.ndarray  # (h,w,3) float32，各通道的局部 robust 尺度
+    kernel_px: int  # 實際用的中值核邊長（工作尺度的像素）
+    min_scale: float
+
+
+@dataclass
 class SegmentationResult:
     mask: np.ndarray  # uint8 0/255，與輸入同尺寸
-    sky_model: SkyModel
-    threshold: float  # Mahalanobis 距離門檻
+    sky_model: SkyModel | LocalSkyModel
+    threshold: float  # 距離門檻（尺規依模型種類而異）
     scale: float  # 估模型時的縮圖比例
     horizon_y: int | None = None  # 地平線列；None = 畫面沒有可辨識的地面帶
 
@@ -123,7 +159,55 @@ def fit_sky_model(img_bgr: np.ndarray, border_frac: float = 0.06, mode: str = "r
     return SkyModel(coeffs.astype(np.float32), (1.0 / scale).astype(np.float32))
 
 
-def sky_distance(img_bgr: np.ndarray, model: SkyModel) -> np.ndarray:
+def fit_local_sky(
+    img_bgr: np.ndarray,
+    kernel_frac: float = DEFAULT_LOCAL_KERNEL_FRAC,
+    work_side: int = DEFAULT_LOCAL_WORK_SIDE,
+    min_scale: float = DEFAULT_LOCAL_MIN_SCALE,
+    scale_gain: float = 4.0,
+) -> LocalSkyModel:
+    """估局部天空模型：背景 = Lab 的大核中值，尺度 = |殘差| 的同核中值。
+
+    中值核是關鍵：它抹掉**比核窄**的東西、保留比核寬的東西。核邊長取工作尺度的 20%
+    時，塔架與葉片（幾十像素）被抹掉而留在殘差裡，雲塊（幾百像素）被算進背景而不再
+    產生殘差。尺度用同一個鄰域，所以雲區的尺度自然放大——葉片相對「該區的天空」仍然
+    突出，遮罩不會因為畫面有雲就整片空掉。
+
+    scale_gain：|殘差| 要量化成 uint8 才能用 OpenCV 的大核中值（O(1) 直方圖法），
+    ×4 再除回來，讓 0–64 Lab 單位的殘差有 0.25 的解析度。
+    """
+    h, w = img_bgr.shape[:2]
+    s = min(1.0, work_side / max(h, w))
+    small = (img_bgr if s >= 1.0 else
+             cv2.resize(img_bgr, (max(8, int(w * s)), max(8, int(h * s))),
+                        interpolation=cv2.INTER_AREA))
+    lab = cv2.cvtColor(small, cv2.COLOR_BGR2Lab)  # uint8：medianBlur 的大核只支援 8U
+    k = int(round(kernel_frac * max(lab.shape[:2]))) | 1  # 必須是奇數
+    k = int(max(5, min(k, 255)))  # OpenCV 的 medianBlur 上限
+    bg = cv2.medianBlur(lab, k).astype(np.float32)
+    resid = lab.astype(np.float32) - bg
+    absr = np.clip(np.abs(resid) * scale_gain, 0, 255).astype(np.uint8)
+    scale = cv2.medianBlur(absr, k).astype(np.float32) / scale_gain * 1.4826
+    return LocalSkyModel(bg=bg, scale=np.maximum(scale, min_scale),
+                         kernel_px=k, min_scale=float(min_scale))
+
+
+def local_sky_distance(img_bgr: np.ndarray, model: LocalSkyModel) -> np.ndarray:
+    """全解析度殘差 ÷ 放大回全解析度的低頻場。"""
+    h, w = img_bgr.shape[:2]
+    bg, scale = model.bg, model.scale
+    if bg.shape[:2] != (h, w):
+        bg = cv2.resize(bg, (w, h), interpolation=cv2.INTER_LINEAR)
+        scale = cv2.resize(scale, (w, h), interpolation=cv2.INTER_LINEAR)
+    lab = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2Lab).astype(np.float32)
+    d = (lab - bg) / np.maximum(scale, model.min_scale)
+    return np.sqrt(np.einsum("ijk,ijk->ij", d, d))
+
+
+def sky_distance(img_bgr: np.ndarray, model: SkyModel | LocalSkyModel) -> np.ndarray:
+    """依模型種類分派，呼叫端不必知道用的是哪一種。"""
+    if isinstance(model, LocalSkyModel):
+        return local_sky_distance(img_bgr, model)
     lab = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2Lab).astype(np.float32)
     means = model.mean_rows(lab.shape[0])  # (h,3)
     d = (lab - means[:, None, :]) * model.inv_scale[None, None, :]
@@ -193,30 +277,50 @@ def segment_turbine(
     border_frac: float = 0.06,
     min_area_frac: float = 3e-4,
     dist_thresh: float | None = None,
-    sky_model: SkyModel | None = None,
+    sky_model: SkyModel | LocalSkyModel | None = None,
     full_res: bool = True,
-    sky_mode: str = "rows",
+    sky_mode: str = "local",
     drop_wide_bands: bool = True,
 ) -> SegmentationResult:
     """把風機（葉片 + 塔架 + 機艙）從天空分出來。
+
+    sky_mode：
+    - `"local"`（預設，全機照）：局部天空模型（`fit_local_sky`）。真實照片上唯一撐得住
+      雲層的做法，理由與實測見模組 docstring。
+    - `"rows"` / `"top_bottom"`：邊緣取樣的逐列多項式模型（`fit_sky_model`）。
+      長焦分區段照必須用這個——那種照片的「結構」本身就佔滿畫面，大核中值會把葉片
+      算進背景。`surface.py` 走 `top_bottom`。
 
     drop_wide_bands：把橫跨 70% 畫面寬、高度不到一半的元件當地面/地平線帶刪掉（全機照用）；
     長焦分區段照的葉片本身就是橫幅，要關掉。"""
     h, w = img_bgr.shape[:2]
     scale = min(1.0, max_side / max(h, w))
     small = img_bgr if scale >= 1.0 else cv2.resize(img_bgr, (int(w * scale), int(h * scale)), interpolation=cv2.INTER_AREA)
-    model = sky_model or fit_sky_model(small, border_frac, mode=sky_mode)
+    if sky_model is not None:
+        model = sky_model
+    elif sky_mode == "local":
+        model = fit_local_sky(img_bgr)  # 自己降到工作尺度，不吃 small
+    else:
+        model = fit_sky_model(small, border_frac, mode=sky_mode)
+    dist_small = None
     if dist_thresh is None:
-        dist_small = sky_distance(small, model)
-        # 固定 5.5 個 robust sigma。合成資料量測：5σ 時塔架召回 95%、天空誤判 0.16%（皆為小碎片）；
-        # Otsu 會被「白葉片 vs 藍天」的大距離拉到 14σ 以上，把灰塔架 vs 亮地平線天空吃掉，故不採用。
-        dist_thresh = DEFAULT_DIST_THRESH
+        if isinstance(model, LocalSkyModel):
+            # 局部模型的距離尺規與逐列模型不同（除的是局部尺度而非全域），
+            # 門檻另外量。真實照片掃描出的高原中心：見 DEFAULT_LOCAL_THRESH 的註解。
+            dist_thresh = DEFAULT_LOCAL_THRESH
+        else:
+            dist_small = sky_distance(small, model)
+            # 固定 5.5 個 robust sigma。合成資料量測：5σ 時塔架召回 95%、天空誤判 0.16%（皆為小碎片）；
+            # Otsu 會被「白葉片 vs 藍天」的大距離拉到 14σ 以上，把灰塔架 vs 亮地平線天空吃掉，故不採用。
+            dist_thresh = DEFAULT_DIST_THRESH
     # 距離圖先做 σ0.8 高斯平滑再取門檻：孤立雜訊像素被壓下去、邊界變平滑，
     # 而 1 px 寬的葉尖線會變成 2 px 寬的較低值仍高於門檻（形態學 open 會把它整條吃掉）。
     if full_res or scale >= 1.0:
         dist = cv2.GaussianBlur(sky_distance(img_bgr, model), (0, 0), 0.8)
         mask = _clean_mask(dist > dist_thresh, int(min_area_frac * h * w), drop_wide_bands=drop_wide_bands)
     else:
+        if dist_small is None:
+            dist_small = sky_distance(small, model)
         dist_small = cv2.GaussianBlur(dist_small, (0, 0), 0.8)
         mask_small = _clean_mask(dist_small > dist_thresh, int(min_area_frac * small.shape[0] * small.shape[1]),
                                  drop_wide_bands=drop_wide_bands)
@@ -640,9 +744,15 @@ def find_structure(
             if it == 0:
                 notes.append("葉片軸線共線（側視），輪轂投影到主葉片軸線")
         moved = float(np.hypot(*(new_hub - hub)))
-        if not (0 <= new_hub[0] < w and 0 <= new_hub[1] < h) or moved > 4.0 * peak:
-            # 臂數法的初估通常在幾個 hub_r 內；移動超過 4 hub_r 多半是葉片與塔架重疊把軸線拉歪
-            notes.append(f"輪轂精修移動 {moved:.0f} px 超過 4×hub_r，保留前一估計")
+        # 允許的移動距離以**轉子半徑**為尺規，不是 hub_r。hub_r 量的是機艙在遮罩裡的
+        # 厚度，會隨天空模型的鬆緊而變（換成局部天空模型後從 17.8 掉到 11.0），拿它當
+        # 尺規會把側視合法的「投影到葉片軸線」也擋掉。精修是葉片軸線的交點/投影，
+        # 移動幾個百分比的葉長屬正常，幾十個百分比才是軸線被塔架拉歪。
+        # 保留 4×hub_r 當下限，所以這條只會放寬、不會變嚴。
+        rotor_r = max((float(c.dist_to(hub).max()) for c in blades), default=0.0)
+        limit = max(4.0 * peak, 0.15 * rotor_r)
+        if not (0 <= new_hub[0] < w and 0 <= new_hub[1] < h) or moved > limit:
+            notes.append(f"輪轂精修移動 {moved:.0f} px 超過上限 {limit:.0f} px，保留前一估計")
             break
         hub = new_hub
         hub_r = max(_dt_at(hub), peak)  # 圓盤只用來切開葉根，寧大勿小

@@ -52,7 +52,10 @@
 
 規格見 [`BLADE_INSPECTION_SPEC.md`](BLADE_INSPECTION_SPEC.md)，原型與可偵測門檻見 [`blade_prototype/`](blade_prototype/)。
 
-> 目前狀態：75 張公開真實照片實測，**晴空無雲時輪轂定位命中 12/14，有雲時只有 1/13**。天空模型是唯一真正的瓶頸，App 化之前要先補。實測結果與失敗案例見 [`blade_prototype/REAL_IMAGE_VALIDATION.md`](blade_prototype/REAL_IMAGE_VALIDATION.md)。
+> 目前狀態：75 張公開真實照片實測。原本「有雲就整個垮掉」（命中 1/13）的天空模型瓶頸已
+> 換成**局部天空模型**解決——整體輪轂命中 **23/30**、有雲 **10/13**、遮罩全空 4 → 0。
+> 逆光仍是硬限制。實測結果與失敗案例見
+> [`blade_prototype/REAL_IMAGE_VALIDATION.md`](blade_prototype/REAL_IMAGE_VALIDATION.md)。
 
 ### 目前隱藏的功能
 
@@ -211,7 +214,7 @@ python -m blade_proto sensitivity --quick --out SENSITIVITY.md
 ```bash
 cd flutter_app && flutter test                                              # 155 tests
 cd backend && GEMINI_API_KEY=ci-fake-key pytest tests/ --asyncio-mode=auto  # 191 tests
-cd blade_prototype && pytest                                                # 67 tests
+cd blade_prototype && pytest                                                # 71 tests
 ```
 
 三者皆在 CI（`.github/workflows/ci.yml`）逐 PR 執行；`flutter analyze` 為硬性門檻（warning 級以上擋 PR）。
