@@ -6,6 +6,7 @@ import '../providers/settings_provider.dart';
 import '../providers/app_state_provider.dart';
 import '../models/form_inspection_record.dart';
 import '../services/database_service.dart';
+import 'blade_inspection_screen.dart';
 import 'form_inspection_screen.dart';
 import 'unified_history_screen.dart';
 
@@ -229,6 +230,21 @@ class _DashboardScreenState extends State<DashboardScreen> {
             context,
             MaterialPageRoute(
               builder: (context) => const UnifiedHistoryScreen(),
+            ),
+          ),
+        ),
+        const SizedBox(height: 12),
+        // 風機葉片檢測（獨立功能：資產驅動，不走定檢表單那條流程）
+        _buildActionCard(
+          context,
+          icon: Icons.energy_savings_leaf,
+          title: '風機葉片檢測',
+          subtitle: '地面目視篩檢：引導拍攝 → 演算法量測 → 人工確認 → 報告',
+          color: Colors.green,
+          onTap: () => Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const BladeInspectionScreen(),
             ),
           ),
         ),

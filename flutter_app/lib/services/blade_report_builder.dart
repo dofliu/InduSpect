@@ -176,9 +176,17 @@ class BladeReportBuilder {
 
   /// 沒有被任何偵測引用的照片。**照樣附進報告**——現場拍了什麼要留得下來，
   /// 而且「哪些照片沒有產生發現」本身就是資訊。
+  ///
+  /// 「已引用」只算**真的列進報告**的那些發現。人工駁回的發現不成列，
+  /// 若把它的照片也算成已引用，那張照片就會從報告上整個消失——
+  /// 駁回的是「這是缺陷」這個判斷，不是「這張照片存在」這件事。
   static List<String> _unusedPhotos(
       WtCaptureSession session, List<WtDetection> detections) {
-    final used = detections.map((d) => d.mediaPath).whereType<String>().toSet();
+    final used = detections
+        .where((d) => d.humanStatus != WtHumanStatus.rejected)
+        .map((d) => d.mediaPath)
+        .whereType<String>()
+        .toSet();
     return session.media
         .where((m) => m.kind == WtMediaKind.photo && !used.contains(m.path))
         .map((m) => m.path)

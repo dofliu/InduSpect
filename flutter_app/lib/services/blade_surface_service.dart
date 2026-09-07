@@ -150,6 +150,13 @@ class _Request {
   const _Request(this.bytes, this.params);
 }
 
+/// 分析函式的型別。編排層收這個而不是直接呼叫 `BladeSurfaceService.analyze`，
+/// 測試才有辦法在不進 isolate、不需要真影像的情況下驗編排邏輯。
+typedef BladeSurfaceAnalyzer = Future<BladeSurfaceAnalysis> Function(
+  Uint8List bytes, {
+  BladeSurfaceParams params,
+});
+
 class BladeSurfaceService {
   BladeSurfaceService._();
 

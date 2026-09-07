@@ -108,14 +108,35 @@ void main() {
     expect(r.top, isNotNull, reason: '兩側的粗糙度照樣要算出來');
   });
 
-  test('分區段照的三個 zone 都有數值，侵蝕案例的前緣每段都比後緣粗', () {
+  /// 分 zone 的意義是**定位**侵蝕在葉片的哪一段，不是「整段都粗」。
+  /// 夾具的侵蝕只塗在畫面 x 的 40%–100%（`render_blade_segment` 的
+  /// `erosion_span=(0.4, 1.0)`），所以 zone 0 應該是乾淨的——
+  /// 這一條同時也是「zone 對應到畫面位置」有沒有對的驗證：
+  /// 若 zone 邊界算錯，乾淨的那一段就不會落在 zone 0。
+  test('分 zone 定位出侵蝕落在哪一段：zone 0 乾淨、zone 1–2 才粗', () {
     final r = analyze('blade_segment_eroded.png');
+    final ref =
+        reference['blade_segment_eroded.png'] as Map<String, dynamic>;
+    final refTop = (ref['top_zone_rms_px'] as List).cast<num>();
+    final refBot = (ref['bottom_zone_rms_px'] as List).cast<num>();
+
     expect(r.top!.zoneRmsPx.length, 3);
     expect(r.top!.zoneTextureStd.length, 3);
     for (var i = 0; i < 3; i++) {
       expect(r.top!.zoneRmsPx[i].isFinite, isTrue, reason: 'zone $i');
-      expect(r.top!.zoneRmsPx[i], greaterThan(r.bottom!.zoneRmsPx[i]),
-          reason: 'zone $i：前緣應比後緣粗');
+      expect(r.top!.zoneRmsPx[i], closeTo(refTop[i].toDouble(), 0.06),
+          reason: 'zone $i 前緣：原型 ${refTop[i]}，Dart ${r.top!.zoneRmsPx[i]}');
+      expect(r.bottom!.zoneRmsPx[i], closeTo(refBot[i].toDouble(), 0.06),
+          reason: 'zone $i 後緣：原型 ${refBot[i]}，Dart ${r.bottom!.zoneRmsPx[i]}');
+    }
+
+    // 沒被塗侵蝕的那一段，前緣不該比後緣粗（否則就是把雜訊當成侵蝕）
+    expect(r.top!.zoneRmsPx[0], lessThan(0.2),
+        reason: 'zone 0 沒有侵蝕，前緣粗糙度應該與乾淨葉片同級');
+    // 有侵蝕的兩段要明顯突出：這才是報告上「中段／葉尖段」的依據
+    for (final i in const [1, 2]) {
+      expect(r.top!.zoneRmsPx[i], greaterThan(4 * r.bottom!.zoneRmsPx[i]),
+          reason: 'zone $i 有侵蝕，前緣應遠粗於後緣');
     }
   });
 

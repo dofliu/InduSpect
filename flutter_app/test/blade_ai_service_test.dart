@@ -161,22 +161,4 @@ void main() {
       );
     });
   });
-
-  test('離線佔位保留演算法結果，AI 來源標記為待補', () {
-    final d = BladeAiService.offlinePlaceholder(
-      detectionId: 'det-7',
-      sessionId: 'sess-1',
-      bladeLabel: 'C',
-      zone: 'tip_LE',
-      defectClass: 'surface_roughness',
-      severity: 2,
-      algorithmMetrics: {'rms_px': 0.6},
-    );
-    expect(d.source, WtDetectionSource.geminiOfflinePending);
-    expect(d.metricJson['rms_px'], 0.6);
-    expect(d.defectClass, 'surface_roughness');
-    expect(d.aiDescription, isNull,
-        reason: '沒跑過 AI 就不能有 AI 描述');
-    expect(d.needsConfirmation, isTrue);
-  });
 }

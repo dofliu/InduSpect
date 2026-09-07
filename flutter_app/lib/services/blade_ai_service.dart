@@ -133,32 +133,6 @@ confidence：0–1，看不清楚就給低分。
     );
   }
 
-  /// 離線時的佔位偵測：演算法的數值照存，AI 解讀標記為待補
-  /// （規格 §6：沿用 `share_queue_service` 的佇列模式，聯網後補跑）。
-  static WtDetection offlinePlaceholder({
-    required String detectionId,
-    required String sessionId,
-    String? bladeLabel,
-    String? zone,
-    String? mediaPath,
-    String? defectClass,
-    int? severity,
-    Map<String, dynamic> algorithmMetrics = const {},
-  }) =>
-      WtDetection(
-        detectionId: detectionId,
-        sessionId: sessionId,
-        layer: WtLayer.surface,
-        blade: bladeLabel,
-        zone: zone,
-        defectClass: defectClass,
-        severity: severity,
-        metricJson: algorithmMetrics,
-        mediaPath: mediaPath,
-        source: WtDetectionSource.geminiOfflinePending,
-        aiDescription: null,
-      );
-
   static int? _clampSeverity(dynamic v) {
     if (v is num) return v.round().clamp(1, 5);
     return null;
