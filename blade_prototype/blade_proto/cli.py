@@ -28,6 +28,7 @@ import numpy as np
 
 from . import synth
 from . import __version__
+from .quality import assess_capture
 from .segmentation import segment_turbine, find_structure
 from .geometry import profiles_from_structure, compare_blades
 from .surface import analyze_blade_edges
@@ -75,14 +76,17 @@ def cmd_analyze_still(a) -> None:
     img = _read(a.image)
     t0 = time.time()
     seg = segment_turbine(img, dist_thresh=a.dist_thresh)
-    st = find_structure(seg.mask, hub_hint=_parse_xy(a.hub))
+    st = find_structure(seg.mask, hub_hint=_parse_xy(a.hub), horizon_y=seg.horizon_y)
+    verdict = assess_capture(seg, st)
     profs = profiles_from_structure(st)
     cmp_ = compare_blades(profs, noise_floor_px=a.noise_floor_px, cm_per_px=a.cm_per_px,
                           rotor_radius_m=a.rotor_radius_m)
     out = {
         "image": a.image,
         "size": [img.shape[1], img.shape[0]],
-        "segmentation": {"threshold_sigma": seg.threshold, "mask_area_frac": float((seg.mask > 0).mean())},
+        "segmentation": {"threshold_sigma": seg.threshold, "mask_area_frac": float((seg.mask > 0).mean()),
+                         "horizon_y": seg.horizon_y},
+        "capture_quality": verdict.to_dict(),
         "structure": {
             "hub": st.hub, "hub_radius_px": st.hub_radius_px, "hub_refined": st.hub_refined,
             "tower_found": st.tower_found, "tower_roll_deg": st.tower_angle_deg, "tower_width_px": st.tower_width_px,
@@ -93,6 +97,10 @@ def cmd_analyze_still(a) -> None:
         "elapsed_s": round(time.time() - t0, 2),
     }
     _dump(out, a.out)
+    if not verdict.ok:
+        print("拍攝品質不合格，幾何互比結果不可採信：")
+        for r in verdict.reasons:
+            print(f"  - {r}")
     if a.overlay:
         cv2.imwrite(a.overlay, draw_still_overlay(img, seg.mask, st, profs, cmp_))
         print(f"→ {a.overlay}")
@@ -248,7 +256,8 @@ def _analyze_still_payload(image: str, *, cm_per_px=None, rotor_radius_m=None, h
     img = _read(image)
     t0 = time.time()
     seg = segment_turbine(img, dist_thresh=dist_thresh)
-    st = find_structure(seg.mask, hub_hint=hub)
+    st = find_structure(seg.mask, hub_hint=hub, horizon_y=seg.horizon_y)
+    verdict = assess_capture(seg, st)
     profs = profiles_from_structure(st)
     cmp_ = compare_blades(profs, noise_floor_px=noise_floor_px, cm_per_px=cm_per_px,
                           rotor_radius_m=rotor_radius_m)
@@ -257,7 +266,9 @@ def _analyze_still_payload(image: str, *, cm_per_px=None, rotor_radius_m=None, h
     return {
         "image": image,
         "size": [img.shape[1], img.shape[0]],
-        "segmentation": {"threshold_sigma": seg.threshold, "mask_area_frac": float((seg.mask > 0).mean())},
+        "segmentation": {"threshold_sigma": seg.threshold, "mask_area_frac": float((seg.mask > 0).mean()),
+                         "horizon_y": seg.horizon_y},
+        "capture_quality": verdict.to_dict(),
         "structure": {
             "hub": st.hub, "hub_radius_px": st.hub_radius_px, "hub_refined": st.hub_refined,
             "tower_found": st.tower_found, "tower_roll_deg": st.tower_angle_deg,
@@ -417,7 +428,10 @@ def cmd_sensitivity(a) -> None:
              f"產生時間：{time.strftime('%Y-%m-%d %H:%M')}；模式：{'quick' if quick else 'full'}。",
              "所有數字來自 `blade_proto.synth` 合成場景（60 m 葉片、4 m 根弦、天空漸層 + 雲層 + 模糊 σ0.9 + 雜訊 σ2.5）。",
              f"雜訊底 = {seeds_clean} 個乾淨場景量測值的 std（下限 {noise_floor_min} px）；quick 模式每個偏移量只跑 {seeds} 個 seed。",
-             "**這是演算法在理想分割下的上限，不是外業結果**；外業誤差來源（手持、風擺、地面雜物）見 README。", ""]
+             "**這是演算法在理想分割下的上限，不是外業結果**；外業誤差來源（手持、風擺、地面雜物）見 README。",
+             "更重要的是：合成天空是單一平滑漸層，**下列所有門檻只在「乾淨天空、無雲、無逆光」的照片上成立**。"
+             "75 張真實照片的實測顯示有雲時輪轂定位只命中 1/13，那些照片根本進不了這條管線"
+             "（見 `REAL_IMAGE_VALIDATION.md`）。", ""]
 
     # 1. 正視三片互比：葉尖 in-plane 偏移
     lines += ["## 1. 正視三片互比：葉尖偏移可偵測門檻", "",

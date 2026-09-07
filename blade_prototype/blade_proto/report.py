@@ -177,6 +177,24 @@ def _geometry_section(still: dict, overlay_uri: str | None, meta: CaseMeta) -> t
     ]))
     parts.append("</div>")
 
+    # 拍攝品質閘門：不合格就不給幾何結論。真實影像驗證顯示定位錯誤時輸出「看起來一樣正常」，
+    # 所以擋在互比之前，把「安靜的錯答案」換成「明確的重拍指示」。
+    q = still.get("capture_quality") or {}
+    if q and not q.get("ok", True):
+        parts.append('<div class="disclaimer"><strong>拍攝品質不合格，本層未做判定</strong>'
+                     '結構定位的結果無法確認正確，任何三片互比的數值都不可採信。'
+                     '請依下列指示重拍後再分析。</div>')
+        parts.append('<ul class="findings">' +
+                     "".join(f"<li>{escape(r)}</li>" for r in q.get("reasons", [])) + "</ul>")
+        for w in q.get("warnings", []):
+            parts.append(f'<p class="note">{escape(w)}</p>')
+        parts.append("</section>")
+        findings.append("幾何層：拍攝品質不合格（" + escape(q.get("reasons", ["原因未記錄"])[0].split("：")[0])
+                        + "），未做三片互比，需重拍")
+        return "\n".join(parts), findings
+    for w in q.get("warnings", []):
+        parts.append(f'<p class="warn">{escape(w)}</p>')
+
     # 中心線曲線（三片各一系列）
     series = []
     for i, b in enumerate(blades[:3]):

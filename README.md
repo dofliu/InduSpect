@@ -52,6 +52,8 @@
 
 規格見 [`BLADE_INSPECTION_SPEC.md`](BLADE_INSPECTION_SPEC.md)，原型與可偵測門檻見 [`blade_prototype/`](blade_prototype/)。
 
+> 目前狀態：75 張公開真實照片實測，**晴空無雲時輪轂定位命中 12/14，有雲時只有 1/13**。天空模型是唯一真正的瓶頸，App 化之前要先補。實測結果與失敗案例見 [`blade_prototype/REAL_IMAGE_VALIDATION.md`](blade_prototype/REAL_IMAGE_VALIDATION.md)。
+
 ### 目前隱藏的功能
 
 快速分析、範本系統、設備管理、雲端同步、RAG 管理等已有實作但未連結到主頁，非當前開發重點。
@@ -209,7 +211,7 @@ python -m blade_proto sensitivity --quick --out SENSITIVITY.md
 ```bash
 cd flutter_app && flutter test                                              # 155 tests
 cd backend && GEMINI_API_KEY=ci-fake-key pytest tests/ --asyncio-mode=auto  # 191 tests
-cd blade_prototype && pytest                                                # 46 tests
+cd blade_prototype && pytest                                                # 61 tests
 ```
 
 三者皆在 CI（`.github/workflows/ci.yml`）逐 PR 執行；`flutter analyze` 為硬性門檻（warning 級以上擋 PR）。
@@ -241,6 +243,7 @@ python backend/scripts/export_standards.py
 | [BLADE_INSPECTION_SPEC.md](BLADE_INSPECTION_SPEC.md) | 風力機葉片地面目視檢測模組規格 |
 | [blade_prototype/README.md](blade_prototype/README.md) | 葉片模組演算法原型用法 |
 | [blade_prototype/SENSITIVITY.md](blade_prototype/SENSITIVITY.md) | 葉片模組可偵測門檻（合成影像量化） |
+| [blade_prototype/REAL_IMAGE_VALIDATION.md](blade_prototype/REAL_IMAGE_VALIDATION.md) | 葉片模組真實影像實測：成功率、失敗案例集、拍攝品質閘門 |
 | [AUTO_FILL_SYSTEM.md](AUTO_FILL_SYSTEM.md) | 定檢表自動回填系統設計 |
 | [TEMPLATE_SYSTEM_SPEC.md](TEMPLATE_SYSTEM_SPEC.md) | 範本系統規格（目前隱藏功能） |
 
