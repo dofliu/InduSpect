@@ -194,7 +194,7 @@ flutter test
 flutter test test/form_inspection_record_test.dart
 ```
 
-### 測試清單（286 tests）
+### 測試清單（295 tests）
 
 | 檔案 | 數量 | 覆蓋範圍 |
 |------|------|---------|
@@ -207,6 +207,8 @@ flutter test test/form_inspection_record_test.dart
 | `form_inspection_record_test.dart` | 21 | Model: toMap/fromMap 往返、null 處理、舊格式相容、standardJudgments 持久化、copyWith 深拷貝 |
 | `database_service_test.dart` | 12 | DB CRUD: insert/update/delete、排序、limit、搜尋、GPS 持久化、UNIQUE 約束 |
 | `photo_service_test.dart` | 6 | 照片命名格式、序號補零、截斷、特殊字元 |
+| `image_decode_test.dart` | 5 | ★ `safeDecodeImage`：`decodeImage` **會丟例外不只回 null**（短位元組在格式嗅探階段就 RangeError），驗真影像解得回來、極短/非影像/截斷都回 null 不丟例外 |
+| `photo_decode_guard_test.dart` | 4 | ★ 兩個照片服務在無法解碼時交出**自己文件寫的結果**：`compressPhoto` 回原始位元組、`ImageService` 丟「Failed to decode image」而不是漏出 RangeError |
 | `blade_geometry_compare_test.dart` | 17 | ★ 幾何層：三片輪廓逐項對照 Python、健康那台四個量都不標記、**單片注入 24 px 偏移要被標記且指對那一片**、離群判準要同時滿足 z 與「大於另兩片彼此差」、閘門拒收時互比一定為空 |
 | `blade_geometry_service_test.dart` | 15 | ★ 分割與結構定位逐階段對照 Python：色空間 → 天空模型場 → 距離與遮罩 → 輪轂/塔架/三片葉尖 |
 | `blade_trend_service_test.dart` | 15 | ★ 跨次趨勢：一個點不產生趨勢、下降不可被說成好轉、駁回的點留在線上、只比無因次比值 |
@@ -305,6 +307,30 @@ flutter build apk --debug
 ---
 
 ## 變更紀錄
+
+### 2026-09-07（解碼守門收斂到一處）
+
+`package:image` 的 `decodeImage` **會丟例外，不只回 null**——位元組太短時在格式
+嗅探階段就 `RangeError`（GIF 的 `isValidFile` 讀字串讀過界），那時連格式都還沒判斷
+出來。所以 `decodeImage(bytes) == null` 只擋得住「格式認得出來但內容壞掉」，
+擋不住「檔案根本不完整」，而後者才是現場會遇到的（外接儲存寫一半被拔掉、複製中斷、
+從相簿選到非影像檔）。
+
+新增 `lib/utils/image_decode.dart` 的 `safeDecodeImage`，五處呼叫端全部改用它。
+放在 `utils/` 而不是任何一個 service 裡是刻意的：定檢與葉片是兩條獨立的功能線，
+從其中一條 import 另一條的檔案只為了拿一個 helper 會把兩者黏起來。
+`BladeImageOps.safeDecode` 留成轉呼叫，葉片端的呼叫點不必知道它搬去哪了。
+
+**兩處的實際影響比原本記的小，這裡更正**：
+
+| 呼叫端 | 原本會怎樣 | 改了什麼 |
+|---|---|---|
+| `image_service._processAndSaveImage` | 有 try/catch 但 `rethrow`，所以漏出去的是 `RangeError` 而不是它自己寫的 `Exception('Failed to decode image')` | 呼叫端（`inspection_provider` 的拍照流程）現在看得懂錯在哪 |
+| `photo_service.compressPhoto` | **本來就不會崩潰**——整段包在 try/catch 裡，`catch (e)` 連 `Error` 一起接，會回原始位元組 | 紀錄從「Compress failed: RangeError…」變成「Failed to decode」，那才是實際發生的事 |
+| `pdf_report_service._downscaleToJpeg` | 外層 `loadPhotoForPdf` 有 try/catch，安全 | 「無法解碼」在 isolate 內就回 null，不必丟例外穿過 isolate 邊界 |
+| `image_quality_service` / `blade_surface_service` | 前一批已修 | 改用共用的那份，本地 try/catch 刪掉 |
+
+所以這一筆修的是**診斷性與紀錄準確度**，不是崩潰。測試 286 → 295。
 
 ### 2026-09-07（葉片模組 Phase 1 缺口補完 + Phase 2 幾何層）
 

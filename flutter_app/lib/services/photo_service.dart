@@ -9,6 +9,7 @@ import 'package:intl/intl.dart';
 import 'dart:io' show File, Directory;
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as path;
+import '../utils/image_decode.dart';
 
 /// 照片管理服務 - 管理拍照任務綁定、自動命名、壓縮、本地儲存
 ///
@@ -180,7 +181,12 @@ class PhotoService {
     maxHeight ??= PhotoService.maxPhotoHeight;
 
     try {
-      final image = img.decodeImage(bytes);
+      // safeDecodeImage 而不是 img.decodeImage：外層的 catch 本來就接得住
+      // RangeError（`catch (e)` 連 Error 一起接），所以這裡**不是**在修崩潰；
+      // 差別在紀錄——截斷的檔案原本會走到下面 catch 印出「Compress failed:
+      // RangeError...」，現在會走這一支印出「Failed to decode」，
+      // 那才是實際發生的事。
+      final image = safeDecodeImage(bytes);
       if (image == null) {
         debugPrint('[PhotoService] Failed to decode image, returning original');
         return bytes;

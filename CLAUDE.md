@@ -52,11 +52,11 @@
 
 ## 測試
 ```bash
-flutter test          # 全部 286 tests（widget_test 已修復，不再排除）
+flutter test          # 全部 295 tests（widget_test 已修復，不再排除）
 cd backend && GEMINI_API_KEY=ci-fake-key pytest tests/ --asyncio-mode=auto   # 191 pytest
 cd blade_prototype && pip install -r requirements.txt && pytest              # 78 tests（葉片原型，合成影像/音軌夾具）
 ```
-Flutter 286 tests / 後端 191 pytest / 葉片原型 78 pytest 全綠（2026-09-07 CI 實測）。DB 測試使用 `sqflite_common_ffi` in-memory。標準資料為單一來源：改 `backend/app/data/inspection_standards.py` 後必須跑 `python backend/scripts/export_standards.py` 重新匯出 JSON（有同步守門測試）。
+Flutter 295 tests / 後端 191 pytest / 葉片原型 78 pytest 全綠（2026-09-07 CI 實測）。DB 測試使用 `sqflite_common_ffi` in-memory。標準資料為單一來源：改 `backend/app/data/inspection_standards.py` 後必須跑 `python backend/scripts/export_standards.py` 重新匯出 JSON（有同步守門測試）。
 
 ## 已知問題追蹤
 - GitHub Issues #14-#19 已全數修復並關閉（2026-04-16）
@@ -67,6 +67,7 @@ Flutter 286 tests / 後端 191 pytest / 葉片原型 78 pytest 全綠（2026-09-
 - 後端 SDK 汰換（2026-09-04）：`google-generativeai`（已停止維護）→ `google-genai`；新增 `backend/app/services/gemini_client.py` 為唯一 Gemini 入口（延遲建立 client、依 key 快取），AI 呼叫一律走 `gemini_client.generate_text()`。相依鏈連帶升版 httpx/pydantic/fastapi。
 - PDF 報告輸出（2026-09-02）：LAUNCH_PLAN 第 5-8 週項目完成；`pdf_report_service.dart` 純 Dart 離線產生申報用 PDF（判定/法規依據/單位換算/AI 報告/照片附件），完成頁與歷史紀錄皆可匯出。字型子集重新產生用 `flutter_app/scripts/subset_pdf_font.py`
 - 葉片模組 Phase 1 App 化（2026-09-07）：SQLite **v5** 三張獨立表（`wt_assets`/`wt_capture_sessions`/`wt_detections`，既有定檢三表不動）、表面層 Dart 移植（與 Python 原型逐 zone 對照到小數第三位一致）、分析編排層、葉片專用 AI prompt、葉片拍攝閘門、三個畫面 + dashboard 第三個入口。三個**不可退化**的約定：①`WtMedia.qualityOk` 未分析時是 `null`，判斷一律用 `!= true`；②`human_status` 預設 `pending`，葉片報告**不輸出「合格」**；③演算法的 severity 是下限，AI 只能往上加不能往下砍。兩個規格修正：取像用系統相機（`camera` plugin 碰不到 5x 望遠與最高像素模式）、不給 `image_quality_service` 加遮罩而另寫 `blade_capture_gate.dart`（遮罩要先分割，而分割正是要被閘門守的那一步）
+- 解碼守門（2026-09-07）：`package:image` 的 `decodeImage` **會丟例外不只回 null**（短位元組在格式嗅探階段就 RangeError）。`lib/utils/image_decode.dart` 的 `safeDecodeImage` 是唯一入口，五處呼叫端全部走它；放在 `utils/` 是刻意的（定檢與葉片是兩條獨立功能線，不該為了一個 helper 互相 import）。實際影響是**診斷性不是崩潰**：`compressPhoto` 本來就有外層 try/catch 接得住，`image_service` 則是漏出 RangeError 而不是它自己寫的 `Exception('Failed to decode image')`
 - 葉片模組 Phase 2 幾何層 Dart 移植（2026-09-07）：`segmentation.py` + `geometry.py` + `quality.py` 移植完成，整機照現在會真的被量測（三片剪影互比）。**中值改成網格模式**是這批唯一的行為改變：逐像素大核中值在手機上跑不動（1024×820×3 約 1.4G 次 bin 運算），改成只在 step=16 的網格點上算真中值 + 雙線性內插（約 64M 次）；真實照片代價是設計範圍內輪轂命中 23/30 → 22/30。**降工作尺度是更糟的選擇**（512/384/256 → 20/19/18，而且時間幾乎沒省，瓶頸在結構定位不在中值）。三個不可退化的約定：①色空間必須是 OpenCV 的 8-bit Lab（`minScale = 1.2` 是那個空間的絕對下限）；②距離變換用 OpenCV 的 5×5 chamfer 近似而非精確 EDT（Python 用 chamfer，輪轂靠 DT 最大值定位，兩邊要一致）；③拍攝閘門在三片互比**之前**且拒收時不算互比。改 `surface.py`/`segmentation.py` 後要重跑 `blade_prototype/scripts/make_*_fixture.py`，否則 Flutter 交叉驗證會紅
 - 葉片模組 Phase 1 缺口已補（2026-09-07）：跨次趨勢畫面（只比無因次比值）、AI 補跑佇列（只補 `human_status = pending`，合併走與線上分析同一條規則）、葉片報告接進離線分享佇列
 - 葉片模組 Phase 1 **原始缺口紀錄**（2026-09-07 盤點，已於同日補完）：①`geminiOfflinePending` 的偵測沒有補跑機制——離線時存下來、畫面也標示了，但連線後沒有任何東西把 AI 解讀跑完（`share_queue_service` 有現成模式可沿用）；②沒有葉片歷史／趨勢畫面，`getWtSessions()` 只被用來拿上次照片（`limit: 1`）、`getWtSessionsPendingShare()` 零呼叫端，所以葉片報告也還沒接離線分享佇列。資產驅動資料模型的整個價值（跨次比對）目前沒有 UI
