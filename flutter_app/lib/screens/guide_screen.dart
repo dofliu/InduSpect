@@ -35,7 +35,9 @@ class GuideScreen extends StatelessWidget {
             '無網路也能完成拍照、判定與暫存',
             '法規判定由內建標準庫（56 條）離線完成',
             '數位錶讀值可由裝置端 OCR 離線辨識',
-            '恢復網路後自動分享，並由雲端 AI 覆核',
+            // 原本寫「並由雲端 AI 覆核」——全 app 沒有任何覆核機制，離線判定與
+            // 線上判定讀的是同一份標準資料，恢復網路不會改寫結果。承諾要對得上程式。
+            '恢復網路後自動送出待分享的報告；離線的判定結果不會被改寫',
           ], Icons.cloud_off, Colors.blueGrey),
           const SizedBox(height: 16),
           _buildApiKeySection(context),

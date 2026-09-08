@@ -894,18 +894,6 @@ class DatabaseService {
     });
   }
 
-  /// 寫入一批偵測結果。一次分析會產生多筆，用 transaction 避免中途失敗留下半套。
-  Future<void> saveWtDetections(List<WtDetection> detections) async {
-    if (detections.isEmpty) return;
-    final db = await database;
-    await db.transaction((txn) async {
-      for (final d in detections) {
-        await txn.insert('wt_detections', d.toMap(),
-            conflictAlgorithm: ConflictAlgorithm.replace);
-      }
-    });
-  }
-
   /// 更新單筆偵測的人工確認狀態。這是稽核依據，只改人工欄位，不動演算法數值。
   Future<void> updateWtDetectionHumanStatus(
     String detectionId,

@@ -194,7 +194,7 @@ flutter test
 flutter test test/form_inspection_record_test.dart
 ```
 
-### 測試清單（463 tests）
+### 測試清單（481 tests）
 
 | 檔案 | 數量 | 覆蓋範圍 |
 |------|------|---------|
@@ -204,6 +204,7 @@ flutter test test/form_inspection_record_test.dart
 | `image_quality_service_test.dart` | 14 | ★ 拍照品質閘門：模糊/過暗/過曝/反光/無法解碼、門檻可調、跨解析度一致性（合成影像） |
 | `connectivity_probe_test.dart` | 14 | ★ 可達性探測：介面×可達性決策矩陣、快取 TTL、forceProbe、逾時與例外 |
 | `inspection_item_state_test.dart` | 28 | displayValue/verdict 邏輯（含法規標準判定優先序）、controller 生命週期；★ **恢復連線後的補判**（Issue #43）：只挑還卡在「待判定」的、已有判定不重跑、`unknown` 不算待判定 |
+| `wt_capture_point_test.dart` | 13 | ★ **拍攝點的寫入端**（全 codebase 查核抓到 `capturePoint()` 有人讀、沒人寫）：每張全機照帶自己的 GPS 且舊 JSON 照樣讀得起來、view → 拍攝點名稱、`upsertCapturePoint` 同名覆蓋／不 mutate／保留 id、`standingDistanceHint` 沒輪轂高度不猜 |
 | `blade_report_export_test.dart` | 4 | ★ **葉片報告的離線交付**（Issue #43）：離線標記待分享而不開分享面板、上線才真的送出、`share: false` 不問連線；含「離線匯出 → 恢復連線 → 佇列真的送出」整條路 |
 | `share_queue_service_test.dart` | 14 | ★ **離線分享佇列**（Issue #43）：檔案不存在時**不標記完成**（定檢與葉片各一條）、無匯出路徑才標記完成、分享失敗不中斷佇列也不標記、上線事件觸發／斷線不觸發、重入守門、dispose 後不再觸發 |
 | `form_inspection_record_test.dart` | 21 | Model: toMap/fromMap 往返、null 處理、舊格式相容、standardJudgments 持久化、copyWith 深拷貝 |
@@ -219,12 +220,12 @@ flutter test test/form_inspection_record_test.dart
 | `blade_audio_decode_test.dart` | 17 | ★ WAV 讀取：夾具逐點對照 Python、四種位元深度（24-bit 走「補低位元組當 int32」與 Python 同尾數）、多聲道取平均、fmt 前插別的區塊、data 長度為 0／超出檔案、**每一種讀不了的情況都有可顯示的原因且不丟例外** |
 | `blade_acoustic_service_test.dart` | 23 | ★ 聲音層：兩段夾具**兩個方向都測**（healthy 不誤報／eroded 真的報且報在對的那一片）、ACF 諧波歧義解對（差三倍就是把 3P 當 1P）、三重守門（靜音／白噪／風噪主導）不可用時**不給逐片數字** |
 | `blade_dynamics_service_test.dart` | 18 | ★ 動態層：抽幀注入所以整條編排測得到、朝下葉片的 25° 容差邊界、**缺測的幀不占標籤位置**（否則後面全部錯位）、不以內插值充當量測、每片不足 2 幀就不互比 |
-| `blade_dataset_service_test.dart` | 23 | ★ Phase 4 前置的標記規則：**「演算法沒報」不等於「人看過沒問題」**（未簽核的場次即使零發現也只是 `unreviewed`）、`qualityOk` 是 null 也算不可用、簽核過但還有 pending 就退回未標記、確認與駁回混在同一份媒體時兩筆都要帶出去、記憶庫候選只算分區段照、manifest 把演算法等級與人的判定放成不同欄位 |
+| `blade_dataset_service_test.dart` | 24 | ★ Phase 4 前置的標記規則：**「演算法沒報」不等於「人看過沒問題」**（未簽核的場次即使零發現也只是 `unreviewed`）、`qualityOk` 是 null 也算不可用、簽核過但還有 pending 就退回未標記、確認與駁回混在同一份媒體時兩筆都要帶出去、記憶庫候選只算分區段照、manifest 把演算法等級與人的判定放成不同欄位 |
 | `blade_audio_recorder_test.dart` | 17 | ★ 錄音流程（plugin 收在一處，流程全測得到）：**裝置不支援 WAV 時不開始錄**（不然會靜靜錄成壓縮格式，等分析才發現解不開）、權限／編碼器的檢查順序、plugin 回 null 時退回指定路徑、放棄會刪檔；另有一組**釘住錄音參數**（WAV／單聲道／自動增益與降噪全關）的測試 |
 | `metric_direction_test.dart` | 8 | ★ 互比方向性：偏低不標記但 **z 照樣算完**、兩片往相反方向偏時 high 模式要抓最吵的而不是偏離最多的、早退路徑也要帶著 direction |
 | `blade_image_ops_test.dart` | 10 | ★ 影像運算逐項對照 OpenCV：網格中值（網格點逐位相同）、REFLECT_101 高斯、5×5 橢圓閉、連通元件、chamfer 距離變換（含最大值位置）、8-bit Lab |
 | `blade_analysis_service_test.dart` | 24 | ★ 葉片分析編排：門檻表邊界、未驗過品質的照片不分析、未超門檻不進報告但存進 DB、AI 不得下砍演算法等級、離線不遺失結果、摘要明講未跑的層 |
-| `blade_report_builder_test.dart` | 9 | ★ 葉片報告的立場：不輸出「合格」、零檢出明說代表什麼、演算法數值看得到、人工駁回的不列入但照片仍附上 |
+| `blade_report_builder_test.dart` | 13 | ★ 葉片報告的立場：不輸出「合格」、零檢出明說代表什麼、演算法數值看得到、人工駁回的不列入但照片仍附上 |
 | `blade_capture_gate_test.dart` | 9 | ★ 葉片拍攝閘門（影像層）：只擋讀不到檔與整張過暗；模糊/過亮/死白降為提醒（儀表門檻套天空畫面會誤攔）、原始量全存供日後校準 |
 | `blade_surface_service_test.dart` | 8 | ★ 表面層 Dart 對照 Python 原型：前後緣比判定一致、凹坑/p95、分 zone 定位侵蝕落在哪一段、cm 換算、失敗要給補救方式 |
 | `blade_ai_service_test.dart` | 8 | ★ 葉片 AI：正常結構清單一定在 prompt 裡、演算法數值不被 AI 覆蓋、severity/confidence 值域夾回、失敗往上丟 |
@@ -345,6 +346,59 @@ flutter build apk --debug
 ### 2026-09-07（葉片模組 Phase 1 缺口補完 + Phase 2 幾何層）
 
 **Phase 1 的兩個缺口**（同日盤點、同日補完）：
+
+### 2026-09-08 — 全 codebase 查核：「這個欄位有沒有人寫、這個服務有沒有人叫」
+
+Issue #43 那一輪同一個問法問了三次、三次都抓到已出貨的缺口（AI 補跑佇列、
+待判定重新判定、葉片 pendingShare），共同形狀是**讀的那端接好了、寫的那端沒接、
+讀那端沒測試所以看不出來**。這一批把同一個問法跑遍整個 codebase：
+348 個 service 公開方法的呼叫端數、六張表每個欄位的讀寫端、畫面上每一句
+「稍後／自動／恢復後」對回程式碼、每個 singleton 有沒有測試縫。
+
+#### 抓到的
+
+**① `capture_points` 有人讀、沒人寫。** 引導拍攝畫面用 `asset.capturePoint(name)`
+算「到上次拍攝點的距離」（規格 §10.2 的 GPS 導回），但全 app 沒有任何地方寫入
+拍攝點——那個功能永遠不會亮。修法：每張**全機照**拍完當場取一次 GPS 寫進
+`WtMedia.latitude/longitude`（分區段照跟著葉片走、沒有固定站位，不取），
+`_commitMedia` 再把有位置的正視／側視 upsert 成資產的同名拍攝點。位置是每張照片
+自己的，不是場次的到場位置——正視與側視站在不同地方。`WtMedia` 的兩個新鍵是列裡
+JSON，舊列讀得起來，不需 migration；有測試釘住。
+
+**② `turbine_state` 永遠是 unknown、`weather_note` / `inspector` / `hub_height_m`
+從沒有畫面收過。** 四個欄位 v5 schema 就有、規格 §10.2 明寫要記錄，但沒有輸入端。
+補上：新場次開拍前問一次風機狀態／天氣／人員（可略過——現場不該被表單擋住，
+但要問：聲音層只在轉動時有意義，報告也要說得出這次是停機還是運轉），拍攝步驟
+可再改；資產對話框加輪轂高度，有了就在拍攝步驟提示「全機照建議站在 1.5–2 倍
+輪轂高度外」；報告摘要最前面多一行 `風機狀態：停機｜天氣：晴｜檢測人員：…`
+（三個都沒填就不印）；語料 manifest 帶 `turbine_state`——停機拍與轉動拍的照片
+不是同一種「正常」，Phase 4 的記憶庫要分開收。
+
+**③ 說明頁寫「恢復網路後…並由雲端 AI 覆核」，全 app 沒有覆核機制。** 離線判定與
+線上判定讀同一份標準資料，恢復網路不會改寫結果。改成說實話。順手把 `_shareFile`
+的「恢復網路後可重新分享」改成「排入待分享，恢復網路後自動送出」——佇列真的會送，
+原句低估了。
+
+**④ 資產沒有刪除入口。** `deleteWtAsset()` 寫好了（連場次與偵測一起、一個
+transaction）但零呼叫端，打錯編號的風機只能永遠留在清單上。資產清單加刪除鈕與
+確認對話框。
+
+**⑤ 死碼：`saveWtDetections`**（零呼叫端零測試，`replaceWtDetections` 取代了它），
+移除。
+
+#### 看到但刻意沒動的
+
+- `bbox_json` 沒有任何演算法會產生，只有語料匯出讀它（null 容錯）——Phase 4 要
+  區域級標註時再說
+- 隱藏的舊流程（`inspection_provider`）的「稍後將自動重試」只在 app 啟動與下一次
+  拍照時重試，**沒有連線監聯**；那條線不是產品重點，記下不改
+- `photo_sync_service.retryFailedTasks` 零呼叫端，但 `processPendingTasks` 本來就
+  連失敗的一起撿，所以不是缺口，只是多餘
+- `location_service` / `gemini_service` / `photo_sync_service` 三個 singleton 沒有
+  測試縫；前兩個是平台包裝，第三個屬隱藏流程
+- 說明頁的「56 條」與標準庫實際條數相符，但是寫死的數字，下次加標準會漂
+- `BackendApiService.healthCheck` 零呼叫端（可達性探測直接打 `/health`），
+  hidden 流程用的 `syncPendingItems` 等整組 API 亦零呼叫端
 
 ### 2026-09-07 — Issue #43 可自動化的兩項：lint 清理與歷史列表分頁
 

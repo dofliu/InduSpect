@@ -44,6 +44,10 @@ class BladeDatasetItem {
   final String assetId;
   final String sessionId;
   final String? turbineModel;
+
+  /// 拍攝當時的風機狀態。Phase 4 的健康樣本記憶庫要分開收：轉動中拍的全機照
+  /// 有動態模糊與不同的葉片姿態，跟停機拍的不是同一種「正常」。
+  final WtTurbineState turbineState;
   final DateTime capturedAt;
   final WtMediaKind kind;
   final WtMediaView view;
@@ -69,6 +73,7 @@ class BladeDatasetItem {
     required this.kind,
     required this.view,
     this.turbineModel,
+    this.turbineState = WtTurbineState.unknown,
     this.zone,
     this.bladePosition,
     this.leadingEdge,
@@ -83,6 +88,8 @@ class BladeDatasetItem {
         'asset_id': assetId,
         'session_id': sessionId,
         if (turbineModel != null) 'turbine_model': turbineModel,
+        // 未記錄就不寫，不要讓 manifest 看起來像「已知是 unknown」
+        if (turbineState != WtTurbineState.unknown) 'turbine_state': turbineState.name,
         'captured_at': capturedAt.toIso8601String(),
         'kind': kind.name,
         'view': view.name,
@@ -255,6 +262,7 @@ class BladeDatasetService {
           assetId: session.assetId,
           sessionId: session.sessionId,
           turbineModel: assets[session.assetId]?.model,
+          turbineState: session.turbineState,
           capturedAt: media.capturedAt,
           kind: media.kind,
           view: media.view,
