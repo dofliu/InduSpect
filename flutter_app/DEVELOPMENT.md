@@ -194,7 +194,7 @@ flutter test
 flutter test test/form_inspection_record_test.dart
 ```
 
-### 測試清單（406 tests）
+### 測試清單（463 tests）
 
 | 檔案 | 數量 | 覆蓋範圍 |
 |------|------|---------|
@@ -203,9 +203,11 @@ flutter test test/form_inspection_record_test.dart
 | `ocr_reading_parser_test.dart` | 21 | ★ Tier 1a OCR 讀值解析：誤讀修正、雜訊過濾、最佳讀值優先序 |
 | `image_quality_service_test.dart` | 14 | ★ 拍照品質閘門：模糊/過暗/過曝/反光/無法解碼、門檻可調、跨解析度一致性（合成影像） |
 | `connectivity_probe_test.dart` | 14 | ★ 可達性探測：介面×可達性決策矩陣、快取 TTL、forceProbe、逾時與例外 |
-| `inspection_item_state_test.dart` | 22 | displayValue/verdict 邏輯（含法規標準判定優先序）、controller 生命週期 |
+| `inspection_item_state_test.dart` | 28 | displayValue/verdict 邏輯（含法規標準判定優先序）、controller 生命週期；★ **恢復連線後的補判**（Issue #43）：只挑還卡在「待判定」的、已有判定不重跑、`unknown` 不算待判定 |
+| `blade_report_export_test.dart` | 4 | ★ **葉片報告的離線交付**（Issue #43）：離線標記待分享而不開分享面板、上線才真的送出、`share: false` 不問連線；含「離線匯出 → 恢復連線 → 佇列真的送出」整條路 |
+| `share_queue_service_test.dart` | 14 | ★ **離線分享佇列**（Issue #43）：檔案不存在時**不標記完成**（定檢與葉片各一條）、無匯出路徑才標記完成、分享失敗不中斷佇列也不標記、上線事件觸發／斷線不觸發、重入守門、dispose 後不再觸發 |
 | `form_inspection_record_test.dart` | 21 | Model: toMap/fromMap 往返、null 處理、舊格式相容、standardJudgments 持久化、copyWith 深拷貝 |
-| `database_service_test.dart` | 12 | DB CRUD: insert/update/delete、排序、limit、搜尋、GPS 持久化、UNIQUE 約束 |
+| `database_service_test.dart` | 18 | DB CRUD: insert/update/delete、排序、limit、搜尋、GPS 持久化、UNIQUE 約束；★ **分頁載入**（Issue #43）：limit/offset 不重疊不漏、翻頁不打亂 created_at DESC、超界回空、搜尋也支援分頁 |
 | `photo_service_test.dart` | 6 | 照片命名格式、序號補零、截斷、特殊字元 |
 | `image_decode_test.dart` | 5 | ★ `safeDecodeImage`：`decodeImage` **會丟例外不只回 null**（短位元組在格式嗅探階段就 RangeError），驗真影像解得回來、極短/非影像/截斷都回 null 不丟例外 |
 | `photo_decode_guard_test.dart` | 4 | ★ 兩個照片服務在無法解碼時交出**自己文件寫的結果**：`compressPhoto` 回原始位元組、`ImageService` 丟「Failed to decode image」而不是漏出 RangeError |
@@ -217,6 +219,7 @@ flutter test test/form_inspection_record_test.dart
 | `blade_audio_decode_test.dart` | 17 | ★ WAV 讀取：夾具逐點對照 Python、四種位元深度（24-bit 走「補低位元組當 int32」與 Python 同尾數）、多聲道取平均、fmt 前插別的區塊、data 長度為 0／超出檔案、**每一種讀不了的情況都有可顯示的原因且不丟例外** |
 | `blade_acoustic_service_test.dart` | 23 | ★ 聲音層：兩段夾具**兩個方向都測**（healthy 不誤報／eroded 真的報且報在對的那一片）、ACF 諧波歧義解對（差三倍就是把 3P 當 1P）、三重守門（靜音／白噪／風噪主導）不可用時**不給逐片數字** |
 | `blade_dynamics_service_test.dart` | 18 | ★ 動態層：抽幀注入所以整條編排測得到、朝下葉片的 25° 容差邊界、**缺測的幀不占標籤位置**（否則後面全部錯位）、不以內插值充當量測、每片不足 2 幀就不互比 |
+| `blade_dataset_service_test.dart` | 23 | ★ Phase 4 前置的標記規則：**「演算法沒報」不等於「人看過沒問題」**（未簽核的場次即使零發現也只是 `unreviewed`）、`qualityOk` 是 null 也算不可用、簽核過但還有 pending 就退回未標記、確認與駁回混在同一份媒體時兩筆都要帶出去、記憶庫候選只算分區段照、manifest 把演算法等級與人的判定放成不同欄位 |
 | `blade_audio_recorder_test.dart` | 17 | ★ 錄音流程（plugin 收在一處，流程全測得到）：**裝置不支援 WAV 時不開始錄**（不然會靜靜錄成壓縮格式，等分析才發現解不開）、權限／編碼器的檢查順序、plugin 回 null 時退回指定路徑、放棄會刪檔；另有一組**釘住錄音參數**（WAV／單聲道／自動增益與降噪全關）的測試 |
 | `metric_direction_test.dart` | 8 | ★ 互比方向性：偏低不標記但 **z 照樣算完**、兩片往相反方向偏時 high 模式要抓最吵的而不是偏離最多的、早退路徑也要帶著 direction |
 | `blade_image_ops_test.dart` | 10 | ★ 影像運算逐項對照 OpenCV：網格中值（網格點逐位相同）、REFLECT_101 高斯、5×5 橢圓閉、連通元件、chamfer 距離變換（含最大值位置）、8-bit Lab |
@@ -226,6 +229,7 @@ flutter test test/form_inspection_record_test.dart
 | `blade_surface_service_test.dart` | 8 | ★ 表面層 Dart 對照 Python 原型：前後緣比判定一致、凹坑/p95、分 zone 定位侵蝕落在哪一段、cm 換算、失敗要給補救方式 |
 | `blade_ai_service_test.dart` | 8 | ★ 葉片 AI：正常結構清單一定在 prompt 裡、演算法數值不被 AI 覆蓋、severity/confidence 值域夾回、失敗往上丟 |
 | `database_migration_test.dart` | 6 | SQLite v3→v4 與 v4→v5 真實 onUpgrade 升級路徑（standard_judgments 欄位；葉片三表 + 既有紀錄不動 + round-trip + 壞 JSON 容錯） |
+| `pubspec_test.dart` | 4 | ★ pubspec 守門：相依依字母排序（**含 `flutter:` / `flutter_test:` 兩個 sdk 相依**，linter 不看空行分段）、sdk 相依沒被搬回各段最上面、lib/ 裡 import 得到的每個 package 都宣告過（手動重排時掉過 `uuid`） |
 | `widget_test.dart` | 1 | App smoke test（sqflite ffi + mock prefs + dotenv testLoad） |
 
 ### 測試依賴
@@ -341,6 +345,213 @@ flutter build apk --debug
 ### 2026-09-07（葉片模組 Phase 1 缺口補完 + Phase 2 幾何層）
 
 **Phase 1 的兩個缺口**（同日盤點、同日補完）：
+
+### 2026-09-07 — Issue #43 可自動化的兩項：lint 清理與歷史列表分頁
+
+Issue #43 是 `[needs-human]` 的追蹤型 issue，四個驗收項目裡兩項需要實機
+（完整流程、離線→恢復網路），另兩項有實質可做的內容。
+
+#### 一、lint 102 → 6
+
+`flutter analyze` 本來就是綠的——CI 的門檻是 warning 以上，而這 102 條全是 info。
+但 102 條雜訊會把真正該看的訊息埋掉：這一批裡有 3 條是**真的潛在崩潰**，
+在 100 條 `withOpacity` 之間根本看不見。
+
+**3 條 `use_build_context_synchronously` 不是風格問題**：
+
+| 位置 | 問題 | 修法 |
+|---|---|---|
+| `step1_upload_checklist._submitLogin` | `context` 是方法**參數**，遮蔽了 State 的 context，所以 State 的 `mounted` 守不到它 | 改用 `context.mounted` |
+| `datetime_field_input` | 兩個 picker 之間有 await，期間 widget 可能已被移除 | 加 `context.mounted` 守門，**放在 datetime 分支裡面**——外面那條「只選日期」的路完全沒用到 context，擋在分支外會把使用者選好的日期丟掉 |
+| `template_filling_screen._onWillPop` | 先 await 存草稿再拿 context 開對話框 | await 後加 `mounted` 守門 |
+
+`withOpacity` → `withValues`（36 處）連帶把 **Flutter 下限提到 3.27**：`withValues`
+是 3.27 才有的。這個版本不是憑印象——framework 自己的 `cupertino/colors.dart` 在
+3.27.0 用了 `withValues`、3.24.0 沒有，而 framework 只會在 API 存在之後才改用它。
+
+`sort_pub_dependencies` 是專案在 `analysis_options.yaml` 裡**自己打開**的規則，
+所以照它排。原本依用途分組並附註解，排序後那些註解會掛到錯的相依上，
+因此把「為什麼需要它」改成貼在各自那一行。排完發現漏掉 `uuid`（會直接編不過），
+是靠「相依名稱集合比對」抓回來的——這種整段重寫一定要有對帳步驟。
+
+**排序這件事第一版沒排乾淨**：`flutter:` / `flutter_test:` 兩個 sdk 相依按慣例
+留在各段最上面，而 **linter 不看空行分段**——整個 section 就是一份平的清單，
+所以 lint 直接紅在下一個相依那一行（`pubspec.yaml:25` 的 `archive`、
+`:57` 的 `build_runner`）。CI analyze 實測是 8 issues 而不是預期的 6，
+差的就是這兩條。把 sdk 相依搬到它們的字母位置（`file_picker` 與 `flutter_dotenv`
+之間、`flutter_lints` 與 `sqflite_common_ffi` 之間）才真的是 6。
+
+教訓是**「排序」不能只靠肉眼看起來對**，所以補了 `test/pubspec_test.dart`：
+兩個守門都對應到實際犯過的錯——排序（含 sdk 相依、且 sdk 相依不能搬回最上面）、
+以及「lib/ 裡 import 得到的 package 都必須宣告」（掉 `uuid` 那次 analyze 抓不到，
+只有建置才會炸）。順手修掉 `camera` 的錯註解：`lib/` 裡其實**沒有任何**
+`package:camera` import，取像全部走 `image_picker`（系統相機）；沒有實機可驗
+移除相依對 Android 建置的影響之前不動它，只把狀態寫清楚。
+
+**刻意留下 6 條**，理由是它們都是行為性的遷移而我沒有實機可驗：
+
+- `WillPopScope` → `PopScope`（1）：`onWillPop` 是 async 且會開確認對話框，
+  而 `PopScope` 的 `canPop` 必須同步決定——要重構那段互動邏輯。
+- Radio 的 `groupValue`/`onChanged` → `RadioGroup`（4）：結構性遷移，
+  而且 `RadioGroup` 要 Flutter 3.32，會再把下限推高。
+- `dart:html` → `package:web`（1）：web 不是產品目標（README 寫的是 Android/iOS）。
+
+#### 二、歷史列表分頁
+
+`ListView.builder` 本來就只建可見的項目，所以這個畫面卡的**不是滾動而是載入**：
+`FormInspectionRecord.fromMap` 每一列都要 `jsonDecode` 三個 JSON 欄位
+（`filled_data` / `ai_results` / `standard_judgments`），一次全載時 N 筆就是
+N×3 次 jsonDecode 全部壓在 main isolate 上。
+
+而那個解析**省不掉**：列表上的「已填 N 項」「異常 N 項」正是從那些欄位算出來的
+（`completedCount` = `filledData.length`、`anomalyCount` 掃 `aiResults`）。
+只查需要的欄位這條路走不通，所以改成限量：一頁 30 筆、捲到底再載。
+
+`searchFormRecords` 也補上 `limit`/`offset`——搜到很多筆時一次全載一樣會卡。
+
+一個容易漏的細節：`itemBuilder` 會在同一幀被呼叫多次，所以 `_loadMore` 要有**重入
+守門**，不然同一頁會被抓好幾遍、列表出現重複項目。
+
+6 條 DB 測試釘住：limit/offset 不重疊不漏、翻頁不打亂 `created_at DESC`、
+超界回空清單、不給 limit 時行為不變、搜尋的分頁與排序一致。
+
+#### 三、離線 → 恢復網路：一半沒測、一半沒實作
+
+回頭確認第二個驗收項目時發現，它不只是「沒有實機驗過」：
+
+**自動分享那一半是沒測過。** `ShareQueueService` 是 singleton，分享動作是
+`FileSaveService.saveAndShare`（static），連線來源是另一個 singleton——三個邊界
+都沒有縫，所以整條「恢復網路 → 清佇列」在單元測試裡碰不到，一條測試都沒有。
+而它錯的方式是靜默的：**把不存在的檔案標成已分享**，使用者會以為客戶收到了報告，
+而畫面上再也不會提醒他重送。
+
+改法是沿用專案既有的慣例（`ConnectivityService` 的 `probeOverride` /
+`interfaceCheckOverride`）：在 singleton 上開 `@visibleForTesting` 的覆寫欄位
+（連線來源、啟動檢查、分享動作、兩次分享之間的間隔），加一個 `resetForTesting()`。
+同時把 `processPendingShares()` 從 `void` 改成回傳 `ShareQueueOutcome`
+（shared / skippedMissingFile / clearedWithoutFile / failed）——原本只有
+`debugPrint`，「有沒有誤標成已分享」沒有東西可以斷言。14 條測試守住的重點不是
+「分享有沒有成功」，是**什麼情況下不准標記完成**。
+
+**「待判定」重新判定那一半根本沒實作。** 畫面提示寫著「恢復網路後可重新判定」，
+但 `standardJudgmentPending` 只被設定與顯示，全 app 唯一的連線監聽是分享佇列，
+沒有任何程式碼重跑判定；而且那個旗標只活在記憶體裡。
+
+補上 `_watchConnectivityForRejudge()`：上線時若有項目還卡在「待判定」就重跑
+`_runStandardJudgment(pendingOnly: true)`。兩個判斷抽成頂層純函式
+（`shouldRejudgeOnReconnect` / `rejudgeTargets`）才測得到——`_runStandardJudgment`
+要打後端也要 `setState`。
+
+`pendingOnly` 刻意**只挑還卡在「待判定」的**：本地 Tier 0 引擎與後端讀的是同一份
+標準資料（`export_standards.py` 匯出），已經判過的重跑不會得到不一樣的結果，
+只會在使用者看過判定之後無聲地換掉它。`judgment = unknown`（匹配不到標準）同理，
+再問一次還是匹配不到，所以也不算待判定。補判成功會出提示——「待判定」無聲變成
+合格，使用者會以為自己看錯了。
+
+**沒做的**：把「待判定」持久化（要 DB migration，而這個狀態只在 Tier 0 asset
+載不起來時出現，屬安裝完整性問題），以及第一項的五步流程端到端 widget 測試
+（那會變成大量測自己寫的假件，而不是測產品）。
+
+#### 四、把所有 `saveAndShare` 呼叫端點過一遍
+
+同一個查法（「這個服務有沒有人叫它」／「這個欄位有沒有人寫它」）在第一項的
+流程上又抓到一個**已經出貨的缺口**：
+
+`blade_report_export.dart` 的註解寫著「`pendingShare` 由呼叫端依連線狀態決定
+——這裡不猜」，而**兩個呼叫端都沒有決定**。全 app 沒有任何地方把葉片作業的
+`pendingShare` 設為 true，於是 `getWtSessionsPendingShare()` 永遠回空、
+離線佇列的葉片那半從來沒被觸發過、`blade_history_screen` 的「待分享」標籤
+也永遠不會出現。上一批寫「葉片報告接進離線分享佇列」時，接的是**讀**的那一端，
+寫的那一端沒有接上。
+
+政策因此搬進 `exportAndShare`：離線就標記待分享、不開分享面板，回傳
+`(path, shared)` 讓呼叫端的提示說對（「恢復網路後自動分享」而不是「已分享」）。
+同時開三個外部邊界的縫（`isOnline` / `outputDir` / `shareSink`）讓它測得到——
+`getApplicationDocumentsDirectory()` 在單元測試裡會炸，但 `PdfReportService.build`
+本身測得起來，所以只要換掉檔案位置就能測整條。其中一條測試把
+「離線匯出 → 恢復連線 → 佇列真的送出」整條走完。
+
+`unified_history_screen._reshareFile`（定檢的「重新分享」）同樣沒有離線處理，
+而它剛好是佇列的原生契約（`pending_share` + `filled_document_path`），
+所以改成離線時標記待分享。
+
+**同時修正了一個我自己一開始改錯的地方。** 一度把 `_exportPdfReport` 與
+`_shareReport` 也擋成「離線不開分享面板」，那是錯的：那兩個是**匯出**動作不是
+交付動作，分享面板上「儲存到檔案」／AirDrop 這些目的地離線可用，擋掉等於拿掉
+功能，而 PDF 寫在 app 文件目錄裡使用者自己拿不到。規則是**離線佇列只套在交付
+動作上**（`_shareFile`、`_reshareFile`、葉片報告），匯出動作照樣開面板。
+兩處各留一段註解說明為什麼刻意不擋，免得下一個人再「修」一次。
+
+沒動的兩處：`blade_dataset_export`（訓練語料 zip，是資料收集工具不是交付）與
+`auto_fill_screen`（隱藏的舊流程）。
+
+#### 還是需要實機的兩項
+
+實機完整流程（上傳 Excel → 一鍵檢測 → 判定回填 → 匯出 → 分享）與離線→恢復網路的
+情境，這個環境做不了，issue 仍開著——**但「恢復網路」那一項現在至少有實作也有
+測試**，實機要驗的是真實的網路切換與系統分享面板，不再是「有沒有寫」。
+
+---
+
+### 2026-09-07 — Phase 4 前置：訓練語料的累積與匯出
+
+**先說 Phase 4 的模型本身還做不了，而且卡的是資料不是工程。**
+
+規格 §5.2 定的方法是 PatchCore 類——只用正常葉片 patch 訓練、TFLite 部署。
+它的整個前提是一個「同一支手機、同一台風機」的健康 patch 記憶庫，而目前這樣的
+照片是 **0 張**：
+
+- 既有的 75 張公開語料是**整機照**（`framing` 的定義是轉子直徑相對畫面長邊，
+  near 也只有 ≥ 1/3），一片葉片在上面只有幾個像素，沒有任何表面紋理可學。
+- 那批照片標註的是**輪轂座標與天空條件**（用來驗證定位），沒有缺陷標註。
+- 合成影像不能替代：那樣訓出來的是「不像我的算圖器」而不是「不像健康葉片」，
+  屬循環驗證——`blade_prototype/README.md` 自己就是這樣說合成夾具的。
+
+所以這一批做的是**讓那件事變得可能**的部分，而它本身就是缺的一塊：第四步
+「人工確認」留下的 `humanStatus` 寫進 DB 之後，**沒有任何東西把它拿出來用**
+（只有報告與趨勢畫面在讀它來顯示）。也就是說規格裡「Phase 0 累積」那句話，
+在工程上等於沒有發生。
+
+#### 標記規則才是這一批的內容
+
+`blade_dataset_service.dart` 純邏輯、不碰 DB 與檔案系統，所以規則測得到（23 條）。
+三個不可退化的約定：
+
+1. **標記來源是人，不是演算法。** 拿演算法的 severity 當標籤訓練，只會讓模型學會
+   模仿演算法——包含它的誤報。manifest 因此把 `algorithm_severity` 與
+   `human_status` 放成**不同欄位**，而且刻意不留一個含糊的 `severity`。
+2. **`humanClean` 同時要求三件事**：場次已簽核、這份媒體沒有成立的發現、
+   照片過了品質閘門。缺一就不是健康樣本。「演算法沒報」不等於「人看過沒問題」
+   ——混用會讓記憶庫摻進演算法漏檢的真缺陷，於是模型把缺陷學成正常，
+   **而那種失效不會有任何徵兆**。品質閘門那一條同樣重要：把模糊的畫面放進記憶庫
+   等於教模型「模糊是正常的」。
+3. **簽核過的場次裡若還有 `pending` 的發現，整份媒體退回 `unreviewed`。**
+   `_finishReview` 有守門所以理論上不會發生，但語料的正確性比防禦性程式碼的整潔
+   重要：寧可少收一筆，不要收一筆錯的。
+
+被駁回的發現**不會消失**——它記錄了演算法在哪裡弄錯（塗裝接縫、LEP 邊緣、雲影），
+是最有價值的負樣本。同一份媒體同時有確認與駁回時，媒體層級標記是 `defect`，
+但兩筆都逐筆帶進 manifest。
+
+#### 「還差多少」
+
+規格把 Phase 4 的估時寫成「視資料量」，而在這之前**沒有任何地方看得到資料量**。
+歷史畫面現在有一張表：各標記的張數、`humanClean` 依視角與區段的分佈，以及一句
+直白的可訓練性判斷。文獻量級（MVTec-AD 的 PatchCore 每類約 200 張正常影像、
+降到數十張仍可運作但會退化）寫在程式碼裡並註明**那是文獻的量級不是本專案量出來的**。
+
+#### 匯出
+
+zip 內含 `manifest.json`（自我描述，含 `schema_version`）與照片。照片只複製
+`defect`/`falsePositive`/`humanClean` 三類；`unusable` 與 `unreviewed` **仍列在
+manifest 裡但不複製檔案**——一次外業可能幾百 MB，而那兩類對訓練沒有用；列在
+manifest 裡則讓「有多少照片還沒人看」看得到，不會變成一個安靜的黑洞。
+原檔已不存在的（外接儲存拔掉、系統清快取）計數回報並照樣列進 manifest。
+
+`archive` 的 `ZipFileEncoder` API 是下載 package 讀過才用的（用
+`zipDirectoryAsync` 而非同步版：幾百 MB 同步壓縮會把畫面凍住）。
+
+---
 
 ### 2026-09-07 — 聲音層兩個未決事項結案
 

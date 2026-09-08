@@ -20,7 +20,7 @@ class Step2CapturePhotos extends StatelessWidget {
         }
 
         if (inspection.isAnalyzing) {
-          return LoadingWidget(
+          return const LoadingWidget(
             message: '正在同步/分析照片...',
           );
         }
@@ -99,7 +99,7 @@ class Step2CapturePhotos extends StatelessWidget {
                   color: Colors.white,
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.1),
+                      color: Colors.black.withValues(alpha: 0.1),
                       blurRadius: 4,
                       offset: const Offset(0, -2),
                     ),
@@ -198,8 +198,8 @@ class Step2CapturePhotos extends StatelessWidget {
         showDialog(
           context: context,
           builder: (context) => AlertDialog(
-            title: Row(
-              children: const [
+            title: const Row(
+              children: [
                 Icon(Icons.warning_amber_rounded, color: Colors.orange),
                 SizedBox(width: 12),
                 Text('提示'),

@@ -7,11 +7,11 @@ class CheckboxFieldInput extends StatelessWidget {
   final ValueChanged<List<String>> onChanged;
 
   const CheckboxFieldInput({
-    Key? key,
+    super.key,
     required this.field,
     required this.value,
     required this.onChanged,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

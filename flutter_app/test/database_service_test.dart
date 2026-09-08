@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
-import 'package:sqflite/sqflite.dart';
 import 'package:induspect_ai/models/form_inspection_record.dart';
+import 'package:induspect_ai/services/database_service.dart';
 
 // 直接操作 DB 測試 CRUD，不透過 singleton 避免與其他測試衝突
 Future<Database> _createTestDb() async {
@@ -330,6 +330,86 @@ void main() {
       expect(r.longitude, isNull);
       expect(r.locationName, isNull);
       expect(r.filledData['f1'], '正常');
+    });
+  });
+  group('分頁載入（Issue #43：大量歷史紀錄）', () {
+    late Database db;
+    late DatabaseService svc;
+
+    setUp(() async {
+      db = await _createTestDb();
+      svc = DatabaseService();
+      svc.attachDatabaseForTesting(db);
+      addTearDown(() async {
+        svc.attachDatabaseForTesting(null);
+        await db.close();
+      });
+      // 建 25 筆，created_at 遞減，好驗排序與翻頁邊界
+      for (var i = 0; i < 25; i++) {
+        await insertRecord(
+            db,
+            FormInspectionRecord(
+              recordId: 'rec-${i.toString().padLeft(2, '0')}',
+              title: i % 2 == 0 ? '變電站 $i' : '空壓機 $i',
+              locationName: '台中',
+              filledData: {'f1': '正常'},
+              createdAt: DateTime(2026, 1, 1).add(Duration(minutes: i)),
+            ));
+      }
+    });
+
+    test('limit 限制筆數，offset 接得上，且不重疊不漏', () async {
+      final p1 = await svc.getAllFormRecords(limit: 10, offset: 0);
+      final p2 = await svc.getAllFormRecords(limit: 10, offset: 10);
+      final p3 = await svc.getAllFormRecords(limit: 10, offset: 20);
+      expect(p1.length, 10);
+      expect(p2.length, 10);
+      expect(p3.length, 5, reason: '最後一頁不足一頁');
+
+      final ids = [...p1, ...p2, ...p3].map((r) => r.recordId).toList();
+      expect(ids.toSet().length, 25, reason: '不能有重複');
+      expect(ids.length, 25, reason: '不能漏');
+    });
+
+    test('排序是 created_at DESC，翻頁不會打亂', () async {
+      final p1 = await svc.getAllFormRecords(limit: 10, offset: 0);
+      final p2 = await svc.getAllFormRecords(limit: 10, offset: 10);
+      final all = [...p1, ...p2];
+      for (var i = 1; i < all.length; i++) {
+        expect(all[i].createdAt.isAfter(all[i - 1].createdAt), isFalse,
+            reason: '第 $i 筆應該不比前一筆新');
+      }
+      expect(p1.first.recordId, 'rec-24', reason: '最新的在最前面');
+    });
+
+    test('超出總數的 offset 回空清單，不丟例外', () async {
+      expect(await svc.getAllFormRecords(limit: 10, offset: 100), isEmpty);
+    });
+
+    test('不給 limit 時仍回全部（既有呼叫端的行為不變）', () async {
+      expect((await svc.getAllFormRecords()).length, 25);
+    });
+
+    test('搜尋也支援分頁——搜到很多筆時一次全載一樣會卡', () async {
+      final hits = await svc.searchFormRecords('變電站');
+      expect(hits.length, 13, reason: '0,2,4..24 共 13 筆');
+
+      final p1 = await svc.searchFormRecords('變電站', limit: 5, offset: 0);
+      final p2 = await svc.searchFormRecords('變電站', limit: 5, offset: 5);
+      final p3 = await svc.searchFormRecords('變電站', limit: 5, offset: 10);
+      expect([p1.length, p2.length, p3.length], [5, 5, 3]);
+      expect([...p1, ...p2, ...p3].map((r) => r.recordId).toSet().length, 13);
+    });
+
+    test('搜尋的分頁與排序一致（不會因為翻頁而錯位）', () async {
+      final full = await svc.searchFormRecords('空壓機');
+      final paged = <FormInspectionRecord>[];
+      for (var off = 0; off < full.length; off += 4) {
+        paged.addAll(
+            await svc.searchFormRecords('空壓機', limit: 4, offset: off));
+      }
+      expect(paged.map((r) => r.recordId).toList(),
+          full.map((r) => r.recordId).toList());
     });
   });
 }

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:path/path.dart' as p;
 import '../models/form_inspection_record.dart';
+import '../services/connectivity_service.dart';
 import '../services/database_service.dart';
 import '../services/file_save_service.dart';
 import '../services/pdf_report_service.dart';
@@ -24,9 +25,20 @@ class _UnifiedHistoryScreenState extends State<UnifiedHistoryScreen> {
   final TextEditingController _searchController = TextEditingController();
   Timer? _searchDebounce;
 
+  /// 一頁幾筆。**這個畫面卡的不是滾動而是載入**：`ListView.builder` 本來就只建
+  /// 可見的項目，但 `FormInspectionRecord.fromMap` 每一列都要 `jsonDecode` 三個
+  /// JSON 欄位（`filled_data` / `ai_results` / `standard_judgments`），而列表上的
+  /// 「已填 N 項」「異常 N 項」正是從那些欄位算出來的，所以省不掉解析、只能限量。
+  /// 一次全載時 N 筆紀錄就是 N×3 次 jsonDecode 全部壓在 main isolate 上。
+  static const int _pageSize = 30;
+
   List<FormInspectionRecord> _records = [];
   List<FormInspectionRecord> _filteredRecords = [];
   bool _isLoading = true;
+  bool _isLoadingMore = false;
+
+  /// 上一次查詢是否還有下一頁（回傳筆數等於 `_pageSize` 就假設還有）
+  bool _hasMore = true;
   // 正在產生 PDF 的紀錄 ID（同時只允許一筆，避免重複產生）
   String? _exportingPdfRecordId;
 
@@ -43,21 +55,51 @@ class _UnifiedHistoryScreenState extends State<UnifiedHistoryScreen> {
     super.dispose();
   }
 
-  /// Issue #16: 使用 SQL-side 搜尋，避免載入全部紀錄再在客戶端過濾
+  /// Issue #16: 使用 SQL-side 搜尋，避免載入全部紀錄再在客戶端過濾。
+  /// Issue #43: 分頁載入，不再一次把全部紀錄解析進記憶體。
   Future<void> _loadRecords() async {
-    setState(() => _isLoading = true);
+    setState(() {
+      _isLoading = true;
+      _hasMore = true;
+    });
     try {
-      final query = _searchController.text.trim();
-      if (query.isEmpty) {
-        _records = await _dbService.getAllFormRecords();
-      } else {
-        _records = await _dbService.searchFormRecords(query);
-      }
+      final page = await _fetchPage(offset: 0);
+      _records = page;
+      _hasMore = page.length == _pageSize;
       _filteredRecords = List.from(_records);
     } catch (e) {
       debugPrint('載入紀錄失敗: $e');
     }
     if (mounted) setState(() => _isLoading = false);
+  }
+
+  /// 捲到底時再拿一頁。
+  ///
+  /// 重入守門是必要的：`itemBuilder` 會在同一幀被呼叫多次，不擋的話同一頁會被
+  /// 抓好幾遍、列表出現重複項目。
+  Future<void> _loadMore() async {
+    if (_isLoadingMore || !_hasMore) return;
+    _isLoadingMore = true;
+    try {
+      final page = await _fetchPage(offset: _records.length);
+      if (!mounted) return;
+      setState(() {
+        _records.addAll(page);
+        _filteredRecords = List.from(_records);
+        _hasMore = page.length == _pageSize;
+      });
+    } catch (e) {
+      debugPrint('載入更多紀錄失敗: $e');
+    } finally {
+      _isLoadingMore = false;
+    }
+  }
+
+  Future<List<FormInspectionRecord>> _fetchPage({required int offset}) {
+    final query = _searchController.text.trim();
+    return query.isEmpty
+        ? _dbService.getAllFormRecords(limit: _pageSize, offset: offset)
+        : _dbService.searchFormRecords(query, limit: _pageSize, offset: offset);
   }
 
   /// Issue #16: 以 300ms debounce 避免每按一個鍵都查 DB
@@ -137,9 +179,20 @@ class _UnifiedHistoryScreenState extends State<UnifiedHistoryScreen> {
                         onRefresh: _loadRecords,
                         child: ListView.builder(
                           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                          itemCount: _filteredRecords.length,
-                          itemBuilder: (context, index) =>
-                              _buildRecordCard(_filteredRecords[index]),
+                          // 多一格當「載入更多」的觸發點與指示器
+                          itemCount:
+                              _filteredRecords.length + (_hasMore ? 1 : 0),
+                          itemBuilder: (context, index) {
+                            if (index >= _filteredRecords.length) {
+                              _loadMore();
+                              return const Padding(
+                                padding: EdgeInsets.symmetric(vertical: 24),
+                                child: Center(
+                                    child: CircularProgressIndicator()),
+                              );
+                            }
+                            return _buildRecordCard(_filteredRecords[index]);
+                          },
                         ),
                       ),
           ),
@@ -457,11 +510,28 @@ class _UnifiedHistoryScreenState extends State<UnifiedHistoryScreen> {
     }
   }
 
+  /// 重新分享。離線時**不開分享面板**，改標記待分享交給離線佇列——
+  /// 面板離線也開得起來，但使用者選了 email 之後那封信會卡在寄件匣，
+  /// 而 app 完全不知道。這一條剛好是佇列的原生契約：它讀的就是
+  /// `pending_share` + `filled_document_path`。
   Future<void> _reshareFile(FormInspectionRecord record) async {
     if (record.filledDocumentPath == null) return;
     try {
       final file = File(record.filledDocumentPath!);
       if (await file.exists()) {
+        if (!await ConnectivityService().checkConnection()) {
+          await _dbService.saveFormRecord(record.copyWith(pendingShare: true));
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('目前離線，已排入待分享（恢復網路後自動送出）'),
+                backgroundColor: Colors.orange,
+              ),
+            );
+            await _loadRecords();
+          }
+          return;
+        }
         await FileSaveService.saveAndShare(
           bytes: await file.readAsBytes(),
           fileName: p.basename(file.path),

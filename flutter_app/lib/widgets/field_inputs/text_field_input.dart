@@ -7,11 +7,11 @@ class TextFieldInput extends StatelessWidget {
   final ValueChanged<String> onChanged;
 
   const TextFieldInput({
-    Key? key,
+    super.key,
     required this.field,
     required this.value,
     required this.onChanged,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

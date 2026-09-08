@@ -42,6 +42,8 @@
 | `flutter_app/lib/services/blade_acoustic_service.dart` | ★ 逐片聲音異常（`acoustics.py` 的 Dart 對照）+ **三重守門**，不可用時不給數字 |
 | `flutter_app/lib/services/blade_dynamics_service.dart` | 動態層編排；**抽幀是注入點**（`BladeFrameExtractor`），原生解碼未接上 |
 | `flutter_app/lib/services/blade_audio_recorder.dart` | App 內錄音（`record` plugin 收在一處）+ **錄音參數的量測要求**（WAV／單聲道／自動增益與降噪一律關） |
+| `flutter_app/lib/services/blade_dataset_service.dart` | ★ Phase 4 前置：訓練語料的標記規則（**標記來源是人工確認不是演算法**；`humanClean` 三個條件缺一不可） |
+| `flutter_app/lib/services/blade_dataset_export.dart` | 語料打包（manifest + zip + 分享） |
 | `flutter_app/lib/screens/blade_history_screen.dart` | 葉片歷史與趨勢（資產驅動資料模型的兌現處） |
 | `flutter_app/lib/services/blade_ai_service.dart` | 葉片專用 AI prompt（正常結構清單）+ 值域夾回 |
 | `flutter_app/lib/services/blade_report_builder.dart` | 葉片報告（**不輸出「合格」**），交給 `pdf_report_service.dart` |
@@ -57,11 +59,11 @@
 
 ## 測試
 ```bash
-flutter test          # 全部 406 tests（widget_test 已修復，不再排除）
+flutter test          # 全部 463 tests（widget_test 已修復，不再排除）
 cd backend && GEMINI_API_KEY=ci-fake-key pytest tests/ --asyncio-mode=auto   # 191 pytest
 cd blade_prototype && pip install -r requirements.txt && pytest              # 81 tests（葉片原型，合成影像/音軌夾具）
 ```
-Flutter 406 tests / 後端 191 pytest / 葉片原型 81 pytest 全綠（2026-09-07 CI 實測）。DB 測試使用 `sqflite_common_ffi` in-memory。標準資料為單一來源：改 `backend/app/data/inspection_standards.py` 後必須跑 `python backend/scripts/export_standards.py` 重新匯出 JSON（有同步守門測試）。
+Flutter 463 tests / 後端 191 pytest / 葉片原型 81 pytest 全綠（2026-09-07 CI 實測）。DB 測試使用 `sqflite_common_ffi` in-memory。標準資料為單一來源：改 `backend/app/data/inspection_standards.py` 後必須跑 `python backend/scripts/export_standards.py` 重新匯出 JSON（有同步守門測試）。
 
 ## 已知問題追蹤
 - GitHub Issues #14-#19 已全數修復並關閉（2026-04-16）
@@ -88,6 +90,15 @@ Flutter 406 tests / 後端 191 pytest / 葉片原型 81 pytest 全綠（2026-09-
 - `replaceWtDetections` 跨層清除修正（2026-09-07）：原本只清傳進來那一層的 `pending`，但 `analyzeSession` 回傳的是整個場次三層的完整結果，於是上一輪標記過、這一輪不再標記的發現會留在報告上。改為清整個場次的 `pending`，`confirmed`/`rejected` 不動
 
 - 葉片聲音層兩個未決事項結案（2026-09-07）：①**`tonal_exclusive` 修好了**——原本的「只有這片有」複查在 ±3% 窄頻帶上重跑 9 點中值濾波，但手機取樣率下那個頻帶只有 4–5 個 bin，達不到需要的 13 個，複查回 NaN 被當成「另兩片沒有」，於是它等同「突出量 ≥ 6 dB」。改成讀各片**全頻帶**突出量在該頻率上的值。實測三片同頻哨音由 3 片誤判降到 0、兩片同頻由 2 降到 0，單片仍抓得到（共消 5 個誤報）。Python/Dart 同步改、夾具重跑（既有兩段夾具的值不變——它們沒有多片同頻的情況）。②**加入 `record: ^6.2.1`** 做 App 內錄音，專案 SDK 下限 `>=3.2.0` → `>=3.5.0`。**刻意不用 7.x**（要 Dart ^3.12/Flutter 3.44，下限太高）。錄音參數是量測要求：WAV／單聲道／44.1 kHz／**自動增益與降噪一律關**（自動增益會拆掉三片互比的基準、降噪削掉要量的寬頻噪音），有測試釘住。`file_picker` 保留為備援。iOS 的 `NSMicrophoneUsageDescription` 待 `ios/` 目錄建立時補
+
+- 葉片 Phase 4 前置：訓練語料的累積與匯出（2026-09-07）。**Phase 4 的模型本身（PatchCore/TFLite）還做不了，卡在資料不是工程**：它的前提是「同一支手機、同一台風機」的健康 patch 記憶庫，而這樣的照片目前 0 張（既有 75 張公開語料是整機照，轉子占畫面 ≤ 1/3；標註的是輪轂座標與天空條件，沒有缺陷標註）。合成影像不能替代——那是循環驗證。
+  所以先做**讓那件事變得可能**的部分：`blade_dataset_service.dart` 把第四步的 `humanStatus`（原本寫進 DB 就沒有出口）整理成自我描述的語料。三個不可退化的標記規則：①**標記來源是人不是演算法**——拿 severity 當標籤只會讓模型學會模仿演算法含它的誤報；②`humanClean` 同時要求「場次已簽核 + 這份媒體沒有成立的發現 + 照片過了品質閘門」，缺一就不是健康樣本（「演算法沒報」≠「人看過沒問題」，混用會讓記憶庫摻進漏檢的真缺陷，模型把缺陷學成正常且毫無徵兆）；③簽核過的場次裡若還有 `pending` 的發現，整份媒體退回 `unreviewed`——寧可少收一筆不要收一筆錯的。
+  畫面上顯示「還差多少」：規格把 Phase 4 的估時寫成「視資料量」，而在此之前沒有任何地方看得到資料量
+
+- Issue #43 可自動化的兩項（2026-09-07）：①**lint 清理 102 → 6**。`flutter analyze` 本來就綠（CI 的門檻是 warning 以上），但 102 條 info 會把真正該看的訊息埋掉。其中 3 條 `use_build_context_synchronously` 是**真的潛在崩潰**（await 後才用 context）不是風格問題；`withOpacity` → `withValues` 連帶把 Flutter 下限提到 **3.27**（`withValues` 是 3.27 才有的——用 framework 自己的 `cupertino/colors.dart` 在 3.27 用了它、3.24 沒有來確認，不是憑印象）。刻意**留下 6 條**：`WillPopScope`→`PopScope`（`onWillPop` 是 async 而 `canPop` 必須同步，要重構）、Radio→`RadioGroup`（結構性遷移且要 Flutter 3.32）、`dart:html`（web 不是產品目標）。②**歷史列表分頁**：`ListView.builder` 本來就只建可見項目，所以卡的**不是滾動而是載入**——`FormInspectionRecord.fromMap` 每列要 `jsonDecode` 三個欄位，而列表上的「已填 N 項／異常 N 項」正是從那些欄位算出來的，省不掉解析只能限量。改成一頁 30 筆、捲到底再載（`itemBuilder` 同一幀會被呼叫多次，所以有重入守門，否則同一頁會抓好幾遍）
+  **Issue #43 的另外兩項（實機完整流程、離線→恢復網路）沒有實機做不了**，issue 仍開著
+- Issue #43 第二項回頭補（2026-09-07）：「離線→恢復網路」不只是沒實機驗過。①**自動分享那一半沒測過**——`ShareQueueService` 是 singleton + static 分享動作，三個邊界都沒縫，於是「把不存在的檔案標成已分享」（使用者會以為客戶收到了報告）沒有任何地方擋。沿用 `ConnectivityService` 的 `@visibleForTesting` 覆寫慣例開縫，`processPendingShares()` 改為回傳 `ShareQueueOutcome`，14 條測試守的是**什麼情況下不准標記完成**。②**「待判定」重新判定那一半根本沒實作**——畫面提示寫著「恢復網路後可重新判定」，但全 app 唯一的連線監聽是分享佇列。補上 `_watchConnectivityForRejudge()`，判斷抽成頂層純函式 `shouldRejudgeOnReconnect` / `rejudgeTargets` 才測得到。`pendingOnly` 只挑還卡在「待判定」的：本地引擎與後端讀同一份標準資料，重跑已判過的只會無聲換掉使用者看過的判定
+- 離線交付的規則（2026-09-07）：**離線佇列只套在「交付」動作上**（定檢的分享／重新分享、葉片報告），**匯出動作照樣開分享面板**——面板上「儲存到檔案」／AirDrop 離線可用，擋掉等於拿掉功能，而 PDF 寫在 app 文件目錄裡使用者自己拿不到。`_exportPdfReport`／`_shareReport` 兩處各留註解說明為什麼刻意不擋。同批修掉一個已出貨的缺口：`blade_report_export` 的註解說「`pendingShare` 由呼叫端決定」但**兩個呼叫端都沒決定**，於是葉片那半條佇列從來沒被觸發過（上一批接的是讀的那端，寫的那端沒接上）；政策搬進 `exportAndShare`，回傳 `(path, shared)` 讓提示說對，並開 `isOnline`/`outputDir`/`shareSink` 三個縫讓它測得到
 
 ## 既有 error（已修復）
 - ~~`measurement.dart`: `sqrt` 未 import `dart:math`~~ → 已修復

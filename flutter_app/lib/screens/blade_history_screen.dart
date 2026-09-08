@@ -7,6 +7,8 @@ import 'package:path/path.dart' as p;
 import '../models/wt_asset.dart';
 import '../models/wt_capture_session.dart';
 import '../models/wt_detection.dart';
+import '../services/blade_dataset_export.dart';
+import '../services/blade_dataset_service.dart';
 import '../services/blade_report_builder.dart';
 import '../services/blade_report_export.dart';
 import '../services/blade_trend_service.dart';
@@ -28,6 +30,7 @@ class _BladeHistoryScreenState extends State<BladeHistoryScreen> {
   List<WtAsset> _assets = [];
   final Map<String, List<WtCaptureSession>> _sessions = {};
   bool _loading = true;
+  bool _busy = false;
 
   @override
   void initState() {
@@ -51,10 +54,67 @@ class _BladeHistoryScreenState extends State<BladeHistoryScreen> {
     });
   }
 
+  /// 訓練語料的統計與匯出（規格 §9 Phase 4 的前置）。
+  ///
+  /// **先給數字再給按鈕**：Phase 4 的估時在規格裡寫的是「視資料量」，
+  /// 而在這之前沒有任何地方看得到資料量。使用者要先知道「還差多少」，
+  /// 匯出才有意義。
+  Future<void> _showDatasetSheet() async {
+    setState(() => _busy = true);
+    BladeDatasetSummary summary;
+    try {
+      summary = await BladeDatasetExport.summarize(db: _db);
+    } catch (e) {
+      if (mounted) {
+        setState(() => _busy = false);
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('讀不到語料統計：$e')));
+      }
+      return;
+    }
+    if (!mounted) return;
+    setState(() => _busy = false);
+
+    final go = await showModalBottomSheet<bool>(
+      context: context,
+      isScrollControlled: true,
+      builder: (_) => _DatasetSheet(summary: summary),
+    );
+    if (go != true || !mounted) return;
+
+    setState(() => _busy = true);
+    try {
+      final r = await BladeDatasetExport.exportAndShare(db: _db);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text('已匯出 ${r.copiedCount} 個檔案'
+            '${r.missingCount > 0 ? '（${r.missingCount} 個原檔已不存在，'
+                '仍列在 manifest 裡）' : ''}：${r.fileName}'),
+        duration: const Duration(seconds: 6),
+      ));
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('匯出失敗：$e')));
+      }
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('葉片檢測歷史')),
+      appBar: AppBar(
+        title: const Text('葉片檢測歷史'),
+        actions: [
+          IconButton(
+            tooltip: '匯出訓練語料',
+            icon: const Icon(Icons.upload_file),
+            onPressed: _busy ? null : _showDatasetSheet,
+          ),
+        ],
+      ),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : _assets.isEmpty
@@ -149,7 +209,7 @@ class _BladeAssetHistoryScreenState extends State<BladeAssetHistoryScreen> {
     setState(() => _busy = true);
     try {
       final detections = await _db.getWtDetections(session.sessionId);
-      final path = await BladeReportExport.exportAndShare(
+      final r = await BladeReportExport.exportAndShare(
         asset: widget.asset,
         session: session,
         // 人工駁回的不列進報告；`buildData` 也會再擋一次
@@ -159,8 +219,13 @@ class _BladeAssetHistoryScreenState extends State<BladeAssetHistoryScreen> {
         db: _db,
       );
       if (mounted) {
+        // 離線時報告已排進佇列而不是已送出——提示要說對，不然使用者以為客戶收到了
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('已重新匯出：${p.basename(path)}')),
+          SnackBar(
+            content: Text(r.shared
+                ? '已重新匯出：${p.basename(r.path)}'
+                : '目前離線，已重新匯出並排入待分享（恢復網路後自動送出）'),
+          ),
         );
       }
     } catch (e) {
@@ -290,7 +355,7 @@ class _BladeAssetHistoryScreenState extends State<BladeAssetHistoryScreen> {
                     padding:
                         const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                     decoration: BoxDecoration(
-                      color: Colors.red.withOpacity(0.12),
+                      color: Colors.red.withValues(alpha: 0.12),
                       borderRadius: BorderRadius.circular(4),
                     ),
                     child: const Text('上升',
@@ -419,14 +484,14 @@ class _BladeAssetHistoryScreenState extends State<BladeAssetHistoryScreen> {
           // 非照片的媒體不能走 `Image.file`：那條路會落到 errorBuilder，
           // 於是一段好好的音軌在畫面上顯示成「圖片壞了」。
           child: media.kind == WtMediaKind.video
-              ? ColoredBox(
+              ? const ColoredBox(
                   color: Colors.black12,
-                  child: const Center(child: Icon(Icons.burst_mode, size: 20)),
+                  child: Center(child: Icon(Icons.burst_mode, size: 20)),
                 )
               : media.kind == WtMediaKind.audio
-                  ? ColoredBox(
+                  ? const ColoredBox(
                       color: Colors.black12,
-                      child: const Center(
+                      child: Center(
                           child: Icon(Icons.insert_drive_file, size: 20)),
                     )
                   : Image.file(
@@ -460,6 +525,93 @@ class _BladeAssetHistoryScreenState extends State<BladeAssetHistoryScreen> {
 
 /// 比值折線。門檻線畫在 1.5 / 2.0 / 5.0——與 `BladeSurfaceTriage` 同一組值，
 /// 讓「這條線離門檻多遠」看得出來，而不是只看得到相對高低。
+/// 訓練語料的統計表 + 匯出按鈕。
+///
+/// 這張表最重要的一列是 `humanClean` 的**分區段照**張數：健康樣本異常偵測
+/// （PatchCore 類）的記憶庫只能用那一類，而「演算法沒報」不算——那是兩件事。
+class _DatasetSheet extends StatelessWidget {
+  const _DatasetSheet({required this.summary});
+
+  final BladeDatasetSummary summary;
+
+  static const Map<BladeDatasetLabel, String> _labelText = {
+    BladeDatasetLabel.defect: '人工確認的缺陷（正樣本）',
+    BladeDatasetLabel.falsePositive: '人工駁回（演算法誤報）',
+    BladeDatasetLabel.humanClean: '人看過且乾淨（可進記憶庫）',
+    BladeDatasetLabel.unusable: '沒過品質閘門（不可用）',
+    BladeDatasetLabel.unreviewed: '還沒有人簽核',
+  };
+
+  @override
+  Widget build(BuildContext context) {
+    final can = summary.memoryBankCandidates;
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('訓練語料', style: Theme.of(context).textTheme.titleLarge),
+            const SizedBox(height: 4),
+            Text('${summary.sessionCount} 次拍攝、'
+                '${summary.reviewedSessionCount} 次有人簽核、'
+                '${summary.assetCount} 台風機'),
+            const SizedBox(height: 16),
+            Card(
+              color: can == 0 ? Colors.orange.shade50 : Colors.blue.shade50,
+              child: Padding(
+                padding: const EdgeInsets.all(12),
+                child: Text(summary.readiness,
+                    style: const TextStyle(fontSize: 13)),
+              ),
+            ),
+            const SizedBox(height: 12),
+            for (final l in BladeDatasetLabel.values)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 2),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(child: Text(_labelText[l] ?? l.name,
+                        style: const TextStyle(fontSize: 13))),
+                    Text('${summary.of(l)}',
+                        style: const TextStyle(
+                            fontSize: 13, fontWeight: FontWeight.bold)),
+                  ],
+                ),
+              ),
+            const SizedBox(height: 12),
+            const Text(
+              '匯出的 zip 含 manifest.json（自我描述：每張照片的區段、拍攝條件、'
+              '演算法量到的數值、AI 的解讀、以及**人的判定**）。'
+              '照片只複製前三類；沒過閘門與沒簽核的仍列在 manifest 裡但不複製檔案'
+              '——一次外業可能是幾百 MB，而那兩類對訓練沒有用。',
+              style: TextStyle(fontSize: 12),
+            ),
+            const SizedBox(height: 16),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context, false),
+                  child: const Text('關閉'),
+                ),
+                const SizedBox(width: 8),
+                FilledButton.icon(
+                  onPressed: () => Navigator.pop(context, true),
+                  icon: const Icon(Icons.upload_file),
+                  label: const Text('匯出並分享'),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class _TrendPainter extends CustomPainter {
   final List<BladeTrendPoint> points;
   const _TrendPainter(this.points);
@@ -487,7 +639,7 @@ class _TrendPainter extends CustomPainter {
         points.length == 1 ? 0 : size.width * i / (points.length - 1);
 
     final grid = Paint()
-      ..color = Colors.grey.withOpacity(0.35)
+      ..color = Colors.grey.withValues(alpha: 0.35)
       ..strokeWidth = 1;
     final label = TextPainter(textDirection: TextDirection.ltr);
     for (final t in _thresholds) {

@@ -7,11 +7,11 @@ class SignatureFieldInput extends StatelessWidget {
   final ValueChanged<dynamic> onChanged;
 
   const SignatureFieldInput({
-    Key? key,
+    super.key,
     required this.field,
     required this.value,
     required this.onChanged,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -27,10 +27,10 @@ class SignatureFieldInput extends StatelessWidget {
             color: Colors.grey[100],
           ),
           child: hasSignature
-              ? Center(
+              ? const Center(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
-                    children: const [
+                    children: [
                       Icon(Icons.check_circle, color: Colors.green, size: 48),
                       SizedBox(height: 8),
                       Text('已簽名'),

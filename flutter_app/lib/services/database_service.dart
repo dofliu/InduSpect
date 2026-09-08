@@ -462,8 +462,8 @@ class DatabaseService {
     }
 
     final result = await db.rawQuery(
-      'SELECT COUNT(*) as count FROM template_inspection_records' +
-      (whereClause.isEmpty ? '' : ' WHERE $whereClause'),
+      'SELECT COUNT(*) as count FROM template_inspection_records'
+      '${whereClause.isEmpty ? '' : ' WHERE $whereClause'}',
       whereArgs.isEmpty ? null : whereArgs,
     );
 
@@ -607,8 +607,8 @@ class DatabaseService {
     }
 
     final result = await db.rawQuery(
-      'SELECT COUNT(*) as count FROM photo_sync_tasks' +
-      (whereClause.isEmpty ? '' : ' WHERE $whereClause'),
+      'SELECT COUNT(*) as count FROM photo_sync_tasks'
+      '${whereClause.isEmpty ? '' : ' WHERE $whereClause'}',
       whereArgs.isEmpty ? null : whereArgs,
     );
 
@@ -691,7 +691,11 @@ class DatabaseService {
   }
 
   /// 搜尋表單檢測紀錄（標題、檔名、地點）
-  Future<List<FormInspectionRecord>> searchFormRecords(String query) async {
+  Future<List<FormInspectionRecord>> searchFormRecords(
+    String query, {
+    int? limit,
+    int? offset,
+  }) async {
     final db = await database;
     final pattern = '%$query%';
 
@@ -700,6 +704,8 @@ class DatabaseService {
       where: 'title LIKE ? OR source_file_name LIKE ? OR location_name LIKE ?',
       whereArgs: [pattern, pattern, pattern],
       orderBy: 'created_at DESC',
+      limit: limit,
+      offset: offset,
     );
 
     return results.map((m) => FormInspectionRecord.fromMap(m)).toList();

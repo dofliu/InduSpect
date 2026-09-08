@@ -8,11 +8,11 @@ class NumberFieldInput extends StatelessWidget {
   final ValueChanged<double?> onChanged;
 
   const NumberFieldInput({
-    Key? key,
+    super.key,
     required this.field,
     required this.value,
     required this.onChanged,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

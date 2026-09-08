@@ -7,7 +7,7 @@ import '../utils/constants.dart';
 import 'package:intl/intl.dart';
 
 class InspectionRecordsScreen extends StatelessWidget {
-  const InspectionRecordsScreen({Key? key}) : super(key: key);
+  const InspectionRecordsScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -119,7 +119,7 @@ class InspectionRecordsScreen extends StatelessWidget {
                        padding: const EdgeInsets.only(left: 12, bottom: 2),
                        child: Text('${e.key}: ${val['value']} ${val['unit'] ?? ''}'),
                      );
-                  }).toList(),
+                  }),
                   const SizedBox(height: 8),
                 ],
                 Align(
