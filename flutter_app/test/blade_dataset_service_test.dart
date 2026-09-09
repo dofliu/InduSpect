@@ -166,6 +166,23 @@ void main() {
       expect(it.toJson()['turbine_model'], 'V112-3.0');
     });
 
+    test('★ 帶上風機狀態：停機拍與轉動拍不是同一種「正常」，未記錄就不寫鍵', () {
+      final running = session()..turbineState = WtTurbineState.running;
+      final it = BladeDatasetService.collect(
+        sessions: [running],
+        detectionsBySession: const {},
+      ).single;
+      expect(it.toJson()['turbine_state'], 'running');
+
+      final unknown = session(); // 預設 unknown
+      final it2 = BladeDatasetService.collect(
+        sessions: [unknown],
+        detectionsBySession: const {},
+      ).single;
+      expect(it2.toJson().containsKey('turbine_state'), isFalse,
+          reason: '沒填就是沒填，manifest 不該看起來像「已知是 unknown」');
+    });
+
     test('只挑屬於這份媒體的發現（不會把別張照片的發現算進來）', () {
       final s = session(media: [photo(path: '/p/a.jpg'), photo(path: '/p/b.jpg')]);
       final ds = [det(id: 'd1', path: '/p/a.jpg')];

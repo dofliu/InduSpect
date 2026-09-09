@@ -32,6 +32,12 @@ class WtMedia {
   final Map<String, dynamic> qualityJson;
   final DateTime capturedAt;
 
+  /// **這一張**拍攝時的 GPS。場次層級的 lat/lng 是「到場位置」，
+  /// 正視與側視卻站在不同地方——資產的拍攝點（`WtAsset.capturePoints`）就是
+  /// 從這裡寫進去的。沒有定位就是 null，不拿場次位置補。
+  final double? latitude;
+  final double? longitude;
+
   WtMedia({
     required this.path,
     this.kind = WtMediaKind.photo,
@@ -42,8 +48,21 @@ class WtMedia {
     this.leadingEdge,
     Map<String, dynamic>? qualityJson,
     DateTime? capturedAt,
+    this.latitude,
+    this.longitude,
   })  : qualityJson = qualityJson ?? {},
         capturedAt = capturedAt ?? DateTime.now();
+
+  bool get hasLocation => latitude != null && longitude != null;
+
+  /// 對應資產拍攝點的名稱。只有全機照（正視／側視）有固定站位；分區段照是
+  /// 跟著葉片走的，沒有「同一個位置」可言。
+  /// 與 `BladeShot.capturePointName` 用同一組字串（'front' / 'side'）。
+  String? get capturePointName {
+    if (view == WtMediaView.front) return 'front';
+    if (view == WtMediaView.side) return 'side';
+    return null;
+  }
 
   /// 品質閘門是否放行。沒有判定結果時回 null（尚未分析），不要當成合格。
   bool? get qualityOk =>
@@ -59,6 +78,8 @@ class WtMedia {
         if (leadingEdge != null) 'le': leadingEdge,
         if (qualityJson.isNotEmpty) 'quality': qualityJson,
         'captured_at': capturedAt.toIso8601String(),
+        if (latitude != null) 'lat': latitude,
+        if (longitude != null) 'lng': longitude,
       };
 
   factory WtMedia.fromJson(Map<String, dynamic> json) => WtMedia(
@@ -72,6 +93,9 @@ class WtMedia {
         qualityJson: (json['quality'] as Map?)?.cast<String, dynamic>() ?? {},
         capturedAt:
             DateTime.tryParse(json['captured_at'] as String? ?? '') ?? DateTime.now(),
+        // 舊列沒有這兩個鍵 → null，照樣讀得起來（media 是列裡的 JSON，不需 migration）
+        latitude: (json['lat'] as num?)?.toDouble(),
+        longitude: (json['lng'] as num?)?.toDouble(),
       );
 
   WtMedia copyWith({Map<String, dynamic>? qualityJson}) => WtMedia(
@@ -84,6 +108,8 @@ class WtMedia {
         leadingEdge: leadingEdge,
         qualityJson: qualityJson ?? this.qualityJson,
         capturedAt: capturedAt,
+        latitude: latitude,
+        longitude: longitude,
       );
 }
 

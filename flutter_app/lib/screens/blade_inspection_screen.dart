@@ -47,6 +47,13 @@ class _BladeInspectionScreenState extends State<BladeInspectionScreen> {
   List<WtAsset> _assets = [];
   WtAsset? _asset;
   WtCaptureSession? _session;
+
+  // 本次作業的 metadata（規格 §10.2：記錄風機狀態、天氣、人員）。
+  // 這三個欄位在 schema 裡從 v5 就有，但在此之前**沒有任何畫面收它們**：
+  // turbine_state 永遠是 unknown、weather_note / inspector 永遠是 null。
+  WtTurbineState _turbineState = WtTurbineState.unknown;
+  String? _weatherNote;
+  String? _inspector;
   WtCaptureSession? _previousSession;
   List<WtDetection> _detections = [];
   BladeAnalysisOutcome? _outcome;
@@ -90,6 +97,12 @@ class _BladeInspectionScreenState extends State<BladeInspectionScreen> {
   Future<void> _capture() async {
     final asset = _asset;
     if (asset == null) return;
+    if (_session == null) {
+      // 新場次：先記風機狀態／天氣／人員。可以略過，但要問——
+      // 聲音層只在轉動時有意義，報告上也要說得出這次是停機還是運轉。
+      await _editSessionMeta();
+      if (!mounted) return;
+    }
     final sessionId = _session?.sessionId ?? _uuid.v4();
 
     final media = await Navigator.push<List<WtMedia>>(
@@ -121,15 +134,97 @@ class _BladeInspectionScreenState extends State<BladeInspectionScreen> {
       latitude: here?.latitude ?? _session?.latitude,
       longitude: here?.longitude ?? _session?.longitude,
       media: media,
-      turbineState: _session?.turbineState ?? WtTurbineState.unknown,
+      turbineState: _turbineState,
+      weatherNote: _weatherNote,
+      inspector: _inspector,
       title: _session?.title ?? '',
     );
     await _db.saveWtSession(session);
+
+    // 全機照自己的 GPS → 資產的拍攝點。這是拍攝點唯一的寫入口；
+    // 沒有它，引導拍攝畫面的「到上次拍攝點的距離」永遠算不出來。
+    final updatedAsset = _assetWithCapturePoints(asset, media);
+    if (!identical(updatedAsset, asset)) await _db.saveWtAsset(updatedAsset);
+
     if (!mounted) return;
     setState(() {
       _session = session;
+      _asset = updatedAsset;
       if (advance) _step = 2;
     });
+  }
+
+  /// 把每張帶位置的全機照 upsert 成同名拍攝點；沒有任何一張帶位置就原樣回傳。
+  static WtAsset _assetWithCapturePoints(WtAsset asset, List<WtMedia> media) {
+    var out = asset;
+    for (final m in media) {
+      final name = m.capturePointName;
+      if (name == null || !m.hasLocation) continue;
+      out = out.upsertCapturePoint(WtCapturePoint(
+        name: name,
+        latitude: m.latitude,
+        longitude: m.longitude,
+      ));
+    }
+    return out;
+  }
+
+  /// 編輯本次作業的 metadata。新場次開拍前會問一次，之後可從拍攝步驟再改。
+  Future<void> _editSessionMeta() async {
+    final r = await showDialog<({WtTurbineState state, String? weather, String? inspector})>(
+      context: context,
+      builder: (_) => _SessionMetaDialog(
+        state: _turbineState,
+        weather: _weatherNote,
+        inspector: _inspector,
+      ),
+    );
+    if (r == null || !mounted) return;
+    setState(() {
+      _turbineState = r.state;
+      _weatherNote = r.weather;
+      _inspector = r.inspector;
+    });
+    // 場次已經存在就直接落地，不等下一次 commit
+    final s = _session;
+    if (s != null) {
+      s.turbineState = r.state;
+      s.weatherNote = r.weather;
+      s.inspector = r.inspector;
+      await _db.saveWtSession(s);
+    }
+  }
+
+  /// 刪除一台風機：它的所有場次、偵測與人工確認一起刪（DB 端是一個 transaction）。
+  /// 沒有這個入口之前，打錯編號的風機只能永遠留在清單上。
+  Future<void> _deleteAsset(WtAsset a) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text('刪除 ${a.assetId}？'),
+        content: const Text('這台風機的所有檢測場次、偵測結果與人工確認都會一起刪除，'
+            '趨勢紀錄會整個消失。照片檔本身不會被刪。'),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('取消')),
+          FilledButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              child: const Text('刪除')),
+        ],
+      ),
+    );
+    if (ok != true) return;
+    await _db.deleteWtAsset(a.assetId);
+    if (!mounted) return;
+    if (_asset?.assetId == a.assetId) {
+      setState(() {
+        _asset = null;
+        _session = null;
+        _step = 0;
+      });
+    }
+    await _loadAssets();
   }
 
   /// 附加一段音軌（規格 §5.4 音軌）。
@@ -505,8 +600,14 @@ class _BladeInspectionScreenState extends State<BladeInspectionScreen> {
                           if (a.model != null) a.model!,
                           if (a.rotorDiameterM != null)
                             '轉子 ${a.rotorDiameterM!.toStringAsFixed(0)} m',
+                          if (a.hubHeightM != null)
+                            '輪轂 ${a.hubHeightM!.toStringAsFixed(0)} m',
                         ].join(' · ')),
-                        trailing: const Icon(Icons.chevron_right),
+                        trailing: IconButton(
+                          icon: const Icon(Icons.delete_outline),
+                          tooltip: '刪除這台風機',
+                          onPressed: _busy ? null : () => _deleteAsset(a),
+                        ),
                         onTap: () => _pickAsset(a),
                       );
                     },
@@ -540,6 +641,26 @@ class _BladeInspectionScreenState extends State<BladeInspectionScreen> {
               subtitle: Text('${prev.media.length} 張照片可當取景參考'),
             ),
           ),
+        Card(
+          margin: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+          child: ListTile(
+            leading: const Icon(Icons.assignment_outlined),
+            title: const Text('本次作業'),
+            subtitle: Text([
+              '風機狀態：${BladeReportBuilder.turbineStateLabel(_turbineState)}',
+              if (_weatherNote != null && _weatherNote!.isNotEmpty) '天氣：$_weatherNote',
+              if (_inspector != null && _inspector!.isNotEmpty) '人員：$_inspector',
+              if (_asset?.standingDistanceHint != null)
+                '全機照建議站在 ${_asset!.standingDistanceHint} 外（1.5–2 倍輪轂高度）',
+            ].join('\n')),
+            isThreeLine: true,
+            trailing: IconButton(
+              icon: const Icon(Icons.edit_outlined),
+              tooltip: '編輯',
+              onPressed: _busy ? null : _editSessionMeta,
+            ),
+          ),
+        ),
         Padding(
           padding: const EdgeInsets.all(16),
           child: FilledButton.icon(
@@ -874,12 +995,14 @@ class _AssetDialogState extends State<_AssetDialog> {
   final _model = TextEditingController();
   final _diameter = TextEditingController();
 
+  final _hub = TextEditingController();
   @override
   void dispose() {
     _id.dispose();
     _site.dispose();
     _model.dispose();
     _diameter.dispose();
+    _hub.dispose();
     super.dispose();
   }
 
@@ -917,6 +1040,14 @@ class _AssetDialogState extends State<_AssetDialog> {
                   hintText: '幾何層要用它把像素換算成實尺',
                 ),
               ),
+              TextField(
+                controller: _hub,
+                keyboardType: TextInputType.number,
+                decoration: const InputDecoration(
+                  labelText: '輪轂高度（m）',
+                  hintText: '全機照要站在 1.5–2 倍輪轂高度外，填了會提示距離',
+                ),
+              ),
             ],
           ),
         ),
@@ -936,10 +1067,97 @@ class _AssetDialogState extends State<_AssetDialog> {
                   siteName: _site.text.trim(),
                   model: _model.text.trim().isEmpty ? null : _model.text.trim(),
                   rotorDiameterM: double.tryParse(_diameter.text.trim()),
+                  hubHeightM: double.tryParse(_hub.text.trim()),
                 ),
               );
             },
             child: const Text('建立'),
+          ),
+        ],
+      );
+}
+
+/// 本次作業的 metadata：風機狀態／天氣／人員（規格 §10.2）。
+///
+/// 三個都可以留空——現場不該被表單擋住——但風機狀態要問：聲音層只在轉動時
+/// 有意義，報告也要說得出這次是停機還是運轉。
+class _SessionMetaDialog extends StatefulWidget {
+  final WtTurbineState state;
+  final String? weather;
+  final String? inspector;
+
+  const _SessionMetaDialog({
+    required this.state,
+    this.weather,
+    this.inspector,
+  });
+
+  @override
+  State<_SessionMetaDialog> createState() => _SessionMetaDialogState();
+}
+
+class _SessionMetaDialogState extends State<_SessionMetaDialog> {
+  late WtTurbineState _state = widget.state;
+  late final _weather = TextEditingController(text: widget.weather ?? '');
+  late final _inspector = TextEditingController(text: widget.inspector ?? '');
+
+  @override
+  void dispose() {
+    _weather.dispose();
+    _inspector.dispose();
+    super.dispose();
+  }
+
+  String? _trimmed(TextEditingController c) {
+    final t = c.text.trim();
+    return t.isEmpty ? null : t;
+  }
+
+  @override
+  Widget build(BuildContext context) => AlertDialog(
+        title: const Text('本次作業'),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('風機狀態', style: TextStyle(fontSize: 12, color: Colors.black54)),
+              Wrap(
+                spacing: 8,
+                children: [
+                  for (final st in WtTurbineState.values)
+                    ChoiceChip(
+                      label: Text(BladeReportBuilder.turbineStateLabel(st)),
+                      selected: _state == st,
+                      onSelected: (_) => setState(() => _state = st),
+                    ),
+                ],
+              ),
+              TextField(
+                controller: _weather,
+                decoration: const InputDecoration(
+                  labelText: '天氣（選填）',
+                  hintText: '晴、多雲、陣風 8 m/s…',
+                ),
+              ),
+              TextField(
+                controller: _inspector,
+                decoration: const InputDecoration(labelText: '檢測人員（選填）'),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('略過'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(
+              context,
+              (state: _state, weather: _trimmed(_weather), inspector: _trimmed(_inspector)),
+            ),
+            child: const Text('確定'),
           ),
         ],
       );

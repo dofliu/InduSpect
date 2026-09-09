@@ -2475,7 +2475,7 @@ class _FormInspectionScreenState extends State<FormInspectionScreen> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('目前離線，檔案已儲存。恢復網路後可重新分享。'),
+              content: Text('目前離線，檔案已儲存並排入待分享，恢復網路後自動送出。'),
               backgroundColor: Colors.orange,
             ),
           );

@@ -119,6 +119,66 @@ void main() {
     expect(data.recordId, 'sess-1');
   });
 
+  group('本次作業 metadata（規格 §10.2）寫進摘要開頭', () {
+    WtCaptureSession meta({
+      WtTurbineState state = WtTurbineState.unknown,
+      String? weather,
+      String? inspector,
+    }) =>
+        WtCaptureSession(
+          sessionId: 'sess-1',
+          assetId: 'WTG-07',
+          capturedAt: DateTime(2026, 9, 20, 9, 40),
+          turbineState: state,
+          weatherNote: weather,
+          inspector: inspector,
+          media: [],
+        );
+
+    test('風機狀態的標籤：unknown 是「未記錄」不是「不知道」', () {
+      expect(BladeReportBuilder.turbineStateLabel(WtTurbineState.stopped), '停機');
+      expect(BladeReportBuilder.turbineStateLabel(WtTurbineState.idling), '怠速');
+      expect(BladeReportBuilder.turbineStateLabel(WtTurbineState.running), '運轉');
+      expect(BladeReportBuilder.turbineStateLabel(WtTurbineState.unknown), '未記錄');
+    });
+
+    test('三個都沒填 → null，不印一行空的', () {
+      expect(BladeReportBuilder.sessionMetaLine(meta()), isNull);
+      expect(BladeReportBuilder.sessionMetaLine(meta(weather: '  ', inspector: '')), isNull,
+          reason: '空白等於沒填');
+    });
+
+    test('填了什麼就寫什麼，unknown 的風機狀態不寫', () {
+      expect(BladeReportBuilder.sessionMetaLine(meta(state: WtTurbineState.stopped)),
+          '風機狀態：停機');
+      expect(
+        BladeReportBuilder.sessionMetaLine(
+            meta(state: WtTurbineState.running, weather: '多雲 陣風 8 m/s', inspector: '王小明')),
+        '風機狀態：運轉｜天氣：多雲 陣風 8 m/s｜檢測人員：王小明',
+      );
+      expect(BladeReportBuilder.sessionMetaLine(meta(weather: '晴')), '天氣：晴');
+    });
+
+    test('★ buildData 把它放在摘要最前面；沒填時摘要不變', () {
+      final withMeta = BladeReportBuilder.buildData(
+        asset: asset,
+        session: meta(state: WtTurbineState.stopped, weather: '晴'),
+        detections: const [],
+      );
+      expect(withMeta.summaryReport, startsWith('風機狀態：停機｜天氣：晴'));
+      expect(withMeta.summaryReport, contains('未檢出超出門檻的異常'));
+      expect(withMeta.summaryReport, isNot(contains('合格')));
+
+      final without = BladeReportBuilder.buildData(
+        asset: asset,
+        session: meta(),
+        detections: const [],
+      );
+      expect(without.summaryReport, startsWith('本次未檢出超出門檻的異常'));
+      expect(without.summaryReport, isNot(contains('風機狀態')));
+    });
+  });
+
   test('人工駁回的發現不列入報告，但照片仍附上', () {
     final data = BladeReportBuilder.buildData(
       asset: asset,

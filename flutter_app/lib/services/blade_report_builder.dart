@@ -156,9 +156,13 @@ class BladeReportBuilder {
     }
 
     // 沒有任何發現時**不能留白**，也不能寫「合格」——要明確講清楚這代表什麼
-    final head = items.isEmpty
+    final body = items.isEmpty
         ? '本次未檢出超出門檻的異常。這不等於葉片沒有問題：$screeningDisclaimer'
         : screeningDisclaimer;
+    // 風機狀態／天氣／人員（規格 §10.2）寫在最前面：讀報告的人第一件要知道的
+    // 是「這次是停機還是運轉拍的」——聲音層只在轉動時有意義。
+    final meta = sessionMetaLine(session);
+    final head = meta == null ? body : '$meta\n\n$body';
 
     return PdfReportData(
       title: _titleOf(asset, session),
@@ -189,6 +193,34 @@ class BladeReportBuilder {
         fontData: fontData,
         photoLoader: photoLoader,
       );
+
+  /// 風機狀態的中文標籤。`unknown` 是「未記錄」不是「不知道」——沒填就是沒填。
+  static String turbineStateLabel(WtTurbineState s) {
+    switch (s) {
+      case WtTurbineState.stopped:
+        return '停機';
+      case WtTurbineState.idling:
+        return '怠速';
+      case WtTurbineState.running:
+        return '運轉';
+      case WtTurbineState.unknown:
+        return '未記錄';
+    }
+  }
+
+  /// 本次作業的 metadata 一行：`風機狀態：停機｜天氣：晴｜檢測人員：王小明`。
+  /// 三個都沒填就回 null——不要印一行「未記錄｜（空）｜（空）」。
+  static String? sessionMetaLine(WtCaptureSession session) {
+    final parts = <String>[
+      if (session.turbineState != WtTurbineState.unknown)
+        '風機狀態：${turbineStateLabel(session.turbineState)}',
+      if (session.weatherNote != null && session.weatherNote!.trim().isNotEmpty)
+        '天氣：${session.weatherNote!.trim()}',
+      if (session.inspector != null && session.inspector!.trim().isNotEmpty)
+        '檢測人員：${session.inspector!.trim()}',
+    ];
+    return parts.isEmpty ? null : parts.join('｜');
+  }
 
   static String _titleOf(WtAsset asset, WtCaptureSession session) {
     if (session.title.isNotEmpty) return session.title;

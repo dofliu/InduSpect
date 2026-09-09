@@ -209,9 +209,15 @@ class _BladeCaptureGuideScreenState extends State<BladeCaptureGuideScreen> {
 
     setState(() => _busy = true);
     try {
+      // 只有全機照（正視／側視）有固定站位需要記位置；分區段照跟著葉片走，不取。
+      // GPS 與存檔／品質判定並行等，不把 10 秒的定位逾時串在後面。
+      final Future<LocationData?>? hereF = shot.capturePointName == null
+          ? null
+          : LocationService().getCurrentPosition();
       final saved = await _saveOriginal(file, shot);
       final report = await ImageQualityService.assess(await saved.readAsBytes());
       final verdict = BladeCaptureGate.judge(report);
+      final here = hereF == null ? null : await hereF;
       final media = WtMedia(
         path: saved.path,
         view: shot.view,
@@ -220,11 +226,15 @@ class _BladeCaptureGuideScreenState extends State<BladeCaptureGuideScreen> {
         zone: shot.zone,
         leadingEdge: shot.leadingEdge,
         qualityJson: verdict.toJson(),
+        // 這張的位置，之後由 blade_inspection_screen 寫進資產的拍攝點
+        latitude: here?.latitude,
+        longitude: here?.longitude,
       );
       if (!mounted) return;
       setState(() {
         shot.media = media;
         shot.verdict = verdict;
+        if (here != null) _here = here;
       });
       if (!verdict.ok) await _showBlockedDialog(shot, verdict);
     } catch (e) {

@@ -118,6 +118,25 @@ class WtAsset {
     return [];
   }
 
+  /// 以名稱為鍵新增或覆蓋一個拍攝點，回傳新物件（不 mutate）。
+  ///
+  /// 這是拍攝點**唯一的寫入口**。在此之前 `capturePoint()` 有人讀（引導拍攝畫面
+  /// 拿它算「到上次拍攝點的距離」），但全 app 沒有任何地方寫——於是「導回上次
+  /// 拍攝點」這個功能永遠不會亮。寫入的來源是每張全機照自己的 GPS
+  /// （`WtMedia.latitude/longitude`），不是場次的到場位置：正視與側視站在不同地方。
+  WtAsset upsertCapturePoint(WtCapturePoint point) {
+    final next = capturePoints.where((p) => p.name != point.name).toList()
+      ..add(point);
+    return copyWith(capturePoints: next);
+  }
+
+  /// 規格 §10.2：全機照站在約 1.5–2 倍輪轂高度外拍。沒有輪轂高度就回 null，不猜。
+  String? get standingDistanceHint {
+    final h = hubHeightM;
+    if (h == null || h <= 0) return null;
+    return '${(h * 1.5).round()}–${(h * 2).round()} m';
+  }
+
   WtAsset copyWith({
     String? siteName,
     String? model,
