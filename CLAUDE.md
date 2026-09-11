@@ -56,9 +56,11 @@
 - 日期用 ISO8601 字串存 SQLite
 - DB migration 必須處理既有使用者升級路徑
 - 繁體中文註解，技術術語保留英文
+- **讀寫兩端要一起接**：新的 service public 方法要有人叫、新的 DB 欄位要有人寫也要有人讀，否則 CI 的死角查核（`scripts/audit_dead_ends.py`）會紅。刻意保留的死角寫進 `scripts/audit_allowlist.json` 附理由；問題修好後要把條目移除（過期條目一樣紅）
 
 ## 測試
 ```bash
+python3 scripts/audit_dead_ends.py   # 死角查核（service 零引用／DB 欄位只讀不寫）；--report 看全部
 flutter test          # 全部 481 tests（widget_test 已修復，不再排除）
 cd backend && GEMINI_API_KEY=ci-fake-key pytest tests/ --asyncio-mode=auto   # 191 pytest
 cd blade_prototype && pip install -r requirements.txt && pytest              # 81 tests（葉片原型，合成影像/音軌夾具）
@@ -100,6 +102,7 @@ Flutter 481 tests / 後端 191 pytest / 葉片原型 81 pytest 全綠（2026-09-
 - Issue #43 第二項回頭補（2026-09-07）：「離線→恢復網路」不只是沒實機驗過。①**自動分享那一半沒測過**——`ShareQueueService` 是 singleton + static 分享動作，三個邊界都沒縫，於是「把不存在的檔案標成已分享」（使用者會以為客戶收到了報告）沒有任何地方擋。沿用 `ConnectivityService` 的 `@visibleForTesting` 覆寫慣例開縫，`processPendingShares()` 改為回傳 `ShareQueueOutcome`，14 條測試守的是**什麼情況下不准標記完成**。②**「待判定」重新判定那一半根本沒實作**——畫面提示寫著「恢復網路後可重新判定」，但全 app 唯一的連線監聽是分享佇列。補上 `_watchConnectivityForRejudge()`，判斷抽成頂層純函式 `shouldRejudgeOnReconnect` / `rejudgeTargets` 才測得到。`pendingOnly` 只挑還卡在「待判定」的：本地引擎與後端讀同一份標準資料，重跑已判過的只會無聲換掉使用者看過的判定
 - 離線交付的規則（2026-09-07）：**離線佇列只套在「交付」動作上**（定檢的分享／重新分享、葉片報告），**匯出動作照樣開分享面板**——面板上「儲存到檔案」／AirDrop 離線可用，擋掉等於拿掉功能，而 PDF 寫在 app 文件目錄裡使用者自己拿不到。`_exportPdfReport`／`_shareReport` 兩處各留註解說明為什麼刻意不擋。同批修掉一個已出貨的缺口：`blade_report_export` 的註解說「`pendingShare` 由呼叫端決定」但**兩個呼叫端都沒決定**，於是葉片那半條佇列從來沒被觸發過（上一批接的是讀的那端，寫的那端沒接上）；政策搬進 `exportAndShare`，回傳 `(path, shared)` 讓提示說對，並開 `isOnline`/`outputDir`/`shareSink` 三個縫讓它測得到
 - 全 codebase 查核（2026-09-08）：把「這個欄位有沒有人寫、這個服務有沒有人叫」跑遍整個 codebase（348 個 service 公開方法的呼叫端數、六張表每欄位讀寫端、畫面每句「稍後／自動／恢復後」對回程式碼、每個 singleton 的測試縫）。抓到：①**`capture_points` 有人讀沒人寫**——引導拍攝畫面算「到上次拍攝點的距離」，但全 app 沒有地方寫入拍攝點，功能永遠不會亮。修法是每張**全機照**當場取 GPS 寫進 `WtMedia.latitude/longitude`（分區段照不取），`_commitMedia` 再 upsert 成資產拍攝點；位置是每張自己的不是場次的（正視與側視站在不同地方）。②`turbine_state`／`weather_note`／`inspector`／`hub_height_m` 規格 §10.2 要記、schema 有、**沒有畫面收**——補場次 metadata 對話框（可略過）、資產加輪轂高度並提示站位距離、報告摘要開頭多一行、語料 manifest 帶 `turbine_state`。③說明頁「並由雲端 AI 覆核」沒有任何實作，改成說實話。④`deleteWtAsset` 零呼叫端，補刪除入口。⑤移除死碼 `saveWtDetections`。刻意不動：`bbox_json` 無產生端、隱藏舊流程沒有連線監聽的重試、三個沒縫的 singleton（平台包裝／隱藏流程）
+- 查核變成 CI 守門（2026-09-11）：`flutter_app/scripts/audit_dead_ends.py` 排在 `flutter analyze` 之前。**保守**（寧可漏報不可誤攔）：callers 只抓全 `lib/` 零引用；columns 穿過 model 方法追讀寫到不動點，但 `toString`／序列化成員／建構子不算（第一版把它們算進去，每個欄位都變成有人碰）。名單 `scripts/audit_allowlist.json` 每條附理由、**過期條目一樣紅**。基準線 4 整檔／43 成員／3 欄位放行，全部有理由。四個反向測試（拿掉拍攝點寫入、塞死方法、塞過期條目、基準）都驗過會關會開
 
 ## 既有 error（已修復）
 - ~~`measurement.dart`: `sqrt` 未 import `dart:math`~~ → 已修復

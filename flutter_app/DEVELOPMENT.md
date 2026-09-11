@@ -233,6 +233,23 @@ flutter test test/form_inspection_record_test.dart
 | `pubspec_test.dart` | 4 | ★ pubspec 守門：相依依字母排序（**含 `flutter:` / `flutter_test:` 兩個 sdk 相依**，linter 不看空行分段）、sdk 相依沒被搬回各段最上面、lib/ 裡 import 得到的每個 package 都宣告過（手動重排時掉過 `uuid`） |
 | `widget_test.dart` | 1 | App smoke test（sqflite ffi + mock prefs + dotenv testLoad） |
 
+### 死角查核（CI 守門，`flutter analyze` 之前跑）
+
+```bash
+python3 scripts/audit_dead_ends.py            # 守門：有未列名單的發現、或名單有過期條目 → exit 1
+python3 scripts/audit_dead_ends.py --report   # 全部列出（含已列名單），不當守門
+python3 scripts/audit_dead_ends.py --check columns
+```
+
+兩個檢查：**callers**（`lib/services/*.dart` 的 public 成員在 `lib/` 零引用）與
+**columns**（DB 欄位在 models/ 與 DB 層以外只讀不寫／只寫不讀／沒人碰）。columns 會
+穿過 model 的方法追讀寫——`capture_points` 的寫端是 `upsertCapturePoint()`、讀端是
+`capturePoint(name)`，業務程式碼碰的是方法不是欄位。
+
+新發現只有兩條路：修掉，或在 `scripts/audit_allowlist.json` **附理由**放行。名單裡的
+條目一旦不再是發現（問題修好了），CI 一樣紅——名單不准長霉。整個檔案屬隱藏功能時
+用 `skip_files` 一條理由放行整檔。
+
 ### 測試依賴
 
 - `sqflite_common_ffi`：讓 DB 測試在 Desktop/CI 上用 in-memory SQLite 執行
@@ -346,6 +363,53 @@ flutter build apk --debug
 ### 2026-09-07（葉片模組 Phase 1 缺口補完 + Phase 2 幾何層）
 
 **Phase 1 的兩個缺口**（同日盤點、同日補完）：
+
+### 2026-09-11 — 把查核變成 CI 守門：`scripts/audit_dead_ends.py`
+
+四輪人工查核、五個已出貨的缺口，同一個問法：「這個欄位有沒有人寫、這個服務有沒有
+人叫」。這一批把它變成 CI 的一道門，排在 `flutter analyze` 之前（純 stdlib Python，
+不依賴 Flutter，先失敗先講）。
+
+#### 守門的姿態：保守
+
+寧可漏報，不可誤攔——一道會誤攔的門很快就會被關掉。所以：
+
+- **callers** 只抓「全 `lib/` 零引用」，不抓「public 但只在自己檔案裡用」（那是 lint
+  的事，不是死角）。`@override` / `@visibleForTesting` 成員跳過；註解先剝掉，
+  doc comment 裡提到方法名不算引用。
+- **columns** 的讀寫要穿過 model 的方法追：直接數欄位名會把 `capture_points` 判成
+  「完全沒人碰」——業務程式碼叫的是 `upsertCapturePoint()` 與 `capturePoint(name)`。
+  追蹤到不動點（A 叫 B、B 寫欄位 → A 也算寫）。**但** `toString` / `hashCode` /
+  序列化成員 / 建構子不算：`toString` 會把每個欄位印出來，而任何地方一句
+  `.toString()` 都命中，算進去等於把每個欄位都判成有人讀；建構子的初始化列表
+  `: field = field ?? []` 會讓每個欄位都看起來有人寫。字串字面值先挖空，
+  `'field: $field'` 這種插值標籤不是寫入。
+- 常見名字（`title` / `status` / `model`）在寫端會被同名 widget 參數灌高——那只會
+  蓋住真缺口，不會製造假警報。接受。
+
+#### 名單就是文件
+
+`scripts/audit_allowlist.json` 每條都要有理由（少於一句話會被拒）。基準線：
+4 個整檔放行（範本系統／舊狀態層／舊影像工具／雲端同步，全是 CLAUDE.md 標為隱藏的
+功能）、43 個成員（多半是隱藏流程的 CRUD 與尚未接 UI 的維護功能，少數是只有測試在
+用的查詢 API）、3 個欄位（兩個舊範本流程的、一個 `bbox_json` 沒有產生端）。
+
+**過期的條目一樣會紅**：名單裡的成員一旦有人叫了、欄位一旦有人寫了，CI 會要求把
+條目移除。這是名單不長霉的唯一辦法——沒有這條，名單只會越來越長，最後跟沒有一樣。
+
+#### 驗證方式（不是「跑過沒紅」）
+
+四個反向測試，每一個都是「把已知缺口放回去，門要關」：
+
+| 測試 | 做法 | 結果 |
+|---|---|---|
+| A | 把 `_commitMedia` 裡的 `upsertCapturePoint(` 改成不存在的方法 | `wt_assets.capture_points` 只讀不寫 ✓ |
+| B/D | 在 `share_queue_service.dart` 塞一個 `ghostMethod()` | callers 抓到、exit 1 ✓ |
+| C | 名單加一條「明明有人叫」的成員與一個不存在的 skip 檔 | 兩條都報過期、exit 1 ✓ |
+| 基準 | 現況 + 名單 | exit 0 ✓ |
+
+過程中抓到自己的兩個過度放行：第一版把 `toString` 當成讀寫端（每個欄位都變成有人
+碰）、把建構子當成寫端。都是「追蹤太熱心」——追到不動點的做法要有排除名單。
 
 ### 2026-09-08 — 全 codebase 查核：「這個欄位有沒有人寫、這個服務有沒有人叫」
 

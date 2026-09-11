@@ -75,6 +75,14 @@ jobs:
       - name: Create empty .env placeholder for asset bundle
         run: touch .env
 
+      # 死角查核（讀寫兩端）：service 方法零引用、DB 欄位只讀不寫／只寫不讀。
+      # 四輪人工查核抓到五個已出貨缺口，形狀都是「讀端接好、寫端沒接、讀端沒測試所以看不出來」
+      # ——把問法變成守門。保守：寧可漏報不可誤攔；新發現要嘛修掉、要嘛在
+      # scripts/audit_allowlist.json 附理由放行；名單裡已經修好的條目也會紅（名單不准長霉）。
+      # 純 stdlib Python，不依賴 Flutter，所以排在 analyze 前面先失敗先講。
+      - name: Dead-end audit (callers / columns)
+        run: python3 scripts/audit_dead_ends.py
+
       # analyze 已轉硬性（warning 級以上擋 PR；info 級不擋）。
       # warning 已於 2026-08-31 全數清零，新增 warning 會在此失敗。
       - name: Static analysis
