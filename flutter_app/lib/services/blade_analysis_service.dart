@@ -330,8 +330,10 @@ class BladeAnalysisService {
     for (final m in videoMedia) {
       if (frameExtractor == null) {
         skipped++;
+        // 測試釘住的是「裝置端抽幀尚未接上」這句：不是「未實作」——原生實作
+        // 已有（Android `BladeVideoFrames`），只是這個平台／這次呼叫沒接上
         notes.add('${_shortPath(m.path)}：影片已保存，但**裝置端抽幀尚未接上**'
-            '（Flutter 沒有純 Dart 的 H.264 解碼器，需原生 MediaCodec／AVFoundation）。'
+            '（目前僅 Android 有原生實作；Flutter 沒有純 Dart 的 H.264 解碼器）。'
             '轉速已由音軌取得；三片剪影互比請用整機照。');
         continue;
       }

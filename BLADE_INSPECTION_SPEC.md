@@ -287,7 +287,7 @@ CREATE TABLE wt_detections (
 | `services/blade_dsp.dart` | 純 Dart DSP（FFT／STFT／自相關／savgol／medfilt）+ 葉片模組唯一一份擬合與中位數 | ✅ Phase 3 |
 | `services/blade_audio_decode.dart` | WAV 讀取（只支援 PCM；每種讀不了的情況都有可顯示的原因） | ✅ Phase 3 |
 | `services/blade_acoustic_service.dart` | §5.4 音軌：逐片寬頻位準／高頻占比／窄頻哨音互比、轉速、三重守門 | ✅ Phase 3 |
-| `services/blade_dynamics_service.dart` | §5.4 影片：多幀取中位。**抽幀是注入點**，原生解碼未接上（見 §12） | ◐ Phase 3（接縫已備） |
+| `services/blade_dynamics_service.dart` | §5.4 影片：多幀取中位。抽幀是注入點，**Android 原生已接上**（`blade_video_frames.dart` + `BladeVideoFrames.kt`，MediaMetadataRetriever 只抽六點鐘那幾幀；iOS 待 `ios/` 建立） | ✅ Phase 3（Android；未實機驗） |
 | `services/blade_dataset_service.dart` | §9 Phase 4 前置：把拍攝與**人工確認**整理成訓練語料，標記規則（含「演算法沒報 ≠ 人看過沒問題」）在這裡 | ✅ Phase 4 前置 |
 | `services/blade_dataset_export.dart` | 語料打包（複製、manifest、zip、分享） | ✅ Phase 4 前置 |
 
@@ -317,7 +317,7 @@ CREATE TABLE wt_detections (
 | **Phase 2 幾何**（已完成 2026-09-07） | `segmentation.py`+`geometry.py`+`quality.py` 的 Dart 移植；中值改網格模式（逐像素在手機跑不動）；拍攝閘門接在互比之前；整機照接進分析編排 | 三片剪影互比可在 App 端跑。**中值網格化的代價是輪轂命中 23/30 → 22/30**；降工作尺度更差（512/384/256 → 20/19/18） | 3–4 週 |
 | ↳ 六點鐘取幀、歷史基線 | 需要影片（動態層）或多次到場的資料累積 | — | ⏳ |
 | **Phase 3 動態**（聲音層已完成 2026-09-07） | `acoustics.py` 的 Dart 移植：純 Dart DSP、WAV 讀取、逐片寬頻位準／高頻占比／窄頻哨音互比、轉速、三重守門。音軌由 `file_picker` 取得（只收 WAV） | **逐片聲音異常篩檢可在 App 端跑**，且轉速免費附帶（夾具上與真值差 0.1%）。不可用時明確回報「不可用」而不是給一個看起來像數據的數字 | 4 週 |
-| ↳ 影片那一半（接縫已備，未接原生） | 抽幀留成 `BladeFrameExtractor` 注入點；編排與判定（多幀取中位 → 三片互比）已完整並測到底 | **`dynamics.py` 的逐幀角度追蹤刻意沒有移植**：轉速已由音軌取得、三片一致性已由幾何層取得，唯一剩下的是六點鐘取幀，而那正好是需要原生解碼的部分。接上原生只需補一個函式 | 小（有實機後） |
+| ↳ 影片那一半（Android 原生已接，2026-09-11） | `BladeFrameExtractor` 由 `BladeVideoFrames.extract` 實作：platform channel → `MediaMetadataRetriever.getScaledFrameAtTime(OPTION_CLOSEST)`，長邊縮到 1280、回 JPEG；背景執行緒串行。畫面多了「附加轉動影片」（`file_picker`、不進記憶體、當場 `probe` 長度尺寸）。**沒有音軌的影片解不了**——抽幀時刻由音軌決定 | **`dynamics.py` 的逐幀角度追蹤刻意沒有移植**（理由同前）。`OPTION_CLOSEST` 不用 `CLOSEST_SYNC`：關鍵幀可能差 1–2 秒，12 rpm 時 1 秒是 72°。Dart 端 16 條 channel 契約測試；**Kotlin 端 CI 不建 APK、未編譯過**，第一次實機要驗 | 實機驗證 |
 | **Phase 4 學習**（**資料前置已備，模型本身仍被資料擋住**，2026-09-07） | 健康樣本異常偵測 TFLite、資料累積後微調偵測器 | 精度提升、離線初判 | 視資料量 |
 | ↳ 語料累積與匯出（已完成 2026-09-07） | `blade_dataset_service.dart` + `blade_dataset_export.dart`：把 App 已經在收集但**沒有出口**的訊號（第四步的 `humanStatus`）整理成自我描述的語料，並在畫面上顯示「還差多少」 | 外業回來當天就能得到可訓練的語料。標記來源是**人工確認**不是演算法輸出——拿 severity 當標籤只會讓模型學會模仿演算法（含它的誤報） | — |
 | ↳ PatchCore / TFLite 本身 | **還做不了，卡在資料而不是工程。** 它的整個前提是「同一支手機、同一台風機」的健康 patch 記憶庫，而目前這樣的照片是 **0 張**：既有的 75 張公開語料是整機照（轉子占畫面 ≤ 1/3，一片葉片只有幾個像素，沒有表面紋理），標註的是輪轂座標與天空條件而非缺陷。合成影像也不能替代——那樣訓出來的是「不像我的算圖器」而不是「不像健康葉片」，屬循環驗證 | 需要一次外業：分區段照 + 人工簽核 | 視資料量 |

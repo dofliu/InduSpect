@@ -61,7 +61,7 @@
 | Phase 0 外業 | 一次現場拍攝（停機 + 怠速各一台），回來跑原型定門檻，並校準葉片拍攝閘門 | ⏳ 待排 |
 | Phase 2 幾何層 | `segmentation.py`+`geometry.py`+`quality.py` 的 Dart 移植；中值改網格模式；閘門接在互比之前 | ✅ 2026-09-07 |
 | Phase 1+ 補完 | 跨次趨勢畫面（只比無因次比值）、AI 補跑佇列、葉片報告接離線分享佇列 | ✅ 2026-09-07 |
-| Phase 3 | 逐片聲音異常（`acoustics.py` 完整移植：寬頻位準／高頻占比／窄頻哨音互比，轉速由包絡自相關取得）+ App 內錄音（`record`，WAV／自動增益與降噪一律關）；影片抽幀留成 `BladeFrameExtractor` 接縫，原生解碼未接上 | ✅ 2026-09-07（影片那一半只到接縫） |
+| Phase 3 | 逐片聲音異常（`acoustics.py` 完整移植）+ App 內錄音（`record`）+ **影片六點鐘取幀的 Android 原生抽幀**（`MediaMetadataRetriever`，只抽少數幾幀；iOS 待 `ios/`） | ✅ 2026-09-11（Kotlin 端未編譯過，待實機） |
 | Phase 4 前置 | 訓練語料的標記規則（人工確認為準、`humanClean` 三條件）、「還差多少」統計面板、manifest + zip 匯出 | ✅ 2026-09-07 |
 | Phase 4 | 健康樣本異常偵測（PatchCore/TFLite）——**卡在資料不是工程**：需要同一台風機的分區段照 + 逐筆人工簽核，目前 0 張 | 待外業 |
 
