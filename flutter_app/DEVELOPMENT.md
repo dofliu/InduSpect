@@ -194,7 +194,7 @@ flutter test
 flutter test test/form_inspection_record_test.dart
 ```
 
-### 測試清單（481 tests）
+### 測試清單（497 tests）
 
 | 檔案 | 數量 | 覆蓋範圍 |
 |------|------|---------|
@@ -204,6 +204,7 @@ flutter test test/form_inspection_record_test.dart
 | `image_quality_service_test.dart` | 14 | ★ 拍照品質閘門：模糊/過暗/過曝/反光/無法解碼、門檻可調、跨解析度一致性（合成影像） |
 | `connectivity_probe_test.dart` | 14 | ★ 可達性探測：介面×可達性決策矩陣、快取 TTL、forceProbe、逾時與例外 |
 | `inspection_item_state_test.dart` | 28 | displayValue/verdict 邏輯（含法規標準判定優先序）、controller 生命週期；★ **恢復連線後的補判**（Issue #43）：只挑還卡在「待判定」的、已有判定不重跑、`unknown` 不算待判定 |
+| `blade_video_frames_test.dart` | 16 | ★ **裝置端抽幀的 channel 契約**：秒→毫秒四捨五入與參數形狀、Uint8List／List<int>／null／空陣列／PlatformException／MissingPluginException 各對到「這一幀沒有」（null，不丟）、非 Android 不碰 channel 且 `extractorOrNull` 為 null、`probe` 解碼與錯誤碼對人話 |
 | `wt_capture_point_test.dart` | 13 | ★ **拍攝點的寫入端**（全 codebase 查核抓到 `capturePoint()` 有人讀、沒人寫）：每張全機照帶自己的 GPS 且舊 JSON 照樣讀得起來、view → 拍攝點名稱、`upsertCapturePoint` 同名覆蓋／不 mutate／保留 id、`standingDistanceHint` 沒輪轂高度不猜 |
 | `blade_report_export_test.dart` | 4 | ★ **葉片報告的離線交付**（Issue #43）：離線標記待分享而不開分享面板、上線才真的送出、`share: false` 不問連線；含「離線匯出 → 恢復連線 → 佇列真的送出」整條路 |
 | `share_queue_service_test.dart` | 14 | ★ **離線分享佇列**（Issue #43）：檔案不存在時**不標記完成**（定檢與葉片各一條）、無匯出路徑才標記完成、分享失敗不中斷佇列也不標記、上線事件觸發／斷線不觸發、重入守門、dispose 後不再觸發 |
@@ -232,6 +233,23 @@ flutter test test/form_inspection_record_test.dart
 | `database_migration_test.dart` | 6 | SQLite v3→v4 與 v4→v5 真實 onUpgrade 升級路徑（standard_judgments 欄位；葉片三表 + 既有紀錄不動 + round-trip + 壞 JSON 容錯） |
 | `pubspec_test.dart` | 4 | ★ pubspec 守門：相依依字母排序（**含 `flutter:` / `flutter_test:` 兩個 sdk 相依**，linter 不看空行分段）、sdk 相依沒被搬回各段最上面、lib/ 裡 import 得到的每個 package 都宣告過（手動重排時掉過 `uuid`） |
 | `widget_test.dart` | 1 | App smoke test（sqflite ffi + mock prefs + dotenv testLoad） |
+
+### 死角查核（CI 守門，`flutter analyze` 之前跑）
+
+```bash
+python3 scripts/audit_dead_ends.py            # 守門：有未列名單的發現、或名單有過期條目 → exit 1
+python3 scripts/audit_dead_ends.py --report   # 全部列出（含已列名單），不當守門
+python3 scripts/audit_dead_ends.py --check columns
+```
+
+兩個檢查：**callers**（`lib/services/*.dart` 的 public 成員在 `lib/` 零引用）與
+**columns**（DB 欄位在 models/ 與 DB 層以外只讀不寫／只寫不讀／沒人碰）。columns 會
+穿過 model 的方法追讀寫——`capture_points` 的寫端是 `upsertCapturePoint()`、讀端是
+`capturePoint(name)`，業務程式碼碰的是方法不是欄位。
+
+新發現只有兩條路：修掉，或在 `scripts/audit_allowlist.json` **附理由**放行。名單裡的
+條目一旦不再是發現（問題修好了），CI 一樣紅——名單不准長霉。整個檔案屬隱藏功能時
+用 `skip_files` 一條理由放行整檔。
 
 ### 測試依賴
 
@@ -346,6 +364,85 @@ flutter build apk --debug
 ### 2026-09-07（葉片模組 Phase 1 缺口補完 + Phase 2 幾何層）
 
 **Phase 1 的兩個缺口**（同日盤點、同日補完）：
+
+### 2026-09-11 — 影片抽幀接上 Android 原生：Phase 3 最後一塊
+
+`BladeFrameExtractor` 從 2026-09-07 起就是刻意留的注入點——Flutter 沒有純 Dart 的
+H.264／HEVC 解碼器，抽幀一定要走原生，而那是一段沒有實機驗不了的 platform channel。
+這一批把它接上：
+
+- **Dart 端** `lib/services/blade_video_frames.dart`：channel `com.induspect/blade_video`，
+  `frameAt(path, atMs, maxSide)` 與 `probe(path)`。`extract` 的契約跟著 `analyzeFrames`
+  走：抽不到、解碼失敗、平台不支援**一律回 null、不丟例外**，因為呼叫端已把 null 定義成
+  「這一幀沒有、其他幀照算」。`probe` 則要講原因（`BladeVideoError`）——那是使用者當場
+  要看的。只有 Android（`isSupported`），其他平台 `extractorOrNull` 回 null，服務層照原本
+  的路寫「尚未接上」。
+- **Kotlin 端** `android/.../BladeVideoFrames.kt`：`MediaMetadataRetriever`，不需要額外
+  相依。`OPTION_CLOSEST` 而不是 `CLOSEST_SYNC`——後者只回關鍵幀，可能離要求時刻 1–2 秒，
+  12 rpm 時 1 秒是 72°，六點鐘就不是六點鐘了。長邊縮到 1280（幾何層 `workSide` 1024 留餘裕），
+  API 27+ 走 `getScaledFrameAtTime` 省掉一張 4K 全尺寸 bitmap（約 33 MB）。單一 executor
+  串行在背景執行緒跑：retriever 不是 thread-safe，而每幀幾十到幾百毫秒會擋 UI。
+- **畫面**：多了「附加轉動影片（選用）」。`file_picker` 走路徑、`withData: false`——
+  4K 30 秒是幾百 MB，不進記憶體。當場 `probe` 長度與尺寸，太短（< 10 秒，規格 §10.3 至少
+  2 圈）直接講。`view: side`（六點鐘取幀要側視，規格 §4.3）。分析摘要改寫：有影片有音軌
+  才列「六點鐘取幀」；**有影片沒音軌明講「抽不了幀」**——抽幀的時刻由音軌決定。
+
+**順帶抓到一個死角**：在此之前 `WtMediaKind.video` 全 app **沒有任何建立點**——服務層
+讀它、歷史畫面畫它、摘要數它，但沒有任何畫面能附加影片。接抽幀器如果不補這一塊，
+接了也永遠不會被叫到。這正是死角守門要抓的形狀（讀端有、寫端無）；它沒抓到是因為
+守門看的是 DB 欄位與 service 方法，不看 enum 值的建立點。記下來，下一版守門可以加。
+
+**誠實的邊界**：Dart 端 16 條 channel 契約測試都是用 `TestDefaultBinaryMessengerBinding`
+掛假原生端；**Kotlin 端 CI 不建 APK、完全沒有編譯過**。第一次有實機要先確認：它能
+build、`getFrameAtTime(OPTION_CLOSEST)` 在目標機型上回得出幀（有些機型對某些編碼回
+null）、旋轉 metadata 處理對不對（直拍影片）、以及抽一幀的實際耗時。
+
+### 2026-09-11 — 把查核變成 CI 守門：`scripts/audit_dead_ends.py`
+
+四輪人工查核、五個已出貨的缺口，同一個問法：「這個欄位有沒有人寫、這個服務有沒有
+人叫」。這一批把它變成 CI 的一道門，排在 `flutter analyze` 之前（純 stdlib Python，
+不依賴 Flutter，先失敗先講）。
+
+#### 守門的姿態：保守
+
+寧可漏報，不可誤攔——一道會誤攔的門很快就會被關掉。所以：
+
+- **callers** 只抓「全 `lib/` 零引用」，不抓「public 但只在自己檔案裡用」（那是 lint
+  的事，不是死角）。`@override` / `@visibleForTesting` 成員跳過；註解先剝掉，
+  doc comment 裡提到方法名不算引用。
+- **columns** 的讀寫要穿過 model 的方法追：直接數欄位名會把 `capture_points` 判成
+  「完全沒人碰」——業務程式碼叫的是 `upsertCapturePoint()` 與 `capturePoint(name)`。
+  追蹤到不動點（A 叫 B、B 寫欄位 → A 也算寫）。**但** `toString` / `hashCode` /
+  序列化成員 / 建構子不算：`toString` 會把每個欄位印出來，而任何地方一句
+  `.toString()` 都命中，算進去等於把每個欄位都判成有人讀；建構子的初始化列表
+  `: field = field ?? []` 會讓每個欄位都看起來有人寫。字串字面值先挖空，
+  `'field: $field'` 這種插值標籤不是寫入。
+- 常見名字（`title` / `status` / `model`）在寫端會被同名 widget 參數灌高——那只會
+  蓋住真缺口，不會製造假警報。接受。
+
+#### 名單就是文件
+
+`scripts/audit_allowlist.json` 每條都要有理由（少於一句話會被拒）。基準線：
+4 個整檔放行（範本系統／舊狀態層／舊影像工具／雲端同步，全是 CLAUDE.md 標為隱藏的
+功能）、43 個成員（多半是隱藏流程的 CRUD 與尚未接 UI 的維護功能，少數是只有測試在
+用的查詢 API）、3 個欄位（兩個舊範本流程的、一個 `bbox_json` 沒有產生端）。
+
+**過期的條目一樣會紅**：名單裡的成員一旦有人叫了、欄位一旦有人寫了，CI 會要求把
+條目移除。這是名單不長霉的唯一辦法——沒有這條，名單只會越來越長，最後跟沒有一樣。
+
+#### 驗證方式（不是「跑過沒紅」）
+
+四個反向測試，每一個都是「把已知缺口放回去，門要關」：
+
+| 測試 | 做法 | 結果 |
+|---|---|---|
+| A | 把 `_commitMedia` 裡的 `upsertCapturePoint(` 改成不存在的方法 | `wt_assets.capture_points` 只讀不寫 ✓ |
+| B/D | 在 `share_queue_service.dart` 塞一個 `ghostMethod()` | callers 抓到、exit 1 ✓ |
+| C | 名單加一條「明明有人叫」的成員與一個不存在的 skip 檔 | 兩條都報過期、exit 1 ✓ |
+| 基準 | 現況 + 名單 | exit 0 ✓ |
+
+過程中抓到自己的兩個過度放行：第一版把 `toString` 當成讀寫端（每個欄位都變成有人
+碰）、把建構子當成寫端。都是「追蹤太熱心」——追到不動點的做法要有排除名單。
 
 ### 2026-09-08 — 全 codebase 查核：「這個欄位有沒有人寫、這個服務有沒有人叫」
 

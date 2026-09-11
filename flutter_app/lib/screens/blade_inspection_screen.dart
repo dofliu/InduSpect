@@ -17,6 +17,7 @@ import '../services/blade_audio_decode.dart';
 import '../services/blade_audio_recorder.dart';
 import '../services/blade_report_builder.dart';
 import '../services/blade_report_export.dart';
+import '../services/blade_video_frames.dart';
 import '../services/connectivity_service.dart';
 import '../services/database_service.dart';
 import '../services/location_service.dart';
@@ -255,6 +256,104 @@ class _BladeInspectionScreenState extends State<BladeInspectionScreen> {
     await _ingestAudio(bytes, file.name, sessionId, asset);
   }
 
+  /// 附加一段轉動影片（規格 §4.3 動態層：怠速側視、至少 2 圈）。
+  ///
+  /// 影片本身**不進記憶體**——4K 30 秒是幾百 MB，`withData: false` 只拿路徑，
+  /// 用檔案複製搬進 App 目錄。當場用原生 `probe` 讀一次長度與尺寸：讀不了、
+  /// 太短，要在人還站在風機旁邊的時候講。抽幀的**時刻**由音軌決定，所以沒有
+  /// 音軌的影片存下來也解不了——這一點在分析步驟的摘要會明講。
+  Future<void> _attachVideo() async {
+    final asset = _asset;
+    if (asset == null) return;
+    final sessionId = _session?.sessionId ?? _uuid.v4();
+
+    if (!BladeVideoFrames.isSupported) {
+      _snack('此平台尚未接上原生影片解碼（目前僅 Android），影片會保存但無法抽幀',
+          error: true);
+    }
+
+    final picked = await FilePicker.platform.pickFiles(
+      type: FileType.video,
+      withData: false,
+    );
+    if (picked == null || picked.files.isEmpty) return;
+    final srcPath = picked.files.first.path;
+    if (srcPath == null) {
+      _snack('讀不到這個檔案的路徑，請改從「檔案」App 選一次', error: true);
+      return;
+    }
+
+    setState(() {
+      _busy = true;
+      _progress = '正在檢查影片…';
+    });
+    File? saved;
+    try {
+      saved = await _saveVideo(srcPath, sessionId);
+      BladeVideoInfo? info;
+      String? problem;
+      if (BladeVideoFrames.isSupported) {
+        try {
+          info = await BladeVideoFrames.probe(saved.path);
+        } on BladeVideoError catch (e) {
+          problem = e.message;
+        }
+      }
+      if (problem != null) {
+        await saved.delete();
+        if (mounted) _snack('影片讀不了：$problem', error: true);
+        return;
+      }
+      final media = <WtMedia>[
+        ...(_session?.media ?? const []),
+        WtMedia(
+          path: saved.path,
+          kind: WtMediaKind.video,
+          view: WtMediaView.side, // 六點鐘取幀要側視（規格 §4.3）
+          qualityJson: {
+            // 沒有 probe（非 Android）就不宣稱 ok——「沒驗過」不能當「驗過了」
+            if (info != null) 'ok': info.longEnough,
+            if (info != null) 'duration_s': info.durationS,
+            if (info != null) 'width': info.width,
+            if (info != null) 'height': info.height,
+            if (info?.frameRate != null) 'frame_rate': info!.frameRate,
+          },
+        ),
+      ];
+      await _commitMedia(asset, sessionId, media);
+      if (!mounted) return;
+      if (info == null) {
+        _snack('影片已保存（此平台無法檢查內容）');
+      } else if (!info.longEnough) {
+        _snack('影片只有 ${info.durationS.toStringAsFixed(1)} 秒，太短：'
+            '六點鐘取幀要涵蓋至少 2 圈（12 rpm 約 10 秒）。已保存但可能抽不到足夠的幀。');
+      } else {
+        _snack('影片可用：${info.durationS.toStringAsFixed(0)} 秒，'
+            '${info.width}×${info.height}'
+            '${info.frameRate != null ? '，${info.frameRate!.toStringAsFixed(0)} fps' : ''}');
+      }
+    } catch (e) {
+      if (saved != null && await saved.exists()) await saved.delete();
+      if (mounted) _snack('影片處理失敗：$e', error: true);
+    } finally {
+      if (mounted) {
+        setState(() {
+          _busy = false;
+          _progress = null;
+        });
+      }
+    }
+  }
+
+  /// 影片原檔複製到 App 目錄（`image_picker`／`file_picker` 給的是快取檔，會被清掉）。
+  Future<File> _saveVideo(String srcPath, String sessionId) async {
+    final docs = await getApplicationDocumentsDirectory();
+    final dir = Directory(p.join(docs.path, 'blade_video', sessionId));
+    if (!await dir.exists()) await dir.create(recursive: true);
+    final ext = p.extension(srcPath).isEmpty ? '.mp4' : p.extension(srcPath);
+    return File(srcPath).copy(p.join(dir.path, '${_uuid.v4()}$ext'));
+  }
+
   /// **App 內錄音**（規格 §5.4 音軌）。
   ///
   /// 與「附加音軌」共用同一條驗證與存檔路徑——錄音只是換一個來源，
@@ -403,6 +502,9 @@ class _BladeInspectionScreenState extends State<BladeInspectionScreen> {
       final outcome = await BladeAnalysisService.analyzeSession(
         session: session,
         useAi: online,
+        // 裝置端抽幀：目前只有 Android 有原生實作；其他平台回 null，
+        // 服務層照原本的路寫「尚未接上」而不是炸掉
+        frameExtractor: BladeVideoFrames.extractorOrNull,
       );
       await _db.replaceWtDetections(session.sessionId, outcome.detections);
       session.status = WtSessionStatus.analyzed;
@@ -685,6 +787,23 @@ class _BladeInspectionScreenState extends State<BladeInspectionScreen> {
             label: const Text('改用既有的 WAV 檔'),
           ),
         ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+          child: OutlinedButton.icon(
+            onPressed: _busy ? null : _attachVideo,
+            icon: const Icon(Icons.videocam_outlined),
+            label: const Text('附加轉動影片（選用）'),
+          ),
+        ),
+        const Padding(
+          padding: EdgeInsets.fromLTRB(16, 4, 16, 0),
+          child: Text(
+            '影片用來在每次葉片通過六點鐘時各抽一幀，多幀取中位抵消風吹擺動。'
+            '要側視、怠速、至少 2 圈；抽幀的時刻由音軌算出，所以**沒有音軌的影片解不了**。'
+            '不逐幀處理，只抽少數幾幀。',
+            style: TextStyle(fontSize: 12),
+          ),
+        ),
         const Padding(
           padding: EdgeInsets.fromLTRB(16, 4, 16, 0),
           child: Text(
@@ -740,6 +859,9 @@ class _BladeInspectionScreenState extends State<BladeInspectionScreen> {
     if (segment > 0) will.add('表面層（$segment 張分區段照）');
     if (whole > 0) will.add('幾何層（$whole 張整機照，三片剪影互比）');
     if (audio > 0) will.add('動態層（$audio 段音軌，逐片噪音與轉速）');
+    if (video > 0 && audio > 0 && BladeVideoFrames.isSupported) {
+      will.add('六點鐘取幀（$video 段影片，時刻由音軌決定，多幀取中位）');
+    }
 
     if (will.isEmpty) {
       return usable == 0 && audio == 0
@@ -751,8 +873,11 @@ class _BladeInspectionScreenState extends State<BladeInspectionScreen> {
     if (segment == 0) missing.add('表面層要分區段照（5x 長焦）');
     if (whole == 0) missing.add('幾何層要整機照');
     if (audio == 0) missing.add('動態層要一段 15 秒以上的音軌');
-    if (video > 0) {
-      missing.add('影片會保存但目前解不了幀（需原生解碼），轉速改由音軌取得');
+    if (video > 0 && audio == 0) {
+      missing.add('有 $video 段影片但沒有音軌——不知道葉片何時通過六點鐘，抽不了幀');
+    }
+    if (video > 0 && !BladeVideoFrames.isSupported) {
+      missing.add('此平台尚未接上原生抽幀（目前僅 Android），影片只保存');
     }
     return '本次會跑：${will.join('、')}。'
         '${missing.isEmpty ? '' : '\n未涵蓋：${missing.join('；')}。沒跑不等於沒問題。'}';
