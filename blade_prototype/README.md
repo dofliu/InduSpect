@@ -15,7 +15,10 @@
    | `surface.py` | （見 §Dart 移植） | `blade_segment_reference.json` |
    | `segmentation.py` / `geometry.py` / `quality.py` | `scripts/make_geometry_fixture.py` | `blade_geometry_reference.json` + `blade_front_scene.png` |
    | （OpenCV 基本運算的語意） | `scripts/make_image_ops_fixture.py` | `blade_image_ops_reference.json` |
-   | `acoustics.py` | `scripts/make_acoustic_fixture.py` | `blade_acoustic_reference.json` + 兩段 WAV |
+   | `acoustics.py` | `motion_hub.py` | **運動分割輪轂定位**（2026-09-12，方向評估的離線驗證）：影片抽 N 幀 → ORB+RANSAC 對齊到中間幀（整張相位相關會被轉子與雲拉走；估出來的相似變換要過「無縮放、轉動 ≤ 3°、平移 ≤ 20%」才收，否則退回下半幅相位相關）→ 逐像素時間中位數 = 靜態背景 → 殘差超過時間 MAD × 6 為「這幀在動」→ 每幀的**細長**元件取主軸直線投票，3 片 × N 幀只在輪轂一處共點。半徑 = 通過輪轂的各段最遠像素的 90 百分位。只定位輪轂與半徑，三片互比與閘門照走既有幾何層 | 天空模型的替代假設 |
+| `sunpos.py` | 太陽方位角／高度角（NOAA 簡化算法，純 sin/cos，Dart 移植藍本）+ 站位建議（逆光／側光／順光）。對 NREL SPA 報告範例差 0.003°，對 pvlib 跑一整天差 ≤ 0.02° | 規格 §3.2「背對太陽拍」的工具化 |
+| `scripts/motion_hub_experiment.py` | 在一個目錄的真實影片上對照 `motion_hub` 與既有天空模型：每段輸出疊圖（背景／聯集遮罩／兩種方法的輪轂）與 `summary.json`（穩像統計、票圖峰比、奇偶幀一致性、顏色法逐幀離散度）。結果與語料授權見 `INNOVATION_REVIEW.md` | 方向評估 |
+| `scripts/make_acoustic_fixture.py` | `blade_acoustic_reference.json` + 兩段 WAV |
 
    `make_acoustic_fixture.py` 會**自我對帳**：它為了掏出中間量重寫了一次
    `analyze_samples` 的前處理，那份重複本來就是漂移來源，所以凡是兩邊都算得出來的量

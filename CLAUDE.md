@@ -49,7 +49,7 @@
 | `flutter_app/lib/services/blade_ai_service.dart` | 葉片專用 AI prompt（正常結構清單）+ 值域夾回 |
 | `flutter_app/lib/services/blade_report_builder.dart` | 葉片報告（**不輸出「合格」**），交給 `pdf_report_service.dart` |
 | `BLADE_INSPECTION_SPEC.md` | 風力機葉片地面目視檢測模組規格（獨立功能，Phase 0 原型 + Phase 1 App 化已完成） |
-| `blade_prototype/` | ★ 葉片模組 Phase 0 演算法原型（Python/OpenCV；分割、三片互比、前緣粗糙度、影片六點鐘取幀、逐片聲音異常、圖文報告產生器、拍攝品質閘門；`SENSITIVITY.md` 合成影像靈敏度、`REAL_IMAGE_VALIDATION.md` 真實影像實測、`scripts/` 語料抓取/驗證/圖文報告三支腳本） |
+| `blade_prototype/` | ★ 葉片模組 Phase 0 演算法原型（Python/OpenCV；分割、三片互比、前緣粗糙度、影片六點鐘取幀、逐片聲音異常、圖文報告產生器、拍攝品質閘門、**運動分割輪轂定位 `motion_hub.py`**、**太陽方位 `sunpos.py`**；`SENSITIVITY.md` 合成影像靈敏度、`REAL_IMAGE_VALIDATION.md` 真實影像實測、**`INNOVATION_REVIEW.md` 改進方向的文獻對照與離線驗證**、`scripts/` 語料抓取/驗證/圖文報告/運動分割實測四支腳本） |
 
 ## 開發慣例
 - 路徑操作用 `package:path/path.dart`，不手動 `split('/')`
@@ -64,9 +64,9 @@
 python3 scripts/audit_dead_ends.py   # 死角查核（service 零引用／DB 欄位只讀不寫）；--report 看全部
 flutter test          # 全部 497 tests（widget_test 已修復，不再排除）
 cd backend && GEMINI_API_KEY=ci-fake-key pytest tests/ --asyncio-mode=auto   # 191 pytest
-cd blade_prototype && pip install -r requirements.txt && pytest              # 81 tests（葉片原型，合成影像/音軌夾具）
+cd blade_prototype && pip install -r requirements.txt && pytest              # 100 tests（葉片原型，合成影像/音軌夾具）
 ```
-Flutter 497 tests / 後端 191 pytest / 葉片原型 81 pytest 全綠（2026-09-11 CI 實測）。DB 測試使用 `sqflite_common_ffi` in-memory。標準資料為單一來源：改 `backend/app/data/inspection_standards.py` 後必須跑 `python backend/scripts/export_standards.py` 重新匯出 JSON（有同步守門測試）。
+Flutter 497 tests / 後端 191 pytest / 葉片原型 100 pytest 全綠（2026-09-12 CI 實測）。DB 測試使用 `sqflite_common_ffi` in-memory。標準資料為單一來源：改 `backend/app/data/inspection_standards.py` 後必須跑 `python backend/scripts/export_standards.py` 重新匯出 JSON（有同步守門測試）。
 
 ## 已知問題追蹤
 - GitHub Issues #14-#19 已全數修復並關閉（2026-04-16）
@@ -105,6 +105,7 @@ Flutter 497 tests / 後端 191 pytest / 葉片原型 81 pytest 全綠（2026-09-
 - 全 codebase 查核（2026-09-08）：把「這個欄位有沒有人寫、這個服務有沒有人叫」跑遍整個 codebase（348 個 service 公開方法的呼叫端數、六張表每欄位讀寫端、畫面每句「稍後／自動／恢復後」對回程式碼、每個 singleton 的測試縫）。抓到：①**`capture_points` 有人讀沒人寫**——引導拍攝畫面算「到上次拍攝點的距離」，但全 app 沒有地方寫入拍攝點，功能永遠不會亮。修法是每張**全機照**當場取 GPS 寫進 `WtMedia.latitude/longitude`（分區段照不取），`_commitMedia` 再 upsert 成資產拍攝點；位置是每張自己的不是場次的（正視與側視站在不同地方）。②`turbine_state`／`weather_note`／`inspector`／`hub_height_m` 規格 §10.2 要記、schema 有、**沒有畫面收**——補場次 metadata 對話框（可略過）、資產加輪轂高度並提示站位距離、報告摘要開頭多一行、語料 manifest 帶 `turbine_state`。③說明頁「並由雲端 AI 覆核」沒有任何實作，改成說實話。④`deleteWtAsset` 零呼叫端，補刪除入口。⑤移除死碼 `saveWtDetections`。刻意不動：`bbox_json` 無產生端、隱藏舊流程沒有連線監聽的重試、三個沒縫的 singleton（平台包裝／隱藏流程）
 - 查核變成 CI 守門（2026-09-11）：`flutter_app/scripts/audit_dead_ends.py` 排在 `flutter analyze` 之前。**保守**（寧可漏報不可誤攔）：callers 只抓全 `lib/` 零引用；columns 穿過 model 方法追讀寫到不動點，但 `toString`／序列化成員／建構子不算（第一版把它們算進去，每個欄位都變成有人碰）。名單 `scripts/audit_allowlist.json` 每條附理由、**過期條目一樣紅**。基準線 4 整檔／43 成員／3 欄位放行，全部有理由。四個反向測試（拿掉拍攝點寫入、塞死方法、塞過期條目、基準）都驗過會關會開
 - 影片抽幀的 Android 原生實作（2026-09-11）：`BladeFrameExtractor` 注入點由 `blade_video_frames.dart`（Dart，platform channel `com.induspect/blade_video`）+ `BladeVideoFrames.kt`（`MediaMetadataRetriever`）接上。三個決定：①`OPTION_CLOSEST` 不用 `CLOSEST_SYNC`——關鍵幀可能離要求時刻 1–2 秒，12 rpm 時 1 秒是 72°，六點鐘就不是六點鐘；②長邊縮到 1280（幾何層工作尺度 1024 留餘裕），API 27+ 用 `getScaledFrameAtTime` 省掉 4K 全尺寸 bitmap；③抽不到、解碼失敗、平台不支援**一律回 null 不丟例外**，因為 `analyzeFrames` 已把 null 定義成「這一幀沒有、其他幀照算」。畫面多了「附加轉動影片」：`file_picker` 走路徑不進記憶體，當場 `probe` 長度／尺寸；**沒有音軌的影片解不了**（抽幀時刻由音軌決定），摘要會明講。發現順帶修掉一個死角：在此之前 `WtMediaKind.video` **全 app 沒有任何建立點**——影片只被讀、從沒被附加。Dart 端 16 條 channel 契約測試；**Kotlin 端 CI 不建 APK、完全未編譯**，第一次實機要先確認它能 build、`getFrameAtTime` 在目標機型上回得出幀
+- 葉片檢測改進方向的評估（2026-09-12，`blade_prototype/INNOVATION_REVIEW.md`）：八個方向逐項對文獻與業界先例，桌面能驗的兩項先做成原型釘測試。①**太陽方位** `sunpos.py`（NOAA 算法，對 NREL SPA 範例差 0.003°、對 pvlib 全天 ≤ 0.02°）——逆光是閘門唯一擋不了的拒收原因，只能從站位消掉。②**運動分割輪轂定位** `motion_hub.py`：時間中位數背景 + 細長段共點投票，取代「不像天空的才是轉子」。真實地面影片（Commons CC 授權，14 段）實測：設計範圍內五段運動法 **5/5** 定位到主風機輪轂、奇偶幀兩個獨立子集差 ≤ 11 px；同樣五段既有天空模型只有 **1/5** 全對，其餘是「8 幀一致但一致地錯」（Masenberg 落在樹梢、Lawrence Weston 落在塔身）或「2/8 對」（兩台／四台同框選到遠台或沙丘）；設計範圍外（遠景風場、無人機、相機移動、側視、小型風機）兩法皆不可用，側視是顏色法較好。疊圖在 `blade_prototype/innovation_review_assets/`。四個不可退化的約定：①穩像用 ORB+RANSAC 且相似變換要過「無縮放、轉動 ≤ 3°、平移 ≤ 20%」，整張相位相關會被轉子拉走；②靜態邊緣在殘餘晃動下會閃成細長段（塔架 × 地平線交點曾拿到與真輪轂相當的票數），用背景梯度與跨幀同 (θ,ρ) 抑制；③三片葉根黏成 Y 形時逐幀用距離變換最厚點挖掉再拆臂；④票數相近的候選取掃過半徑最大的（取像規格是單台主風機，Montrigaud 兩台同框實測只看票數會選到遠處那台）。已知限制：斜視時掃過區是橢圓、半徑量到短軸。App 端零改動，SPEC §13 新增三個待決策項（人工定錨 + 型錄尺度、幾何層改吃影片、拍攝前顯示太陽方位）
 
 ## 既有 error（已修復）
 - ~~`measurement.dart`: `sqrt` 未 import `dart:math`~~ → 已修復
