@@ -327,10 +327,20 @@ def _hub_from_lines_once(masks: np.ndarray, min_area: int, min_elong: float, sig
                          notes=[f"最強的共點只有 {cands[0][4]} 個方向箱（需 ≥ {min_angle_bins}）——那是兩條靜態邊緣的交點，不是轉子"])
     if diverse[0] is not cands[0]:
         notes.append("票數最高的共點方向單一，改取次高但方向多樣的那個")
-    peak, hx, hy, sup, bins = diverse[0]
-    second = next((c[0] for c in cands if c is not diverse[0]), 0.0)
-    rotor_r = rotor_radius_from_occupancy(masks, (hx, hy), valid=valid)
-    if second > 0 and peak / second < 1.3:
+    # 票數相近（≥ 0.6× 主峰）的候選之間，取**掃過半徑最大**的那個。取像規格是「單台主風機、
+    # 整個轉子在框內」，主風機一定是畫面裡最大的轉子；遠處那台票數可能一樣多（線多但短），
+    # 半徑分得開（Montrigaud 兩台同框實測：只看票數會選到遠處那台）。
+    comparable = [c for c in diverse if c[0] >= 0.6 * diverse[0][0]]
+    scored = [(rotor_radius_from_occupancy(masks, (c[1], c[2]), valid=valid), c) for c in comparable]
+    scored.sort(key=lambda rc: (-rc[0], -rc[1][0]))
+    rotor_r, chosen = scored[0]
+    if chosen is not diverse[0]:
+        notes.append(f"票數相近的候選有 {len(comparable)} 個，改取掃過半徑最大的（{rotor_r:.0f} px vs 票數最高者 {scored[[c for _, c in scored].index(diverse[0])][0]:.0f} px）")
+    if len(comparable) > 1:
+        notes.append("畫面裡有第二個放射中心（另一台風機）——結果以最大的轉子為主風機，建議人工確認")
+    peak, hx, hy, sup, bins = chosen
+    second = next((c[0] for c in cands if c is not chosen), 0.0)
+    if len(comparable) == 1 and second > 0 and peak / second < 1.3:
         notes.append("票圖有第二個放射中心（另一台風機或地面影子）——建議人工確認輪轂位置")
     if n_static:
         notes.append(f"抑制了 {n_static} 段靜態邊緣的閃爍")
