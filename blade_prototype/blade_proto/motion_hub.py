@@ -189,11 +189,9 @@ def hub_from_lines(masks: np.ndarray, min_area: int = 30, min_elong: float = 3.0
     for t in range(n):
         cv2.circle(cut[t], (int(round(first.hub[0])), int(round(first.hub[1]))), r0, 0, -1)
     second = _hub_from_lines_once(cut, min_area, min_elong, sigma, through_px, min_votes, static_frac,
-                                  min_angle_bins, bg_edges, edge_frac_max, valid)
+                                  min_angle_bins, bg_edges, edge_frac_max, valid, radius_masks=masks)
     if second.ok and second.n_lines > first.n_lines and second.peak >= 0.8 * first.peak:
         second.notes.append(f"第二回合挖掉輪轂圓盤（r={r0}）後線數 {first.n_lines} → {second.n_lines}")
-        # 半徑一律用完整遮罩量，挖掉的圓盤不影響外緣
-        second.rotor_r_px = rotor_radius_from_occupancy(masks, second.hub, valid=valid)
         return second
     return first
 
@@ -252,7 +250,12 @@ def _arm_pixels(mask: np.ndarray, min_area: int, min_elong: float) -> list[np.nd
 def _hub_from_lines_once(masks: np.ndarray, min_area: int, min_elong: float, sigma: float,
                          through_px: float, min_votes: float, static_frac: float,
                          min_angle_bins: int, bg_edges: np.ndarray | None,
-                         edge_frac_max: float, valid: np.ndarray | None = None) -> MotionHub:
+                         edge_frac_max: float, valid: np.ndarray | None = None,
+                         radius_masks: np.ndarray | None = None) -> MotionHub:
+    # 半徑一律在原始遮罩上量：第二回合傳進來的 masks 挖掉了第一回合輪轂附近的圓盤，
+    # 在那上面量第一個候選的半徑會從第一個環就連續落空、量成十幾個像素，於是近處那台
+    # 反而輸給遠處那台（Montrigaud 實測）。
+    rmasks = masks if radius_masks is None else radius_masks
     n, h, w = masks.shape
     raw: list[tuple[float, float, float, float, np.ndarray, int]] = []
     n_on_edge = 0
@@ -327,17 +330,27 @@ def _hub_from_lines_once(masks: np.ndarray, min_area: int, min_elong: float, sig
                          notes=[f"最強的共點只有 {cands[0][4]} 個方向箱（需 ≥ {min_angle_bins}）——那是兩條靜態邊緣的交點，不是轉子"])
     if diverse[0] is not cands[0]:
         notes.append("票數最高的共點方向單一，改取次高但方向多樣的那個")
-    # 票數相近（≥ 0.6× 主峰）的候選之間，取**掃過半徑最大**的那個。取像規格是「單台主風機、
+    # 票數相近（≥ 0.6× 主峰）的候選之間，取**有效半徑最大**的那個。取像規格是「單台主風機、
     # 整個轉子在框內」，主風機一定是畫面裡最大的轉子；遠處那台票數可能一樣多（線多但短），
     # 半徑分得開（Montrigaud 兩台同框實測：只看票數會選到遠處那台）。
+    # 有效半徑 = min(佔有率半徑, 1.3 × 支持段最遠點的中位數)：佔有率半徑會被滿天快雲撐大
+    # （Lawrence Weston 實測：雲團假中心 r_occ=220 但支持段只伸到 37 px；真輪轂 144 vs 101），
+    # 掃過的範圍不可能超過支持它的葉片段實際伸到的地方。
     comparable = [c for c in diverse if c[0] >= 0.6 * diverse[0][0]]
-    scored = [(rotor_radius_from_occupancy(masks, (c[1], c[2]), valid=valid), c) for c in comparable]
-    scored.sort(key=lambda rc: (-rc[0], -rc[1][0]))
-    rotor_r, chosen = scored[0]
+    scored = []
+    for c in comparable:
+        r_occ = rotor_radius_from_occupancy(rmasks, (c[1], c[2]), valid=valid)
+        far_med = float(np.median([np.hypot(p[:, 0] - c[1], p[:, 1] - c[2]).max() for *_, p in c[3]])) if c[3] else 0.0
+        scored.append((min(r_occ, 1.3 * far_med), r_occ, far_med, c))
+    scored.sort(key=lambda x: (-x[0], -x[3][0]))
+    r_eff, rotor_r, far_med, chosen = scored[0]
     if chosen is not diverse[0]:
-        notes.append(f"票數相近的候選有 {len(comparable)} 個，改取掃過半徑最大的（{rotor_r:.0f} px vs 票數最高者 {scored[[c for _, c in scored].index(diverse[0])][0]:.0f} px）")
+        top = next(x for x in scored if x[3] is diverse[0])
+        notes.append(f"票數相近的候選有 {len(comparable)} 個，改取有效半徑最大的（{r_eff:.0f} px vs 票數最高者 {top[0]:.0f} px）")
     if len(comparable) > 1:
-        notes.append("畫面裡有第二個放射中心（另一台風機）——結果以最大的轉子為主風機，建議人工確認")
+        notes.append("畫面裡有第二個放射中心（另一台風機或移動的雲）——結果以最大的轉子為主風機，建議人工確認")
+    if rotor_r > 2.0 * far_med > 0:
+        notes.append(f"佔有率半徑（{rotor_r:.0f} px）遠大於支持段伸到的距離（{far_med:.0f} px）——畫面裡有大範圍的其他運動（雲），半徑可能偏大")
     peak, hx, hy, sup, bins = chosen
     second = next((c[0] for c in cands if c is not chosen), 0.0)
     if len(comparable) == 1 and second > 0 and peak / second < 1.3:
