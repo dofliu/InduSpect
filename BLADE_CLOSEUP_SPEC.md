@@ -250,9 +250,9 @@ Blades Using Knowledge-Augmented Vision Language Models*, arXiv:2510.22868v2（2
 
 | 來源 | 內容 | 用途 |
 |---|---|---|
-| [DTU Nordtank 無人機影像](https://data.mendeley.com/datasets/hd96prn3nc/2)（Shihavuddin & Chen） | 5280×2970，2017/2018 兩年同一台，有損傷標註 | 主力訓練與評估 |
-| [Blade30](https://github.com/cong-yang/Blade30) | 1,302 張、30 支葉片、陸域與離岸，含缺陷與汙染標註與分割遮罩 | 跨風場泛化測試 |
-| [Multiclass WTB Defect Dataset](https://www.nature.com/articles/s41597-026-06762-x)（Scientific Data 2026） | 多類別無人機影像 | 補 structural 與 environmental 類 |
+| [DTU Nordtank 無人機影像 **v1**](https://data.mendeley.com/datasets/hd96prn3nc/1)（Shihavuddin & Chen）**CC BY 4.0** | 5280×2970，2017/2018 兩年同一台，有損傷標註 | 主力訓練與評估。**v2 是 CC BY-NC 3.0，不可商用**，見 `blade_prototype/CLOSEUP_BASELINE_REPORT.md` §2 |
+| [Blade30](https://github.com/cong-yang/Blade30) **無授權聲明** | 1,302 張、30 支葉片、陸域與離岸，含缺陷與汙染標註與分割遮罩 | 跨風場泛化測試。**repo 沒有 LICENSE 檔**，預設保留所有權利，用之前要取得書面授權 |
+| [Multiclass WTB Defect Dataset](https://doi.org/10.6084/m9.figshare.30210175.v1)（Scientific Data 2026）**CC BY 4.0** | 1,065 張 1024×1024、六類 VOC 標註、**兩位獨立標註者** | 補 structural 與 environmental 類。**三份主力語料中唯一確定可商用的一份**；實測見報告 §5 |
 | [DTU Risø 2024 影片](https://data.mendeley.com/datasets/6nzbdvjn87/1)（CC BY 4.0） | 29 段運轉中葉片影片 | 同葉片跨次追蹤 |
 | Roboflow / Kaggle 上的葉片缺陷集 | 品質不一 | 補充，不進測試集 |
 
@@ -317,7 +317,7 @@ Blades Using Knowledge-Augmented Vision Language Models*, arXiv:2510.22868v2（2
 
 | 階段 | 內容 | 誰 | 出口條件 |
 |---|---|---|---|
-| B0 | 分類表、資料集清單與授權表、語料實際 cm/px 量測（§2 待量） | 學生 | 一張分類表 + 一張資料集表 + 每份語料的 cm/px 分布 |
+| B0 | 分類表、資料集清單與授權表、語料實際 cm/px 量測（§2 待量） | 學生 | 一張分類表 + 一張資料集表 + 每份語料的 cm/px 分布。**已完成：[`BLADE_CLOSEUP_TAXONOMY.md`](BLADE_CLOSEUP_TAXONOMY.md) 與 [`blade_prototype/CLOSEUP_BASELINE_REPORT.md`](blade_prototype/CLOSEUP_BASELINE_REPORT.md)**，回饋見 §12 |
 | B1 | 評估協定實作：葉片級切分、逐類指標、低光照子集 | 學生 | 一支評估腳本，吃預測檔出逐類表 |
 | B2 | 三條基線各跑一次（§8.1–8.3） | 學生 | 三組逐類數字，含 structural recall |
 | B3 | 知識庫建置與消融 | 學生 | 四個知識庫各自缺一次的逐類數字 |
@@ -340,3 +340,41 @@ Blades Using Knowledge-Augmented Vision Language Models*, arXiv:2510.22868v2（2
   https://data.mendeley.com/datasets/hd96prn3nc/2
 - Yang, C. 等, *Blade30*. https://github.com/cong-yang/Blade30
 - 本專案 Mode A 規格：`BLADE_INSPECTION_SPEC.md`；改進方向評估：`blade_prototype/INNOVATION_REVIEW.md`
+- 本模組的 B0 產出：`BLADE_CLOSEUP_TAXONOMY.md`（分類表）、`blade_prototype/CLOSEUP_BASELINE_REPORT.md`（語料實測）
+
+---
+
+## 12. B0 實測回饋（2026-09-13）
+
+B0 做完了，產出兩份文件：分類表 [`BLADE_CLOSEUP_TAXONOMY.md`](BLADE_CLOSEUP_TAXONOMY.md)
+（JSON 為單一來源，有同步守門測試）與語料實測 [`blade_prototype/CLOSEUP_BASELINE_REPORT.md`](blade_prototype/CLOSEUP_BASELINE_REPORT.md)。
+實測推翻或補充了本規格的四件事：
+
+1. **§2 的「待量」量不到。** 開放網路語料 0/200 有 EXIF，唯一可商用的 multiclass 語料
+   3/1065 有 EXIF、1/1065 有焦距。原因是結構性的（圖床重編碼與研究語料統一裁切都會剝掉 EXIF），
+   不是找對語料就能解決。**§9.4「沒有尺度不得報 IEA Level」因此適用於幾乎全部現有語料。**
+   替代路徑是畫面內已知尺寸物件（拍攝規程要加）、型錄弦長、無人機 XMP（未驗證）。
+
+2. **§1.2 的取像規則不保證解析度——這是本規格目前最實質的缺口。**
+   「弦向 ≥ 1/3」在 1024 px 畫面上是 0.73 cm/px，比 Mode A 地面 5x 的 0.37 還差。
+   中段弦長要達到 IEA Level 1 需要約一萬像素寬的畫面，現在沒有這種相機。
+   **Level 1 只有兩條路**：拍弦短的外段且畫面寬 ≥ 6,400 px，或**讓葉片溢出畫面**只拍前緣一段。
+   §1.2 目前只寫下限、沒寫「超過也算」，建議兩者都補：加解析度下限，並明寫溢出畫面是合格的。
+
+3. **現有可商用語料一張健康照都沒有。** multiclass 語料 1065 張每張都至少有一個缺陷框，
+   也沒有任何正常結構的正面標註。**§6 第 4 條（誤報分開報「在正常結構上」與「在乾淨表面上」）
+   在現有語料上執行不了**，而那正是 §5.4 監督式基線的失敗方式。補健康照與正常結構標註
+   應該列為 B0 之後的第一件事。
+
+4. **安全上最關鍵的那一類，在語料裡拍的方式正好收不進來。** multiclass 語料的 `crack` 類
+   抽樣 0/6 通過 §1.2——它們全是整機照上的葉片斷損，不是近身裂縫。
+   **不建議放寬 §1.2 來收它**：那一類 Mode A 的三片剪影互比本來就抓得到，
+   §1.3 第 3 點「一個模式只解一種取像條件」在這裡應該守住。
+
+另外一個正面結果：**既有 Mode A 拍攝閘門在 179 張非 Mode A 照片上零放行**，
+而且是靠對的條件擋下來的（葉片數不對、葉尖半徑離散），不是靠程式丟例外。
+這條已做成回歸測試（`blade_prototype/tests/test_closeup_taxonomy.py`）。
+
+還有一個給 B1 的數字：multiclass 語料兩位標註者的**類別一致率是 94.0%**（Cohen's kappa 0.897），
+而且 92 次分歧全部落在 `surface_injure`↔`corrosion` 與 `hide_craze`↔`craze` 兩對上。
+**94% 是任何模型在這份語料上的可量測上限**，逐類表旁邊要印這個數字。

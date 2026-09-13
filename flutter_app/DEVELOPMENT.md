@@ -284,8 +284,11 @@ flutter pub get
 # 靜態分析
 flutter analyze --no-pub
 
-# 執行測試
-flutter test test/form_inspection_record_test.dart test/database_service_test.dart test/inspection_item_state_test.dart test/photo_service_test.dart
+# 死角查核（CI 排在 analyze 之前）
+python3 scripts/audit_dead_ends.py
+
+# 執行測試（全部 497 條；widget_test.dart 已修復，不再排除）
+flutter test
 
 # Android 建置
 flutter build apk --debug
@@ -298,7 +301,18 @@ flutter build apk --debug
 <uses-permission android:name="android.permission.CAMERA"/>
 <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
 <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
+<uses-permission android:name="android.permission.RECORD_AUDIO"/>
 ```
+
+### 平台現況
+
+**只有 `android/`，`ios/` 尚未建立。** 要支援 iOS 得先 `flutter create --platforms=ios .`，
+並補 `NSCameraUsageDescription`、`NSPhotoLibraryUsageDescription`、
+`NSLocationWhenInUseUsageDescription`、`NSMicrophoneUsageDescription`。
+
+`android/app/src/main/kotlin/.../BladeVideoFrames.kt`（影片抽幀的 platform channel 實作）
+**CI 不建 APK，所以從未被編譯過**——第一次實機要先確認它 build 得起來、
+`getFrameAtTime` 在目標機型上回得出幀。
 
 ---
 

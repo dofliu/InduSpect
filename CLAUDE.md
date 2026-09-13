@@ -9,6 +9,23 @@
 
 其餘功能（快速分析、範本系統、設備管理、雲端同步等）目前為隱藏狀態，非核心開發重點。
 
+另有一條平行產品線：**風力機葉片檢測**（Mode A 地面整機已上線、Mode B 近身影像規格完成未實作），
+與定檢表 pipeline 不共用流程也不共用資料。
+
+## 文件地圖（2026-09-13 整理過）
+| 要找什麼 | 去哪裡 |
+|---|---|
+| 系統總覽、運作原理、快速開始 | `README.md` |
+| 操作步驟、離線行為、常見問題 | `docs/USER_GUIDE.md` |
+| App 架構、DB schema、變更紀錄 | `flutter_app/DEVELOPMENT.md` |
+| 功能規劃 / 上線計畫 | `ROADMAP.md` / `LAUNCH_PLAN.md` |
+| 接棒筆記（下一個 session 先讀這個） | `docs/handover/session-handover.md` |
+| **已完成或已被取代的文件** | `docs/archive/`——留作決策紀錄，**不要照著做** |
+
+根目錄只留現行有效的文件。`arch.md`／`database.md`／`ui.md`／`prj.md`／`todo.md`／
+`feature_enhancements.md`／`COMPILE_CHECK_REPORT.md` 描述的是**專案沒有採用的架構**
+（Supabase、GCP 無伺服器、登入流程），已刪除（內容仍在 git 歷史），不要照它們寫程式。
+
 ## 關鍵檔案
 | 檔案 | 用途 |
 |------|------|
@@ -49,8 +66,11 @@
 | `flutter_app/lib/services/blade_ai_service.dart` | 葉片專用 AI prompt（正常結構清單）+ 值域夾回 |
 | `flutter_app/lib/services/blade_report_builder.dart` | 葉片報告（**不輸出「合格」**），交給 `pdf_report_service.dart` |
 | `BLADE_INSPECTION_SPEC.md` | 風力機葉片地面目視檢測模組規格（獨立功能，Phase 0 原型 + Phase 1 App 化已完成） |
-| `BLADE_CLOSEUP_SPEC.md` | ★ **Mode B：葉片近身影像檢測規格**（無人機距離與角度、外觀判讀、IEA Level 1–2；規格草案，未實作，預定由學生展開） |
-| `blade_prototype/` | ★ 葉片模組 Phase 0 演算法原型（Python/OpenCV；分割、三片互比、前緣粗糙度、影片六點鐘取幀、逐片聲音異常、圖文報告產生器、拍攝品質閘門、**運動分割輪轂定位 `motion_hub.py`**、**太陽方位 `sunpos.py`**；`SENSITIVITY.md` 合成影像靈敏度、`REAL_IMAGE_VALIDATION.md` 真實影像實測、**`INNOVATION_REVIEW.md` 改進方向的文獻對照與離線驗證**、`scripts/` 語料抓取/驗證/圖文報告/運動分割實測四支腳本） |
+| `BLADE_CLOSEUP_SPEC.md` | ★ **Mode B：葉片近身影像檢測規格**（無人機距離與角度、外觀判讀、IEA Level 1–2；規格草案，未實作，預定由學生展開；§12 是 B0 實測回饋） |
+| `docs/USER_GUIDE.md` | 使用手冊（操作步驟；README 不再重複這一段） |
+| `BLADE_CLOSEUP_TAXONOMY.md` | ★ Mode B 標註分類表（B0 產出）。**產物不要手改**——單一來源是 `blade_prototype/data/closeup_taxonomy.json`，改完跑 `render_closeup_taxonomy.py` |
+| `blade_prototype/CLOSEUP_BASELINE_REPORT.md` | ★ Mode B 語料現況實測（B0）：授權盤點、開放網路可用率、cm/px 可得率、可商用語料的類別分布與標註者一致度、Mode A 閘門跨模式回歸 |
+| `blade_prototype/` | ★ 葉片模組 Phase 0 演算法原型（Python/OpenCV；分割、三片互比、前緣粗糙度、影片六點鐘取幀、逐片聲音異常、圖文報告產生器、拍攝品質閘門、**運動分割輪轂定位 `motion_hub.py`**、**太陽方位 `sunpos.py`**；`SENSITIVITY.md` 合成影像靈敏度、`REAL_IMAGE_VALIDATION.md` 真實影像實測、**`INNOVATION_REVIEW.md` 改進方向的文獻對照與離線驗證**、**`CLOSEUP_BASELINE_REPORT.md` Mode B 語料實測**、`scripts/` 語料抓取/驗證/圖文報告/運動分割實測/近身語料抓取/分類表渲染六支腳本） |
 
 ## 開發慣例
 - 路徑操作用 `package:path/path.dart`，不手動 `split('/')`
@@ -65,9 +85,9 @@
 python3 scripts/audit_dead_ends.py   # 死角查核（service 零引用／DB 欄位只讀不寫）；--report 看全部
 flutter test          # 全部 497 tests（widget_test 已修復，不再排除）
 cd backend && GEMINI_API_KEY=ci-fake-key pytest tests/ --asyncio-mode=auto   # 191 pytest
-cd blade_prototype && pip install -r requirements.txt && pytest              # 100 tests（葉片原型，合成影像/音軌夾具）
+cd blade_prototype && pip install -r requirements.txt && pytest              # 115 tests（葉片原型，合成影像/音軌夾具 + Mode B 分類表守門）
 ```
-Flutter 497 tests / 後端 191 pytest / 葉片原型 100 pytest 全綠（2026-09-12 CI 實測）。DB 測試使用 `sqflite_common_ffi` in-memory。標準資料為單一來源：改 `backend/app/data/inspection_standards.py` 後必須跑 `python backend/scripts/export_standards.py` 重新匯出 JSON（有同步守門測試）。
+Flutter 497 tests / 後端 191 pytest / 葉片原型 115 pytest 全綠（2026-09-13 本機實測）。DB 測試使用 `sqflite_common_ffi` in-memory。標準資料為單一來源：改 `backend/app/data/inspection_standards.py` 後必須跑 `python backend/scripts/export_standards.py` 重新匯出 JSON（有同步守門測試）。
 
 ## 已知問題追蹤
 - GitHub Issues #14-#19 已全數修復並關閉（2026-04-16）
@@ -107,6 +127,9 @@ Flutter 497 tests / 後端 191 pytest / 葉片原型 100 pytest 全綠（2026-09
 - 查核變成 CI 守門（2026-09-11）：`flutter_app/scripts/audit_dead_ends.py` 排在 `flutter analyze` 之前。**保守**（寧可漏報不可誤攔）：callers 只抓全 `lib/` 零引用；columns 穿過 model 方法追讀寫到不動點，但 `toString`／序列化成員／建構子不算（第一版把它們算進去，每個欄位都變成有人碰）。名單 `scripts/audit_allowlist.json` 每條附理由、**過期條目一樣紅**。基準線 4 整檔／43 成員／3 欄位放行，全部有理由。四個反向測試（拿掉拍攝點寫入、塞死方法、塞過期條目、基準）都驗過會關會開
 - 影片抽幀的 Android 原生實作（2026-09-11）：`BladeFrameExtractor` 注入點由 `blade_video_frames.dart`（Dart，platform channel `com.induspect/blade_video`）+ `BladeVideoFrames.kt`（`MediaMetadataRetriever`）接上。三個決定：①`OPTION_CLOSEST` 不用 `CLOSEST_SYNC`——關鍵幀可能離要求時刻 1–2 秒，12 rpm 時 1 秒是 72°，六點鐘就不是六點鐘；②長邊縮到 1280（幾何層工作尺度 1024 留餘裕），API 27+ 用 `getScaledFrameAtTime` 省掉 4K 全尺寸 bitmap；③抽不到、解碼失敗、平台不支援**一律回 null 不丟例外**，因為 `analyzeFrames` 已把 null 定義成「這一幀沒有、其他幀照算」。畫面多了「附加轉動影片」：`file_picker` 走路徑不進記憶體，當場 `probe` 長度／尺寸；**沒有音軌的影片解不了**（抽幀時刻由音軌決定），摘要會明講。發現順帶修掉一個死角：在此之前 `WtMediaKind.video` **全 app 沒有任何建立點**——影片只被讀、從沒被附加。Dart 端 16 條 channel 契約測試；**Kotlin 端 CI 不建 APK、完全未編譯**，第一次實機要先確認它能 build、`getFrameAtTime` 在目標機型上回得出幀
 - 葉片檢測改進方向的評估（2026-09-12，`blade_prototype/INNOVATION_REVIEW.md`）：八個方向逐項對文獻與業界先例，桌面能驗的兩項先做成原型釘測試。①**太陽方位** `sunpos.py`（NOAA 算法，對 NREL SPA 範例差 0.003°、對 pvlib 全天 ≤ 0.02°）——逆光是閘門唯一擋不了的拒收原因，只能從站位消掉。②**運動分割輪轂定位** `motion_hub.py`：時間中位數背景 + 細長段共點投票，取代「不像天空的才是轉子」。真實地面影片（Commons CC 授權，14 段）實測：設計範圍內五段運動法 **5/5** 定位到主風機輪轂、奇偶幀兩個獨立子集差 ≤ 11 px；同樣五段既有天空模型只有 **1/5** 全對，其餘是「8 幀一致但一致地錯」（Masenberg 落在樹梢、Lawrence Weston 落在塔身）或「2/8 對」（兩台／四台同框選到遠台或沙丘）；設計範圍外（遠景風場、無人機、相機移動、側視、小型風機）兩法皆不可用，側視是顏色法較好。疊圖在 `blade_prototype/innovation_review_assets/`。四個不可退化的約定：①穩像用 ORB+RANSAC 且相似變換要過「無縮放、轉動 ≤ 3°、平移 ≤ 20%」，整張相位相關會被轉子拉走；②靜態邊緣在殘餘晃動下會閃成細長段（塔架 × 地平線交點曾拿到與真輪轂相當的票數），用背景梯度與跨幀同 (θ,ρ) 抑制；③三片葉根黏成 Y 形時逐幀用距離變換最厚點挖掉再拆臂；④票數相近的候選取掃過半徑最大的（取像規格是單台主風機，Montrigaud 兩台同框實測只看票數會選到遠處那台）。已知限制：斜視時掃過區是橢圓、半徑量到短軸。App 端零改動，SPEC §13 新增三個待決策項（人工定錨 + 型錄尺度、幾何層改吃影片、拍攝前顯示太陽方位）
+- Mode B 的 B0 完成：分類表與語料實測（2026-09-13）。**分類表**（`data/closeup_taxonomy.json` 為單一來源，`BLADE_CLOSEUP_TAXONOMY.md` 是產物，15 條守門測試）：四個機制類 17 個子類、12 項正常結構、6 個品質旗標、8 條判定順序、紀錄格式。四個設計決定：①每個損傷子類都要填「多細才看得到」（`min_cm_per_px`），否則 §9.4「沒有尺度不得報 IEA Level」沒有執行依據；②正常結構要**正面標記**不能只是「沒有缺陷標記」，否則誤報落在哪裡無從歸因；③疑似 structural 分不出來時標 `uncertain` **不准倒向 healthy**（基線論文的失效模式正是裂縫被判成健康）；④`blade_id`/`flight_id` 必填——「按葉片切不按照片切」靠必填欄位執行不是靠記得。易混淆對照做成**雙向**且有測試守（寫這張表時測試抓到一個指錯的名字與 18 條缺的反向）。IEA Level 3–5 的門檻**刻意留白並標「待從原文核對」**，有測試擋「先寫個大概」——安全分級的門檻不可以憑印象填。
+  **語料實測**（200 張開放網路 + 1065 張 figshare 語料）五個結論：①三份主力語料只有一份可商用——**DTU v2 是 CC BY-NC 3.0 而 v1 才是 CC BY 4.0**（規格原本連的是 v2）、Blade30 **完全沒有授權聲明**、Scientific Data 那份是 CC BY 4.0；②開放網路湊不出語料——200 張裡符合取像條件的 23 張、表面可判讀 8 張、**有缺陷的 0 張**，54% 根本不是風機葉片（"turbine blade" 撈到噴射引擎、"rotor blade" 撈到直升機）；③**cm/px 量不到**——EXIF 0/200 與 3/1065，圖床重編碼與研究語料統一裁切都會剝掉，是結構性的不是找對語料就能解決；④**§1.2 的取像規則不保證解析度**——「弦向 ≥ 1/3」在 1024 px 畫面上是 0.73 cm/px，比 Mode A 地面 5x 的 0.37 還差，中段弦長要 Level 1 得要一萬像素寬的畫面，Level 1 只能靠拍外段或**讓葉片溢出畫面**；⑤可商用語料**一張健康照都沒有**，§6 第 4 條的誤報分項統計在它上面執行不了。另外量到兩位標註者的**類別一致率 94.0%**（kappa 0.897），92 次分歧全落在 `surface_injure`↔`corrosion` 與 `hide_craze`↔`craze` 兩對——那是任何模型在這份語料上的可量測上限。順帶做了一條**跨模式回歸**：把 Mode A 的分割+結構定位+拍攝閘門餵進 179 張非 Mode A 照片，**放行 0 張**，而且是靠對的條件擋的（葉片數不對、葉尖半徑離散）不是靠程式丟例外；這條寫進測試，閘門被放寬時會先紅
+
 - 葉片近身影像檢測 Mode B 規格（2026-09-12，`BLADE_CLOSEUP_SPEC.md`）：與既有地面模式並列的**第二個模式**，輸入是「填滿畫面的葉片近身照」，靠外觀與領域知識判讀而非三片互比與物理。**輸入以無人機的距離與角度為硬約束**（8–16 m、上仰 15°、葉片弦向占畫面 ≥ 1/3），這個限縮讓 DTU 與 Blade30 等公開語料從「領域不匹配」變成可直接使用。物理上算出一個違反直覺的結果：**無人機 12 m 用廣角（24 mm eq）是 0.341 cm/px，與地面模式 5x 在 50 m 的 0.37 cm/px 幾乎相同**——提升解析度的是「近距離 **加上** 中長焦」，光是靠近沒有用；12 m / 120 mm eq 的 0.068 cm/px 才讓 IEA Level 1（1 cm² 約 15×15 px）可偵測，Level 0 針孔（< 1 mm，1.5 px）任何組態都做不到。基線是 Zhang 等人的知識增強 VLM（arXiv:2510.22868v2）：整體準確率 94.55% 看似很好，但**逐類拆開後 structural（裂縫）recall 只有 0.5**（12 張裡 6 張被判成健康，多為低光照），而 environmental 的 1.00/1.00 是在 **2 張**上得到的；重新訓練的 YOLOv8n 則是 structural 2/12、environmental 0/2，且 11 張健康照誤報在製造接縫與結構標記上。所以 §6 把評估協定寫成不可退化的四條：**按葉片切不按照片切**、**主指標是逐類 recall 不是 accuracy**、**每類少於 30 張不報 P/R/F1**、**健康照要含容易誤判的正常結構且誤報要分開報**。兩條新的不可退化約定：沒有尺度就不報 IEA 面積等級、取像條件不合就拒收並說明原因。輸出沿用 `WtDetection`，實作後 `wt_detections.bbox_json` 會第一次有生產端，屆時要移除 `audit_allowlist.json` 的對應條目
 
 ## 既有 error（已修復）

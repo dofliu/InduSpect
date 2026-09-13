@@ -6,7 +6,8 @@ import '../models/analysis_result.dart';
 import '../utils/constants.dart';
 
 /// Gemini AI 服務
-/// 基於 aimodel.md 文檔中的提示工程策略
+/// Prompt 策略：結構化 JSON 輸出 + 思維鏈引導（原始設計見 docs/archive/aimodel.md，
+/// 其中的模型 ID 與路由邏輯已汰換，模型 ID 現在由設定頁決定）
 class GeminiService {
   static final GeminiService _instance = GeminiService._internal();
   factory GeminiService() => _instance;
