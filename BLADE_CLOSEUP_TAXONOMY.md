@@ -171,12 +171,12 @@
 ### 6.1 Multiclass Dataset for Intelligent Detection of Wind Turbine Blade Defects Using Drone Imagery, figshare 10.6084/m9.figshare.30210175.v1
 
 - 授權：**CC BY 4.0（可商用；三份主要語料中唯一一份）**
-- 規模：1065 張，全部 1024×1024，Pascal VOC 標註，兩位獨立標註者
+- 規模：1065 張，全部 1024×1024，Pascal VOC 標註，兩位獨立標註者。**取像判定（全數 1065 張）：839 張合格（79%）、185 張整機、39 張葉片太細、2 張非葉片**（`data/closeup_intake_wtb.json`）
 
 | 它的類別 | 對到本表 | 注意 |
 |---|---|---|
-| `crack` | `structural/structural_fracture`、`structural/tip_damage` | **不是近身裂縫**。取樣的 6 張全是整機照上的葉片斷損（輪轂與塔架入鏡），依 §1.2 全數拒收（0/6 通過取像判定）。這一類在 Mode B 的輸入定義下不存在，要由 Mode A 處理。 |
-| `craze` | `structural/longitudinal_crack`、`surface/leading_edge_erosion` | 名稱是龜裂，但目視多為**開放型裂損與前緣缺口**，不是本表定義的細密網狀 `gelcoat_crack_network`。取樣 2/6 通過取像判定。 |
+| `crack` | `structural/structural_fracture`、`structural/tip_damage` | **不是近身裂縫**。全部 177 張逐張看過：174 張是整機照（輪轂與塔架入鏡），2 張葉片太細，1 張非葉片，**0 張通過 §1.2 取像判定**。這一類在 Mode B 的輸入定義下不存在，要由 Mode A 處理。 |
+| `craze` | `structural/longitudinal_crack`、`surface/leading_edge_erosion` | 名稱是龜裂，但目視多為**開放型裂損與前緣缺口**，不是本表定義的細密網狀 `gelcoat_crack_network`。全部 198 張中 180 張（91%）通過取像判定，其餘 18 張葉片太細。 |
 | `hide_craze` | `surface/gelcoat_crack_network`、`structural/longitudinal_crack` | 細長線狀、標註框多為長條。與 craze 是兩位標註者最常互換的一對（40 次分歧）。 |
 | `corrosion` | `healthy/contamination`、`surface/corrosion_metal_part` | **混了兩件事**：部分是生物附著（綠藻）——依本表屬 contamination 不是損傷；部分是金屬件鏽蝕。且有數張拍的是**塔架不是葉片**。與 surface_injure 是第二常互換的一對（52 次分歧）。 |
 | `surface_injure` | `surface/coating_peeling` | — |
@@ -184,10 +184,32 @@
 
 **這份語料缺什麼**：
 
-- **沒有健康照**：1065 張每一張都至少有一個缺陷框。§6 第 4 條要求測試集至少 1/3 是健康照且含易誤判的正常結構——這份語料一張都給不出來，誤報率無從量。
-- **沒有正常結構標註**：接縫、LEP 邊緣、VG 板、避雷接點都沒有被正面標記，所以誤報落在哪裡無從歸因。
+- **沒有健康照**：1065 張每一張都至少有一個缺陷框。§6 第 4 條要求測試集至少 1/3 是健康照且含易誤判的正常結構——這份語料一張都給不出來，誤報率無從量。**已補的部分**：`scripts/closeup_healthy_candidates.py` 從合格影像的框外區域挖出候選小圖（見 `CLOSEUP_HEALTHY_SET.md`），全部 `unreviewed`，要人看過才算 healthy。
+- **沒有正常結構標註**：接縫、LEP 邊緣、VG 板、避雷接點都沒有被正面標記。**已補的部分**：192 張抽樣的影像級存在標記（`data/closeup_normal_structures_wtb.json`）與 8 張的概略框（`data/closeup_normal_structure_boxes_wtb.json`），皆為單一標註者的第一版，待人複核。
 - **沒有尺度**：1065 張只有 3 張還留著 EXIF、1 張有焦距。§9.4 因此適用於幾乎全部——用這份語料訓出來的模型不得輸出 IEA Level。
 - **沒有葉片編號**：檔名是流水號，§6 第 1 條的「按葉片切」在這份語料上執行不了，只能退而按時間戳或飛行批次粗分，且要先確認可行。
+
+**正常結構普查**（192 張抽樣）：從 839 張合格影像等距抽 192 張，影像級標記畫面裡有沒有分類表 §2 的正常結構。單一標註者，未複核。
+
+| 有出現 | 張數 |
+|---|---|
+| tip_marking（紅色葉尖塗裝） | 20 |
+| ruler／比例尺 | 11 |
+| marking_decal（文字、告示牌、商標） | 7 |
+| shadow_and_specular | 6 |
+| mould_parting_line／paint_seam | 5 |
+| repair_patch | 4 |
+| lep_edge_step | 1 |
+
+**沒出現**：`lightning_receptor`、`vortex_generator／serrated_trailing_edge`、`drain_hole`
+
+| 痕跡（不是葉片的東西，但模型會學到） | 張數 |
+|---|---|
+| 灰色矩形塗抹（前處理） | 38 |
+| 時間戳／文字燒錄 | 23 |
+| 人、手、工具入鏡 | 15 |
+
+**與結構類缺陷最易混淆的三種正常結構——避雷接點、VG 板、排水孔——在 192 張裡一張都沒出現**；出現的多是紅色葉尖塗裝與比例尺。反而**標註／前處理痕跡出現在 35% 的影像上**（68/192），比任何一種正常結構都多：模型很可能學到「灰色矩形附近有缺陷」「有時間戳就有缺陷」。這是比缺健康照更迫切的洩漏風險。
 
 **標註者間一致度**：兩位標註者的一致度是任何模型在這份語料上的**可量測上限**。超過它的分數是在報雜訊。
 

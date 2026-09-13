@@ -1,0 +1,261 @@
+{
+ "version": "b0-2026-09-13",
+ "source": "Multiclass Dataset for Intelligent Detection of Wind Turbine Blade Defects Using Drone Imagery, figshare 10.6084/m9.figshare.30210175.v1, CC BY 4.0",
+ "note": "8 張的區域級正常結構／畫面物件框。**單一標註者（本次作業的模型）**在 1024×1024 全解析度上逐張畫，框是概略的（approx=true），目的是給人複核時有起點，並當規格 §8.2 知識庫第 4 項（圖文配對）的種子。所有框 human_status=pending、annotator=claude-first-pass，未簽核前無效力。kind 前綴：normal_structures/=分類表 §2；reference_object/=尺度參考物；artifact/=標註或前處理痕跡（不是葉片的東西，但模型會學到）。",
+ "annotator": "claude-first-pass",
+ "human_status": "pending",
+ "images": [
+  "108.jpg",
+  "13.jpg",
+  "177.jpg",
+  "45.jpg",
+  "598.jpg",
+  "654.jpg",
+  "74.jpg",
+  "87.jpg"
+ ],
+ "boxes": [
+  {
+   "image": "45.jpg",
+   "kind": "normal_structures/tip_marking",
+   "bbox": [
+    0,
+    400,
+    1010,
+    900
+   ],
+   "is_defect": false,
+   "approx": true,
+   "note": "紅色葉尖航警塗裝整段；白色露出處是缺陷框所在（塗層剝落），紅色本身不是"
+  },
+  {
+   "image": "87.jpg",
+   "kind": "reference_object/ruler",
+   "bbox": [
+    240,
+    470,
+    1024,
+    550
+   ],
+   "is_defect": false,
+   "approx": true,
+   "note": "鋼捲尺橫貫畫面，可當 scale.method=reference_object"
+  },
+  {
+   "image": "87.jpg",
+   "kind": "artifact/inpaint_block",
+   "bbox": [
+    20,
+    480,
+    250,
+    550
+   ],
+   "is_defect": false,
+   "approx": true,
+   "note": "米色矩形塗抹，語料前處理痕跡"
+  },
+  {
+   "image": "177.jpg",
+   "kind": "normal_structures/marking_decal",
+   "bbox": [
+    600,
+    555,
+    790,
+    750
+   ],
+   "is_defect": false,
+   "approx": true,
+   "note": "檢測告示牌（手持），非葉片固有結構，屬畫面物件"
+  },
+  {
+   "image": "177.jpg",
+   "kind": "artifact/hand_or_tool",
+   "bbox": [
+    770,
+    600,
+    1024,
+    780
+   ],
+   "is_defect": false,
+   "approx": true,
+   "note": "戴手套的手"
+  },
+  {
+   "image": "177.jpg",
+   "kind": "artifact/timestamp_burn_in",
+   "bbox": [
+    710,
+    860,
+    960,
+    900
+   ],
+   "is_defect": false,
+   "approx": true,
+   "note": "相機時間戳"
+  },
+  {
+   "image": "598.jpg",
+   "kind": "normal_structures/marking_decal",
+   "bbox": [
+    640,
+    350,
+    870,
+    560
+   ],
+   "is_defect": false,
+   "approx": true,
+   "note": "藍色大字商標（上字）"
+  },
+  {
+   "image": "598.jpg",
+   "kind": "normal_structures/marking_decal",
+   "bbox": [
+    640,
+    730,
+    870,
+    930
+   ],
+   "is_defect": false,
+   "approx": true,
+   "note": "藍色大字商標（下字）"
+  },
+  {
+   "image": "598.jpg",
+   "kind": "normal_structures/paint_seam",
+   "bbox": [
+    640,
+    300,
+    1024,
+    330
+   ],
+   "is_defect": false,
+   "approx": true,
+   "note": "橫向淺色接縫／分段線（近似）"
+  },
+  {
+   "image": "598.jpg",
+   "kind": "normal_structures/paint_seam",
+   "bbox": [
+    640,
+    580,
+    1024,
+    610
+   ],
+   "is_defect": false,
+   "approx": true,
+   "note": "橫向淺色接縫／分段線（近似）"
+  },
+  {
+   "image": "598.jpg",
+   "kind": "artifact/hand_or_tool",
+   "bbox": [
+    820,
+    300,
+    850,
+    1000
+   ],
+   "is_defect": false,
+   "approx": true,
+   "note": "垂直細線：繩索或纜線在葉片前方"
+  },
+  {
+   "image": "108.jpg",
+   "kind": "normal_structures/repair_patch",
+   "bbox": [
+    340,
+    0,
+    1000,
+    950
+   ],
+   "is_defect": false,
+   "approx": true,
+   "note": "黃色玻纖修補層整塊；中央黑色燒蝕是缺陷框所在，修補層本身不是"
+  },
+  {
+   "image": "108.jpg",
+   "kind": "artifact/inpaint_block",
+   "bbox": [
+    0,
+    570,
+    420,
+    1024
+   ],
+   "is_defect": false,
+   "approx": true,
+   "note": "深綠色平塗區塊蓋掉地景，前處理痕跡"
+  },
+  {
+   "image": "108.jpg",
+   "kind": "artifact/hand_or_tool",
+   "bbox": [
+    980,
+    590,
+    1024,
+    800
+   ],
+   "is_defect": false,
+   "approx": true,
+   "note": "畫面右緣的手／工具"
+  },
+  {
+   "image": "13.jpg",
+   "kind": "artifact/inpaint_block",
+   "bbox": [
+    310,
+    515,
+    575,
+    615
+   ],
+   "is_defect": false,
+   "approx": true,
+   "note": "灰色矩形塗抹"
+  },
+  {
+   "image": "13.jpg",
+   "kind": "artifact/inpaint_block",
+   "bbox": [
+    0,
+    495,
+    320,
+    565
+   ],
+   "is_defect": false,
+   "approx": true,
+   "note": "灰色矩形塗抹（多塊）"
+  },
+  {
+   "image": "74.jpg",
+   "kind": "normal_structures/lep_edge_step",
+   "bbox": [
+    0,
+    670,
+    1024,
+    720
+   ],
+   "is_defect": false,
+   "approx": true,
+   "note": "前緣保護層邊界的階差（近似），與缺陷（撕裂）相鄰"
+  },
+  {
+   "image": "74.jpg",
+   "kind": "normal_structures/paint_seam",
+   "bbox": [
+    0,
+    320,
+    1024,
+    345
+   ],
+   "is_defect": false,
+   "approx": true,
+   "note": "沿展向的淺色摺線／接縫（近似）"
+  },
+  {
+   "image": "654.jpg",
+   "kind": "none",
+   "bbox": null,
+   "is_defect": false,
+   "approx": true,
+   "note": "全解析度看過：印樣上以為的硬邊陰影其實是葉片與天空的邊界；本張沒有正常結構框"
+  }
+ ]
+}

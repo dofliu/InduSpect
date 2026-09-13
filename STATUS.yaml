@@ -17,9 +17,9 @@ outputs:
   - app
 description: "Flutter mobile app for AI-powered industrial inspection with offline-first architecture, on-device regulation judgment engine (Tier 0), form auto-fill pipeline, GPS-tagged history, and a parallel wind-turbine blade inspection module (ground whole-turbine physics-based Mode A shipped; close-up appearance-based Mode B specified)"
 description_zh: "利用多模態 AI 和 Flutter 行動應用，實現工業設備的智慧巡檢。兩條產品線：①定檢表 pipeline（表單上傳 → 引導拍照 → AI 分析 → 法規判定（離線亦可）→ 自動回填 → 摘要報告 → 離線分享）與 GPS 歷史紀錄；②風力機葉片檢測（Mode A 地面整機物理判定已上線，Mode B 近身影像外觀判讀規格完成未實作）。"
-key_metrics: "2 core features + blade module; 497 Flutter tests, 191 backend pytest, 115 blade-prototype pytest (all in CI); dead-end audit gates PRs; 56 regulation standards single-sourced to on-device Dart judgment engine (Tier 0) + on-device OCR fallback (Tier 1a); on-device photo quality gate + reachability probe; offline PDF report; SQLite v5 (6 tables); blade Mode A surface/geometry/acoustic layers ported to Dart with cross-validation against Python prototype; blade Mode B taxonomy (4 classes / 17 subclasses / 12 normal structures) + corpus audit (3 datasets licence-checked, 200 open-web images triaged)"
+key_metrics: "2 core features + blade module; 497 Flutter tests, 191 backend pytest, 126 blade-prototype pytest (all in CI); dead-end audit gates PRs; 56 regulation standards single-sourced to on-device Dart judgment engine (Tier 0) + on-device OCR fallback (Tier 1a); on-device photo quality gate + reachability probe; offline PDF report; SQLite v5 (6 tables); blade Mode A surface/geometry/acoustic layers ported to Dart with cross-validation against Python prototype; blade Mode B taxonomy (4 classes / 17 subclasses / 12 normal structures) + corpus audit (3 datasets licence-checked, 200 open-web images triaged) + healthy-set v1 (839/1065 pass intake, 192-image normal-structure survey, ~1,200 unreviewed healthy tiles)"
 blockers:
   - "實機端到端測試：沒有 Android 實機做不了（Issue #43）"
   - "葉片模組外業：沒有真實手機拍的葉片語料，拍攝閘門與聲學門檻無法定門檻"
-  - "Mode B 健康照：現有可商用語料 1065 張全部有缺陷，誤報率量不出來"
+  - "Mode B 健康照：可商用語料 1065 張全部有缺陷，第一版已挖出 ~1,200 格健康候選（全部 unreviewed），要人複核後誤報率才量得出來"
   - "ios/ 目錄尚未建立；BladeVideoFrames.kt 從未被編譯過（CI 不建 APK）"
