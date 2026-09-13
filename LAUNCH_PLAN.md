@@ -7,6 +7,37 @@
 
 ---
 
+## 0. 進度更新（2026-09-13）
+
+**這份文件是 2026-08-31 的評估快照，下方 §2 的現況數字未逐段改寫。** 自評估日起，
+P0 八項中的七項已關閉，剩下的全部卡在**實體世界不是程式**：
+
+| P0 | 狀態 |
+|---|---|
+| 1. 實機端到端驗證從未執行 | ⏳ **仍未執行**——沒有實機做不了（Issue #43） |
+| 2. Release 用 debug keystore | ✅ 已補簽署設定 |
+| 3. 後端無認證 + CORS `*` | ✅ API-Key middleware + CORS 白名單 |
+| 4. `BACKEND_API_URL` 未文件化、無聲降級 | ✅ 已文件化並改為顯性提示 |
+| 5. 判定結果未持久化 | ✅ SQLite v4 |
+| 6. preview 模型 ID 寫死 | ✅ 改為設定頁可覆寫 |
+| 7. 隱私合規缺件 | ✅ [`docs/PRIVACY_POLICY.md`](docs/PRIVACY_POLICY.md) |
+| 8. Release build 洩露資訊 | ✅ 已收斂 |
+
+評估日之後另外完成的（不在本文件原有規劃內）：
+
+- **Tier 0 離線判定引擎**（§5 的核心建議）已實作：56 條標準 Dart 化，離線可判
+- **申報用 PDF 報告**（第 5-8 週項目）：裝置端純 Dart 離線產生
+- **拍照品質閘門 + 連線可達性探測**：現場惡劣環境因應
+- **後端 SDK 汰換**：`google-generativeai` → `google-genai`，統一走 `gemini_client.py`
+- **CI 全量收緊**：三軌全綠（Flutter 497 / 後端 191 / 葉片原型 115），
+  `flutter analyze` 改為硬性門檻，另加**死角查核**擋 PR
+- **葉片模組**：Phase 1–3 App 化完成，Mode B 規格與 B0 產出完成（見 [`ROADMAP.md`](ROADMAP.md)）
+
+**現在唯一的擋路石是實機**：一台 Android 實機跑完整流程 + 斷網情境，
+同一趟順便確認 `BladeVideoFrames.kt` build 得起來（CI 不建 APK，它從未被編譯過）。
+
+---
+
 ## 1. 執行摘要（TL;DR）
 
 **專案已具備一個真實可賣的核心賣點**：「拍照 → AI 讀值 → 台灣法規自動判定（含單位換算防呆）→ 回填客戶原本的 Excel/Word 定檢表」。這條 pipeline 在市面主流巡檢 SaaS（SafetyCulture、MaintainX 等）中沒有等價物，是明確的差異化。
@@ -55,7 +86,7 @@ Flutter App（Android / Web / Windows；無 iOS）
  ├─ 法規判定：POST 後端 /api/auto-fill/judge-readings（純規則，無 AI）
  ├─ 表單結構分析/回填：後端 /api/templates、/api/auto-fill（Gemini + openpyxl/python-docx）
  └─ 本地：SQLite v3、離線分享佇列、後端失敗時本地降級
-FastAPI 後端（未部署；Dockerfile/cloudbuild.yaml 備妥但有 5 項阻塞，見 CLOUD_RUN_ASSESSMENT.md）
+FastAPI 後端（未部署；Dockerfile/cloudbuild.yaml 備妥但有 5 項阻塞，見 docs/archive/CLOUD_RUN_ASSESSMENT.md）
 ```
 
 ---
@@ -77,7 +108,7 @@ FastAPI 後端（未部署；Dockerfile/cloudbuild.yaml 備妥但有 5 項阻塞
 
 ### P1 — 試點階段要補
 
-- **後端部署**：依 `CLOUD_RUN_ASSESSMENT.md` 清單執行（Cloud SQL 或先不用 DB、Secret Manager、Artifact Registry）。注意 agent 發現的新問題：**報告狀態存在 in-process 記憶體**（`form_fill.py:51`），Cloud Run 多實例/scale-to-zero 下 `GET /reports/{id}/status` 會 404——需改存 DB 或改為同步回傳。
+- **後端部署**：依 `docs/archive/CLOUD_RUN_ASSESSMENT.md` 清單執行（Cloud SQL 或先不用 DB、Secret Manager、Artifact Registry）。注意 agent 發現的新問題：**報告狀態存在 in-process 記憶體**（`form_fill.py:51`），Cloud Run 多實例/scale-to-zero 下 `GET /reports/{id}/status` 會 404——需改存 DB 或改為同步回傳。
 - **崩潰回報與監控**：接 Crashlytics 或 Sentry（Flutter）+ Cloud Run 結構化 log。沒有這個，試點回饋等於盲飛。
 - **CI 收緊**：把 15 個測試檔全部納入 CI；#45 把 `results.check` 改 `assert`；移除 `flutter analyze` 的 `continue-on-error`；加 `flutter build apk` 煙霧測試。
 - [x] **SDK 汰換（後端）** ✅ 2026-09-04：已遷移至 `google-genai`；新增 `app/services/gemini_client.py` 統一入口（client 延遲建立 + 依 key 快取），移除各 service 的 `genai.configure()` 全域狀態；連帶必須升版 `httpx` 0.26→0.28.1、`pydantic` 2.5.3→2.13.5、`fastapi` 0.109→0.116.1（相依鏈強制，見下）。**待辦**：Flutter 端評估 `firebase_ai`（Firebase AI Logic，可搭配 App Check 防濫用）或維持直連但集中封裝。
@@ -269,7 +300,7 @@ Phase 1 的兩個規格修正（都是實作時才看清楚的）：
 | 主要風險 | key 申請是 onboarding 最大流失點 → 做「30 秒引導申請」精緻化（settings 頁已有雛形） | Gemini 成本需控（好消息：Flash 分析一場 30 張照片的巡檢成本約 NT$1-3，毛利結構健康） | 開源 VLM 讀值精度需驗證 |
 | 適用 | 學術發表、試點、早期採用者 | 事務所/檢測公司規模化 | 資安敏感工廠、政府場域 |
 
-**建議**：路徑 A 立即執行（它同時是路徑 B 的封測期），並在 A 期間即埋好量測（哪些欄位被人工修改 = AI 準確率的真實數據，`feature_enhancements.md` 早已規劃此回饋機制，是未來微調的資料資產）。
+**建議**：路徑 A 立即執行（它同時是路徑 B 的封測期），並在 A 期間即埋好量測（哪些欄位被人工修改 = AI 準確率的真實數據，這份回饋資料是未來微調的資產）。
 
 ---
 
@@ -292,7 +323,7 @@ Phase 1 的兩個規格修正（都是實作時才看清楚的）：
 - [x] **PDF 報告輸出（申報場景的交付格式）** ✅ 2026-09-02：裝置端純 Dart 產生（`pdf` 套件 + 內嵌 Noto Sans TC 子集），離線可用；含基本資料/判定統計/逐項法規依據與單位換算/異常清單/AI 總結/照片附件；完成頁與歷史紀錄皆可匯出（18 測試）
 - **退出條件**：斷網可完成「拍照→判定→匯出（JSON/PDF）」全流程（程式面已達成，待實機驗證）；後端公網部署且非匿名可用
 
-### 第 9-12 週：試點計畫（todo.md 第二階段的落地）
+### 第 9-12 週：試點計畫
 - [ ] 2-3 個場域、5-10 名巡檢員（建議組合：一家消防檢修 + 一個工廠設備課，覆蓋§4 實例 1 與 3）
 - [ ] 量測指標：單場巡檢總時間（目標：紙本流程的 50%）、AI 讀值免修改率（目標 ≥70%）、判定引用正確率（抽查）、每週活躍留存
 - [ ] Gemma 3n E4B PoC 平行進行（Tier 1b）：延遲/發熱/準確度實測報告 → 決定是否進 roadmap

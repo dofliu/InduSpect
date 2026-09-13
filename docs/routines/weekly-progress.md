@@ -36,7 +36,7 @@ gh issue list --state open --limit 20
 ### 1.2 必讀四份核心文件
 1. **`STATUS.yaml`**（origin/main 版本，不是本地暫存）— 抓 progress / next_milestone / key_metrics
 2. **`CLAUDE.md`** — 專案紅線、慣例、關鍵檔案
-3. **`DEVELOPMENT_PLAN.md`** — Sprint 1-6 任務看板（進行中的目標）
+3. **`ROADMAP.md`** — 功能規劃藍圖與當前狀態總覽；上線路徑看 **`LAUNCH_PLAN.md`**
 4. **`docs/handover/session-handover.md`** — 上一次留下的待續事項 / NEEDS HUMAN notes
 
 ### 1.3 git 異常處理
@@ -55,7 +55,7 @@ gh issue list --state open --limit 20
 ### 2.1 來源優先序
 1. `docs/handover/session-handover.md` 中的「下一步建議」
 2. GitHub Issues（label: `weekly-routine-ok`）
-3. `DEVELOPMENT_PLAN.md` 中未完成的 Sub-task（按 Sprint 順序）
+3. `ROADMAP.md` / `LAUNCH_PLAN.md` 中未完成的項目
 4. 既有測試/型別/lint 失敗的小修
 5. 文件補完（README、API 文件、註解）
 
@@ -257,7 +257,7 @@ gh pr create \
 
 每週 routine 應該朝以下方向之一推一格：
 1. **可靠性**：擴充測試、修 edge case、加錯誤處理
-2. **完整性**：補 DEVELOPMENT_PLAN 中未完成的 Sub-task
+2. **完整性**：補 `ROADMAP.md` / `LAUNCH_PLAN.md` 中未完成的項目
 3. **工程紀律**：CI、lint、型別、文件
 4. **資料豐富度**：擴充 `inspection_standards`、預設範本
 5. **可觀測性**：log、指標、健檢端點

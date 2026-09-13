@@ -9,6 +9,23 @@
 
 其餘功能（快速分析、範本系統、設備管理、雲端同步等）目前為隱藏狀態，非核心開發重點。
 
+另有一條平行產品線：**風力機葉片檢測**（Mode A 地面整機已上線、Mode B 近身影像規格完成未實作），
+與定檢表 pipeline 不共用流程也不共用資料。
+
+## 文件地圖（2026-09-13 整理過）
+| 要找什麼 | 去哪裡 |
+|---|---|
+| 系統總覽、運作原理、快速開始 | `README.md` |
+| 操作步驟、離線行為、常見問題 | `docs/USER_GUIDE.md` |
+| App 架構、DB schema、變更紀錄 | `flutter_app/DEVELOPMENT.md` |
+| 功能規劃 / 上線計畫 | `ROADMAP.md` / `LAUNCH_PLAN.md` |
+| 接棒筆記（下一個 session 先讀這個） | `docs/handover/session-handover.md` |
+| **已完成或已被取代的文件** | `docs/archive/`——留作決策紀錄，**不要照著做** |
+
+根目錄只留現行有效的文件。`arch.md`／`database.md`／`ui.md`／`prj.md`／`todo.md`／
+`feature_enhancements.md`／`COMPILE_CHECK_REPORT.md` 描述的是**專案沒有採用的架構**
+（Supabase、GCP 無伺服器、登入流程），已刪除（內容仍在 git 歷史），不要照它們寫程式。
+
 ## 關鍵檔案
 | 檔案 | 用途 |
 |------|------|
@@ -50,6 +67,7 @@
 | `flutter_app/lib/services/blade_report_builder.dart` | 葉片報告（**不輸出「合格」**），交給 `pdf_report_service.dart` |
 | `BLADE_INSPECTION_SPEC.md` | 風力機葉片地面目視檢測模組規格（獨立功能，Phase 0 原型 + Phase 1 App 化已完成） |
 | `BLADE_CLOSEUP_SPEC.md` | ★ **Mode B：葉片近身影像檢測規格**（無人機距離與角度、外觀判讀、IEA Level 1–2；規格草案，未實作，預定由學生展開；§12 是 B0 實測回饋） |
+| `docs/USER_GUIDE.md` | 使用手冊（操作步驟；README 不再重複這一段） |
 | `BLADE_CLOSEUP_TAXONOMY.md` | ★ Mode B 標註分類表（B0 產出）。**產物不要手改**——單一來源是 `blade_prototype/data/closeup_taxonomy.json`，改完跑 `render_closeup_taxonomy.py` |
 | `blade_prototype/CLOSEUP_BASELINE_REPORT.md` | ★ Mode B 語料現況實測（B0）：授權盤點、開放網路可用率、cm/px 可得率、可商用語料的類別分布與標註者一致度、Mode A 閘門跨模式回歸 |
 | `blade_prototype/` | ★ 葉片模組 Phase 0 演算法原型（Python/OpenCV；分割、三片互比、前緣粗糙度、影片六點鐘取幀、逐片聲音異常、圖文報告產生器、拍攝品質閘門、**運動分割輪轂定位 `motion_hub.py`**、**太陽方位 `sunpos.py`**；`SENSITIVITY.md` 合成影像靈敏度、`REAL_IMAGE_VALIDATION.md` 真實影像實測、**`INNOVATION_REVIEW.md` 改進方向的文獻對照與離線驗證**、**`CLOSEUP_BASELINE_REPORT.md` Mode B 語料實測**、`scripts/` 語料抓取/驗證/圖文報告/運動分割實測/近身語料抓取/分類表渲染六支腳本） |

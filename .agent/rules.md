@@ -36,7 +36,8 @@ lib/
 ### AI Prompt 規範
 
 - 所有 Gemini API 呼叫須使用結構化 JSON 輸出
-- 遵循 `aimodel.md` 中定義的 prompt 模板
+- Prompt 模板見各 service（`flutter_app/lib/services/gemini_service.dart`、`blade_ai_service.dart`；
+  後端一律走 `backend/app/services/gemini_client.py`）
 - 加入思維鏈 (Chain-of-Thought) 引導
 
 ### 離線優先架構
@@ -49,12 +50,13 @@ lib/
 
 | 文件 | 用途 |
 |------|------|
-| `README.md` | 專案說明與使用手冊 |
+| `README.md` | 專案總覽 |
+| `docs/USER_GUIDE.md` | 使用手冊（操作步驟） |
+| `CLAUDE.md` | 開發規則速查、關鍵檔案表、已知問題 |
 | `ROADMAP.md` | 功能規劃藍圖 |
-| `todo.md` | 開發路線圖 |
-| `aimodel.md` | AI 模型整合規範 |
-| `arch.md` | 系統架構設計 |
-| `TEMPLATE_SYSTEM_SPEC.md` | 模板系統技術規格 |
+| `LAUNCH_PLAN.md` | 產品化評估與上線計畫 |
+| `flutter_app/DEVELOPMENT.md` | App 架構、DB schema、變更紀錄 |
+| `docs/archive/` | 已完成或已被取代的文件（不要照著做） |
 
 ## 分支策略
 

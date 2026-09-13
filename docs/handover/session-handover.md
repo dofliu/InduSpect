@@ -5,6 +5,69 @@
 
 ---
 
+## 2026-09-13 — 文件整理與 Mode B B0（接棒重點）
+
+**如果你是下一個 session，只讀這一段就夠開工。**
+
+### 現在在哪裡
+
+| 產品線 | 狀態 |
+|---|---|
+| 定檢表 pipeline | 程式面完成。**唯一擋路石是實機端到端測試**（Issue #43） |
+| 葉片 Mode A（地面整機） | App 端完整實作（表面／幾何／聲音層）。影片抽幀的 Kotlin **從未被編譯過** |
+| 葉片 Mode B（近身影像） | 規格 + 分類表 + 語料實測完成，**演算法一行都還沒寫** |
+
+CI 三軌全綠：Flutter 497 / 後端 191 / 葉片原型 115，另有死角查核擋 PR。
+
+### 這一輪做了什麼
+
+1. **[PR #69](https://github.com/dofliu/InduSpect/pull/69)（draft，CI 全綠，等合併）** — Mode B 的 B0：
+   - `BLADE_CLOSEUP_TAXONOMY.md`（由 `blade_prototype/data/closeup_taxonomy.json` 渲染，15 條守門測試）
+   - `blade_prototype/CLOSEUP_BASELINE_REPORT.md`（語料實測）
+2. **文件整理**（本次 commit）：根目錄 markdown 由 22 份降到 8 份。詳見下方「文件在哪裡」。
+
+### 文件在哪裡（整理後）
+
+| 要找什麼 | 去哪裡 |
+|---|---|
+| 系統做什麼、為什麼 | `README.md` |
+| 怎麼操作 | `docs/USER_GUIDE.md`（**新檔**，操作步驟從 README 搬過來） |
+| 開發規則、關鍵檔案、已知問題 | `CLAUDE.md` |
+| App 架構、DB schema、變更紀錄 | `flutter_app/DEVELOPMENT.md` |
+| 功能規劃 / 上線計畫 | `ROADMAP.md` / `LAUNCH_PLAN.md`（§0 有進度更新） |
+| 已完成或已被取代的文件 | `docs/archive/`（**不要照著做**，該目錄的 README 說明每一份為什麼被歸檔） |
+
+**刪掉的 7 份**（`arch.md`、`database.md`、`ui.md`、`prj.md`、`todo.md`、
+`feature_enhancements.md`、`COMPILE_CHECK_REPORT.md`）描述的是**專案沒有採用的架構**
+（Supabase / GCP 無伺服器 / 登入流程），留著會誤導。內容仍在 git 歷史。
+
+### 下一步建議（依可行性排序）
+
+1. **合併 PR #69**（draft、CI 全綠，等劉老師決定時機）
+2. **Mode B 的健康照與正常結構標註** — B0 量到現有可商用語料 1065 張**一張健康照都沒有**，
+   §6 第 4 條的誤報分項統計執行不了。`BLADE_CLOSEUP_TAXONOMY.md` §2 的 12 項正常結構
+   就是拍攝清單。這件事**不需要實機也不需要外業**，是目前唯一能純線上推進的葉片工作
+3. **B1 評估協定實作**（葉片級切分、逐類指標、低光照子集）——同樣純線上可做
+4. 其餘葉片工作與定檢主線都**卡在實體世界**，見下方 NEEDS HUMAN
+
+### [NEEDS HUMAN] 卡住的四件事
+
+1. **實機端到端測試**（Issue #43）——需要一台 Android 實機。同一趟請確認
+   `android/.../BladeVideoFrames.kt` build 得起來、`getFrameAtTime` 在目標機型回得出幀
+2. **葉片外業**——一次現場拍攝（停機 + 怠速各一台）即可定葉片拍攝閘門與聲學門檻，
+   同一趟收 Phase 4 的語料。目前**真實手機拍的葉片照片是 0 張**
+3. **後端 Cloud Run 部署**——需要 GCP 帳號操作
+4. **Play 內部測試軌上架**——需要 keystore 與開發者帳號
+
+### 踩過的坑（省下一次重複）
+
+- **Wikimedia Commons 從本環境會 429**（API 與 upload 都會），語料抓取一律走 Openverse
+- **Openverse 對查詢字做 AND 比對**：長查詢字結果歸零，短查詢字相關性崩掉，中間沒有地帶
+- **`aimodel.md` 已歸檔**，模型 ID 與路由邏輯已汰換；後端一律走 `gemini_client.py`
+- `blade_prototype` 全套測試約 130 秒，超過 Bash 工具預設 120 秒逾時，要加 `timeout`
+
+---
+
 ## 2026-05-16 — Session #6（測試門檻收緊 + 文件對齊 housekeeping）
 
 **本週做了**：在 Sessions #2-#5 的 3 個 PR（#32 #34 #35）全部 merge 後做收尾整理。

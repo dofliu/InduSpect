@@ -1,6 +1,6 @@
 # GCP Cloud Build 配置
 #
-# 前置作業（一次性，見 CLOUD_RUN_ASSESSMENT.md）：
+# 前置作業（一次性，見 ../docs/archive/CLOUD_RUN_ASSESSMENT.md 與 ../LAUNCH_PLAN.md）：
 #   1. 建立 Artifact Registry repo：
 #      gcloud artifacts repositories create induspect --repository-format=docker --location=asia-east1
 #   2. 建立 Secret Manager secrets 並授權 Cloud Run SA 讀取：
