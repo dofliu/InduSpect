@@ -41,6 +41,7 @@ TRUTH = ROOT / "data" / "closeup_truth_wtb.json"
 GROUPS = ROOT / "data" / "closeup_blade_groups_wtb.json"
 SUBSETS = ROOT / "data" / "closeup_subsets_wtb.json"
 NS = ROOT / "data" / "closeup_normal_structures_wtb.json"
+INTAKE = ROOT / "data" / "closeup_intake_wtb.json"
 TAXONOMY = ROOT / "data" / "closeup_taxonomy.json"
 
 VERSION = "b1-2026-09-14"
@@ -230,7 +231,8 @@ def unambiguous_mechanism_map(taxonomy: dict, dataset_key: str = "multiclass_wtb
 
 
 def evaluate(truth_doc: dict, pred_doc: dict, groups_doc: dict, subsets_doc: dict,
-             ns_doc: dict, taxonomy: dict, split: str) -> dict:
+             ns_doc: dict, taxonomy: dict, split: str, intake_doc: dict | None = None,
+             domain: str = "intake_P") -> dict:
     truth = truth_doc["labels"]
     classes = truth_doc["classes"]
     preds_raw = pred_doc["predictions"]
@@ -246,6 +248,20 @@ def evaluate(truth_doc: dict, pred_doc: dict, groups_doc: dict, subsets_doc: dic
     if declared != split:
         raise EvalError(f"預測檔宣告的切分是「{declared}」，這次跑的是「{split}」。"
                         "同一份預測不可以換一種切分重算——那會把訓練過的影像當成測試。")
+
+    # 評估域：Mode B 的輸入定義是 §1.2 取像合格的影像。在整機照上評估沒有意義
+    # （那是 Mode A 的輸入），而且它們也沒有被正常結構普查覆蓋。
+    intake = (intake_doc or {}).get("labels", {})
+    if domain == "intake_P":
+        if not intake:
+            raise EvalError("--domain intake_P 需要 data/closeup_intake_wtb.json")
+        in_domain = {k for k, v in intake.items() if v == "P"}
+        domain_note = f"取像合格 P（{len(in_domain)} 張）——Mode B 的輸入定義（§1.2）"
+    elif domain == "all":
+        in_domain = set(truth)
+        domain_note = f"全語料（{len(in_domain)} 張，含整機照）——只用來對照，不是 Mode B 的輸入域"
+    else:
+        raise EvalError(f"不認得的評估域：{domain}")
 
     gid = {k: v for k, v in groups_doc["groups"].items()}
     if split == "folds":
@@ -265,6 +281,7 @@ def evaluate(truth_doc: dict, pred_doc: dict, groups_doc: dict, subsets_doc: dic
     else:
         raise EvalError(f"不認得的切分：{split}")
 
+    ids = [i for i in ids if i in in_domain]
     ok, bad_groups = split_is_group_respecting({i: assign[i] for i in assign if i in gid}, gid)
     missing = [i for i in ids if i not in pred]
     artifact = subsets_doc.get("annotation_artifact", {})
@@ -293,6 +310,8 @@ def evaluate(truth_doc: dict, pred_doc: dict, groups_doc: dict, subsets_doc: dic
     return dict(
         version=VERSION,
         model=pred_doc.get("model", "（未命名）"),
+        domain=domain,
+        domain_note=domain_note,
         split=split,
         split_note=eval_note,
         split_is_group_respecting=ok,
@@ -334,7 +353,8 @@ def render_markdown(r: dict) -> str:
     L: list[str] = [f"# Mode B 評估報告：{r['model']}", ""]
     if r["leakage_warning"]:
         L += [f"> ⚠️ {r['leakage_warning']}", ""]
-    L += [f"切分：`{r['split']}`——{r['split_note']}　評估 {r['n_images_evaluated']} 張。"
+    L += [f"評估域：{r['domain_note']}", "",
+          f"切分：`{r['split']}`——{r['split_note']}　評估 {r['n_images_evaluated']} 張。"
           f"{r['coverage_note']}", "",
           "## 1. 逐類 recall（主指標）", "",
           "| 類別 | 真值張數 | recall | precision | F1 | TP | FN | FP |", "|---|---|---|---|---|---|---|---|"]
@@ -554,6 +574,8 @@ def cmd_eval(args: argparse.Namespace) -> int:
         json.loads(NS.read_text(encoding="utf-8")) if NS.exists() else {},
         json.loads(Path(args.taxonomy).read_text(encoding="utf-8")),
         split=args.split or pred_doc.get("split"),
+        intake_doc=json.loads(INTAKE.read_text(encoding="utf-8")) if INTAKE.exists() else None,
+        domain=args.domain,
     )
     md = render_markdown(result)
     if args.markdown:
@@ -603,6 +625,8 @@ def main(argv: list[str] | None = None) -> int:
     e.add_argument("--subsets", default=str(SUBSETS))
     e.add_argument("--taxonomy", default=str(TAXONOMY))
     e.add_argument("--split", default=None, choices=("folds", "proposed", "official"))
+    e.add_argument("--domain", default="intake_P", choices=("intake_P", "all"),
+                   help="評估域。預設只評 §1.2 取像合格的影像（Mode B 的輸入定義）")
     e.add_argument("--markdown", default=None)
     e.add_argument("--json", default=None)
     e.set_defaults(func=cmd_eval)

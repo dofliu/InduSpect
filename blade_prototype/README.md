@@ -48,7 +48,7 @@
 cd blade_prototype
 python3 -m venv .venv && . .venv/bin/activate
 pip install -r requirements.txt
-pytest            # 182 tests，約 2–3 分鐘（動態層與運動分割的合成影片測試最慢）
+pytest            # 184 tests，約 2–3 分鐘（動態層與運動分割的合成影片測試最慢）
 ```
 
 ## 三種輸入、三個指令
@@ -122,6 +122,7 @@ python -m blade_proto report --asset WTG-07 --still still.json --still-overlay s
 | `scripts/make_image_ops_fixture.py` | OpenCV 基本運算的逐項參考值（網格中值、REFLECT_101 高斯、5×5 橢圓閉、連通元件、chamfer 距離變換、8-bit Lab），輸入由公式重建而非影像檔 | Dart 交叉驗證 |
 | `scripts/make_validation_report.py` | **真實影像驗證的圖文報告產生器**：吃 `validate_real_images.py` 的輸出，排出摘要磚、天空條件命中率圖表、天空×取景交叉表、逐個失敗模式的前後疊圖對照、閘門門檻掃描表、逐張結果與影像授權附錄；`--pdf` 可直接列印成 A4 PDF | 交付物 |
 | `scripts/blade_test_report.py` | **測試報告的數字來源**：吃 `validate_real_images.py` 的輸出排成 Markdown 表（命中率／閘門／拒收原因），`--baseline` 與上一次結果**逐張比對**（演算法沒有無聲漂移的證據），並把放行影像的三片互比標記與葉尖間距偏離 120° 並列。`BLADE_TEST_REPORT.md` 真實影像那一節由它產生 | 測試報告 |
+| `scripts/closeup_survey_sheets.py` | **正常結構普查的印樣版面**（4×4、每格 460 px）。第一版 192 張抽樣是臨時做的沒進版控，續做會對不上規格，所以固定下來；`--only-unsurveyed` 只出還沒普查的。取像合格的 839 張已全覆蓋 | Mode B 標註 |
 | `scripts/closeup_eval.py` | **Mode B 評估協定（B1）**：`truth`／`subsets` 產真值與子集旗標（已進版控，評估不需要語料）、`eval` 出逐類報告、`nn-baseline` 與 `leakage-demo` 量洩漏值多少分。規格 §6 四條規則在這裡是**會拒跑的程式**：切分宣告不符、未知類別、未知影像一律擋；< 30 張的類別不印數字；未普查的誤報自成一格。說明見 `CLOSEUP_EVAL_PROTOCOL.md` | Mode B 評估 |
 | `scripts/closeup_blade_groups.py` | **Mode B 切分群組**：全域描述子取候選鄰居 → ORB+RANSAC 內點數驗證 → 連通分量 = 「不可拆到不同子集」的單位（`split_group`，**不是 blade_id**）。產出群組檔、群感知 5 折，並量語料自己附的切分洩漏多少（實測 test 63.4% 在 train 有近重複）。說明見 `CLOSEUP_SPLIT_GROUPS.md` | Mode B 評估協定 |
 | `scripts/closeup_review_tool.py` | **Mode B 人工複核工作區**：把健康候選格、`x` 全解析度複核、概略框三個佇列切成離線工作區（切圖 + 單檔 HTML，鍵盤操作、可中斷續做），`ingest` 併進版控的決策檔。四條規則在匯入處執行：升格要人名（模型名整批拒收）、跳過 ≠ 乾淨、顯示倍率 < 1 的升格不收、決策綁座標。說明見 `CLOSEUP_HEALTHY_SET.md` §6 | Mode B 標註 |

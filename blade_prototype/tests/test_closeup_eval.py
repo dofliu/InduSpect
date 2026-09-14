@@ -49,7 +49,8 @@ def test_markdown_prints_not_reported_instead_of_a_number() -> None:
 
 def _minimal_result(truth, pred, classes) -> dict:
     ids = sorted(truth)
-    return dict(model="t", split="folds", split_note="", split_is_group_respecting=True,
+    return dict(model="t", domain="all", domain_note="測試用", split="folds", split_note="",
+                split_is_group_respecting=True,
                 leaking_groups=[], leakage_warning=None, n_images_evaluated=len(ids),
                 n_missing_predictions=0, coverage_note="", primary_metric="per_class_recall",
                 per_class=ev.metrics_with_floor(ev.per_class_counts(truth, pred, classes, ids)),
@@ -111,7 +112,7 @@ def test_official_split_is_stamped_as_leaking() -> None:
                   proposed_split={str(i): "train" for i in range(6)})
     pred = dict(model="m", split="official", official_split=official,
                 predictions={str(i): ["a"] for i in range(3)})
-    r = ev.evaluate(truth, pred, groups, {}, {}, TAX, split="official")
+    r = ev.evaluate(truth, pred, groups, {}, {}, TAX, split="official", domain="all")
     assert r["split_is_group_respecting"] is False
     assert r["leakage_warning"] and "虛高" in r["leakage_warning"]
     assert "⚠️" in ev.render_markdown(r)
@@ -158,11 +159,30 @@ def test_truth_is_the_union_of_both_annotators() -> None:
         assert set(TRUTH["labels"][k]) == set(v["a"]) | set(v["b"])
 
 
+INTAKE = json.loads((ROOT / "data" / "closeup_intake_wtb.json").read_text(encoding="utf-8"))
+
+
 def test_subsets_keep_unsurveyed_as_null() -> None:
+    """普查已補滿取像合格的 839 張；域外的仍是 null，不可以當成「沒有痕跡」。"""
     art = SUBSETS["annotation_artifact"]
-    assert any(v is None for v in art.values()), "未普查要是 null，不可以當成「沒有痕跡」"
-    assert sum(1 for v in art.values() if v is not None) == 192
+    passing = {k for k, v in INTAKE["labels"].items() if v == "P"}
+    assert {k for k, v in art.items() if v is not None} == passing
+    assert any(v is None for v in art.values()), "非取像合格的仍要是 null"
     assert 0 < sum(1 for v in SUBSETS["low_light"].values() if v) < N
+
+
+def test_false_positive_attribution_has_no_unsurveyed_gap_in_domain() -> None:
+    """普查補滿的理由就是這一格：評估域裡不得再有「未普查」。
+
+    第一版 192 張抽樣時，656 張有誤報的影像裡有 523 張落在這一格，§6 第 4 條形同虛設。
+    """
+    ns = json.loads((ROOT / "data" / "closeup_normal_structures_wtb.json").read_text(encoding="utf-8"))
+    passing = sorted({k for k, v in INTAKE["labels"].items() if v == "P"})
+    truth = {i: [] for i in passing}                 # 全當健康，讓每個預測都是誤報
+    pred = {i: ["craze"] for i in passing}
+    fp = ev.false_positive_breakdown(truth, pred, passing, {}, ns["labels"])
+    assert fp["buckets"]["not_surveyed"] == 0
+    assert fp["images_with_any_false_positive"] == len(passing)
 
 
 def test_leakage_demo_isolates_one_variable() -> None:
