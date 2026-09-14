@@ -266,12 +266,10 @@ README「已知限制」寫的「偏軸會引入透視差，塔架轉正只能�
 | Brooklyn Wind Turbine（塔基仰拍，範圍外） | (291, 171) r=180，主峰比 0.9，奇偶幀差 37 px | (291, 171) r=180，0.9，37 px | ✅ |
 | Lawrence Weston（480p、快雲） | (142, 168) r=136，主峰比 1.3，11 px | (142, 168) r=136，1.3，11 px | ✅ |
 | Masenberg 20240428（斜視） | (540, 145) r=64，主峰比 1.7，0 px | (540, 145) r=64，1.7，0 px | ✅ |
-| Parc éolien de Montrigaud（兩台同框） | (276, 210) r=124，主峰比 1.3，0 px | 見 §6.1 | |
-| Windturbines Maasvlakte 2-4（四台同框、3 s） | (540, 204) r=120，主峰比 1.9，0 px | 見 §6.1 | |
+| Parc éolien de Montrigaud（兩台同框） | (276, 210) r=124，主峰比 1.3，0 px | (276, 210) r=124，1.3，0 px | ✅ |
+| Windturbines Maasvlakte 2-4（四台同框、3 s） | (540, 204) r=120，主峰比 1.9，0 px | (540, 204) r=120，1.9，0 px | ✅ |
 
-### 6.1 補完
-
-（Montrigaud 與 Maasvlakte 2-4 兩段在本報告 commit 時仍在重跑——每段 120 幀 ORB+RANSAC 穩像約 1–2 分鐘——結果於後續 commit 補進上表。）
+**6/6 逐段一致**：輪轂座標、半徑、主峰比、奇偶幀差全部與 `INNOVATION_REVIEW.md` §3.1 相同（`motion_hub.py` 2026-09-12 之後沒有改動，這是它第一次被重跑確認）。設計範圍內五段（abla、Masenberg、Lawrence Weston、Montrigaud、Maasvlakte 2-4）都定位到主風機輪轂；Brooklyn 是塔基仰拍、相機平移，落在輪轂罩上但奇偶幀差 37 px，與文件寫的「不穩」一致。六段合計 **15 分 45 秒**（每段 120 幀 ORB+RANSAC 穩像 + 時間中位數背景，Masenberg 16 MB 4K 最慢），這個成本是 §13 第 9 項「幾何層要不要改吃影片」要一起考慮的——手機上只會更慢。
 
 ---
 
