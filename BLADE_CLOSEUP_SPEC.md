@@ -318,7 +318,8 @@ Blades Using Knowledge-Augmented Vision Language Models*, arXiv:2510.22868v2（2
 | 階段 | 內容 | 誰 | 出口條件 |
 |---|---|---|---|
 | B0 | 分類表、資料集清單與授權表、語料實際 cm/px 量測（§2 待量） | 學生 | 一張分類表 + 一張資料集表 + 每份語料的 cm/px 分布。**已完成：[`BLADE_CLOSEUP_TAXONOMY.md`](BLADE_CLOSEUP_TAXONOMY.md) 與 [`blade_prototype/CLOSEUP_BASELINE_REPORT.md`](blade_prototype/CLOSEUP_BASELINE_REPORT.md)**，回饋見 §12 |
-| B1 | 評估協定實作：葉片級切分、逐類指標、低光照子集 | 學生 | 一支評估腳本，吃預測檔出逐類表 |
+| B0.5 | 健康照與正常結構第一版 + **人工複核** | 本專案（工具）／學生（複核） | 候選與工具已就位（[`blade_prototype/CLOSEUP_HEALTHY_SET.md`](blade_prototype/CLOSEUP_HEALTHY_SET.md)，`scripts/closeup_review_tool.py`）；**出口條件是簽核過的決策筆數 > 0**，目前 0 |
+| B1 | 評估協定實作：葉片級切分、逐類指標、低光照子集 | 學生 | 一支評估腳本，吃預測檔出逐類表。**先決條件**：語料沒有葉片編號，「按葉片切」要先解（見 CLOSEUP_HEALTHY_SET §4 末段） |
 | B2 | 三條基線各跑一次（§8.1–8.3） | 學生 | 三組逐類數字，含 structural recall |
 | B3 | 知識庫建置與消融 | 學生 | 四個知識庫各自缺一次的逐類數字 |
 | B4 | 兩段式合流、接進 App | 本專案 | `bboxJson` 有生產端、死角名單條目移除 |

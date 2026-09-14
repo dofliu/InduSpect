@@ -1,0 +1,251 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Mode B 人工複核</title>
+<style>
+  :root { color-scheme: dark; --bg:#14161a; --panel:#1d2027; --line:#2c313a; --fg:#e8eaee; --dim:#9aa2b1;
+          --ok:#4ade80; --no:#f87171; --unc:#fbbf24; }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--fg);
+         font:14px/1.55 -apple-system,"Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif; }
+  header { display:flex; gap:16px; align-items:center; flex-wrap:wrap;
+           padding:10px 16px; background:var(--panel); border-bottom:1px solid var(--line); }
+  header h1 { font-size:15px; margin:0; font-weight:600; }
+  .grow { flex:1; }
+  button, select, input { background:#262b34; color:var(--fg); border:1px solid var(--line);
+           border-radius:6px; padding:5px 10px; font:inherit; cursor:pointer; }
+  button:hover { background:#30363f; }
+  button.primary { background:#2563eb; border-color:#2563eb; }
+  main { display:grid; grid-template-columns:minmax(0,1fr) 320px; gap:16px; padding:16px; align-items:start; }
+  @media (max-width: 820px) { main { grid-template-columns:minmax(0,1fr); } }
+  .stage { background:#0e1013; border:1px solid var(--line); border-radius:10px; padding:16px;
+           display:flex; flex-direction:column; align-items:center; gap:10px; min-height:320px; overflow:auto; }
+  .cropwrap { position:relative; line-height:0; }
+  .cropwrap img { display:block; image-rendering:auto; }
+  .cropwrap .box { position:absolute; border:2px solid #fbbf24; box-shadow:0 0 0 1px #000 inset; }
+  .ctx { position:relative; line-height:0; opacity:.95; }
+  .ctx img { display:block; width:320px; border:1px solid var(--line); border-radius:4px; }
+  .ctx .mark { position:absolute; border:2px solid #38bdf8; }
+  aside { background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:14px; }
+  aside h2 { font-size:13px; margin:0 0 6px; color:var(--dim); font-weight:600; letter-spacing:.03em; }
+  .q { font-size:15px; font-weight:600; margin:2px 0 10px; }
+  .keys { display:flex; flex-direction:column; gap:6px; margin-bottom:12px; }
+  .keys button { text-align:left; display:flex; gap:8px; align-items:baseline; }
+  kbd { background:#0e1013; border:1px solid var(--line); border-bottom-width:2px; border-radius:4px;
+        padding:0 5px; font:12px/1.6 ui-monospace,monospace; color:var(--dim); }
+  .meta { color:var(--dim); font-size:12.5px; word-break:break-all; }
+  .badge { padding:2px 8px; border-radius:999px; font-size:12px; font-weight:600; }
+  .badge.ok { background:#14532d; color:var(--ok); }
+  .badge.warn { background:#4c1d1d; color:var(--no); }
+  .progress { height:6px; background:#0e1013; border-radius:4px; overflow:hidden; margin:8px 0 4px; }
+  .progress i { display:block; height:100%; background:#2563eb; }
+  .state { font-weight:600; }
+  .state.yes { color:var(--ok); } .state.no { color:var(--no); } .state.uncertain { color:var(--unc); }
+  .note { color:var(--dim); font-size:12px; border-top:1px solid var(--line); margin-top:12px; padding-top:10px; }
+  .hidden { display:none !important; }
+</style>
+
+<header>
+  <h1>Mode B 人工複核</h1>
+  <select id="queue"></select>
+  <span id="counter" class="meta"></span>
+  <span id="scale" class="badge"></span>
+  <span class="grow"></span>
+  <input id="annotator" placeholder="你的名字（必填）" size="14">
+  <button id="import">匯入先前的決策</button>
+  <button id="export" class="primary">匯出決策</button>
+</header>
+
+<main>
+  <div class="stage">
+    <div class="cropwrap"><img id="crop" alt=""><div id="overlay" class="box hidden"></div></div>
+    <div class="ctx"><img id="context" alt=""><div id="mark" class="mark"></div></div>
+    <div id="caption" class="meta"></div>
+  </div>
+
+  <aside>
+    <h2 id="qtitle"></h2>
+    <div class="q" id="question"></div>
+    <div class="keys">
+      <button data-d="yes"><kbd>y</kbd><span id="yeslabel"></span></button>
+      <button data-d="no"><kbd>n</kbd><span>不是／不對（可再選理由）</span></button>
+      <button data-d="uncertain"><kbd>u</kbd><span>不確定</span></button>
+      <button data-d="skip"><kbd>s</kbd><span>跳過（維持 unreviewed）</span></button>
+    </div>
+    <div id="reasons" class="keys"></div>
+    <h2>這一筆</h2>
+    <div class="meta" id="itemmeta"></div>
+    <div>目前決策：<span id="state" class="state">—</span></div>
+    <div class="progress"><i id="bar"></i></div>
+    <div class="meta" id="tally"></div>
+    <div class="note">
+      <div><kbd>←</kbd><kbd>→</kbd> 換一筆　<kbd>z</kbd> 放大切換</div>
+      <div id="qnote" style="margin-top:6px"></div>
+      <div style="margin-top:6px">升格（yes）需要 1:1 以上的顯示倍率，縮小看的會在匯入時被擋下。</div>
+    </div>
+  </aside>
+</main>
+
+<input type="file" id="file" accept="application/json" class="hidden">
+
+<script>
+const META = /*__META__*/null;
+const ITEMS = /*__ITEMS__*/null;
+const KEY = "induspect.modeb.review." + META.fingerprint;
+
+// 決策只存在瀏覽器與匯出檔裡；進版控一定要經 ingest（那裡才擋得住不合格的簽核）。
+let decisions = {};
+try { decisions = JSON.parse(localStorage.getItem(KEY) || "{}"); } catch (e) { decisions = {}; }
+function save() { try { localStorage.setItem(KEY, JSON.stringify(decisions)); } catch (e) {} }
+
+const queues = Object.keys(META.queues);
+let queue = queues[0], idx = 0, zoom = 1;
+// 小切圖預設放大到 2×（仍 ≥ 1:1，升格規則照樣成立）；全解析度的大圖維持 1×。
+const fitZoom = (it) => (it && it.crop_size[0] <= 512 ? 2 : 1);
+
+const $ = (id) => document.getElementById(id);
+const list = () => ITEMS.filter(it => it.queue === queue);
+
+function current() { return list()[idx]; }
+
+function render() {
+  const items = list(), it = items[idx];
+  const q = META.queues[queue];
+  $("qtitle").textContent = q.title;
+  $("question").textContent = q.question;
+  $("yeslabel").textContent = q.yes_label;
+  $("qnote").textContent = q.note;
+  $("counter").textContent = `${idx + 1} / ${items.length}`;
+
+  const rs = $("reasons");
+  rs.innerHTML = "";
+  Object.entries(q.reasons).forEach(([code, label], i) => {
+    const b = document.createElement("button");
+    b.innerHTML = `<kbd>${i + 1}</kbd><span>${label}</span>`;
+    b.onclick = () => decide("no", code);
+    rs.appendChild(b);
+  });
+
+  if (!it) { $("crop").removeAttribute("src"); return; }
+  zoom = fitZoom(it);
+  $("crop").src = it.crop;
+  $("caption").textContent = it.caption;
+  $("itemmeta").textContent = `${it.item_id}｜${it.image}｜region ${it.region.join(",")}`;
+  $("context").src = it.context;
+
+  const d = decisions[it.item_id];
+  $("state").textContent = d ? (d.decision + (d.reason ? `（${q.reasons[d.reason] || d.reason}）` : "")) : "—";
+  $("state").className = "state " + (d ? d.decision : "");
+
+  const done = items.filter(x => decisions[x.item_id]).length;
+  $("bar").style.width = (100 * done / Math.max(1, items.length)) + "%";
+  const tally = {};
+  items.forEach(x => { const e = decisions[x.item_id]; if (e) tally[e.decision] = (tally[e.decision] || 0) + 1; });
+  $("tally").textContent = `已決策 ${done} / ${items.length}　` +
+    Object.entries(tally).map(([k, v]) => `${k} ${v}`).join("　");
+}
+
+// 顯示倍率由 DOM 實際量，不是宣稱的。切圖以原尺寸顯示，放大只是為了看細節。
+function measure() {
+  const img = $("crop"), it = current();
+  if (!it || !img.naturalWidth) return 0;
+  const s = img.getBoundingClientRect().width / img.naturalWidth;
+  const el = $("scale");
+  el.textContent = s >= 0.999 ? `${s.toFixed(2)}× 1:1` : `${s.toFixed(2)}×（縮小，升格會被擋）`;
+  el.className = "badge " + (s >= 0.999 ? "ok" : "warn");
+  return s;
+}
+
+function placeOverlays() {
+  const it = current(); if (!it) return;
+  const img = $("crop"), r = img.getBoundingClientRect();
+  const s = r.width / (img.naturalWidth || 1);
+  const ov = $("overlay");
+  if (it.overlay) {
+    ov.classList.remove("hidden");
+    ov.style.left = (it.overlay[0] * s) + "px"; ov.style.top = (it.overlay[1] * s) + "px";
+    ov.style.width = (it.overlay[2] * s) + "px"; ov.style.height = (it.overlay[3] * s) + "px";
+  } else ov.classList.add("hidden");
+
+  const cimg = $("context"), cs = it.context_scale, m = $("mark");
+  if (cimg.naturalWidth) {
+    const k = cimg.getBoundingClientRect().width / cimg.naturalWidth * cs;
+    m.style.left = (it.region[0] * k) + "px"; m.style.top = (it.region[1] * k) + "px";
+    m.style.width = (it.region[2] * k) + "px"; m.style.height = (it.region[3] * k) + "px";
+  }
+  measure();
+}
+
+$("crop").addEventListener("load", () => {
+  const img = $("crop");
+  img.style.width = (img.naturalWidth * zoom) + "px";
+  placeOverlays();
+});
+$("context").addEventListener("load", placeOverlays);
+window.addEventListener("resize", placeOverlays);
+
+function decide(decision, reason) {
+  const it = current(); if (!it) return;
+  if (decision === "skip") { delete decisions[it.item_id]; save(); next(); return; }
+  decisions[it.item_id] = {
+    item_id: it.item_id, queue: it.queue, decision,
+    reason: reason || null, view_scale: measure(), decided_at: new Date().toISOString(),
+  };
+  save();
+  // 選了「不是」還要挑理由時不要自動跳走；理由是可選的，所以只有 yes／uncertain 直接前進。
+  if (decision !== "no" || reason) next(); else render();
+}
+
+function next() { const n = list().length; if (idx < n - 1) idx++; render(); }
+function prev() { if (idx > 0) idx--; render(); }
+
+document.addEventListener("keydown", (e) => {
+  if (e.target.tagName === "INPUT") return;
+  const q = META.queues[queue], codes = Object.keys(q.reasons);
+  if (e.key === "y" || e.key === "h") decide("yes");
+  else if (e.key === "n") decide("no");
+  else if (e.key === "u") decide("uncertain");
+  else if (e.key === "s" || e.key === " ") decide("skip");
+  else if (e.key === "ArrowRight") next();
+  else if (e.key === "ArrowLeft") prev();
+  else if (e.key === "z") { zoom = zoom === 1 ? 2 : 1; const i = $("crop"); i.style.width = (i.naturalWidth * zoom) + "px"; placeOverlays(); }
+  else if (codes[Number(e.key) - 1]) decide("no", codes[Number(e.key) - 1]);
+  else return;
+  e.preventDefault();
+});
+
+document.querySelectorAll("[data-d]").forEach(b => b.onclick = () => decide(b.dataset.d));
+
+$("queue").innerHTML = queues.map(q => `<option value="${q}">${META.queues[q].title}</option>`).join("");
+$("queue").onchange = () => { queue = $("queue").value; idx = 0; render(); };
+
+$("export").onclick = () => {
+  const who = $("annotator").value.trim();
+  if (!who) { alert("請先填名字——升格一定要有簽核人。"); $("annotator").focus(); return; }
+  const payload = {
+    annotator: who, exported_at: new Date().toISOString(),
+    items_fingerprint: META.fingerprint,
+    decisions: Object.values(decisions),
+  };
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([JSON.stringify(payload, null, 1)], { type: "application/json" }));
+  a.download = `decisions_${who.replace(/\s+/g, "_")}_${new Date().toISOString().slice(0, 10)}.json`;
+  a.click();
+};
+
+$("import").onclick = () => $("file").click();
+$("file").onchange = (e) => {
+  const f = e.target.files[0]; if (!f) return;
+  const r = new FileReader();
+  r.onload = () => {
+    try {
+      const doc = JSON.parse(r.result);
+      (doc.decisions || []).forEach(d => { decisions[d.item_id] = d; });
+      if (doc.annotator && !$("annotator").value) $("annotator").value = doc.annotator;
+      save(); render();
+    } catch (err) { alert("讀不了這個檔：" + err); }
+  };
+  r.readAsText(f);
+};
+
+render();
+</script>
