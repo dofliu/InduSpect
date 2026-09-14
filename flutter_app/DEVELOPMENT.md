@@ -194,7 +194,7 @@ flutter test
 flutter test test/form_inspection_record_test.dart
 ```
 
-### 測試清單（497 tests）
+### 測試清單（504 tests）
 
 | 檔案 | 數量 | 覆蓋範圍 |
 |------|------|---------|
@@ -287,7 +287,7 @@ flutter analyze --no-pub
 # 死角查核（CI 排在 analyze 之前）
 python3 scripts/audit_dead_ends.py
 
-# 執行測試（全部 497 條；widget_test.dart 已修復，不再排除）
+# 執行測試（全部 504 條；widget_test.dart 已修復，不再排除）
 flutter test
 
 # Android 建置

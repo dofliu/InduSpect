@@ -43,7 +43,7 @@ Release 簽署要自備 keystore 並設定 `key.properties`，見 [`DEVELOPMENT.
 ```bash
 python3 scripts/audit_dead_ends.py   # 死角查核，CI 排在 analyze 之前
 flutter analyze                      # warning 級以上擋 PR
-flutter test                         # 497 tests
+flutter test                         # 504 tests
 ```
 
 `scripts/audit_dead_ends.py` 擋的是「新的 service 公開方法沒人叫」與「新的 DB 欄位只讀不寫

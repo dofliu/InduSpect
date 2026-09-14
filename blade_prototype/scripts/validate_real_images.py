@@ -105,7 +105,10 @@ def analyse(path: str, gt_hub, max_side: int) -> dict:
         rec["hub_err_diag"] = round(err / diag, 4)
         rec["hub_ok"] = bool(err / diag <= HUB_TOL_DIAG)
     # 幾何互比只有三片都在時才有意義；記錄它「敢不敢下結論」
-    if len(st.blades) >= 2:
+    if rec["verdict"]["metrics"].get("view") == "side":
+        rec["side_view"] = True
+        rec["comparison_flagged"] = []  # 側視不做三片互比（quality.detect_side_view）
+    elif len(st.blades) >= 2:
         try:
             profs = profiles_from_structure(st)
             cmp_ = compare_blades(profs, noise_floor_px=1.5)

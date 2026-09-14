@@ -30,7 +30,7 @@ from . import synth
 from . import __version__
 from .quality import assess_capture
 from .segmentation import segment_turbine, find_structure
-from .geometry import profiles_from_structure, compare_blades
+from .geometry import profiles_from_structure, compare_blades, side_view_summary
 from .surface import analyze_blade_edges
 from .dynamics import analyze_frames, analyze_video, video_frames, video_fps
 from .acoustics import AudioClip, analyze_audio, analyze_samples, find_ffmpeg, load_audio
@@ -72,6 +72,16 @@ def _parse_xy(s: str | None):
 # ---------------------------------------------------------------- analyze-still
 
 
+def _still_comparison(verdict, profs, *, noise_floor_px, cm_per_px, rotor_radius_m) -> dict:
+    """閘門判定為側視時走 `side_view_summary`（只報垂掛葉片彎曲），其餘走三片互比。
+    兩個 analyze-still 入口共用，避免一邊改了一邊沒改。"""
+    if verdict.metrics.get("view") == "side":
+        return side_view_summary(profs, verdict.metrics["hanging_blade_index"],
+                                 cm_per_px=cm_per_px, rotor_radius_m=rotor_radius_m)
+    return compare_blades(profs, noise_floor_px=noise_floor_px, cm_per_px=cm_per_px,
+                          rotor_radius_m=rotor_radius_m)
+
+
 def cmd_analyze_still(a) -> None:
     img = _read(a.image)
     t0 = time.time()
@@ -79,8 +89,8 @@ def cmd_analyze_still(a) -> None:
     st = find_structure(seg.mask, hub_hint=_parse_xy(a.hub), horizon_y=seg.horizon_y)
     verdict = assess_capture(seg, st)
     profs = profiles_from_structure(st)
-    cmp_ = compare_blades(profs, noise_floor_px=a.noise_floor_px, cm_per_px=a.cm_per_px,
-                          rotor_radius_m=a.rotor_radius_m)
+    cmp_ = _still_comparison(verdict, profs, noise_floor_px=a.noise_floor_px, cm_per_px=a.cm_per_px,
+                             rotor_radius_m=a.rotor_radius_m)
     out = {
         "image": a.image,
         "size": [img.shape[1], img.shape[0]],
@@ -259,8 +269,8 @@ def _analyze_still_payload(image: str, *, cm_per_px=None, rotor_radius_m=None, h
     st = find_structure(seg.mask, hub_hint=hub, horizon_y=seg.horizon_y)
     verdict = assess_capture(seg, st)
     profs = profiles_from_structure(st)
-    cmp_ = compare_blades(profs, noise_floor_px=noise_floor_px, cm_per_px=cm_per_px,
-                          rotor_radius_m=rotor_radius_m)
+    cmp_ = _still_comparison(verdict, profs, noise_floor_px=noise_floor_px, cm_per_px=cm_per_px,
+                             rotor_radius_m=rotor_radius_m)
     if overlay_path:
         cv2.imwrite(overlay_path, draw_still_overlay(img, seg.mask, st, profs, cmp_))
     return {

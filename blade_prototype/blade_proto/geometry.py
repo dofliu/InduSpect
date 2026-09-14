@@ -254,3 +254,45 @@ def compare_blades(
         for c in out["comparisons"]:
             c["outlier_deviation_cm"] = c["outlier_deviation"] * cm_per_px
     return out
+
+
+def side_view_summary(
+    profiles: list[BladeProfile],
+    hanging_index: int,
+    cm_per_px: float | None = None,
+    rotor_radius_m: float | None = None,
+) -> dict:
+    """側視（`quality.detect_side_view` 判定）：不做三片互比，只回報垂掛葉片的彎曲。
+
+    回傳與 `compare_blades` 同形（`comparisons` 為空、`any_flagged` False），報告與 App 端
+    不必另開一條路徑；多出來的 `hanging_blade` 是這張照片唯一的量測。單幀的 tip_deflection
+    **含預彎**（SENSITIVITY.md §2），不是缺陷量——要與同一台的基線或另一幀比才有意義，
+    所以這裡不設門檻、不標記。
+    """
+    p = profiles[hanging_index]
+    if cm_per_px is None and rotor_radius_m:
+        # 垂掛在六點鐘的那片投影長度 ≈ 轉子半徑（sin 90° = 1）；上方那段是另兩片疊在一起，
+        # 只有 R·sin(30°)，不能拿來反推尺度。
+        cm_per_px = rotor_radius_m * 100.0 / max(float(p.radius_px), 1e-6)
+    hb = {
+        "index": hanging_index,
+        "label": "ABC"[hanging_index] if hanging_index < 3 else str(hanging_index),
+        "axis_angle_deg": float(p.axis_angle_deg),
+        "radius_px": float(p.radius_px),
+        "bend_coeff": float(p.bend_coeff),
+        "tip_deflection_px": float(p.tip_deflection_px),
+        "residual_rms_px": float(p.residual_rms_px),
+        "n_contaminated_bins": int(p.n_contaminated_bins),
+    }
+    if cm_per_px:
+        hb["tip_deflection_cm"] = float(p.tip_deflection_px) * cm_per_px
+    return {
+        "n_blades": len(profiles),
+        "view": "side",
+        "cm_per_px": cm_per_px,
+        "comparisons": [],
+        "any_flagged": False,
+        "hanging_blade": hb,
+        "note": "側視：三片投影共線，互比不適用；量測項目為垂掛葉片的 flapwise 彎曲"
+                "（單幀值含預彎，需與同一台的基線比對）",
+    }

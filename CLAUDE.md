@@ -47,7 +47,7 @@
 | `flutter_app/lib/screens/blade_capture_guide_screen.dart` | 葉片引導拍攝（格位清單 + 上次同格位照片對照 + GPS 導回拍攝點；用系統相機保住 5x 長焦與全解析度） |
 | `flutter_app/lib/services/blade_surface_service.dart` | ★ 表面層前緣粗糙度（`surface.py` 的 Dart 對照實作，跑在 isolate） |
 | `flutter_app/lib/services/blade_analysis_service.dart` | ★ 葉片分析編排 + **門檻表單一來源**（前後緣 rms 比 5.0/2.0/1.5） |
-| `flutter_app/lib/services/blade_capture_gate.dart` | 葉片照拍攝品質判定：影像層（模糊/曝光）+ **結構層**（`quality.py` 移植，三片半徑離散是唯一有鑑別力的拒收條件） |
+| `flutter_app/lib/services/blade_capture_gate.dart` | 葉片照拍攝品質判定：影像層（模糊/曝光）+ **結構層**（`quality.py` 移植，三片半徑離散是唯一有鑑別力的拒收條件；**側視另走一組規則** `detectSideView`：恰好兩片、一上一下、垂直 ±12°、有塔架 → 不套三片規則、只量垂掛葉片彎曲） |
 | `flutter_app/lib/services/blade_image_ops.dart` | ★ OpenCV 對照的影像運算（8-bit Lab、**網格大核中值**、REFLECT_101 高斯、5×5 橢圓閉、連通元件、chamfer 距離變換） |
 | `flutter_app/lib/services/blade_geometry_service.dart` | ★ 幾何層分割（`segmentation.py` 的局部天空模型 + 遮罩清理 + 地平線） |
 | `flutter_app/lib/services/blade_structure_service.dart` | ★ 結構定位（輪轂/塔架/三片葉片、第二個轉子） |
@@ -85,11 +85,11 @@
 ## 測試
 ```bash
 python3 scripts/audit_dead_ends.py   # 死角查核（service 零引用／DB 欄位只讀不寫）；--report 看全部
-flutter test          # 全部 497 tests（widget_test 已修復，不再排除）
+flutter test          # 全部 504 tests（widget_test 已修復，不再排除）
 cd backend && GEMINI_API_KEY=ci-fake-key pytest tests/ --asyncio-mode=auto   # 191 pytest
-cd blade_prototype && pip install -r requirements.txt && pytest              # 131 tests（葉片原型，合成影像/音軌夾具 + Mode B 分類表與標記檔守門 + 測試報告聚合器）
+cd blade_prototype && pip install -r requirements.txt && pytest              # 142 tests（葉片原型，合成影像/音軌夾具 + Mode B 分類表與標記檔守門 + 測試報告聚合器 + 側視閘門）
 ```
-Flutter 497 tests / 後端 191 pytest / 葉片原型 131 pytest 全綠（2026-09-14 本機實測）。DB 測試使用 `sqflite_common_ffi` in-memory。標準資料為單一來源：改 `backend/app/data/inspection_standards.py` 後必須跑 `python backend/scripts/export_standards.py` 重新匯出 JSON（有同步守門測試）。
+Flutter 504 tests / 後端 191 pytest / 葉片原型 142 pytest 全綠（2026-09-14 本機實測；**GitHub Actions 因用量預算已停用，CI 不再跑**，本機驗證見下方「本機 Flutter」條目）。DB 測試使用 `sqflite_common_ffi` in-memory。標準資料為單一來源：改 `backend/app/data/inspection_standards.py` 後必須跑 `python backend/scripts/export_standards.py` 重新匯出 JSON（有同步守門測試）。
 
 ## 已知問題追蹤
 - GitHub Issues #14-#19 已全數修復並關閉（2026-04-16）
@@ -135,6 +135,9 @@ Flutter 497 tests / 後端 191 pytest / 葉片原型 131 pytest 全綠（2026-09
 - Mode B 健康照與正常結構第一版（2026-09-13，`blade_prototype/CLOSEUP_HEALTHY_SET.md`）：接 B0「一張健康照都沒有」的結論做**讓那件事變得可能**的部分。四個 pass：①全部 1065 張取像判定——**839 合格、`crack` 類 0/177**（174 張整機），B0 的 32 張抽樣結論升級成全語料；②192 張正常結構普查——**避雷接點、VG 板、排水孔 0 張**（正是與結構類缺陷最易混淆的三種），出現的是紅色葉尖塗裝 10%、比例尺 6%；而**標註／前處理痕跡（灰色矩形塗抹 20%、時間戳 12%、人手工具 8%）出現在 35% 的影像上，比任何正常結構都多**——模型會學到「灰色矩形附近有缺陷」，這是比缺健康照更迫切的洩漏風險；③`closeup_healthy_candidates.py` 從兩位標註者框外挖 256 px 候選格：6,880 格 → `blade_like` 1,842 格 → 目視 64 格約 64% 真的是葉片表面 ≈ 1,200 格可用；第一版沒有紋理下限，四成是平塗灰塊與過曝白，補了 `gray_std < 4 → flat_or_blank` 才降下來；④8 張全解析度概略框。三個不可退化的約定：**全部 `unreviewed`／`pending`、annotator 是 `claude-first-pass`、測試守任何一筆不得在沒有人簽核下變 confirmed**——「兩位標註者都沒框」≠「確認乾淨」，他們只框自己要框的。一個判錯的例子留在報告裡：654 在印樣上看成硬邊陰影，全解析度看是葉片與天空的邊界，所以 Pass 2 的 `x` 標記全部要在全解析度上複核。健康候選與缺陷影像**同源**（同葉片同飛行），按葉片切時必須分在同一側，而語料沒有葉片編號——B1 要先解這個
 
 - 葉片模組現況測試報告（2026-09-14，`blade_prototype/BLADE_TEST_REPORT.md`）：把現在能測的全部跑一遍。**沒有退化**——75 張真實照片逐張與 2026-09-07 比對 0 個欄位有差（23/30、閘門 8 放行全對、範圍外 45 張誤放行 0）；四層合成端到端數字對得上 `SENSITIVITY.md`（正視 300 cm 偏移量到 24.8/25.0 px、2 cm 侵蝕 rms 比 3.09、+4 dB 侵蝕 z=4.6、哨音 13.9 dB 獨有、風噪 0.5 判不可用且不給數字、影片 11.999/12 rpm）；運動分割 6 段真實影片重跑與 `INNOVATION_REVIEW.md` §3.1 逐段一致。**兩個新發現**寫進 `BLADE_INSPECTION_SPEC.md` §13 第 11、12 項：①閘門放行的 8 張真實照片裡**三片互比標記了 5 張**，量級是偏軸透視差不是缺陷（ed894e7a 葉尖偏移 226 cm、z=12.8），葉尖方位角間距偏離 120° 當偏軸指標鑑別力不夠（有標記者中位 6°、無標記者 2°，但 3° 的也被標）；②**側視全機照會被閘門拒收**（合成 3000×4000：只定位到 2 片、半徑差 66%）——規格 §5.1 的側視模式與 `quality.py`／`blade_capture_gate.dart` 的「葉片數 ≠ 3」規則衝突，`SENSITIVITY.md` §2 的側視數字是繞過閘門直接算的；側視**影片**不受影響。真實影像那一節的數字由 `scripts/blade_test_report.py` 產生（`--baseline` 逐張比對；5 條測試守它）。環境備註：本容器沒有 Flutter SDK（App 端引用 CI 的 497）、沒有 Playwright（PDF 用 `/opt/pw-browsers` 的 chromium headless `--print-to-pdf`）
+
+- 側視全機照的閘門規則（2026-09-14，SPEC §13-12 已決策）：規格 §5.1 的側視模式原本會被 `quality.py`／`blade_capture_gate.dart` 以「葉片數 ≠ 3」「半徑離散」拒收，而 App 的引導拍攝本來就會要使用者拍側視——拍了一定被拒、理由還指向「等轉子轉開」。改成**側視另走一組規則**：`detect_side_view`／`detectSideView` 判定（恰好 2 個伸長元件、全部在垂直 ±12° 內、一上一下、塔架找到）→ 不套那兩條、改發「三片互比不適用、只量垂掛葉片彎曲」警告；幾何層走 `side_view_summary`／`sideViewSummary`（`comparisons` 空、多 `hanging_blade`），報告排「側視垂掛葉片彎曲」段，App 端只寫摘要備註、不產生發現、不進趨勢（單幀含預彎不是缺陷量，要等基線資料模型）。**12° 是拿 75 張真實照片定的**：≤12° 一張都不命中（語料裡沒有真正的側視照），所以真實影像閘門結果逐張 0 個欄位改變；唯一「轉子近側視」的 1573f056 是 6.6°／19.2° 的斜視，斜視含透視分量不放行。單獨一根垂直的東西不收。Dart 交叉驗證夾具 `scripts/make_side_fixture.py` → `blade_side_scene.png` + `blade_side_reference.json`（600×900、15 cm/px；改側視路徑要重跑）。順帶：`pubspec.lock` 補上 2026-09-07 加入 `record` 時漏掉的 8 條相依、windows 外掛註冊同步
+- **本機 Flutter 取代 CI**（2026-09-14）：GitHub Actions 因帳號用量預算暫停，PR 上的 CI 一律秒紅（runner 未指派），**不是程式問題**。本容器可以裝 Flutter：`git clone --depth 1 -b stable https://github.com/flutter/flutter.git /opt/flutter && /opt/flutter/bin/flutter precache --linux && cd flutter_app && touch .env && flutter pub get`（storage.googleapis.com／pub.dev 從 proxy 可達，約 1.2 GB、5 分鐘），之後 `flutter analyze`（6 條已知 info）與 `flutter test`（504，約 40 秒）都能在本機跑。合併前的驗證改成本機三軌：`pytest`（blade_prototype）、`flutter test`、`scripts/audit_dead_ends.py`
 
 - 葉片近身影像檢測 Mode B 規格（2026-09-12，`BLADE_CLOSEUP_SPEC.md`）：與既有地面模式並列的**第二個模式**，輸入是「填滿畫面的葉片近身照」，靠外觀與領域知識判讀而非三片互比與物理。**輸入以無人機的距離與角度為硬約束**（8–16 m、上仰 15°、葉片弦向占畫面 ≥ 1/3），這個限縮讓 DTU 與 Blade30 等公開語料從「領域不匹配」變成可直接使用。物理上算出一個違反直覺的結果：**無人機 12 m 用廣角（24 mm eq）是 0.341 cm/px，與地面模式 5x 在 50 m 的 0.37 cm/px 幾乎相同**——提升解析度的是「近距離 **加上** 中長焦」，光是靠近沒有用；12 m / 120 mm eq 的 0.068 cm/px 才讓 IEA Level 1（1 cm² 約 15×15 px）可偵測，Level 0 針孔（< 1 mm，1.5 px）任何組態都做不到。基線是 Zhang 等人的知識增強 VLM（arXiv:2510.22868v2）：整體準確率 94.55% 看似很好，但**逐類拆開後 structural（裂縫）recall 只有 0.5**（12 張裡 6 張被判成健康，多為低光照），而 environmental 的 1.00/1.00 是在 **2 張**上得到的；重新訓練的 YOLOv8n 則是 structural 2/12、environmental 0/2，且 11 張健康照誤報在製造接縫與結構標記上。所以 §6 把評估協定寫成不可退化的四條：**按葉片切不按照片切**、**主指標是逐類 recall 不是 accuracy**、**每類少於 30 張不報 P/R/F1**、**健康照要含容易誤判的正常結構且誤報要分開報**。兩條新的不可退化約定：沒有尺度就不報 IEA 面積等級、取像條件不合就拒收並說明原因。輸出沿用 `WtDetection`，實作後 `wt_detections.bbox_json` 會第一次有生產端，屆時要移除 `audit_allowlist.json` 的對應條目
 

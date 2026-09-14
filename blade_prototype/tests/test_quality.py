@@ -8,28 +8,31 @@ import cv2
 import numpy as np
 import pytest
 
-from blade_proto.quality import CaptureVerdict, assess_capture
+from blade_proto.quality import (SIDE_VIEW_MAX_TILT_DEG, CaptureVerdict, assess_capture,
+                                 detect_side_view)
 from blade_proto.segmentation import (SegmentationResult, SkyModel, find_horizon,
                                       find_second_rotor, find_structure, segment_turbine)
-from blade_proto.synth import SceneSpec, render_front
+from blade_proto.synth import SceneSpec, render_front, render_side
 
 
 class _Blade:
     """假葉片。`xs`/`ys` 是真結構會有的像素索引——第二轉子檢查要靠它認出「哪些元件
     是已定位的風機自己」，所以 stub 也得有，不能讓安全檢查因為缺屬性而被跳過。"""
 
-    def __init__(self, r, tip=(0.0, 0.0), pixels=None):
+    def __init__(self, r, tip=(0.0, 0.0), pixels=None, angle=0.0):
         self.tip_radius_px = r
         self.tip_xy = tip
+        self.tip_angle_deg = angle  # 數學慣例，270° = 六點鐘；預設 0°（朝右）不會被當成側視
         px = pixels if pixels is not None else [(int(tip[0]), int(tip[1]))]
         self.xs = np.array([p[0] for p in px], dtype=np.int64)
         self.ys = np.array([p[1] for p in px], dtype=np.int64)
 
 
 class _Structure:
-    def __init__(self, radii, tips=None, tower=True, refined=True, notes=(), hub=(150.0, 60.0)):
+    def __init__(self, radii, tips=None, tower=True, refined=True, notes=(), hub=(150.0, 60.0), angles=None):
         tips = tips or [(0.0, 0.0)] * len(radii)
-        self.blades = [_Blade(r, t) for r, t in zip(radii, tips)]
+        angles = angles or [0.0] * len(radii)
+        self.blades = [_Blade(r, t, angle=a) for r, t, a in zip(radii, tips, angles)]
         self.tower_found = tower
         self.hub_refined = refined
         self.hub = hub
@@ -219,3 +222,63 @@ def test_second_rotor_check_can_be_skipped_for_cost():
     v = assess_capture(_seg(mask), find_structure(mask), check_second_rotor=False)
     assert "second_rotor_ratio" not in v.metrics
     assert not any("另一個轉子" in w for w in v.warnings)
+
+
+# ------------------------------------------------------------------ 側視（§13-12）
+# 規格 §5.1 的側視模式（垂掛葉片量 flapwise 彎曲）原本會被「葉片數 ≠ 3」與「半徑離散」
+# 兩條正視規則拒收（BLADE_TEST_REPORT.md §4.2）。側視另走一組規則，但判定側視要嚴：
+# 恰好兩片、一上一下、都在垂直 ±12° 內、塔架找到。12° 是拿 75 張真實照片定的——
+# ≤12° 沒有任何一張命中，所以真實影像的閘門結果一張都不變。
+
+
+def test_side_view_two_vertical_blades_skips_three_blade_rules():
+    v = assess_capture(_seg(_mask_with_ground(ground_frac=0.1)),
+                       _Structure([300.0, 150.0], angles=[270.0, 90.0]))
+    assert v.ok, v.reasons
+    assert v.metrics["view"] == "side" and v.metrics["hanging_blade_index"] == 0
+    assert v.metrics["tip_radius_spread"] > 0.15, "離散度照記錄，只是不拿來判"
+    assert any("側視" in w and "互比不適用" in w for w in v.warnings), v.warnings
+
+
+def test_side_view_needs_one_up_and_one_down():
+    v = assess_capture(_seg(_mask_with_ground()), _Structure([300.0, 150.0], angles=[90.0, 92.0]))
+    assert not v.ok and any("只定位到 2 片" in r for r in v.reasons)
+    assert v.metrics["view"] == "front"
+
+
+def test_oblique_view_is_not_side_view():
+    """1573f056（真實照片，標註「轉子近側視」）兩片是 6.6° 與 19.2°——斜視不是側視，
+    垂掛葉片的彎曲含透視分量，放行只會多一個假訊號來源。"""
+    v = assess_capture(_seg(_mask_with_ground()), _Structure([277.0, 215.8], angles=[289.2, 83.4]))
+    assert not v.ok and v.metrics["view"] == "front"
+
+
+def test_side_view_requires_tower():
+    v = assess_capture(_seg(_mask_with_ground()),
+                       _Structure([300.0, 150.0], angles=[270.0, 90.0], tower=False))
+    assert not v.ok and v.metrics["view"] == "front"
+
+
+def test_single_hanging_blade_is_not_side_view():
+    """單獨一根垂直的東西也可能是桿子、桅杆或被雲切掉的別台風機。"""
+    v = assess_capture(_seg(_mask_with_ground()), _Structure([300.0], angles=[270.0]))
+    assert not v.ok and v.metrics["view"] == "front"
+    assert detect_side_view(_Structure([300.0], angles=[270.0])) is None
+
+
+def test_side_view_tilt_threshold_is_pinned():
+    assert SIDE_VIEW_MAX_TILT_DEG == 12.0
+    assert detect_side_view(_Structure([300.0, 150.0], angles=[270.0 + 12.0, 90.0])) == 0
+    assert detect_side_view(_Structure([300.0, 150.0], angles=[270.0 + 12.5, 90.0])) is None
+
+
+def test_synthetic_side_view_passes_the_gate_end_to_end():
+    """合成側視照（葉片 A 垂掛在六點鐘）整條路：分割 → 結構 → 閘門放行、標成側視。"""
+    img, _ = render_side(SceneSpec.for_scale(6.0, "side", (1500, 2000), seed=1))
+    seg = segment_turbine(img)
+    st = find_structure(seg.mask, horizon_y=seg.horizon_y)
+    v = assess_capture(seg, st)
+    assert v.ok, v.reasons
+    assert v.metrics["view"] == "side"
+    hang = st.blades[v.metrics["hanging_blade_index"]]
+    assert abs(((hang.tip_angle_deg - 270.0) + 180) % 360 - 180) < SIDE_VIEW_MAX_TILT_DEG

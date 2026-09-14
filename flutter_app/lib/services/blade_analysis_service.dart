@@ -464,8 +464,17 @@ class BladeAnalysisService {
       ));
     }
     if (out.isEmpty) {
-      notes.add('${_shortPath(m.path)}（整機照）：三片剪影互比未見離群'
-          '（${result.comparisons.length} 個量都在雜訊範圍內）。');
+      if (result.metrics['view'] == 'side') {
+        // 側視只量垂掛葉片的彎曲，不做三片互比；單幀值含預彎，所以只記數字不判定。
+        // 現階段沒有跨次基線的資料模型，先寫進摘要備註，不產生發現、不進趨勢。
+        final defl = result.metrics['hanging_tip_deflection_px'];
+        notes.add('${_shortPath(m.path)}（整機照，側視）：只量垂掛葉片的 flapwise 彎曲'
+            '（葉尖偏移 ${defl is num ? defl.toStringAsFixed(1) : '—'} px，含預彎），'
+            '不做三片互比；要與同一台的基線比對才有意義。');
+      } else {
+        notes.add('${_shortPath(m.path)}（整機照）：三片剪影互比未見離群'
+            '（${result.comparisons.length} 個量都在雜訊範圍內）。');
+      }
     }
     return out;
   }

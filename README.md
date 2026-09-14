@@ -189,7 +189,7 @@ python -m blade_proto --help
 
 ```bash
 cd flutter_app && python3 scripts/audit_dead_ends.py                        # 死角查核（CI 排在 analyze 之前）
-cd flutter_app && flutter analyze && flutter test                           # 497 tests
+cd flutter_app && flutter analyze && flutter test                           # 504 tests
 cd backend && GEMINI_API_KEY=ci-fake-key pytest tests/ --asyncio-mode=auto  # 191 tests
 cd blade_prototype && pytest                                                # 115 tests
 ```

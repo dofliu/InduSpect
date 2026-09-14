@@ -33,6 +33,14 @@ MAX_RADIUS_SPREAD = 0.15
 SECOND_ROTOR_WARN_RATIO = 0.5
 # 前景太少代表風機根本沒被分出來（白葉片對上亮雲天空）。
 MIN_MASK_FRAC = 0.0015
+# 側視：相機垂直轉子面，三片葉片的投影落在通過輪轂的同一條垂直線上——正視用的
+# 「葉片數 ≠ 3」與「三片半徑離散」兩條規則在這裡本來就不成立（另兩片疊成一段、投影長度
+# 只有 R·sin），照套會把規格 §5.1 的側視模式整個擋掉（BLADE_TEST_REPORT.md §4.2）。
+# 判定側視的條件刻意嚴格：**恰好 2 個伸長元件、全部在垂直 ±12° 內、一上一下、塔架找到**。
+# 12° 是拿 75 張真實照片定的：≤12° 沒有任何一張命中（語料裡沒有真正的側視照），
+# 唯一標成「轉子近側視」的 1573f056 兩片是 6.6° 與 19.2°——那是斜視不是側視，
+# 斜視的垂掛葉片彎曲含透視分量，放行只會多一個假訊號來源（同報告 §3.3）。
+SIDE_VIEW_MAX_TILT_DEG = 12.0
 
 
 @dataclass
@@ -56,6 +64,39 @@ def _spread(values: list[float]) -> float:
     if med <= 1e-6:
         return float("inf")
     return float(np.ptp(values) / med)
+
+
+def _wrap_deg(a: float) -> float:
+    """折到 (−180, 180]。"""
+    return ((a + 180.0) % 360.0) - 180.0
+
+
+def _tilt_from_vertical_deg(angle_deg: float) -> float:
+    """葉片軸線離垂直（90° 朝上或 270° 朝下）的角度。"""
+    return min(abs(_wrap_deg(angle_deg - 90.0)), abs(_wrap_deg(angle_deg - 270.0)))
+
+
+def detect_side_view(structure, max_tilt_deg: float = SIDE_VIEW_MAX_TILT_DEG) -> int | None:
+    """是側視就回傳垂掛葉片（朝下那片）的索引，否則 None。
+
+    條件見 `SIDE_VIEW_MAX_TILT_DEG` 的說明。只收「兩片、一上一下」：單獨一根垂直的東西
+    也可能是桿子、桅杆或被雲切掉的別台風機，沒有上方那段就沒有「這是轉子」的證據；
+    三片分得開就不是側視，走正視規則。
+    """
+    blades = list(getattr(structure, "blades", []))
+    if len(blades) != 2 or not getattr(structure, "tower_found", False):
+        return None
+    angles = [getattr(b, "tip_angle_deg", None) for b in blades]
+    if any(a is None for a in angles):
+        return None
+    angles = [float(a) for a in angles]
+    if any(_tilt_from_vertical_deg(a) > max_tilt_deg for a in angles):
+        return None
+    down = [i for i, a in enumerate(angles) if abs(_wrap_deg(a - 270.0)) <= max_tilt_deg]
+    up = [i for i, a in enumerate(angles) if abs(_wrap_deg(a - 90.0)) <= max_tilt_deg]
+    if len(down) != 1 or len(up) != 1:
+        return None
+    return down[0]
 
 
 def assess_capture(
@@ -110,7 +151,15 @@ def assess_capture(
 
     n = len(structure.blades)
     metrics["n_blades"] = n
-    if n != n_blades_expected:
+    # 側視走另一組規則（見 SIDE_VIEW_MAX_TILT_DEG）：不要求三片、不看半徑離散，
+    # 但要明說這張只能量垂掛葉片的彎曲、不能做三片互比。
+    hanging = detect_side_view(structure) if n_blades_expected == 3 else None
+    metrics["view"] = "side" if hanging is not None else "front"
+    if hanging is not None:
+        metrics["hanging_blade_index"] = hanging
+        warnings.append("側視：三片投影共線，三片互比不適用。本張只量垂掛葉片的 flapwise 彎曲，"
+                        "而且單幀值含預彎，要與同一台的基線或正視互比結果對照才有意義")
+    elif n != n_blades_expected:
         reasons.append(f"只定位到 {n} 片葉片（應為 {n_blades_expected}）："
                        "可能有葉片正好貼在塔架上（六點鐘方位）或沒入雲層，"
                        "請等轉子轉到三片都離開塔架再拍")
@@ -120,7 +169,8 @@ def assess_capture(
     if len(radii) >= 2:
         sp = _spread(radii)
         metrics["tip_radius_spread"] = round(sp, 3)
-        if sp > max_radius_spread:
+        # 側視時上方那段是另兩片疊在一起、長度只有 R·sin，離散度沒有「是不是同一台」的意義。
+        if hanging is None and sp > max_radius_spread:
             reasons.append(f"三片葉尖半徑差 {sp * 100:.0f}%（上限 {max_radius_spread * 100:.0f}%）："
                            "同一台風機三片等長，差這麼多代表有一片其實是地物、電線或別台風機，"
                            "請重拍並確保只有一台風機在框內")

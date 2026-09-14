@@ -143,10 +143,19 @@ class BladeComparison {
   final List<MetricComparison> comparisons;
   final String? note;
 
+  /// 側視時為 'side'（`sideViewSummary`），正視為 null——正視的 JSON 形狀不變。
+  final String? view;
+
+  /// 側視時垂掛葉片的量測（index／radius_px／bend_coeff／tip_deflection_px／
+  /// residual_rms_px／n_contaminated_bins）；正視為 null。
+  final Map<String, dynamic>? hangingBlade;
+
   const BladeComparison({
     required this.nBlades,
     required this.comparisons,
     this.note,
+    this.view,
+    this.hangingBlade,
   });
 
   bool get anyFlagged => comparisons.any((c) => c.flagged);
@@ -156,6 +165,8 @@ class BladeComparison {
         'comparisons': comparisons.map((c) => c.toJson()).toList(),
         'any_flagged': anyFlagged,
         if (note != null) 'note': note,
+        if (view != null) 'view': view,
+        if (hangingBlade != null) 'hanging_blade': hangingBlade,
       };
 }
 
@@ -514,6 +525,32 @@ class BladeGeometryCompare {
     );
   }
 
+  /// 側視（閘門 `BladeStructureGate.detectSideView` 判定）：不做三片互比，只回報垂掛
+  /// 葉片的彎曲。回傳與 [compareBlades] 同形（`comparisons` 為空），報告與分析編排
+  /// 不必另開一條路徑。單幀的 tipDeflection **含預彎**，不是缺陷量——要與同一台的
+  /// 基線或另一幀比才有意義，所以這裡不設門檻、不標記。對照 `geometry.py::side_view_summary`。
+  static BladeComparison sideViewSummary(
+      List<BladeProfile> profiles, int hangingIndex) {
+    final p = profiles[hangingIndex];
+    return BladeComparison(
+      nBlades: profiles.length,
+      comparisons: const [],
+      view: 'side',
+      hangingBlade: {
+        'index': hangingIndex,
+        'label': hangingIndex < 3 ? 'ABC'[hangingIndex] : '$hangingIndex',
+        'axis_angle_deg': p.axisAngleDeg,
+        'radius_px': p.radiusPx,
+        'bend_coeff': p.bendCoeff,
+        'tip_deflection_px': p.tipDeflectionPx,
+        'residual_rms_px': p.residualRmsPx,
+        'n_contaminated_bins': p.nContaminatedBins,
+      },
+      note: '側視：三片投影共線，互比不適用；量測項目為垂掛葉片的 flapwise 彎曲'
+          '（單幀值含預彎，需與同一台的基線比對）',
+    );
+  }
+
   // ------------------------------------------------------- 數值 helper
 
   static int _binOf(Float64List edges, double v, int nBins) {
@@ -675,8 +712,17 @@ BladeGeometryOutcome runGeometryPipeline(
     );
   }
   final profiles = BladeGeometryCompare.profilesFromStructure(st);
-  final cmp = BladeGeometryCompare.compareBlades(profiles,
-      noiseFloorPx: noiseFloorPx);
+  // 閘門判定為側視時不做三片互比：另兩片疊成一段，互比只會吐出自洽但無意義的離群。
+  final hangingIndex = verdict.metrics['hanging_blade_index'];
+  final side = verdict.metrics['view'] == 'side' &&
+      hangingIndex is int &&
+      hangingIndex >= 0 &&
+      hangingIndex < profiles.length;
+  final cmp = side
+      ? BladeGeometryCompare.sideViewSummary(profiles, hangingIndex)
+      : BladeGeometryCompare.compareBlades(profiles,
+          noiseFloorPx: noiseFloorPx);
+  final hb = cmp.hangingBlade;
   return BladeGeometryOutcome(
     ok: true,
     warnings: verdict.warnings,
@@ -687,6 +733,12 @@ BladeGeometryOutcome runGeometryPipeline(
       'n_profiles': profiles.length,
       'contaminated_bins':
           profiles.fold<int>(0, (a, pr) => a + pr.nContaminatedBins),
+      if (hb != null) ...{
+        'hanging_radius_px': hb['radius_px'],
+        'hanging_bend_coeff': hb['bend_coeff'],
+        'hanging_tip_deflection_px': hb['tip_deflection_px'],
+        'hanging_residual_rms_px': hb['residual_rms_px'],
+      },
     },
     comparisons: cmp.comparisons,
     profiles: profiles,
