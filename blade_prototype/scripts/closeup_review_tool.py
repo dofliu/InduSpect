@@ -48,6 +48,7 @@ INTAKE = ROOT / "data" / "closeup_intake_wtb.json"
 NS = ROOT / "data" / "closeup_normal_structures_wtb.json"
 BOXES = ROOT / "data" / "closeup_normal_structure_boxes_wtb.json"
 DECISIONS = ROOT / "data" / "closeup_review_decisions.json"
+FIRSTPASS = ROOT / "data" / "closeup_healthy_firstpass_wtb.json"
 
 DECISIONS_VERSION = "b1-2026-09-14"
 
@@ -141,6 +142,33 @@ def collect_healthy_items(manifest: dict, bg: set[str], limit: int | None, seed:
     return out
 
 
+def apply_firstpass_prior(items: list[dict], firstpass: dict) -> dict:
+    """第一遍標記只做兩件事：把先驗掛上去、把最可能是葉片表面的排前面。
+
+    它**不寫任何決策**——`claude-first-pass` 在 MODEL_ANNOTATOR 黑名單裡，本來就進不了決策檔。
+    這裡刻意只碰順序與顯示欄位，讓「誰有權說 healthy」不因為有了先驗而改變。
+    """
+    prior = {t["item_id"]: t["code"] for t in firstpass["tiles"]}
+    rank = firstpass["meta"].get("priority") or {}
+    hit = 0
+    for it in items:
+        if it["queue"] != "healthy":
+            continue
+        code = prior.get(it["item_id"])
+        if code is None:
+            continue
+        hit += 1
+        it["prior"] = code
+        it["prior_annotator"] = firstpass["meta"]["annotator"]
+        it["caption"] += f"｜第一遍 {code}（{firstpass['meta']['vocabulary'].get(code, '')}，未複核）"
+    order = {id(it): i for i, it in enumerate(items)}
+    items.sort(key=lambda it: (it["queue"] != "healthy",
+                               rank.get(it.get("prior"), len(rank)),
+                               order[id(it)]))
+    return dict(matched=hit, missing=sum(1 for it in items
+                                         if it["queue"] == "healthy" and "prior" not in it))
+
+
 def collect_ns_recheck_items(ns: dict) -> list[dict]:
     out = []
     for idx, codes in sorted(ns["labels"].items(), key=lambda kv: int(kv[0])):
@@ -188,6 +216,12 @@ def build(args: argparse.Namespace) -> int:
         items += collect_ns_recheck_items(json.loads(NS.read_text(encoding="utf-8")))
     if "boxes" in queues:
         items += collect_box_items(json.loads(BOXES.read_text(encoding="utf-8")))
+
+    prior_stats = None
+    fp_path = Path(args.firstpass) if args.firstpass else FIRSTPASS
+    if not args.no_firstpass and fp_path.exists():
+        prior_stats = apply_firstpass_prior(items, json.loads(fp_path.read_text(encoding="utf-8")))
+        prior_stats["source"] = str(fp_path)
 
     kept: list[dict] = []
     contexts: set[str] = set()
@@ -238,7 +272,9 @@ def build(args: argparse.Namespace) -> int:
         queues={q: QUEUES[q] for q in queues},
         n_items=len(kept),
         fingerprint=fingerprint(kept),
-        note="決策要經 ingest 才進版控。跳過的不寫。升格要人名、要 1:1。",
+        firstpass=prior_stats,
+        note="決策要經 ingest 才進版控。跳過的不寫。升格要人名、要 1:1。"
+             "第一遍標記只排順序，不是決策。",
     )
     (out / "items.json").write_text(json.dumps(dict(meta=meta, items=kept), ensure_ascii=False, indent=1),
                                     encoding="utf-8")
@@ -385,6 +421,13 @@ def summarise_status(items_doc: dict | None, decisions: dict) -> dict:
         decided = Counter(e["queue"] for e in entries if e["item_id"] in index)
         out["remaining"] = {q: q_total[q] - decided.get(q, 0) for q in sorted(q_total)}
         out["stale_entries"] = sorted(e["item_id"] for e in entries if e["item_id"] not in index)
+        # 有第一遍先驗時，「還差多少」照先驗拆開：先看完 b 才是把最可能有用的那批看完。
+        done = {e["item_id"] for e in entries}
+        priors = [it for it in items_doc["items"] if it.get("prior")]
+        if priors:
+            left = Counter(it["prior"] for it in priors if it["item_id"] not in done)
+            out["remaining_by_prior"] = {c: left.get(c, 0)
+                                         for c in sorted({it["prior"] for it in priors})}
     return out
 
 
@@ -402,6 +445,9 @@ def status(args: argparse.Namespace) -> int:
         print("還沒看的：")
         for q, n in summary["remaining"].items():
             print(f"  {q}: {n}")
+        if summary.get("remaining_by_prior"):
+            per = "、".join(f"{c} {n}" for c, n in summary["remaining_by_prior"].items())
+            print(f"  （healthy 依第一遍先驗，未複核：{per}）")
         if summary["stale_entries"]:
             print(f"失效決策（候選已重新產生，對不上像素）：{len(summary['stale_entries'])} 筆")
     return 0
@@ -419,6 +465,9 @@ def main(argv: list[str] | None = None) -> int:
     b.add_argument("--bg", default="blade_like", help="healthy 佇列要哪些 bg_guess，逗號分隔")
     b.add_argument("--limit", type=int, default=None, help="healthy 佇列最多幾格")
     b.add_argument("--seed", type=int, default=7)
+    b.add_argument("--firstpass", default=None,
+                   help="第一遍標記檔（預設 data/closeup_healthy_firstpass_wtb.json，只用來排序）")
+    b.add_argument("--no-firstpass", action="store_true", help="不套第一遍先驗，照座標順序排")
     b.set_defaults(func=build)
 
     i = sub.add_parser("ingest", help="把匯出的決策併進版控中的決策檔")

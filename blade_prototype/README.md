@@ -48,7 +48,7 @@
 cd blade_prototype
 python3 -m venv .venv && . .venv/bin/activate
 pip install -r requirements.txt
-pytest            # 184 tests，約 2–3 分鐘（動態層與運動分割的合成影片測試最慢）
+pytest            # 207 tests，約 2–3 分鐘（動態層與運動分割的合成影片測試最慢）
 ```
 
 ## 三種輸入、三個指令
@@ -125,6 +125,9 @@ python -m blade_proto report --asset WTG-07 --still still.json --still-overlay s
 | `scripts/closeup_survey_sheets.py` | **正常結構普查的印樣版面**（4×4、每格 460 px）。第一版 192 張抽樣是臨時做的沒進版控，續做會對不上規格，所以固定下來；`--only-unsurveyed` 只出還沒普查的。取像合格的 839 張已全覆蓋 | Mode B 標註 |
 | `scripts/closeup_eval.py` | **Mode B 評估協定（B1）**：`truth`／`subsets` 產真值與子集旗標（已進版控，評估不需要語料）、`eval` 出逐類報告、`nn-baseline` 與 `leakage-demo` 量洩漏值多少分。規格 §6 四條規則在這裡是**會拒跑的程式**：切分宣告不符、未知類別、未知影像一律擋；< 30 張的類別不印數字；未普查的誤報自成一格。說明見 `CLOSEUP_EVAL_PROTOCOL.md` | Mode B 評估 |
 | `scripts/closeup_blade_groups.py` | **Mode B 切分群組**：全域描述子取候選鄰居 → ORB+RANSAC 內點數驗證 → 連通分量 = 「不可拆到不同子集」的單位（`split_group`，**不是 blade_id**）。產出群組檔、群感知 5 折，並量語料自己附的切分洩漏多少（實測 test 63.4% 在 train 有近重複）。說明見 `CLOSEUP_SPLIT_GROUPS.md` | Mode B 評估協定 |
+| `scripts/closeup_candidate_sheets.py` | **健康候選格的接觸印樣**：1,842 格 `blade_like` 候選排成一頁 48 格，**原尺寸 256 px 不縮放**（縮了就看不出紋理，也就回到 654 那個錯誤），並寫出 `layout.json` 讓標記對得回座標 | Mode B 標註 |
+| `scripts/closeup_candidate_firstpass.py` | **第一遍逐格標記（不是簽核）**：印樣上的碼串 → 版控檔（`pack`）、與候選對帳（`verify`）。`annotator` 一律 `claude-first-pass`、狀態一律 `unreviewed`——這個名字正好被複核工具的模型名規則擋住，所以它只能改變**複核的順序與先驗**，不能變成決策。實測 788 格是純表面（42.8%），比抽樣推估的 64% 低 21 個百分點 | Mode B 標註 |
+| `scripts/closeup_baseline.py` | **Mode B 離線基線（B2）**：123 維手工特徵 + 純 numpy 一對多邏輯迴歸（零初始化、無隨機種子，重跑逐位元相同），群感知 5 折。**不是規格 §8 的三條基線**（§8.1/8.2 要 Gemini 金鑰、§8.3 要 PyTorch，本容器都沒有），它是地板的第二個點：平均逐類 recall 0.308，與 1-NN 的 0.344 打平 | Mode B 評估 |
 | `scripts/closeup_review_tool.py` | **Mode B 人工複核工作區**：把健康候選格、`x` 全解析度複核、概略框三個佇列切成離線工作區（切圖 + 單檔 HTML，鍵盤操作、可中斷續做），`ingest` 併進版控的決策檔。四條規則在匯入處執行：升格要人名（模型名整批拒收）、跳過 ≠ 乾淨、顯示倍率 < 1 的升格不收、決策綁座標。說明見 `CLOSEUP_HEALTHY_SET.md` §6 | Mode B 標註 |
 | `report.py` / `charts.py` | 圖文報告：把數值排成 HTML（區段、統計磚、數值表、待確認欄）＋內嵌 SVG 圖表。無外部相依、無 JS；照片以 base64 內嵌 | 交付物 |
 | `synth.py` | 參數化風機（60 m 葉片、4 m 根弦、塔架、機艙、預彎），正視/側視/分區段/影片；`SceneSpec.for_scale()` 依感光元件像素數與 cm/px 建場景，轉子塞不進畫面會拒絕 | 測試夾具 |

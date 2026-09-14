@@ -70,7 +70,9 @@
 | `docs/USER_GUIDE.md` | 使用手冊（操作步驟；README 不再重複這一段） |
 | `BLADE_CLOSEUP_TAXONOMY.md` | ★ Mode B 標註分類表（B0 產出）。**產物不要手改**——單一來源是 `blade_prototype/data/closeup_taxonomy.json`，改完跑 `render_closeup_taxonomy.py` |
 | `blade_prototype/BLADE_TEST_REPORT.md` | ★ **葉片模組現況測試報告**（2026-09-14）：自動化測試、75 張真實影像逐張回歸、四層合成端到端、圖文報告產生、運動分割重跑、Mode B 現況、沒測到的。真實影像那一節的數字由 `scripts/blade_test_report.py` 產生（`--baseline` 逐張比對） |
-| `blade_prototype/CLOSEUP_HEALTHY_SET.md` | ★ Mode B 健康照與正常結構第一版：全語料取像判定、正常結構普查、健康候選挖掘（`scripts/closeup_healthy_candidates.py`）、概略框、**人工複核工具（§6）**。三份標記檔在 `data/closeup_*_wtb.json`，**單一標註者未複核**，測試守「不得偷偷簽核」 |
+| `blade_prototype/CLOSEUP_HEALTHY_SET.md` | ★ Mode B 健康照與正常結構第一版：全語料取像判定、正常結構普查、健康候選挖掘（`scripts/closeup_healthy_candidates.py`）、概略框、**人工複核工具（§6）**。三份標記檔在 `data/closeup_*_wtb.json`，**單一標註者未複核**，測試守「不得偷偷簽核」；§7 是 1,842 格健康候選的**第一遍逐格標記**（788 格純表面／42.8%，仍全部 unreviewed） |
+| `blade_prototype/scripts/closeup_candidate_firstpass.py` | ★ Mode B 第一遍逐格標記（**不是簽核**）：1,842 格健康候選逐格看過，`annotator` 一律 `claude-first-pass`、狀態一律 `unreviewed`——這個名字正好被複核工具的模型名規則擋住，所以它只能改**複核順序與先驗**。實測純表面 788 格（42.8%），比 64 格抽樣推估的 64% 低 21 個百分點（邊界格被算成表面） |
+| `blade_prototype/scripts/closeup_baseline.py` | Mode B 離線基線（B2）：手工特徵 + 純 numpy 邏輯迴歸，平均逐類 recall 0.308 與 1-NN 打平。**規格 §8 三條基線未跑**（§8.1/8.2 要 Gemini 金鑰、§8.3 要 PyTorch，本容器都沒有） |
 | `blade_prototype/scripts/closeup_review_tool.py` | ★ Mode B 人工複核的那道門：離線工作區（切圖 + 單檔 HTML）+ `ingest` 四條簽核規則。決策寫進 `data/closeup_review_decisions.json`（目前 0 筆） |
 | `blade_prototype/CLOSEUP_EVAL_PROTOCOL.md` | ★ Mode B 評估協定（B1）：`scripts/closeup_eval.py` 把 §6 四條規則變成會拒跑的程式（切分宣告不符／未知類別／< 30 張不報數字／未普查的誤報不併進乾淨那格）＋**洩漏值 0.204 的配對實驗**＋1-NN 地板。評估域預設取像合格 839 張。真值與子集旗標已進版控，評估不需要語料本體 |
 | `blade_prototype/CLOSEUP_SPLIT_GROUPS.md` | ★ Mode B 切分群組（§6 第 1 條的執行依據）：影像重疊連出 524 個 `split_group` + 群感知 5 折；**語料自己附的切分洩漏 63.4% 不可用**。產出 `data/closeup_blade_groups_wtb.json`，由 `scripts/closeup_blade_groups.py` 產生 |
@@ -90,9 +92,9 @@
 python3 scripts/audit_dead_ends.py   # 死角查核（service 零引用／DB 欄位只讀不寫）；--report 看全部
 flutter test          # 全部 506 tests（widget_test 已修復，不再排除）
 cd backend && GEMINI_API_KEY=ci-fake-key pytest tests/ --asyncio-mode=auto   # 191 pytest
-cd blade_prototype && pip install -r requirements.txt && pytest              # 184 tests（葉片原型，合成影像/音軌夾具 + Mode B 分類表與標記檔守門 + 測試報告聚合器 + 側視閘門 + 複核工具 + 切分群組 + 評估協定 + 普查覆蓋）
+cd blade_prototype && pip install -r requirements.txt && pytest              # 207 tests（葉片原型，合成影像/音軌夾具 + Mode B 分類表與標記檔守門 + 測試報告聚合器 + 側視閘門 + 複核工具 + 切分群組 + 評估協定 + 普查覆蓋 + 第一遍標記守門 + 離線基線）
 ```
-Flutter 506 tests / 後端 191 pytest / 葉片原型 184 pytest 全綠（2026-09-14 本機實測；**GitHub Actions 因用量預算已停用，CI 不再跑**，本機驗證見下方「本機 Flutter」條目）。DB 測試使用 `sqflite_common_ffi` in-memory。標準資料為單一來源：改 `backend/app/data/inspection_standards.py` 後必須跑 `python backend/scripts/export_standards.py` 重新匯出 JSON（有同步守門測試）。
+Flutter 506 tests / 後端 191 pytest / 葉片原型 207 pytest 全綠（2026-09-14 本機實測；**GitHub Actions 因用量預算已停用，CI 不再跑**，本機驗證見下方「本機 Flutter」條目）。DB 測試使用 `sqflite_common_ffi` in-memory。標準資料為單一來源：改 `backend/app/data/inspection_standards.py` 後必須跑 `python backend/scripts/export_standards.py` 重新匯出 JSON（有同步守門測試）。
 
 ## 已知問題追蹤
 - GitHub Issues #14-#19 已全數修復並關閉（2026-04-16）
@@ -143,6 +145,8 @@ Flutter 506 tests / 後端 191 pytest / 葉片原型 184 pytest 全綠（2026-09
 - **本機 Flutter 取代 CI**（2026-09-14）：GitHub Actions 因帳號用量預算暫停，PR 上的 CI 一律秒紅（runner 未指派），**不是程式問題**。本容器可以裝 Flutter：`git clone --depth 1 -b stable https://github.com/flutter/flutter.git /opt/flutter && /opt/flutter/bin/flutter precache --linux && cd flutter_app && touch .env && flutter pub get`（storage.googleapis.com／pub.dev 從 proxy 可達，約 1.2 GB、5 分鐘），之後 `flutter analyze`（6 條已知 info）與 `flutter test`（506，約 40 秒）都能在本機跑。合併前的驗證改成本機三軌：`pytest`（blade_prototype）、`flutter test`、`scripts/audit_dead_ends.py`
 
 - 葉片近身影像檢測 Mode B 規格（2026-09-12，`BLADE_CLOSEUP_SPEC.md`）：與既有地面模式並列的**第二個模式**，輸入是「填滿畫面的葉片近身照」，靠外觀與領域知識判讀而非三片互比與物理。**輸入以無人機的距離與角度為硬約束**（8–16 m、上仰 15°、葉片弦向占畫面 ≥ 1/3），這個限縮讓 DTU 與 Blade30 等公開語料從「領域不匹配」變成可直接使用。物理上算出一個違反直覺的結果：**無人機 12 m 用廣角（24 mm eq）是 0.341 cm/px，與地面模式 5x 在 50 m 的 0.37 cm/px 幾乎相同**——提升解析度的是「近距離 **加上** 中長焦」，光是靠近沒有用；12 m / 120 mm eq 的 0.068 cm/px 才讓 IEA Level 1（1 cm² 約 15×15 px）可偵測，Level 0 針孔（< 1 mm，1.5 px）任何組態都做不到。基線是 Zhang 等人的知識增強 VLM（arXiv:2510.22868v2）：整體準確率 94.55% 看似很好，但**逐類拆開後 structural（裂縫）recall 只有 0.5**（12 張裡 6 張被判成健康，多為低光照），而 environmental 的 1.00/1.00 是在 **2 張**上得到的；重新訓練的 YOLOv8n 則是 structural 2/12、environmental 0/2，且 11 張健康照誤報在製造接縫與結構標記上。所以 §6 把評估協定寫成不可退化的四條：**按葉片切不按照片切**、**主指標是逐類 recall 不是 accuracy**、**每類少於 30 張不報 P/R/F1**、**健康照要含容易誤判的正常結構且誤報要分開報**。兩條新的不可退化約定：沒有尺度就不報 IEA 面積等級、取像條件不合就拒收並說明原因。輸出沿用 `WtDetection`，實作後 `wt_detections.bbox_json` 會第一次有生產端，屆時要移除 `audit_allowlist.json` 的對應條目
+
+- Mode B 健康候選第一遍標記 + B2 離線基線（2026-09-14）：兩件都是「讓下一步變得可能」。①**1,842 格健康候選逐格看過一遍**（`closeup_candidate_sheets.py` 出印樣、`closeup_candidate_firstpass.py` 收成版控檔）：`b` 純表面 **788（42.8%）**、`e` 邊界格 648、`n` 不是葉片 274、`u` 判不了 132。**它改掉一個數字**——可用候選從「約 1,200 格」降到 788，原本的 64% 是 64 格抽樣，**抽樣把邊界格算成了葉片表面**（邊界格的對比來自天空不是漆面，混進健康記憶庫會讓模型把「有邊」學成正常）。三條不可退化（16 條反向測試）：`annotator` 一律 `claude-first-pass`、狀態一律 `unreviewed`，這個名字正好落在複核工具的模型名黑名單裡**進不了決策檔**（`pack` 會自我對帳，黑名單放寬到擋不住它就拒絕產出）；它只改**複核順序與先驗**（`build` 把 `b` 排最前、每格標「第一遍 b（…，未複核）」、`status` 印出各碼還差多少），不寫任何決策；`item_id` 與 `healthy` 佇列同一套雜湊，候選重新產生後對不上的由 `verify` 點名。決策檔仍 **0 筆**——先驗不是簽核。②**B2 離線基線**（`closeup_baseline.py`，寫進 `CLOSEUP_EVAL_PROTOCOL.md` §3.6）：123 維手工特徵 + 純 numpy 一對多邏輯迴歸（零初始化、無隨機種子，重跑逐位元相同）、群感知 5 折，**平均逐類 recall 0.308 對 1-NN 的 0.344、平均 F1 0.374 對 0.369——打平**，一組設計過的紋理特徵贏不了「抄最像的鄰居」。它把 `crack` 的 117 個誤報清成 0；`craze` 反贏、`hide_craze` 反輸，而那正是標註者一致率最低的一對（多半在量標註噪音）。域外 226 張整機照預測 26/56/39/23/14、命中 2/2/8/5/0——**§8.3 的縮影，§1.2 的取像閘門不是形式要求**。**規格 §8 三條基線仍未跑**：§8.1/8.2 要 Gemini API key、§8.3 要 PyTorch，本容器兩樣都沒有（環境事實不是取捨）
 
 ## 既有 error（已修復）
 - ~~`measurement.dart`: `sqrt` 未 import `dart:math`~~ → 已修復
