@@ -229,7 +229,9 @@ Blades Using Knowledge-Augmented Vision Language Models*, arXiv:2510.22868v2（2
 
 ## 6. 評估協定（不可退化）
 
-在碰任何模型之前先定好，並且鎖住。四條：
+在碰任何模型之前先定好，並且鎖住。四條——**都已經是程式會執行的東西**
+（`blade_prototype/scripts/closeup_eval.py`，做法與實測見
+[`CLOSEUP_EVAL_PROTOCOL.md`](blade_prototype/CLOSEUP_EVAL_PROTOCOL.md)）：
 
 1. **測試集按葉片切，不按照片切。** 同一支葉片的相鄰影格極為相似，按照片隨機切會讓
    訓練與測試共享同一支葉片，分數虛高。切分依據是「哪一支葉片、哪一次飛行」。
@@ -252,7 +254,11 @@ Blades Using Knowledge-Augmented Vision Language Models*, arXiv:2510.22868v2（2
    **誤報率要分開報「誤報在正常結構上」與「誤報在乾淨表面上」**，前者才是真問題。
 
 補充：低光照要單獨切一個子集報數字。§5.2 的 6 張漏檢都在低光照，
-如果不分開報，改善或惡化都會被平均掉。
+如果不分開報，改善或惡化都會被平均掉。低光照的定義是**可重現的量**：
+V 通道全圖均值低於語料自身分布的第 20 百分位（`data/closeup_subsets_wtb.json`），不是人的印象。
+
+**洩漏值多少分，已經量過**：同一組 test、同一個 1-NN、只差訓練池裡有沒有同群照片，
+平均逐類 recall 差 **0.204**（0.605 → 0.401）。按照片切獎勵的就是這個。
 
 ---
 
@@ -329,8 +335,8 @@ Blades Using Knowledge-Augmented Vision Language Models*, arXiv:2510.22868v2（2
 |---|---|---|---|
 | B0 | 分類表、資料集清單與授權表、語料實際 cm/px 量測（§2 待量） | 學生 | 一張分類表 + 一張資料集表 + 每份語料的 cm/px 分布。**已完成：[`BLADE_CLOSEUP_TAXONOMY.md`](BLADE_CLOSEUP_TAXONOMY.md) 與 [`blade_prototype/CLOSEUP_BASELINE_REPORT.md`](blade_prototype/CLOSEUP_BASELINE_REPORT.md)**，回饋見 §12 |
 | B0.5 | 健康照與正常結構第一版 + **人工複核** | 本專案（工具）／學生（複核） | 候選與工具已就位（[`blade_prototype/CLOSEUP_HEALTHY_SET.md`](blade_prototype/CLOSEUP_HEALTHY_SET.md)，`scripts/closeup_review_tool.py`）；**出口條件是簽核過的決策筆數 > 0**，目前 0 |
-| B1 | 評估協定實作：葉片級切分、逐類指標、低光照子集 | 學生 | 一支評估腳本，吃預測檔出逐類表。**切分已備妥**：用 `closeup_blade_groups_wtb.json` 的 `folds`（群感知 5 折，零洩漏），不要自己重切（見 [`CLOSEUP_SPLIT_GROUPS.md`](blade_prototype/CLOSEUP_SPLIT_GROUPS.md）） |
-| B2 | 三條基線各跑一次（§8.1–8.3） | 學生 | 三組逐類數字，含 structural recall |
+| B1 | 評估協定實作：葉片級切分、逐類指標、低光照子集 | 本專案 | **已完成**：`blade_prototype/scripts/closeup_eval.py`（四條規則都會拒跑不合規的輸入）＋群感知 5 折切分。用法與 1-NN 地板見 [`CLOSEUP_EVAL_PROTOCOL.md`](blade_prototype/CLOSEUP_EVAL_PROTOCOL.md) |
+| B2 | 三條基線各跑一次（§8.1–8.3） | 學生 | 三組逐類數字，含 structural recall。**用 `closeup_eval.py` 出報告**，不要自己算指標；要明顯高過 1-NN 地板（逐類 recall 0.25–0.64）才算學到東西 |
 | B3 | 知識庫建置與消融 | 學生 | 四個知識庫各自缺一次的逐類數字 |
 | B4 | 兩段式合流、接進 App | 本專案 | `bboxJson` 有生產端、死角名單條目移除 |
 

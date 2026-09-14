@@ -55,9 +55,9 @@
 
 ## 2. 自動化測試
 
-### 2.1 葉片原型（Python）— 167 passed
+### 2.1 葉片原型（Python）— 182 passed
 
-報告初版量到 131；同日修掉 §8 的第 2、3 項（側視閘門、拒收訊息）各加了測試成為 144，再加上 Mode B 人工複核工具的 13 條（`tests/test_closeup_review_tool.py`）與切分群組的 10 條（`tests/test_closeup_blade_groups.py`）後為 167。
+報告初版量到 131；同日修掉 §8 的第 2、3 項（側視閘門、拒收訊息）各加了測試成為 144，再加上 Mode B 人工複核工具的 13 條（`tests/test_closeup_review_tool.py`）、切分群組的 10 條（`tests/test_closeup_blade_groups.py`）與評估協定的 15 條（`tests/test_closeup_eval.py`）後為 182。
 
 | 檔案 | 條數 | 守什麼 |
 |---|---|---|
@@ -286,7 +286,7 @@ README「已知限制」寫的「偏軸會引入透視差，塔架轉正只能�
 
 ## 7. Mode B 現況（近身影像）
 
-沒有可跑的偵測管線——**這一節沒有任何準確率數字，因為還沒有東西可以量**。能測的只有語料與分類表的守門（36 條測試，全綠）：
+沒有可跑的偵測管線——**這一節沒有任何準確率數字，因為還沒有東西可以量**。能測的只有語料與分類表的守門（51 條測試，全綠）：
 
 | 項目 | 現況 | 來源 |
 |---|---|---|
@@ -299,6 +299,7 @@ README「已知限制」寫的「偏軸會引入透視差，塔架轉正只能�
 | 標註一致度 | 兩位標註者類別一致 94.0%（κ 0.897）——任何模型在這份語料上的可量測上限 | `CLOSEUP_BASELINE_REPORT.md` |
 | 複核工具 | 三佇列離線工作區 + 四條簽核規則；**決策 0 筆**（工具有了不代表複核做了） | `CLOSEUP_HEALTHY_SET.md` §6 |
 | 切分 | 524 個 `split_group` + 群感知 5 折（逐折洩漏 0）；**語料自己附的切分洩漏 63.4%，不可用** | `CLOSEUP_SPLIT_GROUPS.md` |
+| 評估協定 | §6 四條變成會拒跑的程式；**洩漏值 0.204**（配對實驗）；1-NN 地板逐類 recall 0.25–0.64 | `CLOSEUP_EVAL_PROTOCOL.md` |
 | Mode A 閘門對非 Mode A 照片 | 179 張放行 0 張，釘在 `test_mode_a_gate_rejects_everything_out_of_domain` | `test_closeup_taxonomy.py` |
 
 ---

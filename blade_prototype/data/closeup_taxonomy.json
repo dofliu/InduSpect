@@ -1,662 +1,662 @@
 {
-  "version": "b0-2026-09-13",
-  "spec": "BLADE_CLOSEUP_SPEC.md",
-  "note": "Mode B（葉片近身影像）的標註分類表。這份 JSON 是單一來源：BLADE_CLOSEUP_TAXONOMY.md 由 scripts/render_closeup_taxonomy.py 產生，tests/test_closeup_taxonomy.py 守同步。",
-  "photo_label_rule": "照片級標籤取畫面內最嚴重的機制類，優先序 structural > environmental > surface > healthy。uncertain 與 reject 不參與這個比較，見 decision_rules。",
-  "classes": [
+ "version": "b0-2026-09-13",
+ "spec": "BLADE_CLOSEUP_SPEC.md",
+ "note": "Mode B（葉片近身影像）的標註分類表。這份 JSON 是單一來源：BLADE_CLOSEUP_TAXONOMY.md 由 scripts/render_closeup_taxonomy.py 產生，tests/test_closeup_taxonomy.py 守同步。",
+ "photo_label_rule": "照片級標籤取畫面內最嚴重的機制類，優先序 structural > environmental > surface > healthy。uncertain 與 reject 不參與這個比較，見 decision_rules。",
+ "classes": [
+  {
+   "id": "healthy",
+   "name_zh": "健康",
+   "name_en": "Healthy",
+   "severity_scale": "none",
+   "definition": "看過且確認沒有成立的損傷。含乾淨表面、正常結構、汙染。",
+   "evidence_type": "排除法：要能說出畫面上每一個可疑物件為什麼不是損傷",
+   "subclasses": [
     {
-      "id": "healthy",
-      "name_zh": "健康",
-      "name_en": "Healthy",
-      "severity_scale": "none",
-      "definition": "看過且確認沒有成立的損傷。含乾淨表面、正常結構、汙染。",
-      "evidence_type": "排除法：要能說出畫面上每一個可疑物件為什麼不是損傷",
-      "subclasses": [
-        {
-          "id": "clean_surface",
-          "name_zh": "乾淨表面",
-          "is_defect": false,
-          "appearance": "連續、單一色、無邊界特徵的葉片蒙皮",
-          "geometric_rule": "無",
-          "location": "任意",
-          "min_cm_per_px": null,
-          "confused_with": []
-        },
-        {
-          "id": "normal_structure",
-          "name_zh": "正常結構",
-          "is_defect": false,
-          "appearance": "見 normal_structures 清單，標註時要指到清單的哪一項",
-          "geometric_rule": "多半規則、重複、對稱、或有明確製造意圖",
-          "location": "依項目",
-          "min_cm_per_px": null,
-          "confused_with": []
-        },
-        {
-          "id": "contamination",
-          "name_zh": "汙染",
-          "is_defect": false,
-          "appearance": "汙漬、鹽霧白痕、油汙、藻類綠斑、蟲屍、鳥糞。顏色附加在表面上，不改變表面幾何",
-          "geometric_rule": "邊界柔和、常沿重力方向流下；蟲屍集中在前緣且呈點狀散布",
-          "location": "任意，前緣較多",
-          "min_cm_per_px": null,
-          "confused_with": [
-            "environmental/lightning_damage",
-            "normal_structures/vortex_generator",
-            "structural/transverse_crack",
-            "surface/corrosion_metal_part",
-            "surface/surface_pitting"
-          ],
-          "note": "照片級算 healthy，但要單獨統計。Blade30 的標註把 contamination 與 defect 分開，§5.4 的 YOLOv8n 基線兩類就是 damage/dirt——不分開統計就無法與它們比較。"
-        }
-      ]
+     "id": "clean_surface",
+     "name_zh": "乾淨表面",
+     "is_defect": false,
+     "appearance": "連續、單一色、無邊界特徵的葉片蒙皮",
+     "geometric_rule": "無",
+     "location": "任意",
+     "min_cm_per_px": null,
+     "confused_with": []
     },
     {
-      "id": "surface",
-      "name_zh": "表面劣化",
-      "name_en": "Surface",
-      "severity_scale": "iea_task46",
-      "definition": "蒙皮材料被減少或被破壞，但未及承載結構。",
-      "evidence_type": "紋理與顏色（影像檢索有效，§5.3 的消融顯示只用影像檢索時 surface 類仍站得住）",
-      "subclasses": [
-        {
-          "id": "leading_edge_erosion",
-          "name_zh": "前緣侵蝕",
-          "is_defect": true,
-          "appearance": "由點蝕起、擴為塗層剝除露出底漆（白轉灰或黃），嚴重時露出膠衣與積層",
-          "geometric_rule": "只在前緣；沿展向的連續或半連續帶狀；外緣不規則呈鋸齒；寬度沿展向變化",
-          "location": "前緣，外側 1/3 展向最嚴重（線速度最高）",
-          "min_cm_per_px": 0.07,
-          "confused_with": [
-            "environmental/ice_accretion",
-            "normal_structures/lep_edge_step",
-            "surface/coating_peeling"
-          ],
-          "note": "與結冰的關鍵區別是減法 vs 加法：侵蝕把材料磨掉，邊界不規則且下陷；結冰堆上去，邊界平滑且隆起。"
-        },
-        {
-          "id": "coating_peeling",
-          "name_zh": "塗層剝落／起泡",
-          "is_defect": true,
-          "appearance": "片狀脫落露出底層，邊緣常捲起帶陰影；起泡時為圓形隆起",
-          "geometric_rule": "邊界銳利、形狀不規則的封閉片狀；不限前緣；單一大片而非沿緣帶狀",
-          "location": "任意",
-          "min_cm_per_px": 0.17,
-          "confused_with": [
-            "normal_structures/lep_edge_step",
-            "normal_structures/marking_decal",
-            "normal_structures/paint_seam",
-            "normal_structures/repair_patch",
-            "structural/delamination",
-            "surface/leading_edge_erosion"
-          ]
-        },
-        {
-          "id": "corrosion_metal_part",
-          "name_zh": "金屬件腐蝕",
-          "is_defect": true,
-          "appearance": "避雷接點、排水孔、根部法蘭等金屬件本體出現橘褐色鏽蝕與表面粗化",
-          "geometric_rule": "以金屬件為中心；鏽蝕在件上，不只是件下方的流痕",
-          "location": "金屬件周圍",
-          "min_cm_per_px": 0.17,
-          "confused_with": [
-            "healthy/contamination",
-            "normal_structures/contamination_streak",
-            "normal_structures/lightning_receptor"
-          ],
-          "note": "順流而下的鏽色條痕本身是汙染不是損傷。判 corrosion 的條件是**源頭的金屬件本體**看得出腐蝕，只看到流痕要標 contamination。"
-        },
-        {
-          "id": "gelcoat_crack_network",
-          "name_zh": "膠衣龜裂",
-          "is_defect": true,
-          "appearance": "細密網狀裂紋，如陶瓷開片",
-          "geometric_rule": "網狀、無單一主走向、不貫穿、裂縫不張開",
-          "location": "任意，日照面較多",
-          "min_cm_per_px": 0.07,
-          "confused_with": [
-            "structural/longitudinal_crack",
-            "structural/transverse_crack"
-          ],
-          "note": "這是 surface 與 structural 的邊界案例。判 surface 的條件是**網狀且無主走向**；一旦出現單一、有走向、張開的裂縫，改判 structural。"
-        },
-        {
-          "id": "surface_pitting",
-          "name_zh": "點蝕／針孔群",
-          "is_defect": true,
-          "appearance": "直徑 < 1 mm 的密集小孔",
-          "geometric_rule": "點狀密集分布，多在前緣",
-          "location": "前緣",
-          "min_cm_per_px": 0.03,
-          "confused_with": [
-            "healthy/contamination",
-            "normal_structures/drain_hole"
-          ],
-          "note": "對應 IEA Level 0。§2 已證明**合規取像條件下都做不到**（1 mm 在 12 m / 120 mm eq 只有 1.5 px）。列在表上是為了讓標註者知道「影像上看不到」不等於「沒有」，報告不得因為沒偵測到就宣稱無 Level 0。"
-        }
-      ]
+     "id": "normal_structure",
+     "name_zh": "正常結構",
+     "is_defect": false,
+     "appearance": "見 normal_structures 清單，標註時要指到清單的哪一項",
+     "geometric_rule": "多半規則、重複、對稱、或有明確製造意圖",
+     "location": "依項目",
+     "min_cm_per_px": null,
+     "confused_with": []
     },
     {
-      "id": "environmental",
-      "name_zh": "環境事件",
-      "name_en": "Environmental",
-      "severity_scale": "generic_1_5",
-      "definition": "外部事件造成的附著或燒蝕，成因在葉片之外。",
-      "evidence_type": "顏色與場景（§5.3：只用文字檢索時 F1 掉到 0.500，這類要靠參考影像）",
-      "subclasses": [
-        {
-          "id": "ice_accretion",
-          "name_zh": "結冰",
-          "is_defect": true,
-          "appearance": "前緣白色不透明堆積，表面光滑或呈羽狀／角狀",
-          "geometric_rule": "沿前緣分布但為**加法**：邊界平滑、剖面隆起、常向迎風側伸出",
-          "location": "前緣",
-          "min_cm_per_px": 0.35,
-          "confused_with": [
-            "environmental/snow_adhesion",
-            "surface/leading_edge_erosion"
-          ],
-          "note": "場景線索是強證據：同一張照片裡的地面、機艙、塔架若也有積冰積雪，結冰的可信度大幅提高。"
-        },
-        {
-          "id": "snow_adhesion",
-          "name_zh": "積雪附著",
-          "is_defect": true,
-          "appearance": "鬆散白色附著，表面粗糙不反光",
-          "geometric_rule": "分布不限前緣；邊界鬆散",
-          "location": "任意",
-          "min_cm_per_px": 0.35,
-          "confused_with": [
-            "environmental/ice_accretion"
-          ]
-        },
-        {
-          "id": "lightning_damage",
-          "name_zh": "雷擊損傷",
-          "is_defect": true,
-          "appearance": "黑褐色碳化燒蝕、放射狀焦痕；嚴重時葉尖爆裂缺口或殼體撕裂",
-          "geometric_rule": "**有明確中心點**（多為避雷接點或葉尖），焦痕自該點放射",
-          "location": "葉尖與避雷接點周圍",
-          "min_cm_per_px": 0.35,
-          "confused_with": [
-            "healthy/contamination",
-            "normal_structures/lightning_receptor",
-            "normal_structures/tip_marking"
-          ],
-          "note": "避雷接點本身是深色金屬圓盤，是**正常結構**。判雷擊的條件是接點**周圍**有碳化或材料破壞，不是接點本身顏色深。"
-        }
-      ]
-    },
-    {
-      "id": "structural",
-      "name_zh": "結構損傷",
-      "name_en": "Structural",
-      "severity_scale": "generic_1_5",
-      "definition": "承載結構的完整性受損：裂縫、分層、斷裂。",
-      "evidence_type": "幾何（§5.3：只用影像檢索時 F1 = 0.000，這類**一定要**把幾何規則用文字講出來）",
-      "subclasses": [
-        {
-          "id": "transverse_crack",
-          "name_zh": "橫向裂縫",
-          "is_defect": true,
-          "appearance": "單一線狀開口，兩端漸細；開口處常有深色陰影或滲出物",
-          "geometric_rule": "與展向夾角 > 45°；線寬沿長度變化；走向可有偏折；**不貫穿全長**",
-          "location": "任意，常起於前緣或後緣向內延伸",
-          "min_cm_per_px": 0.07,
-          "confused_with": [
-            "healthy/contamination",
-            "normal_structures/contamination_streak",
-            "normal_structures/marking_decal",
-            "normal_structures/shadow_and_specular",
-            "surface/gelcoat_crack_network"
-          ],
-          "note": "最關鍵也最難的一類。§5.2 的基線在這一類 recall 只有 0.500，12 張有 6 張被判成健康，多發生在低光照。Mode B 要追的主指標就是這一格。"
-        },
-        {
-          "id": "longitudinal_crack",
-          "name_zh": "縱向裂縫",
-          "is_defect": true,
-          "appearance": "沿展向的線狀開口，常沿黏合線或殼體接合縫發展",
-          "geometric_rule": "與展向夾角 < 45°；**寬度變化、走向有偏折、邊緣有陰影或滲出物**",
-          "location": "黏合線、前後緣接合處",
-          "min_cm_per_px": 0.07,
-          "confused_with": [
-            "normal_structures/mould_parting_line",
-            "normal_structures/paint_seam",
-            "normal_structures/shadow_and_specular",
-            "surface/gelcoat_crack_network"
-          ],
-          "note": "與模具合模線最易混淆，這是 §5.4 的 YOLOv8n 誤報主因。區別：合模線**筆直、等寬、貫穿全長、兩側無顏色差異**；裂縫寬度變化、走向偏折、邊緣有陰影。分不出來就標 uncertain，不要標 healthy。"
-        },
-        {
-          "id": "trailing_edge_split",
-          "name_zh": "後緣開裂",
-          "is_defect": true,
-          "appearance": "後緣沿線張開成縫，兩側殼體分離",
-          "geometric_rule": "沿後緣；開口寬度自某點向兩端收斂；後緣輪廓在該處中斷或變形",
-          "location": "後緣，中外段較多",
-          "min_cm_per_px": 0.17,
-          "confused_with": [
-            "normal_structures/serrated_trailing_edge"
-          ]
-        },
-        {
-          "id": "delamination",
-          "name_zh": "分層",
-          "is_defect": true,
-          "appearance": "表面鼓起或呈波浪狀陰影，敲擊聲空",
-          "geometric_rule": "閉合、邊界柔和的隆起區；尺度 > 10 cm",
-          "location": "任意",
-          "min_cm_per_px": 0.35,
-          "confused_with": [
-            "normal_structures/repair_patch",
-            "normal_structures/vortex_generator",
-            "surface/coating_peeling"
-          ],
-          "note": "影像上只能標「疑似」。分層的確診要靠敲擊法或熱像，近身照給不出證據。標註時 severity 不得高於 3，並在 note 寫明未確診。"
-        },
-        {
-          "id": "tip_damage",
-          "name_zh": "葉尖損傷",
-          "is_defect": true,
-          "appearance": "葉尖缺損、撕裂、材料剝離",
-          "geometric_rule": "葉尖輪廓與另兩片不一致；缺口邊緣不規則",
-          "location": "葉尖",
-          "min_cm_per_px": 0.35,
-          "confused_with": [
-            "normal_structures/tip_marking"
-          ]
-        },
-        {
-          "id": "structural_fracture",
-          "name_zh": "斷裂／缺損",
-          "is_defect": true,
-          "appearance": "葉片缺一整塊或整段斷離，露出內部腹板與夾層",
-          "geometric_rule": "葉片外形中斷；斷面可見內部構造",
-          "location": "任意",
-          "min_cm_per_px": 0.46,
-          "confused_with": [
-            "normal_structures/drain_hole"
-          ],
-          "note": "Mode A 也抓得到（三片剪影互比）。Mode B 在這一類沒有優勢，列出是為了分類體系完整。"
-        }
-      ]
+     "id": "contamination",
+     "name_zh": "汙染",
+     "is_defect": false,
+     "appearance": "汙漬、鹽霧白痕、油汙、藻類綠斑、蟲屍、鳥糞。顏色附加在表面上，不改變表面幾何",
+     "geometric_rule": "邊界柔和、常沿重力方向流下；蟲屍集中在前緣且呈點狀散布",
+     "location": "任意，前緣較多",
+     "min_cm_per_px": null,
+     "confused_with": [
+      "environmental/lightning_damage",
+      "normal_structures/vortex_generator",
+      "structural/transverse_crack",
+      "surface/corrosion_metal_part",
+      "surface/surface_pitting"
+     ],
+     "note": "照片級算 healthy，但要單獨統計。Blade30 的標註把 contamination 與 defect 分開，§5.4 的 YOLOv8n 基線兩類就是 damage/dirt——不分開統計就無法與它們比較。"
     }
-  ],
-  "normal_structures": [
-    {
-      "id": "mould_parting_line",
-      "name_zh": "模具合模線／殼體接合縫",
-      "recognise": "筆直、等寬、沿展向貫穿全長，兩側顏色相同",
-      "confused_with": [
-        "structural/longitudinal_crack"
-      ]
-    },
-    {
-      "id": "paint_seam",
-      "name_zh": "塗裝接縫／色帶邊界",
-      "recognise": "顏色分界線，兩側都是完整塗層，無材料缺失",
-      "confused_with": [
-        "structural/longitudinal_crack",
-        "surface/coating_peeling"
-      ]
-    },
-    {
-      "id": "lep_edge_step",
-      "name_zh": "LEP 前緣保護膜邊緣階差",
-      "recognise": "沿前緣兩側各一條平行於前緣的規則階差，兩側等距、邊緣平直",
-      "confused_with": [
-        "surface/coating_peeling",
-        "surface/leading_edge_erosion"
-      ]
-    },
-    {
-      "id": "vortex_generator",
-      "name_zh": "渦流產生器（VG 板）",
-      "recognise": "成排等距的小三角片，規則重複",
-      "confused_with": [
-        "healthy/contamination",
-        "structural/delamination"
-      ]
-    },
-    {
-      "id": "serrated_trailing_edge",
-      "name_zh": "鋸齒尾緣",
-      "recognise": "後緣等間距鋸齒，齒形一致",
-      "confused_with": [
-        "structural/trailing_edge_split"
-      ]
-    },
-    {
-      "id": "drain_hole",
-      "name_zh": "排水孔",
-      "recognise": "葉尖或後緣附近的規則圓孔，邊緣整齊，常有加強環",
-      "confused_with": [
-        "structural/structural_fracture",
-        "surface/surface_pitting"
-      ]
-    },
-    {
-      "id": "lightning_receptor",
-      "name_zh": "避雷接點",
-      "recognise": "圓形金屬盤嵌在蒙皮上，表面平整，位置對稱成對",
-      "confused_with": [
-        "environmental/lightning_damage",
-        "surface/corrosion_metal_part"
-      ]
-    },
-    {
-      "id": "marking_decal",
-      "name_zh": "編號噴漆／標記貼紙／警示帶",
-      "recognise": "文字、數字、幾何圖形，邊界規則",
-      "confused_with": [
-        "structural/transverse_crack",
-        "surface/coating_peeling"
-      ]
-    },
-    {
-      "id": "tip_marking",
-      "name_zh": "葉尖航警塗裝",
-      "recognise": "葉尖橘紅或紅白色段，色帶邊界平直垂直於展向",
-      "confused_with": [
-        "environmental/lightning_damage",
-        "structural/tip_damage"
-      ]
-    },
-    {
-      "id": "repair_patch",
-      "name_zh": "修補痕",
-      "recognise": "補土、重塗或貼補的區塊，表面質感與周圍不同但完整，邊界常呈規則橢圓或矩形",
-      "confused_with": [
-        "structural/delamination",
-        "surface/coating_peeling"
-      ],
-      "note": "不是損傷，但**要記錄位置**。修補處是既往缺陷的位置，跨次比對時那裡再出問題的機率比別處高。"
-    },
-    {
-      "id": "contamination_streak",
-      "name_zh": "汙漬流痕",
-      "recognise": "沿重力方向的深色條痕，邊界柔和，寬度向下發散",
-      "confused_with": [
-        "structural/transverse_crack",
-        "surface/corrosion_metal_part"
-      ]
-    },
-    {
-      "id": "shadow_and_specular",
-      "name_zh": "陰影與反光帶",
-      "recognise": "隨光源方向變化；同一位置在另一張不同角度的照片上消失",
-      "confused_with": [
-        "structural/longitudinal_crack",
-        "structural/transverse_crack"
-      ],
-      "note": "規格 §3.3 的原始清單沒有這一項，是本表新增。理由：硬邊陰影在影像上與裂縫**幾何相同**（單一線狀、有走向、邊緣銳利），§5.2 的低光照漏檢與這件事是同一個問題的兩面。唯一可靠的排除法是另一張不同光線角度的照片，所以 §1.1 的「兩面都要拍」在標註上也有用。"
-    }
-  ],
-  "severity_scales": {
-    "iea_task46": {
-      "applies_to": [
-        "surface/leading_edge_erosion"
-      ],
-      "requires_scale": true,
-      "source": "IEA Wind TCP Task 46, Leading Edge Erosion Classification System, 2023",
-      "levels": [
-        {
-          "level": 0,
-          "criterion": "針孔，單一尺寸 < 1 mm",
-          "detectable": false,
-          "note": "§2 已證明合規取像條件下都做不到"
-        },
-        {
-          "level": 1,
-          "criterion": "單一實例面積 1–10 cm²",
-          "detectable": true,
-          "min_cm_per_px": 0.07
-        },
-        {
-          "level": 2,
-          "criterion": "單一實例面積 10 cm² – 1 m²",
-          "detectable": true,
-          "min_cm_per_px": 0.17
-        },
-        {
-          "level": 3,
-          "criterion": "待從 IEA 原文逐條抄錄核對",
-          "detectable": true,
-          "min_cm_per_px": 0.46
-        },
-        {
-          "level": 4,
-          "criterion": "待從 IEA 原文逐條抄錄核對",
-          "detectable": true,
-          "min_cm_per_px": 0.46
-        },
-        {
-          "level": 5,
-          "criterion": "待從 IEA 原文逐條抄錄核對",
-          "detectable": true,
-          "min_cm_per_px": 0.46
-        }
-      ],
-      "open_item": "Level 0–2 的門檻取自 BLADE_CLOSEUP_SPEC.md §2.2，已可用。Level 3–5 **尚未從 IEA 原始文件核對**，在核對完成前不得寫進報告——安全分級的門檻不可以憑印象填。"
-    },
-    "generic_1_5": {
-      "applies_to": [
-        "environmental/*",
-        "structural/*",
-        "surface/* 無尺度時"
-      ],
-      "requires_scale": false,
-      "source": "沿用 Mode A 既有 severity 1–5",
-      "levels": [
-        {
-          "level": 1,
-          "criterion": "可見異常，不影響運轉"
-        },
-        {
-          "level": 2,
-          "criterion": "輕微，列入追蹤"
-        },
-        {
-          "level": 3,
-          "criterion": "中度，排程修補"
-        },
-        {
-          "level": 4,
-          "criterion": "嚴重，近期停機處理"
-        },
-        {
-          "level": 5,
-          "criterion": "危急，立即停機"
-        }
-      ]
-    }
+   ]
   },
-  "quality_flags": [
+  {
+   "id": "surface",
+   "name_zh": "表面劣化",
+   "name_en": "Surface",
+   "severity_scale": "iea_task46",
+   "definition": "蒙皮材料被減少或被破壞，但未及承載結構。",
+   "evidence_type": "紋理與顏色（影像檢索有效，§5.3 的消融顯示只用影像檢索時 surface 類仍站得住）",
+   "subclasses": [
     {
-      "id": "low_light",
-      "criterion": "整體偏暗或陰影覆蓋葉片主要區域",
-      "why": "§5.2 的 6 張漏檢全在低光照。不單獨切子集，改善與惡化都會被平均掉"
+     "id": "leading_edge_erosion",
+     "name_zh": "前緣侵蝕",
+     "is_defect": true,
+     "appearance": "由點蝕起、擴為塗層剝除露出底漆（白轉灰或黃），嚴重時露出膠衣與積層",
+     "geometric_rule": "只在前緣；沿展向的連續或半連續帶狀；外緣不規則呈鋸齒；寬度沿展向變化",
+     "location": "前緣，外側 1/3 展向最嚴重（線速度最高）",
+     "min_cm_per_px": 0.07,
+     "confused_with": [
+      "environmental/ice_accretion",
+      "normal_structures/lep_edge_step",
+      "surface/coating_peeling"
+     ],
+     "note": "與結冰的關鍵區別是減法 vs 加法：侵蝕把材料磨掉，邊界不規則且下陷；結冰堆上去，邊界平滑且隆起。"
     },
     {
-      "id": "motion_blur",
-      "criterion": "邊緣拖影，Laplacian 變異數低於門檻",
-      "why": "裂縫的判準是邊緣銳利，模糊直接摧毀那個判準"
+     "id": "coating_peeling",
+     "name_zh": "塗層剝落／起泡",
+     "is_defect": true,
+     "appearance": "片狀脫落露出底層，邊緣常捲起帶陰影；起泡時為圓形隆起",
+     "geometric_rule": "邊界銳利、形狀不規則的封閉片狀；不限前緣；單一大片而非沿緣帶狀",
+     "location": "任意",
+     "min_cm_per_px": 0.17,
+     "confused_with": [
+      "normal_structures/lep_edge_step",
+      "normal_structures/marking_decal",
+      "normal_structures/paint_seam",
+      "normal_structures/repair_patch",
+      "structural/delamination",
+      "surface/leading_edge_erosion"
+     ]
     },
     {
-      "id": "backlit",
-      "criterion": "光源在葉片後方，葉片呈剪影",
-      "why": "Mode A 的閘門唯一擋不了的拒收原因；解法在站位不在演算法（見 blade_proto/sunpos.py）"
+     "id": "corrosion_metal_part",
+     "name_zh": "金屬件腐蝕",
+     "is_defect": true,
+     "appearance": "避雷接點、排水孔、根部法蘭等金屬件本體出現橘褐色鏽蝕與表面粗化",
+     "geometric_rule": "以金屬件為中心；鏽蝕在件上，不只是件下方的流痕",
+     "location": "金屬件周圍",
+     "min_cm_per_px": 0.17,
+     "confused_with": [
+      "healthy/contamination",
+      "normal_structures/contamination_streak",
+      "normal_structures/lightning_receptor"
+     ],
+     "note": "順流而下的鏽色條痕本身是汙染不是損傷。判 corrosion 的條件是**源頭的金屬件本體**看得出腐蝕，只看到流痕要標 contamination。"
     },
     {
-      "id": "specular",
-      "criterion": "鏡面反光帶覆蓋畫面",
-      "why": "反光帶與裂縫幾何相同"
+     "id": "gelcoat_crack_network",
+     "name_zh": "膠衣龜裂",
+     "is_defect": true,
+     "appearance": "細密網狀裂紋，如陶瓷開片",
+     "geometric_rule": "網狀、無單一主走向、不貫穿、裂縫不張開",
+     "location": "任意，日照面較多",
+     "min_cm_per_px": 0.07,
+     "confused_with": [
+      "structural/longitudinal_crack",
+      "structural/transverse_crack"
+     ],
+     "note": "這是 surface 與 structural 的邊界案例。判 surface 的條件是**網狀且無主走向**；一旦出現單一、有走向、張開的裂縫，改判 structural。"
     },
     {
-      "id": "scale_unknown",
-      "criterion": "無 EXIF 焦距／距離，畫面內也無已知尺寸物件",
-      "why": "觸發 §9.4：不得輸出 IEA Level"
-    },
-    {
-      "id": "off_spec_framing",
-      "criterion": "葉片弦向未橫跨畫面 1/3",
-      "why": "觸發 §9.5：拒收並說明原因"
+     "id": "surface_pitting",
+     "name_zh": "點蝕／針孔群",
+     "is_defect": true,
+     "appearance": "直徑 < 1 mm 的密集小孔",
+     "geometric_rule": "點狀密集分布，多在前緣",
+     "location": "前緣",
+     "min_cm_per_px": 0.03,
+     "confused_with": [
+      "healthy/contamination",
+      "normal_structures/drain_hole"
+     ],
+     "note": "對應 IEA Level 0。§2 已證明**合規取像條件下都做不到**（1 mm 在 12 m / 120 mm eq 只有 1.5 px）。列在表上是為了讓標註者知道「影像上看不到」不等於「沒有」，報告不得因為沒偵測到就宣稱無 Level 0。"
     }
-  ],
-  "decision_rules": [
-    {
-      "order": 1,
-      "rule": "取像不合 §1.2（葉片弦向未橫跨畫面 ≥ 1/3）→ photo_label = reject，不給任何類別標籤，不進訓練集也不進測試集。"
-    },
-    {
-      "order": 2,
-      "rule": "尺度未知 → 可以標類別與 generic severity，**不得**標 IEA Level（§9.4）。"
-    },
-    {
-      "order": 3,
-      "rule": "一張照片可有多個 region。照片級標籤取最嚴重的機制類：structural > environmental > surface > healthy。"
-    },
-    {
-      "order": 4,
-      "rule": "疑似 structural 但無法與 normal_structure 區分 → photo_label = uncertain，**不得**標 healthy。理由：§5.2 的失效模式正是裂縫被判成健康，把不確定倒向 healthy 會複製那個失效。uncertain 不計入任何類別的分母，單獨報張數。"
-    },
-    {
-      "order": 5,
-      "rule": "修補痕 → normal_structure/repair_patch，照片級算 healthy，但位置要留在 region 裡。"
-    },
-    {
-      "order": 6,
-      "rule": "汙染 → healthy/contamination，照片級算 healthy，但要單獨統計張數。"
-    },
-    {
-      "order": 7,
-      "rule": "healthy 是「看過且確認乾淨」，不是「沒標到東西」。沒有人看過的照片 photo_label = unreviewed，與 healthy 不同。這條對齊 blade_dataset_service.dart 的 humanClean 規則。"
-    },
-    {
-      "order": 8,
-      "rule": "低光照／模糊／逆光照樣標，但要打 quality_flags。§6 補充要求低光照單獨切子集報數字。"
-    }
-  ],
-  "record_schema": {
-    "note": "B1 的評估腳本吃這個格式。blade_id 與 flight_id 是**必填**——§6.1 的「按葉片切不按照片切」靠它們執行，不是靠記得。",
-    "required": [
-      "image_id",
-      "blade_id",
-      "flight_id",
-      "source",
-      "licence",
-      "photo_label",
-      "annotator"
-    ],
-    "fields": {
-      "image_id": "字串，語料內唯一",
-      "blade_id": "字串，哪一支葉片。**必填**，切分依據",
-      "flight_id": "字串，哪一次飛行／哪一次拍攝。**必填**，切分依據",
-      "source": "語料來源代號（dtu / blade30 / openverse / field）",
-      "licence": "授權字串，例如 CC BY 4.0。NC 的不得進訓練集",
-      "intake": "{accepted: bool, reason: str, blade_fraction: float}",
-      "scale": "{cm_per_px: float|null, method: exif|reference_object|unknown, focal_35mm_eq: float|null, distance_m: float|null}",
-      "quality_flags": "quality_flags 的 id 陣列",
-      "photo_label": "healthy | surface | environmental | structural | uncertain | reject | unreviewed",
-      "regions": "[{bbox:[x,y,w,h], class, subclass, is_defect, severity, iea_level, note}]",
-      "annotator": "標註者代號。**不得填演算法輸出**（§9.3）"
-    }
+   ]
   },
-  "dataset_class_map": {
-    "note": "把公開語料的類別名對到本表。**對照是暫定的**：依 CLOSEUP_BASELINE_REPORT.md §5 逐張目視得到，樣本每類 4–6 張，尚未逐張核對全集。名稱相同不代表定義相同——這份對照的價值正是把「名稱一樣但東西不一樣」寫出來。",
-    "multiclass_wtb": {
-      "source": "Multiclass Dataset for Intelligent Detection of Wind Turbine Blade Defects Using Drone Imagery, figshare 10.6084/m9.figshare.30210175.v1",
-      "licence": "CC BY 4.0（可商用；三份主要語料中唯一一份）",
-      "size": "1065 張，全部 1024×1024，Pascal VOC 標註，兩位獨立標註者。**取像判定（全數 1065 張）：839 張合格（79%）、185 張整機、39 張葉片太細、2 張非葉片**（`data/closeup_intake_wtb.json`）",
-      "classes": [
-        {
-          "their": "crack",
-          "ours": [
-            "structural/structural_fracture",
-            "structural/tip_damage"
-          ],
-          "caveat": "**不是近身裂縫**。全部 177 張逐張看過：174 張是整機照（輪轂與塔架入鏡），2 張葉片太細，1 張非葉片，**0 張通過 §1.2 取像判定**。這一類在 Mode B 的輸入定義下不存在，要由 Mode A 處理。"
-        },
-        {
-          "their": "craze",
-          "ours": [
-            "structural/longitudinal_crack",
-            "surface/leading_edge_erosion"
-          ],
-          "caveat": "名稱是龜裂，但目視多為**開放型裂損與前緣缺口**，不是本表定義的細密網狀 `gelcoat_crack_network`。全部 198 張中 180 張（91%）通過取像判定，其餘 18 張葉片太細。"
-        },
-        {
-          "their": "hide_craze",
-          "ours": [
-            "surface/gelcoat_crack_network",
-            "structural/longitudinal_crack"
-          ],
-          "caveat": "細長線狀、標註框多為長條。與 craze 是兩位標註者最常互換的一對（40 次分歧）。"
-        },
-        {
-          "their": "corrosion",
-          "ours": [
-            "healthy/contamination",
-            "surface/corrosion_metal_part"
-          ],
-          "caveat": "**混了兩件事**：部分是生物附著（綠藻）——依本表屬 contamination 不是損傷；部分是金屬件鏽蝕。且有數張拍的是**塔架不是葉片**。與 surface_injure 是第二常互換的一對（52 次分歧）。"
-        },
-        {
-          "their": "surface_injure",
-          "ours": [
-            "surface/coating_peeling"
-          ],
-          "caveat": ""
-        },
-        {
-          "their": "thunderstrike",
-          "ours": [
-            "environmental/lightning_damage"
-          ],
-          "caveat": "本表最乾淨的對照。近身、中心明確、碳化特徵清楚。"
-        }
-      ],
-      "gaps": [
-        "**沒有健康照**：1065 張每一張都至少有一個缺陷框。§6 第 4 條要求測試集至少 1/3 是健康照且含易誤判的正常結構——這份語料一張都給不出來，誤報率無從量。**已補的部分**：`scripts/closeup_healthy_candidates.py` 從合格影像的框外區域挖出候選小圖（見 `CLOSEUP_HEALTHY_SET.md`），全部 `unreviewed`，要人看過才算 healthy。",
-        "**沒有正常結構標註**：接縫、LEP 邊緣、VG 板、避雷接點都沒有被正面標記。**已補的部分**：192 張抽樣的影像級存在標記（`data/closeup_normal_structures_wtb.json`）與 8 張的概略框（`data/closeup_normal_structure_boxes_wtb.json`），皆為單一標註者的第一版，待人複核。",
-        "**沒有尺度**：1065 張只有 3 張還留著 EXIF、1 張有焦距。§9.4 因此適用於幾乎全部——用這份語料訓出來的模型不得輸出 IEA Level。",
-        "**沒有葉片編號**：檔名是流水號，§6 第 1 條的「按葉片切」在這份語料上執行不了，只能退而按時間戳或飛行批次粗分，且要先確認可行。"
-      ],
-      "inter_annotator": {
-        "note": "兩位標註者的一致度是任何模型在這份語料上的**可量測上限**。超過它的分數是在報雜訊。",
-        "boxes_a": 1584,
-        "boxes_b": 1543,
-        "matched_iou_0_5": 1543,
-        "localisation_agreement": 0.974,
-        "class_agreement_of_matched": 0.94,
-        "cohen_kappa": 0.897,
-        "disagreement_pairs": "全部 92 次類別分歧只落在兩對上：surface_injure↔corrosion 52 次、hide_craze↔craze 40 次。這是兩個獨立的人給的證據，說明這兩條界線畫得不夠利。"
-      },
-      "normal_structure_survey": {
-        "note": "從 839 張合格影像等距抽 192 張，影像級標記畫面裡有沒有分類表 §2 的正常結構。單一標註者，未複核。",
-        "sample": 192,
-        "present": {
-          "tip_marking（紅色葉尖塗裝）": 20,
-          "ruler／比例尺": 11,
-          "marking_decal（文字、告示牌、商標）": 7,
-          "shadow_and_specular": 6,
-          "mould_parting_line／paint_seam": 5,
-          "repair_patch": 4,
-          "lep_edge_step": 1
-        },
-        "absent": [
-          "lightning_receptor",
-          "vortex_generator／serrated_trailing_edge",
-          "drain_hole"
-        ],
-        "artifacts": {
-          "灰色矩形塗抹（前處理）": 38,
-          "時間戳／文字燒錄": 23,
-          "人、手、工具入鏡": 15
-        },
-        "finding": "**與結構類缺陷最易混淆的三種正常結構——避雷接點、VG 板、排水孔——在 192 張裡一張都沒出現**；出現的多是紅色葉尖塗裝與比例尺。反而**標註／前處理痕跡出現在 35% 的影像上**（68/192），比任何一種正常結構都多：模型很可能學到「灰色矩形附近有缺陷」「有時間戳就有缺陷」。這是比缺健康照更迫切的洩漏風險。"
-      }
+  {
+   "id": "environmental",
+   "name_zh": "環境事件",
+   "name_en": "Environmental",
+   "severity_scale": "generic_1_5",
+   "definition": "外部事件造成的附著或燒蝕，成因在葉片之外。",
+   "evidence_type": "顏色與場景（§5.3：只用文字檢索時 F1 掉到 0.500，這類要靠參考影像）",
+   "subclasses": [
+    {
+     "id": "ice_accretion",
+     "name_zh": "結冰",
+     "is_defect": true,
+     "appearance": "前緣白色不透明堆積，表面光滑或呈羽狀／角狀",
+     "geometric_rule": "沿前緣分布但為**加法**：邊界平滑、剖面隆起、常向迎風側伸出",
+     "location": "前緣",
+     "min_cm_per_px": 0.35,
+     "confused_with": [
+      "environmental/snow_adhesion",
+      "surface/leading_edge_erosion"
+     ],
+     "note": "場景線索是強證據：同一張照片裡的地面、機艙、塔架若也有積冰積雪，結冰的可信度大幅提高。"
+    },
+    {
+     "id": "snow_adhesion",
+     "name_zh": "積雪附著",
+     "is_defect": true,
+     "appearance": "鬆散白色附著，表面粗糙不反光",
+     "geometric_rule": "分布不限前緣；邊界鬆散",
+     "location": "任意",
+     "min_cm_per_px": 0.35,
+     "confused_with": [
+      "environmental/ice_accretion"
+     ]
+    },
+    {
+     "id": "lightning_damage",
+     "name_zh": "雷擊損傷",
+     "is_defect": true,
+     "appearance": "黑褐色碳化燒蝕、放射狀焦痕；嚴重時葉尖爆裂缺口或殼體撕裂",
+     "geometric_rule": "**有明確中心點**（多為避雷接點或葉尖），焦痕自該點放射",
+     "location": "葉尖與避雷接點周圍",
+     "min_cm_per_px": 0.35,
+     "confused_with": [
+      "healthy/contamination",
+      "normal_structures/lightning_receptor",
+      "normal_structures/tip_marking"
+     ],
+     "note": "避雷接點本身是深色金屬圓盤，是**正常結構**。判雷擊的條件是接點**周圍**有碳化或材料破壞，不是接點本身顏色深。"
     }
+   ]
+  },
+  {
+   "id": "structural",
+   "name_zh": "結構損傷",
+   "name_en": "Structural",
+   "severity_scale": "generic_1_5",
+   "definition": "承載結構的完整性受損：裂縫、分層、斷裂。",
+   "evidence_type": "幾何（§5.3：只用影像檢索時 F1 = 0.000，這類**一定要**把幾何規則用文字講出來）",
+   "subclasses": [
+    {
+     "id": "transverse_crack",
+     "name_zh": "橫向裂縫",
+     "is_defect": true,
+     "appearance": "單一線狀開口，兩端漸細；開口處常有深色陰影或滲出物",
+     "geometric_rule": "與展向夾角 > 45°；線寬沿長度變化；走向可有偏折；**不貫穿全長**",
+     "location": "任意，常起於前緣或後緣向內延伸",
+     "min_cm_per_px": 0.07,
+     "confused_with": [
+      "healthy/contamination",
+      "normal_structures/contamination_streak",
+      "normal_structures/marking_decal",
+      "normal_structures/shadow_and_specular",
+      "surface/gelcoat_crack_network"
+     ],
+     "note": "最關鍵也最難的一類。§5.2 的基線在這一類 recall 只有 0.500，12 張有 6 張被判成健康，多發生在低光照。Mode B 要追的主指標就是這一格。"
+    },
+    {
+     "id": "longitudinal_crack",
+     "name_zh": "縱向裂縫",
+     "is_defect": true,
+     "appearance": "沿展向的線狀開口，常沿黏合線或殼體接合縫發展",
+     "geometric_rule": "與展向夾角 < 45°；**寬度變化、走向有偏折、邊緣有陰影或滲出物**",
+     "location": "黏合線、前後緣接合處",
+     "min_cm_per_px": 0.07,
+     "confused_with": [
+      "normal_structures/mould_parting_line",
+      "normal_structures/paint_seam",
+      "normal_structures/shadow_and_specular",
+      "surface/gelcoat_crack_network"
+     ],
+     "note": "與模具合模線最易混淆，這是 §5.4 的 YOLOv8n 誤報主因。區別：合模線**筆直、等寬、貫穿全長、兩側無顏色差異**；裂縫寬度變化、走向偏折、邊緣有陰影。分不出來就標 uncertain，不要標 healthy。"
+    },
+    {
+     "id": "trailing_edge_split",
+     "name_zh": "後緣開裂",
+     "is_defect": true,
+     "appearance": "後緣沿線張開成縫，兩側殼體分離",
+     "geometric_rule": "沿後緣；開口寬度自某點向兩端收斂；後緣輪廓在該處中斷或變形",
+     "location": "後緣，中外段較多",
+     "min_cm_per_px": 0.17,
+     "confused_with": [
+      "normal_structures/serrated_trailing_edge"
+     ]
+    },
+    {
+     "id": "delamination",
+     "name_zh": "分層",
+     "is_defect": true,
+     "appearance": "表面鼓起或呈波浪狀陰影，敲擊聲空",
+     "geometric_rule": "閉合、邊界柔和的隆起區；尺度 > 10 cm",
+     "location": "任意",
+     "min_cm_per_px": 0.35,
+     "confused_with": [
+      "normal_structures/repair_patch",
+      "normal_structures/vortex_generator",
+      "surface/coating_peeling"
+     ],
+     "note": "影像上只能標「疑似」。分層的確診要靠敲擊法或熱像，近身照給不出證據。標註時 severity 不得高於 3，並在 note 寫明未確診。"
+    },
+    {
+     "id": "tip_damage",
+     "name_zh": "葉尖損傷",
+     "is_defect": true,
+     "appearance": "葉尖缺損、撕裂、材料剝離",
+     "geometric_rule": "葉尖輪廓與另兩片不一致；缺口邊緣不規則",
+     "location": "葉尖",
+     "min_cm_per_px": 0.35,
+     "confused_with": [
+      "normal_structures/tip_marking"
+     ]
+    },
+    {
+     "id": "structural_fracture",
+     "name_zh": "斷裂／缺損",
+     "is_defect": true,
+     "appearance": "葉片缺一整塊或整段斷離，露出內部腹板與夾層",
+     "geometric_rule": "葉片外形中斷；斷面可見內部構造",
+     "location": "任意",
+     "min_cm_per_px": 0.46,
+     "confused_with": [
+      "normal_structures/drain_hole"
+     ],
+     "note": "Mode A 也抓得到（三片剪影互比）。Mode B 在這一類沒有優勢，列出是為了分類體系完整。"
+    }
+   ]
   }
+ ],
+ "normal_structures": [
+  {
+   "id": "mould_parting_line",
+   "name_zh": "模具合模線／殼體接合縫",
+   "recognise": "筆直、等寬、沿展向貫穿全長，兩側顏色相同",
+   "confused_with": [
+    "structural/longitudinal_crack"
+   ]
+  },
+  {
+   "id": "paint_seam",
+   "name_zh": "塗裝接縫／色帶邊界",
+   "recognise": "顏色分界線，兩側都是完整塗層，無材料缺失",
+   "confused_with": [
+    "structural/longitudinal_crack",
+    "surface/coating_peeling"
+   ]
+  },
+  {
+   "id": "lep_edge_step",
+   "name_zh": "LEP 前緣保護膜邊緣階差",
+   "recognise": "沿前緣兩側各一條平行於前緣的規則階差，兩側等距、邊緣平直",
+   "confused_with": [
+    "surface/coating_peeling",
+    "surface/leading_edge_erosion"
+   ]
+  },
+  {
+   "id": "vortex_generator",
+   "name_zh": "渦流產生器（VG 板）",
+   "recognise": "成排等距的小三角片，規則重複",
+   "confused_with": [
+    "healthy/contamination",
+    "structural/delamination"
+   ]
+  },
+  {
+   "id": "serrated_trailing_edge",
+   "name_zh": "鋸齒尾緣",
+   "recognise": "後緣等間距鋸齒，齒形一致",
+   "confused_with": [
+    "structural/trailing_edge_split"
+   ]
+  },
+  {
+   "id": "drain_hole",
+   "name_zh": "排水孔",
+   "recognise": "葉尖或後緣附近的規則圓孔，邊緣整齊，常有加強環",
+   "confused_with": [
+    "structural/structural_fracture",
+    "surface/surface_pitting"
+   ]
+  },
+  {
+   "id": "lightning_receptor",
+   "name_zh": "避雷接點",
+   "recognise": "圓形金屬盤嵌在蒙皮上，表面平整，位置對稱成對",
+   "confused_with": [
+    "environmental/lightning_damage",
+    "surface/corrosion_metal_part"
+   ]
+  },
+  {
+   "id": "marking_decal",
+   "name_zh": "編號噴漆／標記貼紙／警示帶",
+   "recognise": "文字、數字、幾何圖形，邊界規則",
+   "confused_with": [
+    "structural/transverse_crack",
+    "surface/coating_peeling"
+   ]
+  },
+  {
+   "id": "tip_marking",
+   "name_zh": "葉尖航警塗裝",
+   "recognise": "葉尖橘紅或紅白色段，色帶邊界平直垂直於展向",
+   "confused_with": [
+    "environmental/lightning_damage",
+    "structural/tip_damage"
+   ]
+  },
+  {
+   "id": "repair_patch",
+   "name_zh": "修補痕",
+   "recognise": "補土、重塗或貼補的區塊，表面質感與周圍不同但完整，邊界常呈規則橢圓或矩形",
+   "confused_with": [
+    "structural/delamination",
+    "surface/coating_peeling"
+   ],
+   "note": "不是損傷，但**要記錄位置**。修補處是既往缺陷的位置，跨次比對時那裡再出問題的機率比別處高。"
+  },
+  {
+   "id": "contamination_streak",
+   "name_zh": "汙漬流痕",
+   "recognise": "沿重力方向的深色條痕，邊界柔和，寬度向下發散",
+   "confused_with": [
+    "structural/transverse_crack",
+    "surface/corrosion_metal_part"
+   ]
+  },
+  {
+   "id": "shadow_and_specular",
+   "name_zh": "陰影與反光帶",
+   "recognise": "隨光源方向變化；同一位置在另一張不同角度的照片上消失",
+   "confused_with": [
+    "structural/longitudinal_crack",
+    "structural/transverse_crack"
+   ],
+   "note": "規格 §3.3 的原始清單沒有這一項，是本表新增。理由：硬邊陰影在影像上與裂縫**幾何相同**（單一線狀、有走向、邊緣銳利），§5.2 的低光照漏檢與這件事是同一個問題的兩面。唯一可靠的排除法是另一張不同光線角度的照片，所以 §1.1 的「兩面都要拍」在標註上也有用。"
+  }
+ ],
+ "severity_scales": {
+  "iea_task46": {
+   "applies_to": [
+    "surface/leading_edge_erosion"
+   ],
+   "requires_scale": true,
+   "source": "IEA Wind TCP Task 46, Leading Edge Erosion Classification System, 2023",
+   "levels": [
+    {
+     "level": 0,
+     "criterion": "針孔，單一尺寸 < 1 mm",
+     "detectable": false,
+     "note": "§2 已證明合規取像條件下都做不到"
+    },
+    {
+     "level": 1,
+     "criterion": "單一實例面積 1–10 cm²",
+     "detectable": true,
+     "min_cm_per_px": 0.07
+    },
+    {
+     "level": 2,
+     "criterion": "單一實例面積 10 cm² – 1 m²",
+     "detectable": true,
+     "min_cm_per_px": 0.17
+    },
+    {
+     "level": 3,
+     "criterion": "待從 IEA 原文逐條抄錄核對",
+     "detectable": true,
+     "min_cm_per_px": 0.46
+    },
+    {
+     "level": 4,
+     "criterion": "待從 IEA 原文逐條抄錄核對",
+     "detectable": true,
+     "min_cm_per_px": 0.46
+    },
+    {
+     "level": 5,
+     "criterion": "待從 IEA 原文逐條抄錄核對",
+     "detectable": true,
+     "min_cm_per_px": 0.46
+    }
+   ],
+   "open_item": "Level 0–2 的門檻取自 BLADE_CLOSEUP_SPEC.md §2.2，已可用。Level 3–5 **尚未從 IEA 原始文件核對**，在核對完成前不得寫進報告——安全分級的門檻不可以憑印象填。"
+  },
+  "generic_1_5": {
+   "applies_to": [
+    "environmental/*",
+    "structural/*",
+    "surface/* 無尺度時"
+   ],
+   "requires_scale": false,
+   "source": "沿用 Mode A 既有 severity 1–5",
+   "levels": [
+    {
+     "level": 1,
+     "criterion": "可見異常，不影響運轉"
+    },
+    {
+     "level": 2,
+     "criterion": "輕微，列入追蹤"
+    },
+    {
+     "level": 3,
+     "criterion": "中度，排程修補"
+    },
+    {
+     "level": 4,
+     "criterion": "嚴重，近期停機處理"
+    },
+    {
+     "level": 5,
+     "criterion": "危急，立即停機"
+    }
+   ]
+  }
+ },
+ "quality_flags": [
+  {
+   "id": "low_light",
+   "criterion": "整體偏暗或陰影覆蓋葉片主要區域",
+   "why": "§5.2 的 6 張漏檢全在低光照。不單獨切子集，改善與惡化都會被平均掉"
+  },
+  {
+   "id": "motion_blur",
+   "criterion": "邊緣拖影，Laplacian 變異數低於門檻",
+   "why": "裂縫的判準是邊緣銳利，模糊直接摧毀那個判準"
+  },
+  {
+   "id": "backlit",
+   "criterion": "光源在葉片後方，葉片呈剪影",
+   "why": "Mode A 的閘門唯一擋不了的拒收原因；解法在站位不在演算法（見 blade_proto/sunpos.py）"
+  },
+  {
+   "id": "specular",
+   "criterion": "鏡面反光帶覆蓋畫面",
+   "why": "反光帶與裂縫幾何相同"
+  },
+  {
+   "id": "scale_unknown",
+   "criterion": "無 EXIF 焦距／距離，畫面內也無已知尺寸物件",
+   "why": "觸發 §9.4：不得輸出 IEA Level"
+  },
+  {
+   "id": "off_spec_framing",
+   "criterion": "葉片弦向未橫跨畫面 1/3",
+   "why": "觸發 §9.5：拒收並說明原因"
+  }
+ ],
+ "decision_rules": [
+  {
+   "order": 1,
+   "rule": "取像不合 §1.2（葉片弦向未橫跨畫面 ≥ 1/3）→ photo_label = reject，不給任何類別標籤，不進訓練集也不進測試集。"
+  },
+  {
+   "order": 2,
+   "rule": "尺度未知 → 可以標類別與 generic severity，**不得**標 IEA Level（§9.4）。"
+  },
+  {
+   "order": 3,
+   "rule": "一張照片可有多個 region。照片級標籤取最嚴重的機制類：structural > environmental > surface > healthy。"
+  },
+  {
+   "order": 4,
+   "rule": "疑似 structural 但無法與 normal_structure 區分 → photo_label = uncertain，**不得**標 healthy。理由：§5.2 的失效模式正是裂縫被判成健康，把不確定倒向 healthy 會複製那個失效。uncertain 不計入任何類別的分母，單獨報張數。"
+  },
+  {
+   "order": 5,
+   "rule": "修補痕 → normal_structure/repair_patch，照片級算 healthy，但位置要留在 region 裡。"
+  },
+  {
+   "order": 6,
+   "rule": "汙染 → healthy/contamination，照片級算 healthy，但要單獨統計張數。"
+  },
+  {
+   "order": 7,
+   "rule": "healthy 是「看過且確認乾淨」，不是「沒標到東西」。沒有人看過的照片 photo_label = unreviewed，與 healthy 不同。這條對齊 blade_dataset_service.dart 的 humanClean 規則。"
+  },
+  {
+   "order": 8,
+   "rule": "低光照／模糊／逆光照樣標，但要打 quality_flags。§6 補充要求低光照單獨切子集報數字。"
+  }
+ ],
+ "record_schema": {
+  "note": "B1 的評估腳本吃這個格式。blade_id 與 flight_id 是**必填**——§6.1 的「按葉片切不按照片切」靠它們執行，不是靠記得。",
+  "required": [
+   "image_id",
+   "blade_id",
+   "flight_id",
+   "source",
+   "licence",
+   "photo_label",
+   "annotator"
+  ],
+  "fields": {
+   "image_id": "字串，語料內唯一",
+   "blade_id": "字串，哪一支葉片。**必填**，切分依據",
+   "flight_id": "字串，哪一次飛行／哪一次拍攝。**必填**，切分依據",
+   "source": "語料來源代號（dtu / blade30 / openverse / field）",
+   "licence": "授權字串，例如 CC BY 4.0。NC 的不得進訓練集",
+   "intake": "{accepted: bool, reason: str, blade_fraction: float}",
+   "scale": "{cm_per_px: float|null, method: exif|reference_object|unknown, focal_35mm_eq: float|null, distance_m: float|null}",
+   "quality_flags": "quality_flags 的 id 陣列",
+   "photo_label": "healthy | surface | environmental | structural | uncertain | reject | unreviewed",
+   "regions": "[{bbox:[x,y,w,h], class, subclass, is_defect, severity, iea_level, note}]",
+   "annotator": "標註者代號。**不得填演算法輸出**（§9.3）"
+  }
+ },
+ "dataset_class_map": {
+  "note": "把公開語料的類別名對到本表。**對照是暫定的**：依 CLOSEUP_BASELINE_REPORT.md §5 逐張目視得到，樣本每類 4–6 張，尚未逐張核對全集。名稱相同不代表定義相同——這份對照的價值正是把「名稱一樣但東西不一樣」寫出來。",
+  "multiclass_wtb": {
+   "source": "Multiclass Dataset for Intelligent Detection of Wind Turbine Blade Defects Using Drone Imagery, figshare 10.6084/m9.figshare.30210175.v1",
+   "licence": "CC BY 4.0（可商用；三份主要語料中唯一一份）",
+   "size": "1065 張，全部 1024×1024，Pascal VOC 標註，兩位獨立標註者。**取像判定（全數 1065 張）：839 張合格（79%）、185 張整機、39 張葉片太細、2 張非葉片**（`data/closeup_intake_wtb.json`）",
+   "classes": [
+    {
+     "their": "crack",
+     "ours": [
+      "structural/structural_fracture",
+      "structural/tip_damage"
+     ],
+     "caveat": "**不是近身裂縫**。全部 177 張逐張看過：174 張是整機照（輪轂與塔架入鏡），2 張葉片太細，1 張非葉片，**0 張通過 §1.2 取像判定**。這一類在 Mode B 的輸入定義下不存在，要由 Mode A 處理。"
+    },
+    {
+     "their": "craze",
+     "ours": [
+      "structural/longitudinal_crack",
+      "surface/leading_edge_erosion"
+     ],
+     "caveat": "名稱是龜裂，但目視多為**開放型裂損與前緣缺口**，不是本表定義的細密網狀 `gelcoat_crack_network`。全部 198 張中 180 張（91%）通過取像判定，其餘 18 張葉片太細。"
+    },
+    {
+     "their": "hide_craze",
+     "ours": [
+      "surface/gelcoat_crack_network",
+      "structural/longitudinal_crack"
+     ],
+     "caveat": "細長線狀、標註框多為長條。與 craze 是兩位標註者最常互換的一對（40 次分歧）。"
+    },
+    {
+     "their": "corrosion",
+     "ours": [
+      "healthy/contamination",
+      "surface/corrosion_metal_part"
+     ],
+     "caveat": "**混了兩件事**：部分是生物附著（綠藻）——依本表屬 contamination 不是損傷；部分是金屬件鏽蝕。且有數張拍的是**塔架不是葉片**。與 surface_injure 是第二常互換的一對（52 次分歧）。"
+    },
+    {
+     "their": "surface_injure",
+     "ours": [
+      "surface/coating_peeling"
+     ],
+     "caveat": ""
+    },
+    {
+     "their": "thunderstrike",
+     "ours": [
+      "environmental/lightning_damage"
+     ],
+     "caveat": "本表最乾淨的對照。近身、中心明確、碳化特徵清楚。"
+    }
+   ],
+   "gaps": [
+    "**沒有健康照**：1065 張每一張都至少有一個缺陷框。§6 第 4 條要求測試集至少 1/3 是健康照且含易誤判的正常結構——這份語料一張都給不出來，誤報率無從量。**已補的部分**：`scripts/closeup_healthy_candidates.py` 從合格影像的框外區域挖出候選小圖（見 `CLOSEUP_HEALTHY_SET.md`），全部 `unreviewed`，要人看過才算 healthy。",
+    "**沒有正常結構標註**：接縫、LEP 邊緣、VG 板、避雷接點都沒有被正面標記。**已補的部分**：192 張抽樣的影像級存在標記（`data/closeup_normal_structures_wtb.json`）與 8 張的概略框（`data/closeup_normal_structure_boxes_wtb.json`），皆為單一標註者的第一版，待人複核。",
+    "**沒有尺度**：1065 張只有 3 張還留著 EXIF、1 張有焦距。§9.4 因此適用於幾乎全部——用這份語料訓出來的模型不得輸出 IEA Level。",
+    "**沒有葉片編號**：檔名是流水號。**已解**（2026-09-14，`CLOSEUP_SPLIT_GROUPS.md`）：用影像重疊連出 524 個 `split_group`，§6 第 1 條改以它為執行依據，並附群感知 5 折。檔名相鄰性經實測**不帶任何結構**（同一次飛行的 25 張散在 69…851）。順帶量到語料自己附的 `train_val_test_split.txt` 是按照片切、**63.4% 的 test 影像在 train 有近重複**，不可使用。"
+   ],
+   "inter_annotator": {
+    "note": "兩位標註者的一致度是任何模型在這份語料上的**可量測上限**。超過它的分數是在報雜訊。",
+    "boxes_a": 1584,
+    "boxes_b": 1543,
+    "matched_iou_0_5": 1543,
+    "localisation_agreement": 0.974,
+    "class_agreement_of_matched": 0.94,
+    "cohen_kappa": 0.897,
+    "disagreement_pairs": "全部 92 次類別分歧只落在兩對上：surface_injure↔corrosion 52 次、hide_craze↔craze 40 次。這是兩個獨立的人給的證據，說明這兩條界線畫得不夠利。"
+   },
+   "normal_structure_survey": {
+    "note": "從 839 張合格影像等距抽 192 張，影像級標記畫面裡有沒有分類表 §2 的正常結構。單一標註者，未複核。",
+    "sample": 192,
+    "present": {
+     "tip_marking（紅色葉尖塗裝）": 20,
+     "ruler／比例尺": 11,
+     "marking_decal（文字、告示牌、商標）": 7,
+     "shadow_and_specular": 6,
+     "mould_parting_line／paint_seam": 5,
+     "repair_patch": 4,
+     "lep_edge_step": 1
+    },
+    "absent": [
+     "lightning_receptor",
+     "vortex_generator／serrated_trailing_edge",
+     "drain_hole"
+    ],
+    "artifacts": {
+     "灰色矩形塗抹（前處理）": 38,
+     "時間戳／文字燒錄": 23,
+     "人、手、工具入鏡": 15
+    },
+    "finding": "**與結構類缺陷最易混淆的三種正常結構——避雷接點、VG 板、排水孔——在 192 張裡一張都沒出現**；出現的多是紅色葉尖塗裝與比例尺。反而**標註／前處理痕跡出現在 35% 的影像上**（68/192），比任何一種正常結構都多：模型很可能學到「灰色矩形附近有缺陷」「有時間戳就有缺陷」。這是比缺健康照更迫切的洩漏風險。"
+   }
+  }
+ }
 }
