@@ -69,6 +69,7 @@
 | `BLADE_CLOSEUP_SPEC.md` | ★ **Mode B：葉片近身影像檢測規格**（無人機距離與角度、外觀判讀、IEA Level 1–2；規格草案，未實作，預定由學生展開；§12 是 B0 實測回饋） |
 | `docs/USER_GUIDE.md` | 使用手冊（操作步驟；README 不再重複這一段） |
 | `BLADE_CLOSEUP_TAXONOMY.md` | ★ Mode B 標註分類表（B0 產出）。**產物不要手改**——單一來源是 `blade_prototype/data/closeup_taxonomy.json`，改完跑 `render_closeup_taxonomy.py` |
+| `blade_prototype/BLADE_TEST_REPORT.md` | ★ **葉片模組現況測試報告**（2026-09-14）：自動化測試、75 張真實影像逐張回歸、四層合成端到端、圖文報告產生、運動分割重跑、Mode B 現況、沒測到的。真實影像那一節的數字由 `scripts/blade_test_report.py` 產生（`--baseline` 逐張比對） |
 | `blade_prototype/CLOSEUP_HEALTHY_SET.md` | ★ Mode B 健康照與正常結構第一版：全語料取像判定、正常結構普查、健康候選挖掘（`scripts/closeup_healthy_candidates.py`）、概略框。三份標記檔在 `data/closeup_*_wtb.json`，**單一標註者未複核**，測試守「不得偷偷簽核」 |
 | `blade_prototype/CLOSEUP_BASELINE_REPORT.md` | ★ Mode B 語料現況實測（B0）：授權盤點、開放網路可用率、cm/px 可得率、可商用語料的類別分布與標註者一致度、Mode A 閘門跨模式回歸 |
 | `blade_prototype/` | ★ 葉片模組 Phase 0 演算法原型（Python/OpenCV；分割、三片互比、前緣粗糙度、影片六點鐘取幀、逐片聲音異常、圖文報告產生器、拍攝品質閘門、**運動分割輪轂定位 `motion_hub.py`**、**太陽方位 `sunpos.py`**；`SENSITIVITY.md` 合成影像靈敏度、`REAL_IMAGE_VALIDATION.md` 真實影像實測、**`INNOVATION_REVIEW.md` 改進方向的文獻對照與離線驗證**、**`CLOSEUP_BASELINE_REPORT.md` Mode B 語料實測**、`scripts/` 語料抓取/驗證/圖文報告/運動分割實測/近身語料抓取/分類表渲染六支腳本） |
@@ -86,9 +87,9 @@
 python3 scripts/audit_dead_ends.py   # 死角查核（service 零引用／DB 欄位只讀不寫）；--report 看全部
 flutter test          # 全部 497 tests（widget_test 已修復，不再排除）
 cd backend && GEMINI_API_KEY=ci-fake-key pytest tests/ --asyncio-mode=auto   # 191 pytest
-cd blade_prototype && pip install -r requirements.txt && pytest              # 126 tests（葉片原型，合成影像/音軌夾具 + Mode B 分類表與標記檔守門）
+cd blade_prototype && pip install -r requirements.txt && pytest              # 131 tests（葉片原型，合成影像/音軌夾具 + Mode B 分類表與標記檔守門 + 測試報告聚合器）
 ```
-Flutter 497 tests / 後端 191 pytest / 葉片原型 126 pytest 全綠（2026-09-13 本機實測）。DB 測試使用 `sqflite_common_ffi` in-memory。標準資料為單一來源：改 `backend/app/data/inspection_standards.py` 後必須跑 `python backend/scripts/export_standards.py` 重新匯出 JSON（有同步守門測試）。
+Flutter 497 tests / 後端 191 pytest / 葉片原型 131 pytest 全綠（2026-09-14 本機實測）。DB 測試使用 `sqflite_common_ffi` in-memory。標準資料為單一來源：改 `backend/app/data/inspection_standards.py` 後必須跑 `python backend/scripts/export_standards.py` 重新匯出 JSON（有同步守門測試）。
 
 ## 已知問題追蹤
 - GitHub Issues #14-#19 已全數修復並關閉（2026-04-16）

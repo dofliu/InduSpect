@@ -47,7 +47,7 @@
 cd blade_prototype
 python3 -m venv .venv && . .venv/bin/activate
 pip install -r requirements.txt
-pytest            # 76 tests，約 3 分鐘（聲學測試較慢）
+pytest            # 131 tests，約 2–3 分鐘（動態層與運動分割的合成影片測試最慢）
 ```
 
 ## 三種輸入、三個指令
@@ -120,6 +120,7 @@ python -m blade_proto report --asset WTG-07 --still still.json --still-overlay s
 | `scripts/make_geometry_fixture.py` | 幾何層的同類夾具：一張 384×512 合成正視圖 + 逐階段參考值 + 「單片注入 900 cm 葉尖偏移」的數值情境（驗標記真的會觸發） | Dart 交叉驗證 |
 | `scripts/make_image_ops_fixture.py` | OpenCV 基本運算的逐項參考值（網格中值、REFLECT_101 高斯、5×5 橢圓閉、連通元件、chamfer 距離變換、8-bit Lab），輸入由公式重建而非影像檔 | Dart 交叉驗證 |
 | `scripts/make_validation_report.py` | **真實影像驗證的圖文報告產生器**：吃 `validate_real_images.py` 的輸出，排出摘要磚、天空條件命中率圖表、天空×取景交叉表、逐個失敗模式的前後疊圖對照、閘門門檻掃描表、逐張結果與影像授權附錄；`--pdf` 可直接列印成 A4 PDF | 交付物 |
+| `scripts/blade_test_report.py` | **測試報告的數字來源**：吃 `validate_real_images.py` 的輸出排成 Markdown 表（命中率／閘門／拒收原因），`--baseline` 與上一次結果**逐張比對**（演算法沒有無聲漂移的證據），並把放行影像的三片互比標記與葉尖間距偏離 120° 並列。`BLADE_TEST_REPORT.md` 真實影像那一節由它產生 | 測試報告 |
 | `report.py` / `charts.py` | 圖文報告：把數值排成 HTML（區段、統計磚、數值表、待確認欄）＋內嵌 SVG 圖表。無外部相依、無 JS；照片以 base64 內嵌 | 交付物 |
 | `synth.py` | 參數化風機（60 m 葉片、4 m 根弦、塔架、機艙、預彎），正視/側視/分區段/影片；`SceneSpec.for_scale()` 依感光元件像素數與 cm/px 建場景，轉子塞不進畫面會拒絕 | 測試夾具 |
 
@@ -187,6 +188,15 @@ python scripts/validate_real_images.py --dir real_images              # 逐張�
 python scripts/make_validation_report.py \
   --corpus real_images --after real_images/_out \
   --out validation.html --pdf validation.pdf                          # 圖文報告（可列印）
+```
+
+整個模組的**現況測試報告**（自動化測試、75 張真實影像逐張回歸、四層合成端到端、圖文報告產生、
+運動分割重跑、Mode B 現況、沒測到的）在 **`BLADE_TEST_REPORT.md`**；重跑方式在該檔 §10：
+
+```bash
+python scripts/validate_real_images.py --dir real_images   --out out/A
+python scripts/validate_real_images.py --dir real_images_b --out out/B
+python scripts/blade_test_report.py --after out/A --after out/B --baseline <上一次的 A> --baseline <上一次的 B>
 ```
 
 影像不進版控（`.gitignore`），版控裡只有 `data/real_image_labels.json`（75 張的人工標註：
