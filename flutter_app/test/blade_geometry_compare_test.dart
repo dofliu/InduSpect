@@ -225,6 +225,35 @@ void main() {
       expect(v.reasons.join(), contains('六點鐘'));
     });
 
+    // n = 0 與 n = 1/2 的成因不同。75 張真實照片裡 18 張是 n = 0，而 2026-09-14 之前
+    // 三種都印「可能有葉片貼在塔架上，請等轉子轉開」——那會把現場的人帶去等一件不會發生的事。
+    test('一片都沒定位到 → 指向取景與分割，不叫人等轉子', () {
+      final v = BladeStructureGate.judge(
+          structure: const BladeStructure(blades: [], towerFound: true),
+          checkSecondRotor: false);
+      expect(v.ok, isFalse);
+      final msg = v.reasons.join();
+      expect(msg, contains('一片葉片都沒有定位到'));
+      expect(msg, contains('完整入鏡'));
+      expect(msg, contains('分割'));
+      expect(msg, isNot(contains('等轉子轉到')),
+          reason: 'n = 0 時轉子轉不轉都一樣，不可以叫人等');
+    });
+
+    test('定位到超過三片 → 指向取景，不指向塔架', () {
+      final v = BladeStructureGate.judge(
+          structure: BladeStructure(
+              blades: [_tip(100), _tip(101), _tip(102), _tip(99)],
+              towerFound: true,
+              hubRefined: true),
+          checkSecondRotor: false);
+      expect(v.ok, isFalse);
+      final msg = v.reasons.join();
+      expect(msg, contains('多於 3'));
+      expect(msg, contains('不只一台風機'));
+      expect(msg, isNot(contains('等轉子轉到')));
+    });
+
     test('沒塔架、輪轂未精修 → 只警告不拒收', () {
       final v = BladeStructureGate.judge(
           structure: BladeStructure(

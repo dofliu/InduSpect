@@ -48,7 +48,7 @@
 cd blade_prototype
 python3 -m venv .venv && . .venv/bin/activate
 pip install -r requirements.txt
-pytest            # 142 tests，約 2–3 分鐘（動態層與運動分割的合成影片測試最慢）
+pytest            # 144 tests，約 2–3 分鐘（動態層與運動分割的合成影片測試最慢）
 ```
 
 ## 三種輸入、三個指令

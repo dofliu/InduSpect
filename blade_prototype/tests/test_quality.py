@@ -117,6 +117,25 @@ def test_gate_rejects_wrong_blade_count_and_says_why():
     assert any("只定位到 2 片" in r and "塔架" in r for r in v.reasons)
 
 
+def test_zero_blades_does_not_tell_the_operator_to_wait_for_the_rotor():
+    """n = 0 與 n = 1/2 的成因不同。75 張真實照片裡 18 張是 n = 0，而 2026-09-14 之前
+    三種都印「可能有葉片貼在塔架上，請等轉子轉開」——那會把現場的人帶去等一件不會發生的事。"""
+    v = assess_capture(_seg(_mask_with_ground()), _Structure([]))
+    assert not v.ok
+    msg = "".join(v.reasons)
+    assert "一片葉片都沒有定位到" in msg
+    assert "完整入鏡" in msg and "分割" in msg
+    assert "等轉子轉到" not in msg, "n = 0 時轉子轉不轉都一樣，不可以叫人等"
+
+
+def test_more_blades_than_expected_points_at_framing_not_at_the_tower():
+    v = assess_capture(_seg(_mask_with_ground()), _Structure([220.0, 214.0, 219.0, 217.0]))
+    assert not v.ok
+    msg = "".join(v.reasons)
+    assert "多於 3" in msg and "不只一台風機" in msg
+    assert "等轉子轉到" not in msg
+
+
 def test_gate_rejects_when_turbine_barely_segmented():
     """白葉片對上亮雲天空時遮罩幾乎全空——要說「對比不足」，不是回報三片一致。"""
     m = np.zeros((400, 600), np.uint8)
