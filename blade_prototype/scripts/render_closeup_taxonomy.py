@@ -180,6 +180,24 @@ def render(d: dict) -> str:
             for g in ds["gaps"]:
                 add(f"- {g}")
             add("")
+            sv = ds.get("normal_structure_survey")
+            if sv:
+                add(f"**正常結構普查**（{sv['sample']} 張抽樣）：{sv['note']}")
+                add("")
+                add("| 有出現 | 張數 |")
+                add("|---|---|")
+                for k, v in sv["present"].items():
+                    add(f"| {k} | {v} |")
+                add("")
+                add("**沒出現**：" + "、".join(f"`{x}`" for x in sv["absent"]))
+                add("")
+                add("| 痕跡（不是葉片的東西，但模型會學到） | 張數 |")
+                add("|---|---|")
+                for k, v in sv["artifacts"].items():
+                    add(f"| {k} | {v} |")
+                add("")
+                add(sv["finding"])
+                add("")
             ia = ds["inter_annotator"]
             add(f"**標註者間一致度**：{ia['note']}")
             add("")
