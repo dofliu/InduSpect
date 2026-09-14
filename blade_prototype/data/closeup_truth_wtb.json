@@ -1,0 +1,12053 @@
+{
+ "version": "b1-2026-09-14",
+ "source": "Multiclass Dataset for Intelligent Detection of Wind Turbine Blade Defects Using Drone Imagery, figshare 10.6084/m9.figshare.30210175.v1, CC BY 4.0",
+ "note": "影像級類別真值，由語料的兩位標註者 VOC 標註彙整。`labels` 取兩人聯集（漏檢比誤報嚴重）；`per_annotator` 保留各自的，因為兩人一致率 94.0% 是任何模型在這份語料上的可量測上限，分歧的影像上的分數要當雜訊看。**沒有健康照**：每張至少一個缺陷框。",
+ "classes": [
+  "corrosion",
+  "crack",
+  "craze",
+  "hide_craze",
+  "surface_injure",
+  "thunderstrike"
+ ],
+ "labels": {
+  "0": [
+   "corrosion"
+  ],
+  "1": [
+   "craze"
+  ],
+  "2": [
+   "surface_injure"
+  ],
+  "3": [
+   "corrosion"
+  ],
+  "4": [
+   "crack"
+  ],
+  "5": [
+   "corrosion"
+  ],
+  "6": [
+   "craze"
+  ],
+  "7": [
+   "hide_craze"
+  ],
+  "8": [
+   "crack"
+  ],
+  "9": [
+   "hide_craze"
+  ],
+  "10": [
+   "surface_injure",
+   "thunderstrike"
+  ],
+  "11": [
+   "surface_injure"
+  ],
+  "12": [
+   "crack"
+  ],
+  "13": [
+   "hide_craze"
+  ],
+  "14": [
+   "hide_craze",
+   "surface_injure"
+  ],
+  "15": [
+   "craze"
+  ],
+  "16": [
+   "craze",
+   "hide_craze"
+  ],
+  "17": [
+   "thunderstrike"
+  ],
+  "18": [
+   "craze"
+  ],
+  "19": [
+   "surface_injure"
+  ],
+  "20": [
+   "craze"
+  ],
+  "21": [
+   "craze"
+  ],
+  "22": [
+   "surface_injure"
+  ],
+  "23": [
+   "crack"
+  ],
+  "24": [
+   "craze"
+  ],
+  "25": [
+   "hide_craze"
+  ],
+  "26": [
+   "crack"
+  ],
+  "27": [
+   "surface_injure"
+  ],
+  "28": [
+   "hide_craze"
+  ],
+  "29": [
+   "hide_craze"
+  ],
+  "30": [
+   "craze"
+  ],
+  "31": [
+   "surface_injure"
+  ],
+  "32": [
+   "thunderstrike"
+  ],
+  "33": [
+   "crack"
+  ],
+  "34": [
+   "hide_craze",
+   "surface_injure"
+  ],
+  "35": [
+   "corrosion"
+  ],
+  "36": [
+   "hide_craze"
+  ],
+  "37": [
+   "surface_injure",
+   "thunderstrike"
+  ],
+  "38": [
+   "craze",
+   "hide_craze"
+  ],
+  "39": [
+   "corrosion"
+  ],
+  "40": [
+   "thunderstrike"
+  ],
+  "41": [
+   "hide_craze"
+  ],
+  "42": [
+   "craze"
+  ],
+  "43": [
+   "surface_injure"
+  ],
+  "44": [
+   "craze",
+   "hide_craze"
+  ],
+  "45": [
+   "surface_injure"
+  ],
+  "46": [
+   "corrosion"
+  ],
+  "47": [
+   "craze"
+  ],
+  "48": [
+   "surface_injure"
+  ],
+  "49": [
+   "craze"
+  ],
+  "50": [
+   "craze",
+   "hide_craze"
+  ],
+  "51": [
+   "craze"
+  ],
+  "52": [
+   "thunderstrike"
+  ],
+  "53": [
+   "crack"
+  ],
+  "54": [
+   "hide_craze"
+  ],
+  "55": [
+   "hide_craze"
+  ],
+  "56": [
+   "craze",
+   "hide_craze"
+  ],
+  "57": [
+   "corrosion",
+   "craze",
+   "surface_injure"
+  ],
+  "58": [
+   "hide_craze"
+  ],
+  "59": [
+   "crack"
+  ],
+  "60": [
+   "hide_craze",
+   "thunderstrike"
+  ],
+  "61": [
+   "craze",
+   "hide_craze"
+  ],
+  "62": [
+   "hide_craze",
+   "thunderstrike"
+  ],
+  "63": [
+   "surface_injure"
+  ],
+  "64": [
+   "corrosion"
+  ],
+  "65": [
+   "corrosion"
+  ],
+  "66": [
+   "crack"
+  ],
+  "67": [
+   "hide_craze"
+  ],
+  "68": [
+   "hide_craze"
+  ],
+  "69": [
+   "crack"
+  ],
+  "70": [
+   "crack"
+  ],
+  "71": [
+   "craze"
+  ],
+  "72": [
+   "corrosion"
+  ],
+  "73": [
+   "craze"
+  ],
+  "74": [
+   "craze"
+  ],
+  "75": [
+   "surface_injure"
+  ],
+  "76": [
+   "craze"
+  ],
+  "77": [
+   "thunderstrike"
+  ],
+  "78": [
+   "crack"
+  ],
+  "79": [
+   "craze"
+  ],
+  "80": [
+   "craze"
+  ],
+  "81": [
+   "craze"
+  ],
+  "82": [
+   "crack"
+  ],
+  "83": [
+   "hide_craze"
+  ],
+  "84": [
+   "thunderstrike"
+  ],
+  "85": [
+   "crack"
+  ],
+  "86": [
+   "hide_craze"
+  ],
+  "87": [
+   "craze"
+  ],
+  "88": [
+   "crack"
+  ],
+  "89": [
+   "crack"
+  ],
+  "90": [
+   "surface_injure"
+  ],
+  "91": [
+   "hide_craze"
+  ],
+  "92": [
+   "crack"
+  ],
+  "93": [
+   "craze"
+  ],
+  "94": [
+   "crack"
+  ],
+  "95": [
+   "corrosion",
+   "surface_injure",
+   "thunderstrike"
+  ],
+  "96": [
+   "corrosion",
+   "surface_injure"
+  ],
+  "97": [
+   "crack"
+  ],
+  "98": [
+   "craze"
+  ],
+  "99": [
+   "hide_craze"
+  ],
+  "100": [
+   "thunderstrike"
+  ],
+  "101": [
+   "surface_injure"
+  ],
+  "102": [
+   "thunderstrike"
+  ],
+  "103": [
+   "craze"
+  ],
+  "104": [
+   "crack"
+  ],
+  "105": [
+   "surface_injure"
+  ],
+  "106": [
+   "corrosion",
+   "surface_injure"
+  ],
+  "107": [
+   "crack"
+  ],
+  "108": [
+   "surface_injure",
+   "thunderstrike"
+  ],
+  "109": [
+   "surface_injure"
+  ],
+  "110": [
+   "corrosion",
+   "surface_injure"
+  ],
+  "111": [
+   "crack"
+  ],
+  "112": [
+   "surface_injure",
+   "thunderstrike"
+  ],
+  "113": [
+   "corrosion"
+  ],
+  "114": [
+   "hide_craze"
+  ],
+  "115": [
+   "corrosion"
+  ],
+  "116": [
+   "hide_craze",
+   "surface_injure"
+  ],
+  "117": [
+   "craze"
+  ],
+  "118": [
+   "surface_injure"
+  ],
+  "119": [
+   "thunderstrike"
+  ],
+  "120": [
+   "corrosion"
+  ],
+  "121": [
+   "hide_craze"
+  ],
+  "122": [
+   "hide_craze"
+  ],
+  "123": [
+   "craze"
+  ],
+  "124": [
+   "hide_craze"
+  ],
+  "125": [
+   "hide_craze"
+  ],
+  "126": [
+   "craze",
+   "surface_injure"
+  ],
+  "127": [
+   "surface_injure"
+  ],
+  "128": [
+   "surface_injure"
+  ],
+  "129": [
+   "hide_craze"
+  ],
+  "130": [
+   "crack"
+  ],
+  "131": [
+   "surface_injure"
+  ],
+  "132": [
+   "corrosion"
+  ],
+  "133": [
+   "crack"
+  ],
+  "134": [
+   "crack"
+  ],
+  "135": [
+   "craze"
+  ],
+  "136": [
+   "crack"
+  ],
+  "137": [
+   "crack"
+  ],
+  "138": [
+   "hide_craze"
+  ],
+  "139": [
+   "craze"
+  ],
+  "140": [
+   "hide_craze"
+  ],
+  "141": [
+   "craze"
+  ],
+  "142": [
+   "surface_injure"
+  ],
+  "143": [
+   "crack"
+  ],
+  "144": [
+   "hide_craze"
+  ],
+  "145": [
+   "surface_injure"
+  ],
+  "146": [
+   "hide_craze"
+  ],
+  "147": [
+   "hide_craze"
+  ],
+  "148": [
+   "hide_craze"
+  ],
+  "149": [
+   "surface_injure"
+  ],
+  "150": [
+   "surface_injure"
+  ],
+  "151": [
+   "craze",
+   "hide_craze"
+  ],
+  "152": [
+   "crack"
+  ],
+  "153": [
+   "craze"
+  ],
+  "154": [
+   "corrosion",
+   "surface_injure"
+  ],
+  "155": [
+   "surface_injure",
+   "thunderstrike"
+  ],
+  "156": [
+   "craze"
+  ],
+  "157": [
+   "crack"
+  ],
+  "158": [
+   "corrosion",
+   "surface_injure",
+   "thunderstrike"
+  ],
+  "159": [
+   "crack"
+  ],
+  "160": [
+   "corrosion"
+  ],
+  "161": [
+   "corrosion"
+  ],
+  "162": [
+   "corrosion"
+  ],
+  "163": [
+   "hide_craze"
+  ],
+  "164": [
+   "crack"
+  ],
+  "165": [
+   "corrosion"
+  ],
+  "166": [
+   "craze"
+  ],
+  "167": [
+   "craze"
+  ],
+  "168": [
+   "crack"
+  ],
+  "169": [
+   "craze",
+   "surface_injure"
+  ],
+  "170": [
+   "corrosion"
+  ],
+  "171": [
+   "hide_craze"
+  ],
+  "172": [
+   "craze",
+   "hide_craze"
+  ],
+  "173": [
+   "craze"
+  ],
+  "174": [
+   "crack"
+  ],
+  "175": [
+   "craze"
+  ],
+  "176": [
+   "crack"
+  ],
+  "177": [
+   "craze"
+  ],
+  "178": [
+   "surface_injure"
+  ],
+  "179": [
+   "crack"
+  ],
+  "180": [
+   "craze"
+  ],
+  "181": [
+   "craze"
+  ],
+  "182": [
+   "crack"
+  ],
+  "183": [
+   "crack"
+  ],
+  "184": [
+   "craze"
+  ],
+  "185": [
+   "hide_craze"
+  ],
+  "186": [
+   "thunderstrike"
+  ],
+  "187": [
+   "crack"
+  ],
+  "188": [
+   "crack"
+  ],
+  "189": [
+   "craze"
+  ],
+  "190": [
+   "surface_injure"
+  ],
+  "191": [
+   "thunderstrike"
+  ],
+  "192": [
+   "corrosion",
+   "hide_craze",
+   "surface_injure"
+  ],
+  "193": [
+   "craze"
+  ],
+  "194": [
+   "thunderstrike"
+  ],
+  "195": [
+   "craze"
+  ],
+  "196": [
+   "surface_injure"
+  ],
+  "197": [
+   "craze"
+  ],
+  "198": [
+   "craze",
+   "hide_craze"
+  ],
+  "199": [
+   "crack"
+  ],
+  "200": [
+   "surface_injure"
+  ],
+  "201": [
+   "crack"
+  ],
+  "202": [
+   "surface_injure"
+  ],
+  "203": [
+   "crack"
+  ],
+  "204": [
+   "thunderstrike"
+  ],
+  "205": [
+   "corrosion",
+   "thunderstrike"
+  ],
+  "206": [
+   "crack"
+  ],
+  "207": [
+   "corrosion",
+   "surface_injure"
+  ],
+  "208": [
+   "corrosion",
+   "surface_injure"
+  ],
+  "209": [
+   "craze",
+   "hide_craze"
+  ],
+  "210": [
+   "surface_injure"
+  ],
+  "211": [
+   "crack"
+  ],
+  "212": [
+   "crack"
+  ],
+  "213": [
+   "craze"
+  ],
+  "214": [
+   "craze"
+  ],
+  "215": [
+   "craze"
+  ],
+  "216": [
+   "crack"
+  ],
+  "217": [
+   "surface_injure"
+  ],
+  "218": [
+   "corrosion"
+  ],
+  "219": [
+   "craze"
+  ],
+  "220": [
+   "hide_craze"
+  ],
+  "221": [
+   "crack"
+  ],
+  "222": [
+   "surface_injure"
+  ],
+  "223": [
+   "thunderstrike"
+  ],
+  "224": [
+   "hide_craze"
+  ],
+  "225": [
+   "crack"
+  ],
+  "226": [
+   "crack"
+  ],
+  "227": [
+   "corrosion"
+  ],
+  "228": [
+   "craze",
+   "hide_craze"
+  ],
+  "229": [
+   "crack"
+  ],
+  "230": [
+   "corrosion",
+   "surface_injure"
+  ],
+  "231": [
+   "crack"
+  ],
+  "232": [
+   "thunderstrike"
+  ],
+  "233": [
+   "crack"
+  ],
+  "234": [
+   "hide_craze",
+   "surface_injure"
+  ],
+  "235": [
+   "craze"
+  ],
+  "236": [
+   "craze"
+  ],
+  "237": [
+   "hide_craze",
+   "surface_injure"
+  ],
+  "238": [
+   "crack"
+  ],
+  "239": [
+   "corrosion"
+  ],
+  "240": [
+   "hide_craze"
+  ],
+  "241": [
+   "hide_craze"
+  ],
+  "242": [
+   "craze"
+  ],
+  "243": [
+   "craze"
+  ],
+  "244": [
+   "hide_craze"
+  ],
+  "245": [
+   "surface_injure"
+  ],
+  "246": [
+   "surface_injure"
+  ],
+  "247": [
+   "surface_injure"
+  ],
+  "248": [
+   "corrosion"
+  ],
+  "249": [
+   "surface_injure"
+  ],
+  "250": [
+   "crack"
+  ],
+  "251": [
+   "craze"
+  ],
+  "252": [
+   "crack"
+  ],
+  "253": [
+   "craze"
+  ],
+  "254": [
+   "hide_craze"
+  ],
+  "255": [
+   "surface_injure"
+  ],
+  "256": [
+   "hide_craze",
+   "surface_injure"
+  ],
+  "257": [
+   "surface_injure"
+  ],
+  "258": [
+   "craze"
+  ],
+  "259": [
+   "surface_injure"
+  ],
+  "260": [
+   "craze"
+  ],
+  "261": [
+   "craze"
+  ],
+  "262": [
+   "hide_craze"
+  ],
+  "263": [
+   "crack"
+  ],
+  "264": [
+   "crack"
+  ],
+  "265": [
+   "corrosion"
+  ],
+  "266": [
+   "corrosion"
+  ],
+  "267": [
+   "craze"
+  ],
+  "268": [
+   "hide_craze"
+  ],
+  "269": [
+   "crack"
+  ],
+  "270": [
+   "craze"
+  ],
+  "271": [
+   "crack"
+  ],
+  "272": [
+   "corrosion"
+  ],
+  "273": [
+   "surface_injure",
+   "thunderstrike"
+  ],
+  "274": [
+   "thunderstrike"
+  ],
+  "275": [
+   "crack"
+  ],
+  "276": [
+   "craze",
+   "hide_craze"
+  ],
+  "277": [
+   "crack"
+  ],
+  "278": [
+   "corrosion"
+  ],
+  "279": [
+   "hide_craze"
+  ],
+  "280": [
+   "hide_craze"
+  ],
+  "281": [
+   "hide_craze"
+  ],
+  "282": [
+   "corrosion"
+  ],
+  "283": [
+   "hide_craze",
+   "surface_injure"
+  ],
+  "284": [
+   "hide_craze"
+  ],
+  "285": [
+   "surface_injure"
+  ],
+  "286": [
+   "hide_craze"
+  ],
+  "287": [
+   "surface_injure"
+  ],
+  "288": [
+   "surface_injure"
+  ],
+  "289": [
+   "craze"
+  ],
+  "290": [
+   "thunderstrike"
+  ],
+  "291": [
+   "corrosion"
+  ],
+  "292": [
+   "crack"
+  ],
+  "293": [
+   "craze",
+   "hide_craze"
+  ],
+  "294": [
+   "corrosion"
+  ],
+  "295": [
+   "surface_injure"
+  ],
+  "296": [
+   "craze"
+  ],
+  "297": [
+   "crack"
+  ],
+  "298": [
+   "corrosion"
+  ],
+  "299": [
+   "craze",
+   "hide_craze",
+   "surface_injure"
+  ],
+  "300": [
+   "hide_craze"
+  ],
+  "301": [
+   "surface_injure"
+  ],
+  "302": [
+   "corrosion",
+   "surface_injure"
+  ],
+  "303": [
+   "craze"
+  ],
+  "304": [
+   "thunderstrike"
+  ],
+  "305": [
+   "crack"
+  ],
+  "306": [
+   "craze"
+  ],
+  "307": [
+   "corrosion"
+  ],
+  "308": [
+   "hide_craze"
+  ],
+  "309": [
+   "hide_craze"
+  ],
+  "310": [
+   "crack"
+  ],
+  "311": [
+   "surface_injure"
+  ],
+  "312": [
+   "craze",
+   "hide_craze"
+  ],
+  "313": [
+   "corrosion",
+   "surface_injure"
+  ],
+  "314": [
+   "surface_injure"
+  ],
+  "315": [
+   "crack"
+  ],
+  "316": [
+   "thunderstrike"
+  ],
+  "317": [
+   "corrosion"
+  ],
+  "318": [
+   "crack"
+  ],
+  "319": [
+   "craze"
+  ],
+  "320": [
+   "craze",
+   "hide_craze"
+  ],
+  "321": [
+   "corrosion"
+  ],
+  "322": [
+   "corrosion"
+  ],
+  "323": [
+   "corrosion"
+  ],
+  "324": [
+   "surface_injure"
+  ],
+  "325": [
+   "surface_injure"
+  ],
+  "326": [
+   "craze",
+   "surface_injure"
+  ],
+  "327": [
+   "surface_injure"
+  ],
+  "328": [
+   "surface_injure"
+  ],
+  "329": [
+   "craze",
+   "hide_craze"
+  ],
+  "330": [
+   "craze"
+  ],
+  "331": [
+   "corrosion",
+   "surface_injure"
+  ],
+  "332": [
+   "surface_injure"
+  ],
+  "333": [
+   "thunderstrike"
+  ],
+  "334": [
+   "surface_injure"
+  ],
+  "335": [
+   "crack"
+  ],
+  "336": [
+   "thunderstrike"
+  ],
+  "337": [
+   "surface_injure"
+  ],
+  "338": [
+   "crack"
+  ],
+  "339": [
+   "corrosion"
+  ],
+  "340": [
+   "corrosion"
+  ],
+  "341": [
+   "hide_craze"
+  ],
+  "342": [
+   "surface_injure"
+  ],
+  "343": [
+   "surface_injure"
+  ],
+  "344": [
+   "crack"
+  ],
+  "345": [
+   "hide_craze",
+   "surface_injure"
+  ],
+  "346": [
+   "corrosion"
+  ],
+  "347": [
+   "craze"
+  ],
+  "348": [
+   "crack"
+  ],
+  "349": [
+   "crack"
+  ],
+  "350": [
+   "hide_craze"
+  ],
+  "351": [
+   "craze",
+   "hide_craze"
+  ],
+  "352": [
+   "crack"
+  ],
+  "353": [
+   "surface_injure"
+  ],
+  "354": [
+   "craze"
+  ],
+  "355": [
+   "crack"
+  ],
+  "356": [
+   "thunderstrike"
+  ],
+  "357": [
+   "surface_injure"
+  ],
+  "358": [
+   "craze"
+  ],
+  "359": [
+   "crack"
+  ],
+  "360": [
+   "surface_injure"
+  ],
+  "361": [
+   "hide_craze"
+  ],
+  "362": [
+   "hide_craze"
+  ],
+  "363": [
+   "surface_injure"
+  ],
+  "364": [
+   "craze",
+   "hide_craze"
+  ],
+  "365": [
+   "crack"
+  ],
+  "366": [
+   "crack"
+  ],
+  "367": [
+   "crack"
+  ],
+  "368": [
+   "corrosion"
+  ],
+  "369": [
+   "surface_injure"
+  ],
+  "370": [
+   "corrosion",
+   "surface_injure"
+  ],
+  "371": [
+   "corrosion"
+  ],
+  "372": [
+   "hide_craze"
+  ],
+  "373": [
+   "corrosion"
+  ],
+  "374": [
+   "hide_craze"
+  ],
+  "375": [
+   "corrosion"
+  ],
+  "376": [
+   "craze",
+   "hide_craze"
+  ],
+  "377": [
+   "craze"
+  ],
+  "378": [
+   "crack"
+  ],
+  "379": [
+   "hide_craze"
+  ],
+  "380": [
+   "craze"
+  ],
+  "381": [
+   "crack"
+  ],
+  "382": [
+   "craze",
+   "hide_craze"
+  ],
+  "383": [
+   "craze"
+  ],
+  "384": [
+   "corrosion",
+   "surface_injure"
+  ],
+  "385": [
+   "corrosion",
+   "thunderstrike"
+  ],
+  "386": [
+   "surface_injure"
+  ],
+  "387": [
+   "craze"
+  ],
+  "388": [
+   "hide_craze"
+  ],
+  "389": [
+   "crack"
+  ],
+  "390": [
+   "corrosion"
+  ],
+  "391": [
+   "crack"
+  ],
+  "392": [
+   "craze"
+  ],
+  "393": [
+   "thunderstrike"
+  ],
+  "394": [
+   "crack"
+  ],
+  "395": [
+   "crack"
+  ],
+  "396": [
+   "craze",
+   "hide_craze"
+  ],
+  "397": [
+   "crack"
+  ],
+  "398": [
+   "craze",
+   "hide_craze"
+  ],
+  "399": [
+   "corrosion"
+  ],
+  "400": [
+   "surface_injure",
+   "thunderstrike"
+  ],
+  "401": [
+   "crack"
+  ],
+  "402": [
+   "crack"
+  ],
+  "403": [
+   "crack"
+  ],
+  "404": [
+   "craze"
+  ],
+  "405": [
+   "corrosion"
+  ],
+  "406": [
+   "craze"
+  ],
+  "407": [
+   "corrosion",
+   "surface_injure"
+  ],
+  "408": [
+   "corrosion",
+   "surface_injure"
+  ],
+  "409": [
+   "hide_craze"
+  ],
+  "410": [
+   "corrosion"
+  ],
+  "411": [
+   "corrosion"
+  ],
+  "412": [
+   "surface_injure"
+  ],
+  "413": [
+   "surface_injure"
+  ],
+  "414": [
+   "crack"
+  ],
+  "415": [
+   "craze",
+   "surface_injure"
+  ],
+  "416": [
+   "surface_injure"
+  ],
+  "417": [
+   "hide_craze"
+  ],
+  "418": [
+   "crack"
+  ],
+  "419": [
+   "crack"
+  ],
+  "420": [
+   "hide_craze"
+  ],
+  "421": [
+   "surface_injure"
+  ],
+  "422": [
+   "hide_craze"
+  ],
+  "423": [
+   "corrosion",
+   "hide_craze"
+  ],
+  "424": [
+   "hide_craze",
+   "surface_injure"
+  ],
+  "425": [
+   "corrosion"
+  ],
+  "426": [
+   "hide_craze"
+  ],
+  "427": [
+   "surface_injure"
+  ],
+  "428": [
+   "surface_injure"
+  ],
+  "429": [
+   "craze",
+   "hide_craze"
+  ],
+  "430": [
+   "corrosion",
+   "surface_injure"
+  ],
+  "431": [
+   "crack"
+  ],
+  "432": [
+   "surface_injure"
+  ],
+  "433": [
+   "crack"
+  ],
+  "434": [
+   "surface_injure"
+  ],
+  "435": [
+   "craze"
+  ],
+  "436": [
+   "craze",
+   "hide_craze"
+  ],
+  "437": [
+   "thunderstrike"
+  ],
+  "438": [
+   "hide_craze"
+  ],
+  "439": [
+   "hide_craze"
+  ],
+  "440": [
+   "crack"
+  ],
+  "441": [
+   "surface_injure"
+  ],
+  "442": [
+   "corrosion"
+  ],
+  "443": [
+   "crack"
+  ],
+  "444": [
+   "craze"
+  ],
+  "445": [
+   "surface_injure"
+  ],
+  "446": [
+   "hide_craze"
+  ],
+  "447": [
+   "crack"
+  ],
+  "448": [
+   "hide_craze"
+  ],
+  "449": [
+   "hide_craze"
+  ],
+  "450": [
+   "hide_craze"
+  ],
+  "451": [
+   "corrosion",
+   "surface_injure"
+  ],
+  "452": [
+   "hide_craze"
+  ],
+  "453": [
+   "craze",
+   "hide_craze"
+  ],
+  "454": [
+   "craze"
+  ],
+  "455": [
+   "crack"
+  ],
+  "456": [
+   "craze",
+   "hide_craze"
+  ],
+  "457": [
+   "hide_craze"
+  ],
+  "458": [
+   "surface_injure"
+  ],
+  "459": [
+   "corrosion",
+   "surface_injure"
+  ],
+  "460": [
+   "crack"
+  ],
+  "461": [
+   "thunderstrike"
+  ],
+  "462": [
+   "surface_injure"
+  ],
+  "463": [
+   "hide_craze"
+  ],
+  "464": [
+   "craze",
+   "hide_craze"
+  ],
+  "465": [
+   "crack"
+  ],
+  "466": [
+   "corrosion",
+   "surface_injure"
+  ],
+  "467": [
+   "corrosion",
+   "thunderstrike"
+  ],
+  "468": [
+   "craze",
+   "hide_craze"
+  ],
+  "469": [
+   "craze"
+  ],
+  "470": [
+   "crack"
+  ],
+  "471": [
+   "crack"
+  ],
+  "472": [
+   "hide_craze"
+  ],
+  "473": [
+   "crack"
+  ],
+  "474": [
+   "surface_injure"
+  ],
+  "475": [
+   "surface_injure"
+  ],
+  "476": [
+   "surface_injure"
+  ],
+  "477": [
+   "hide_craze"
+  ],
+  "478": [
+   "surface_injure"
+  ],
+  "479": [
+   "surface_injure",
+   "thunderstrike"
+  ],
+  "480": [
+   "corrosion"
+  ],
+  "481": [
+   "corrosion"
+  ],
+  "482": [
+   "craze"
+  ],
+  "483": [
+   "hide_craze"
+  ],
+  "484": [
+   "corrosion",
+   "surface_injure"
+  ],
+  "485": [
+   "corrosion"
+  ],
+  "486": [
+   "crack"
+  ],
+  "487": [
+   "surface_injure"
+  ],
+  "488": [
+   "thunderstrike"
+  ],
+  "489": [
+   "corrosion"
+  ],
+  "490": [
+   "corrosion",
+   "surface_injure"
+  ],
+  "491": [
+   "corrosion"
+  ],
+  "492": [
+   "surface_injure"
+  ],
+  "493": [
+   "corrosion",
+   "surface_injure"
+  ],
+  "494": [
+   "surface_injure"
+  ],
+  "495": [
+   "corrosion"
+  ],
+  "496": [
+   "hide_craze"
+  ],
+  "497": [
+   "hide_craze"
+  ],
+  "498": [
+   "surface_injure"
+  ],
+  "499": [
+   "surface_injure"
+  ],
+  "500": [
+   "corrosion"
+  ],
+  "501": [
+   "corrosion"
+  ],
+  "502": [
+   "corrosion"
+  ],
+  "503": [
+   "corrosion"
+  ],
+  "504": [
+   "surface_injure"
+  ],
+  "505": [
+   "corrosion"
+  ],
+  "506": [
+   "crack"
+  ],
+  "507": [
+   "crack"
+  ],
+  "508": [
+   "hide_craze"
+  ],
+  "509": [
+   "corrosion"
+  ],
+  "510": [
+   "corrosion"
+  ],
+  "511": [
+   "hide_craze"
+  ],
+  "512": [
+   "surface_injure"
+  ],
+  "513": [
+   "craze"
+  ],
+  "514": [
+   "surface_injure"
+  ],
+  "515": [
+   "corrosion"
+  ],
+  "516": [
+   "corrosion"
+  ],
+  "517": [
+   "hide_craze"
+  ],
+  "518": [
+   "craze"
+  ],
+  "519": [
+   "hide_craze"
+  ],
+  "520": [
+   "crack"
+  ],
+  "521": [
+   "corrosion"
+  ],
+  "522": [
+   "corrosion",
+   "surface_injure"
+  ],
+  "523": [
+   "thunderstrike"
+  ],
+  "524": [
+   "craze"
+  ],
+  "525": [
+   "crack"
+  ],
+  "526": [
+   "hide_craze"
+  ],
+  "527": [
+   "corrosion"
+  ],
+  "528": [
+   "hide_craze"
+  ],
+  "529": [
+   "surface_injure"
+  ],
+  "530": [
+   "corrosion"
+  ],
+  "531": [
+   "crack"
+  ],
+  "532": [
+   "surface_injure"
+  ],
+  "533": [
+   "hide_craze"
+  ],
+  "534": [
+   "hide_craze"
+  ],
+  "535": [
+   "surface_injure"
+  ],
+  "536": [
+   "surface_injure"
+  ],
+  "537": [
+   "crack"
+  ],
+  "538": [
+   "craze"
+  ],
+  "539": [
+   "corrosion"
+  ],
+  "540": [
+   "corrosion"
+  ],
+  "541": [
+   "hide_craze"
+  ],
+  "542": [
+   "hide_craze"
+  ],
+  "543": [
+   "surface_injure",
+   "thunderstrike"
+  ],
+  "544": [
+   "crack"
+  ],
+  "545": [
+   "surface_injure"
+  ],
+  "546": [
+   "corrosion"
+  ],
+  "547": [
+   "surface_injure"
+  ],
+  "548": [
+   "crack"
+  ],
+  "549": [
+   "corrosion"
+  ],
+  "550": [
+   "corrosion"
+  ],
+  "551": [
+   "surface_injure",
+   "thunderstrike"
+  ],
+  "552": [
+   "crack"
+  ],
+  "553": [
+   "surface_injure"
+  ],
+  "554": [
+   "craze"
+  ],
+  "555": [
+   "surface_injure"
+  ],
+  "556": [
+   "craze"
+  ],
+  "557": [
+   "hide_craze"
+  ],
+  "558": [
+   "crack"
+  ],
+  "559": [
+   "craze"
+  ],
+  "560": [
+   "corrosion"
+  ],
+  "561": [
+   "corrosion"
+  ],
+  "562": [
+   "crack"
+  ],
+  "563": [
+   "craze"
+  ],
+  "564": [
+   "craze",
+   "hide_craze"
+  ],
+  "565": [
+   "craze"
+  ],
+  "566": [
+   "corrosion"
+  ],
+  "567": [
+   "crack"
+  ],
+  "568": [
+   "crack"
+  ],
+  "569": [
+   "hide_craze"
+  ],
+  "570": [
+   "crack"
+  ],
+  "571": [
+   "hide_craze"
+  ],
+  "572": [
+   "craze"
+  ],
+  "573": [
+   "surface_injure"
+  ],
+  "574": [
+   "craze"
+  ],
+  "575": [
+   "craze"
+  ],
+  "576": [
+   "surface_injure"
+  ],
+  "577": [
+   "crack"
+  ],
+  "578": [
+   "hide_craze"
+  ],
+  "579": [
+   "corrosion",
+   "surface_injure"
+  ],
+  "580": [
+   "craze"
+  ],
+  "581": [
+   "surface_injure"
+  ],
+  "582": [
+   "crack"
+  ],
+  "583": [
+   "corrosion"
+  ],
+  "584": [
+   "crack"
+  ],
+  "585": [
+   "crack"
+  ],
+  "586": [
+   "crack"
+  ],
+  "587": [
+   "hide_craze",
+   "surface_injure"
+  ],
+  "588": [
+   "corrosion"
+  ],
+  "589": [
+   "hide_craze"
+  ],
+  "590": [
+   "corrosion"
+  ],
+  "591": [
+   "surface_injure",
+   "thunderstrike"
+  ],
+  "592": [
+   "craze"
+  ],
+  "593": [
+   "crack"
+  ],
+  "594": [
+   "crack"
+  ],
+  "595": [
+   "corrosion",
+   "hide_craze",
+   "surface_injure"
+  ],
+  "596": [
+   "crack"
+  ],
+  "597": [
+   "hide_craze"
+  ],
+  "598": [
+   "corrosion"
+  ],
+  "599": [
+   "corrosion"
+  ],
+  "600": [
+   "hide_craze"
+  ],
+  "601": [
+   "surface_injure"
+  ],
+  "602": [
+   "crack"
+  ],
+  "603": [
+   "surface_injure",
+   "thunderstrike"
+  ],
+  "604": [
+   "crack"
+  ],
+  "605": [
+   "corrosion"
+  ],
+  "606": [
+   "surface_injure"
+  ],
+  "607": [
+   "craze",
+   "hide_craze"
+  ],
+  "608": [
+   "crack"
+  ],
+  "609": [
+   "craze",
+   "surface_injure"
+  ],
+  "610": [
+   "hide_craze"
+  ],
+  "611": [
+   "corrosion"
+  ],
+  "612": [
+   "hide_craze"
+  ],
+  "613": [
+   "hide_craze"
+  ],
+  "614": [
+   "hide_craze"
+  ],
+  "615": [
+   "hide_craze"
+  ],
+  "616": [
+   "craze",
+   "hide_craze"
+  ],
+  "617": [
+   "hide_craze"
+  ],
+  "618": [
+   "hide_craze"
+  ],
+  "619": [
+   "hide_craze"
+  ],
+  "620": [
+   "surface_injure"
+  ],
+  "621": [
+   "hide_craze",
+   "surface_injure"
+  ],
+  "622": [
+   "hide_craze"
+  ],
+  "623": [
+   "hide_craze",
+   "surface_injure"
+  ],
+  "624": [
+   "hide_craze"
+  ],
+  "625": [
+   "hide_craze"
+  ],
+  "626": [
+   "hide_craze"
+  ],
+  "627": [
+   "surface_injure"
+  ],
+  "628": [
+   "hide_craze"
+  ],
+  "629": [
+   "surface_injure"
+  ],
+  "630": [
+   "corrosion",
+   "surface_injure"
+  ],
+  "631": [
+   "surface_injure"
+  ],
+  "632": [
+   "craze"
+  ],
+  "633": [
+   "hide_craze"
+  ],
+  "634": [
+   "craze"
+  ],
+  "635": [
+   "surface_injure"
+  ],
+  "636": [
+   "surface_injure"
+  ],
+  "637": [
+   "craze"
+  ],
+  "638": [
+   "hide_craze"
+  ],
+  "639": [
+   "corrosion",
+   "hide_craze",
+   "surface_injure"
+  ],
+  "640": [
+   "surface_injure"
+  ],
+  "641": [
+   "craze",
+   "hide_craze"
+  ],
+  "642": [
+   "hide_craze",
+   "surface_injure"
+  ],
+  "643": [
+   "hide_craze"
+  ],
+  "644": [
+   "hide_craze"
+  ],
+  "645": [
+   "surface_injure"
+  ],
+  "646": [
+   "surface_injure"
+  ],
+  "647": [
+   "surface_injure"
+  ],
+  "648": [
+   "craze",
+   "hide_craze"
+  ],
+  "649": [
+   "corrosion"
+  ],
+  "650": [
+   "corrosion"
+  ],
+  "651": [
+   "corrosion",
+   "surface_injure"
+  ],
+  "652": [
+   "craze",
+   "hide_craze"
+  ],
+  "653": [
+   "surface_injure"
+  ],
+  "654": [
+   "craze",
+   "hide_craze"
+  ],
+  "655": [
+   "hide_craze"
+  ],
+  "656": [
+   "surface_injure"
+  ],
+  "657": [
+   "surface_injure"
+  ],
+  "658": [
+   "corrosion",
+   "surface_injure"
+  ],
+  "659": [
+   "thunderstrike"
+  ],
+  "660": [
+   "craze",
+   "surface_injure"
+  ],
+  "661": [
+   "surface_injure"
+  ],
+  "662": [
+   "surface_injure"
+  ],
+  "663": [
+   "craze",
+   "hide_craze"
+  ],
+  "664": [
+   "corrosion",
+   "surface_injure"
+  ],
+  "665": [
+   "hide_craze"
+  ],
+  "666": [
+   "craze",
+   "hide_craze"
+  ],
+  "667": [
+   "hide_craze"
+  ],
+  "668": [
+   "craze"
+  ],
+  "669": [
+   "surface_injure"
+  ],
+  "670": [
+   "hide_craze",
+   "surface_injure"
+  ],
+  "671": [
+   "corrosion",
+   "craze",
+   "hide_craze",
+   "surface_injure"
+  ],
+  "672": [
+   "corrosion",
+   "surface_injure"
+  ],
+  "673": [
+   "surface_injure"
+  ],
+  "674": [
+   "surface_injure"
+  ],
+  "675": [
+   "hide_craze"
+  ],
+  "676": [
+   "hide_craze"
+  ],
+  "677": [
+   "hide_craze"
+  ],
+  "678": [
+   "hide_craze"
+  ],
+  "679": [
+   "surface_injure"
+  ],
+  "680": [
+   "corrosion"
+  ],
+  "681": [
+   "surface_injure"
+  ],
+  "682": [
+   "hide_craze"
+  ],
+  "683": [
+   "surface_injure"
+  ],
+  "684": [
+   "surface_injure"
+  ],
+  "685": [
+   "craze"
+  ],
+  "686": [
+   "thunderstrike"
+  ],
+  "687": [
+   "surface_injure"
+  ],
+  "688": [
+   "thunderstrike"
+  ],
+  "689": [
+   "surface_injure"
+  ],
+  "690": [
+   "thunderstrike"
+  ],
+  "691": [
+   "craze"
+  ],
+  "692": [
+   "craze"
+  ],
+  "693": [
+   "hide_craze"
+  ],
+  "694": [
+   "hide_craze"
+  ],
+  "695": [
+   "hide_craze"
+  ],
+  "696": [
+   "hide_craze"
+  ],
+  "697": [
+   "hide_craze"
+  ],
+  "698": [
+   "hide_craze"
+  ],
+  "699": [
+   "thunderstrike"
+  ],
+  "700": [
+   "corrosion",
+   "surface_injure"
+  ],
+  "701": [
+   "craze"
+  ],
+  "702": [
+   "surface_injure"
+  ],
+  "703": [
+   "corrosion"
+  ],
+  "704": [
+   "corrosion"
+  ],
+  "705": [
+   "hide_craze"
+  ],
+  "706": [
+   "hide_craze"
+  ],
+  "707": [
+   "corrosion"
+  ],
+  "708": [
+   "thunderstrike"
+  ],
+  "709": [
+   "hide_craze"
+  ],
+  "710": [
+   "craze"
+  ],
+  "711": [
+   "corrosion",
+   "surface_injure"
+  ],
+  "712": [
+   "corrosion",
+   "surface_injure"
+  ],
+  "713": [
+   "craze"
+  ],
+  "714": [
+   "craze"
+  ],
+  "715": [
+   "craze"
+  ],
+  "716": [
+   "craze"
+  ],
+  "717": [
+   "craze",
+   "hide_craze"
+  ],
+  "718": [
+   "hide_craze"
+  ],
+  "719": [
+   "corrosion"
+  ],
+  "720": [
+   "hide_craze"
+  ],
+  "721": [
+   "hide_craze"
+  ],
+  "722": [
+   "corrosion"
+  ],
+  "723": [
+   "hide_craze"
+  ],
+  "724": [
+   "corrosion"
+  ],
+  "725": [
+   "craze"
+  ],
+  "726": [
+   "surface_injure"
+  ],
+  "727": [
+   "corrosion"
+  ],
+  "728": [
+   "craze",
+   "hide_craze"
+  ],
+  "729": [
+   "corrosion"
+  ],
+  "730": [
+   "craze",
+   "hide_craze"
+  ],
+  "731": [
+   "craze"
+  ],
+  "732": [
+   "corrosion"
+  ],
+  "733": [
+   "corrosion"
+  ],
+  "734": [
+   "crack"
+  ],
+  "735": [
+   "crack"
+  ],
+  "736": [
+   "craze"
+  ],
+  "737": [
+   "craze",
+   "hide_craze"
+  ],
+  "738": [
+   "crack"
+  ],
+  "739": [
+   "crack"
+  ],
+  "740": [
+   "surface_injure"
+  ],
+  "741": [
+   "craze"
+  ],
+  "742": [
+   "craze"
+  ],
+  "743": [
+   "surface_injure",
+   "thunderstrike"
+  ],
+  "744": [
+   "thunderstrike"
+  ],
+  "745": [
+   "surface_injure"
+  ],
+  "746": [
+   "surface_injure"
+  ],
+  "747": [
+   "surface_injure"
+  ],
+  "748": [
+   "surface_injure",
+   "thunderstrike"
+  ],
+  "749": [
+   "corrosion",
+   "surface_injure"
+  ],
+  "750": [
+   "surface_injure"
+  ],
+  "751": [
+   "crack"
+  ],
+  "752": [
+   "corrosion"
+  ],
+  "753": [
+   "hide_craze",
+   "surface_injure"
+  ],
+  "754": [
+   "craze",
+   "hide_craze",
+   "thunderstrike"
+  ],
+  "755": [
+   "corrosion"
+  ],
+  "756": [
+   "hide_craze"
+  ],
+  "757": [
+   "hide_craze"
+  ],
+  "758": [
+   "craze"
+  ],
+  "759": [
+   "craze",
+   "surface_injure"
+  ],
+  "760": [
+   "surface_injure"
+  ],
+  "761": [
+   "hide_craze"
+  ],
+  "762": [
+   "crack"
+  ],
+  "763": [
+   "crack"
+  ],
+  "764": [
+   "corrosion",
+   "hide_craze",
+   "surface_injure"
+  ],
+  "765": [
+   "craze"
+  ],
+  "766": [
+   "hide_craze"
+  ],
+  "767": [
+   "surface_injure"
+  ],
+  "768": [
+   "hide_craze"
+  ],
+  "769": [
+   "hide_craze"
+  ],
+  "770": [
+   "surface_injure"
+  ],
+  "771": [
+   "craze"
+  ],
+  "772": [
+   "surface_injure"
+  ],
+  "773": [
+   "crack"
+  ],
+  "774": [
+   "crack"
+  ],
+  "775": [
+   "corrosion",
+   "thunderstrike"
+  ],
+  "776": [
+   "crack"
+  ],
+  "777": [
+   "corrosion"
+  ],
+  "778": [
+   "corrosion"
+  ],
+  "779": [
+   "craze"
+  ],
+  "780": [
+   "crack"
+  ],
+  "781": [
+   "thunderstrike"
+  ],
+  "782": [
+   "corrosion"
+  ],
+  "783": [
+   "craze"
+  ],
+  "784": [
+   "craze"
+  ],
+  "785": [
+   "craze"
+  ],
+  "786": [
+   "craze"
+  ],
+  "787": [
+   "craze"
+  ],
+  "788": [
+   "craze"
+  ],
+  "789": [
+   "crack"
+  ],
+  "790": [
+   "crack"
+  ],
+  "791": [
+   "thunderstrike"
+  ],
+  "792": [
+   "crack"
+  ],
+  "793": [
+   "craze"
+  ],
+  "794": [
+   "thunderstrike"
+  ],
+  "795": [
+   "craze"
+  ],
+  "796": [
+   "surface_injure"
+  ],
+  "797": [
+   "craze"
+  ],
+  "798": [
+   "crack"
+  ],
+  "799": [
+   "surface_injure"
+  ],
+  "800": [
+   "craze"
+  ],
+  "801": [
+   "corrosion"
+  ],
+  "802": [
+   "surface_injure"
+  ],
+  "803": [
+   "craze"
+  ],
+  "804": [
+   "surface_injure"
+  ],
+  "805": [
+   "crack"
+  ],
+  "806": [
+   "craze"
+  ],
+  "807": [
+   "craze"
+  ],
+  "808": [
+   "corrosion"
+  ],
+  "809": [
+   "surface_injure"
+  ],
+  "810": [
+   "hide_craze"
+  ],
+  "811": [
+   "crack"
+  ],
+  "812": [
+   "hide_craze"
+  ],
+  "813": [
+   "crack"
+  ],
+  "814": [
+   "corrosion"
+  ],
+  "815": [
+   "corrosion",
+   "surface_injure"
+  ],
+  "816": [
+   "crack"
+  ],
+  "817": [
+   "thunderstrike"
+  ],
+  "818": [
+   "hide_craze",
+   "surface_injure"
+  ],
+  "819": [
+   "craze"
+  ],
+  "820": [
+   "hide_craze",
+   "surface_injure"
+  ],
+  "821": [
+   "crack"
+  ],
+  "822": [
+   "corrosion"
+  ],
+  "823": [
+   "hide_craze"
+  ],
+  "824": [
+   "craze"
+  ],
+  "825": [
+   "hide_craze"
+  ],
+  "826": [
+   "craze"
+  ],
+  "827": [
+   "craze",
+   "hide_craze",
+   "surface_injure"
+  ],
+  "828": [
+   "craze"
+  ],
+  "829": [
+   "surface_injure"
+  ],
+  "830": [
+   "hide_craze"
+  ],
+  "831": [
+   "crack"
+  ],
+  "832": [
+   "crack"
+  ],
+  "833": [
+   "corrosion"
+  ],
+  "834": [
+   "thunderstrike"
+  ],
+  "835": [
+   "thunderstrike"
+  ],
+  "836": [
+   "corrosion"
+  ],
+  "837": [
+   "hide_craze"
+  ],
+  "838": [
+   "hide_craze"
+  ],
+  "839": [
+   "surface_injure"
+  ],
+  "840": [
+   "hide_craze"
+  ],
+  "841": [
+   "surface_injure"
+  ],
+  "842": [
+   "surface_injure"
+  ],
+  "843": [
+   "thunderstrike"
+  ],
+  "844": [
+   "crack"
+  ],
+  "845": [
+   "corrosion"
+  ],
+  "846": [
+   "surface_injure"
+  ],
+  "847": [
+   "craze"
+  ],
+  "848": [
+   "thunderstrike"
+  ],
+  "849": [
+   "crack"
+  ],
+  "850": [
+   "corrosion"
+  ],
+  "851": [
+   "surface_injure"
+  ],
+  "852": [
+   "corrosion",
+   "surface_injure"
+  ],
+  "853": [
+   "surface_injure"
+  ],
+  "854": [
+   "thunderstrike"
+  ],
+  "855": [
+   "crack"
+  ],
+  "856": [
+   "craze",
+   "hide_craze"
+  ],
+  "857": [
+   "thunderstrike"
+  ],
+  "858": [
+   "corrosion"
+  ],
+  "859": [
+   "surface_injure"
+  ],
+  "860": [
+   "corrosion",
+   "surface_injure"
+  ],
+  "861": [
+   "craze"
+  ],
+  "862": [
+   "surface_injure"
+  ],
+  "863": [
+   "thunderstrike"
+  ],
+  "864": [
+   "surface_injure"
+  ],
+  "865": [
+   "corrosion"
+  ],
+  "866": [
+   "corrosion"
+  ],
+  "867": [
+   "surface_injure"
+  ],
+  "868": [
+   "surface_injure"
+  ],
+  "869": [
+   "crack"
+  ],
+  "870": [
+   "corrosion"
+  ],
+  "871": [
+   "craze",
+   "hide_craze"
+  ],
+  "872": [
+   "crack"
+  ],
+  "873": [
+   "surface_injure"
+  ],
+  "874": [
+   "thunderstrike"
+  ],
+  "875": [
+   "hide_craze"
+  ],
+  "876": [
+   "surface_injure"
+  ],
+  "877": [
+   "surface_injure"
+  ],
+  "878": [
+   "corrosion"
+  ],
+  "879": [
+   "surface_injure"
+  ],
+  "880": [
+   "thunderstrike"
+  ],
+  "881": [
+   "corrosion"
+  ],
+  "882": [
+   "corrosion"
+  ],
+  "883": [
+   "craze",
+   "hide_craze"
+  ],
+  "884": [
+   "craze",
+   "hide_craze"
+  ],
+  "885": [
+   "craze",
+   "hide_craze"
+  ],
+  "886": [
+   "craze",
+   "hide_craze"
+  ],
+  "887": [
+   "corrosion"
+  ],
+  "888": [
+   "craze"
+  ],
+  "889": [
+   "hide_craze"
+  ],
+  "890": [
+   "crack"
+  ],
+  "891": [
+   "corrosion"
+  ],
+  "892": [
+   "crack"
+  ],
+  "893": [
+   "craze"
+  ],
+  "894": [
+   "thunderstrike"
+  ],
+  "895": [
+   "craze",
+   "hide_craze"
+  ],
+  "896": [
+   "thunderstrike"
+  ],
+  "897": [
+   "thunderstrike"
+  ],
+  "898": [
+   "crack"
+  ],
+  "899": [
+   "corrosion"
+  ],
+  "900": [
+   "craze",
+   "hide_craze"
+  ],
+  "901": [
+   "surface_injure"
+  ],
+  "902": [
+   "corrosion",
+   "surface_injure"
+  ],
+  "903": [
+   "crack"
+  ],
+  "904": [
+   "hide_craze"
+  ],
+  "905": [
+   "surface_injure"
+  ],
+  "906": [
+   "crack"
+  ],
+  "907": [
+   "surface_injure"
+  ],
+  "908": [
+   "craze"
+  ],
+  "909": [
+   "craze",
+   "hide_craze"
+  ],
+  "910": [
+   "hide_craze"
+  ],
+  "911": [
+   "crack"
+  ],
+  "912": [
+   "craze"
+  ],
+  "913": [
+   "crack"
+  ],
+  "914": [
+   "surface_injure"
+  ],
+  "915": [
+   "corrosion",
+   "surface_injure"
+  ],
+  "916": [
+   "hide_craze"
+  ],
+  "917": [
+   "hide_craze"
+  ],
+  "918": [
+   "hide_craze"
+  ],
+  "919": [
+   "corrosion"
+  ],
+  "920": [
+   "corrosion"
+  ],
+  "921": [
+   "crack"
+  ],
+  "922": [
+   "thunderstrike"
+  ],
+  "923": [
+   "crack"
+  ],
+  "924": [
+   "surface_injure"
+  ],
+  "925": [
+   "surface_injure"
+  ],
+  "926": [
+   "hide_craze"
+  ],
+  "927": [
+   "surface_injure",
+   "thunderstrike"
+  ],
+  "928": [
+   "craze",
+   "hide_craze"
+  ],
+  "929": [
+   "corrosion"
+  ],
+  "930": [
+   "craze"
+  ],
+  "931": [
+   "surface_injure"
+  ],
+  "932": [
+   "corrosion"
+  ],
+  "933": [
+   "surface_injure"
+  ],
+  "934": [
+   "surface_injure"
+  ],
+  "935": [
+   "corrosion"
+  ],
+  "936": [
+   "surface_injure"
+  ],
+  "937": [
+   "corrosion"
+  ],
+  "938": [
+   "corrosion"
+  ],
+  "939": [
+   "craze"
+  ],
+  "940": [
+   "surface_injure"
+  ],
+  "941": [
+   "corrosion"
+  ],
+  "942": [
+   "corrosion"
+  ],
+  "943": [
+   "thunderstrike"
+  ],
+  "944": [
+   "surface_injure"
+  ],
+  "945": [
+   "thunderstrike"
+  ],
+  "946": [
+   "hide_craze"
+  ],
+  "947": [
+   "surface_injure"
+  ],
+  "948": [
+   "crack"
+  ],
+  "949": [
+   "surface_injure"
+  ],
+  "950": [
+   "surface_injure"
+  ],
+  "951": [
+   "corrosion"
+  ],
+  "952": [
+   "thunderstrike"
+  ],
+  "953": [
+   "crack"
+  ],
+  "954": [
+   "surface_injure"
+  ],
+  "955": [
+   "corrosion"
+  ],
+  "956": [
+   "corrosion",
+   "surface_injure",
+   "thunderstrike"
+  ],
+  "957": [
+   "craze"
+  ],
+  "958": [
+   "hide_craze"
+  ],
+  "959": [
+   "corrosion"
+  ],
+  "960": [
+   "crack"
+  ],
+  "961": [
+   "craze"
+  ],
+  "962": [
+   "corrosion"
+  ],
+  "963": [
+   "hide_craze"
+  ],
+  "964": [
+   "crack"
+  ],
+  "965": [
+   "surface_injure"
+  ],
+  "966": [
+   "surface_injure"
+  ],
+  "967": [
+   "crack"
+  ],
+  "968": [
+   "corrosion"
+  ],
+  "969": [
+   "hide_craze"
+  ],
+  "970": [
+   "craze"
+  ],
+  "971": [
+   "surface_injure"
+  ],
+  "972": [
+   "corrosion"
+  ],
+  "973": [
+   "hide_craze"
+  ],
+  "974": [
+   "surface_injure",
+   "thunderstrike"
+  ],
+  "975": [
+   "hide_craze",
+   "surface_injure"
+  ],
+  "976": [
+   "crack"
+  ],
+  "977": [
+   "corrosion"
+  ],
+  "978": [
+   "corrosion"
+  ],
+  "979": [
+   "craze"
+  ],
+  "980": [
+   "surface_injure",
+   "thunderstrike"
+  ],
+  "981": [
+   "corrosion",
+   "craze",
+   "surface_injure"
+  ],
+  "982": [
+   "hide_craze"
+  ],
+  "983": [
+   "hide_craze"
+  ],
+  "984": [
+   "hide_craze"
+  ],
+  "985": [
+   "hide_craze"
+  ],
+  "986": [
+   "hide_craze"
+  ],
+  "987": [
+   "thunderstrike"
+  ],
+  "988": [
+   "surface_injure"
+  ],
+  "989": [
+   "corrosion",
+   "hide_craze",
+   "surface_injure"
+  ],
+  "990": [
+   "hide_craze"
+  ],
+  "991": [
+   "hide_craze"
+  ],
+  "992": [
+   "surface_injure"
+  ],
+  "993": [
+   "surface_injure"
+  ],
+  "994": [
+   "craze"
+  ],
+  "995": [
+   "surface_injure"
+  ],
+  "996": [
+   "craze"
+  ],
+  "997": [
+   "hide_craze"
+  ],
+  "998": [
+   "corrosion"
+  ],
+  "999": [
+   "surface_injure"
+  ],
+  "1000": [
+   "hide_craze",
+   "surface_injure"
+  ],
+  "1001": [
+   "surface_injure"
+  ],
+  "1002": [
+   "corrosion"
+  ],
+  "1003": [
+   "surface_injure"
+  ],
+  "1004": [
+   "craze",
+   "hide_craze"
+  ],
+  "1005": [
+   "surface_injure"
+  ],
+  "1006": [
+   "thunderstrike"
+  ],
+  "1007": [
+   "surface_injure"
+  ],
+  "1008": [
+   "surface_injure"
+  ],
+  "1009": [
+   "surface_injure"
+  ],
+  "1010": [
+   "hide_craze"
+  ],
+  "1011": [
+   "craze"
+  ],
+  "1012": [
+   "hide_craze"
+  ],
+  "1013": [
+   "surface_injure"
+  ],
+  "1014": [
+   "hide_craze"
+  ],
+  "1015": [
+   "surface_injure"
+  ],
+  "1016": [
+   "corrosion",
+   "surface_injure"
+  ],
+  "1017": [
+   "hide_craze"
+  ],
+  "1018": [
+   "surface_injure"
+  ],
+  "1019": [
+   "thunderstrike"
+  ],
+  "1020": [
+   "surface_injure"
+  ],
+  "1021": [
+   "thunderstrike"
+  ],
+  "1022": [
+   "surface_injure"
+  ],
+  "1023": [
+   "thunderstrike"
+  ],
+  "1024": [
+   "craze"
+  ],
+  "1025": [
+   "hide_craze"
+  ],
+  "1026": [
+   "hide_craze"
+  ],
+  "1027": [
+   "hide_craze"
+  ],
+  "1028": [
+   "thunderstrike"
+  ],
+  "1029": [
+   "surface_injure"
+  ],
+  "1030": [
+   "craze"
+  ],
+  "1031": [
+   "corrosion"
+  ],
+  "1032": [
+   "hide_craze"
+  ],
+  "1033": [
+   "thunderstrike"
+  ],
+  "1034": [
+   "hide_craze"
+  ],
+  "1035": [
+   "craze"
+  ],
+  "1036": [
+   "craze"
+  ],
+  "1037": [
+   "corrosion"
+  ],
+  "1038": [
+   "craze"
+  ],
+  "1039": [
+   "craze"
+  ],
+  "1040": [
+   "craze"
+  ],
+  "1041": [
+   "craze",
+   "hide_craze"
+  ],
+  "1042": [
+   "corrosion"
+  ],
+  "1043": [
+   "corrosion"
+  ],
+  "1044": [
+   "hide_craze"
+  ],
+  "1045": [
+   "corrosion"
+  ],
+  "1046": [
+   "craze"
+  ],
+  "1047": [
+   "craze"
+  ],
+  "1048": [
+   "corrosion"
+  ],
+  "1049": [
+   "corrosion"
+  ],
+  "1050": [
+   "crack"
+  ],
+  "1051": [
+   "craze"
+  ],
+  "1052": [
+   "surface_injure"
+  ],
+  "1053": [
+   "craze"
+  ],
+  "1054": [
+   "crack"
+  ],
+  "1055": [
+   "crack"
+  ],
+  "1056": [
+   "thunderstrike"
+  ],
+  "1057": [
+   "crack"
+  ],
+  "1058": [
+   "crack"
+  ],
+  "1059": [
+   "hide_craze"
+  ],
+  "1060": [
+   "surface_injure"
+  ],
+  "1061": [
+   "craze"
+  ],
+  "1062": [
+   "crack"
+  ],
+  "1063": [
+   "corrosion"
+  ],
+  "1064": [
+   "craze"
+  ]
+ },
+ "per_annotator": {
+  "0": {
+   "a": [
+    "corrosion"
+   ],
+   "b": [
+    "corrosion"
+   ]
+  },
+  "1": {
+   "a": [
+    "craze"
+   ],
+   "b": [
+    "craze"
+   ]
+  },
+  "2": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "3": {
+   "a": [
+    "corrosion"
+   ],
+   "b": [
+    "corrosion"
+   ]
+  },
+  "4": {
+   "a": [
+    "crack"
+   ],
+   "b": [
+    "crack"
+   ]
+  },
+  "5": {
+   "a": [
+    "corrosion"
+   ],
+   "b": [
+    "corrosion"
+   ]
+  },
+  "6": {
+   "a": [
+    "craze"
+   ],
+   "b": [
+    "craze"
+   ]
+  },
+  "7": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "hide_craze"
+   ]
+  },
+  "8": {
+   "a": [
+    "crack"
+   ],
+   "b": [
+    "crack"
+   ]
+  },
+  "9": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "hide_craze"
+   ]
+  },
+  "10": {
+   "a": [
+    "surface_injure",
+    "thunderstrike"
+   ],
+   "b": [
+    "surface_injure",
+    "thunderstrike"
+   ]
+  },
+  "11": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "12": {
+   "a": [
+    "crack"
+   ],
+   "b": [
+    "crack"
+   ]
+  },
+  "13": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "hide_craze"
+   ]
+  },
+  "14": {
+   "a": [
+    "hide_craze",
+    "surface_injure"
+   ],
+   "b": [
+    "hide_craze",
+    "surface_injure"
+   ]
+  },
+  "15": {
+   "a": [
+    "craze"
+   ],
+   "b": [
+    "craze"
+   ]
+  },
+  "16": {
+   "a": [
+    "craze"
+   ],
+   "b": [
+    "hide_craze"
+   ]
+  },
+  "17": {
+   "a": [
+    "thunderstrike"
+   ],
+   "b": [
+    "thunderstrike"
+   ]
+  },
+  "18": {
+   "a": [
+    "craze"
+   ],
+   "b": [
+    "craze"
+   ]
+  },
+  "19": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "20": {
+   "a": [
+    "craze"
+   ],
+   "b": [
+    "craze"
+   ]
+  },
+  "21": {
+   "a": [
+    "craze"
+   ],
+   "b": [
+    "craze"
+   ]
+  },
+  "22": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "23": {
+   "a": [
+    "crack"
+   ],
+   "b": [
+    "crack"
+   ]
+  },
+  "24": {
+   "a": [
+    "craze"
+   ],
+   "b": [
+    "craze"
+   ]
+  },
+  "25": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "hide_craze"
+   ]
+  },
+  "26": {
+   "a": [
+    "crack"
+   ],
+   "b": [
+    "crack"
+   ]
+  },
+  "27": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "28": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "hide_craze"
+   ]
+  },
+  "29": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "hide_craze"
+   ]
+  },
+  "30": {
+   "a": [
+    "craze"
+   ],
+   "b": [
+    "craze"
+   ]
+  },
+  "31": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "32": {
+   "a": [
+    "thunderstrike"
+   ],
+   "b": [
+    "thunderstrike"
+   ]
+  },
+  "33": {
+   "a": [
+    "crack"
+   ],
+   "b": [
+    "crack"
+   ]
+  },
+  "34": {
+   "a": [
+    "hide_craze",
+    "surface_injure"
+   ],
+   "b": [
+    "hide_craze",
+    "surface_injure"
+   ]
+  },
+  "35": {
+   "a": [
+    "corrosion"
+   ],
+   "b": [
+    "corrosion"
+   ]
+  },
+  "36": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "hide_craze"
+   ]
+  },
+  "37": {
+   "a": [
+    "surface_injure",
+    "thunderstrike"
+   ],
+   "b": [
+    "surface_injure",
+    "thunderstrike"
+   ]
+  },
+  "38": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "craze"
+   ]
+  },
+  "39": {
+   "a": [
+    "corrosion"
+   ],
+   "b": [
+    "corrosion"
+   ]
+  },
+  "40": {
+   "a": [
+    "thunderstrike"
+   ],
+   "b": [
+    "thunderstrike"
+   ]
+  },
+  "41": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "hide_craze"
+   ]
+  },
+  "42": {
+   "a": [
+    "craze"
+   ],
+   "b": [
+    "craze"
+   ]
+  },
+  "43": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "44": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "craze"
+   ]
+  },
+  "45": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "46": {
+   "a": [
+    "corrosion"
+   ],
+   "b": [
+    "corrosion"
+   ]
+  },
+  "47": {
+   "a": [
+    "craze"
+   ],
+   "b": [
+    "craze"
+   ]
+  },
+  "48": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "49": {
+   "a": [
+    "craze"
+   ],
+   "b": [
+    "craze"
+   ]
+  },
+  "50": {
+   "a": [
+    "craze"
+   ],
+   "b": [
+    "craze",
+    "hide_craze"
+   ]
+  },
+  "51": {
+   "a": [
+    "craze"
+   ],
+   "b": [
+    "craze"
+   ]
+  },
+  "52": {
+   "a": [
+    "thunderstrike"
+   ],
+   "b": [
+    "thunderstrike"
+   ]
+  },
+  "53": {
+   "a": [
+    "crack"
+   ],
+   "b": [
+    "crack"
+   ]
+  },
+  "54": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "hide_craze"
+   ]
+  },
+  "55": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "hide_craze"
+   ]
+  },
+  "56": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "craze",
+    "hide_craze"
+   ]
+  },
+  "57": {
+   "a": [
+    "craze",
+    "surface_injure"
+   ],
+   "b": [
+    "corrosion",
+    "craze"
+   ]
+  },
+  "58": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "hide_craze"
+   ]
+  },
+  "59": {
+   "a": [
+    "crack"
+   ],
+   "b": [
+    "crack"
+   ]
+  },
+  "60": {
+   "a": [
+    "hide_craze",
+    "thunderstrike"
+   ],
+   "b": [
+    "hide_craze",
+    "thunderstrike"
+   ]
+  },
+  "61": {
+   "a": [
+    "craze"
+   ],
+   "b": [
+    "craze",
+    "hide_craze"
+   ]
+  },
+  "62": {
+   "a": [
+    "hide_craze",
+    "thunderstrike"
+   ],
+   "b": [
+    "hide_craze",
+    "thunderstrike"
+   ]
+  },
+  "63": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "64": {
+   "a": [
+    "corrosion"
+   ],
+   "b": [
+    "corrosion"
+   ]
+  },
+  "65": {
+   "a": [
+    "corrosion"
+   ],
+   "b": [
+    "corrosion"
+   ]
+  },
+  "66": {
+   "a": [
+    "crack"
+   ],
+   "b": [
+    "crack"
+   ]
+  },
+  "67": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "hide_craze"
+   ]
+  },
+  "68": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "hide_craze"
+   ]
+  },
+  "69": {
+   "a": [
+    "crack"
+   ],
+   "b": [
+    "crack"
+   ]
+  },
+  "70": {
+   "a": [
+    "crack"
+   ],
+   "b": [
+    "crack"
+   ]
+  },
+  "71": {
+   "a": [
+    "craze"
+   ],
+   "b": [
+    "craze"
+   ]
+  },
+  "72": {
+   "a": [
+    "corrosion"
+   ],
+   "b": []
+  },
+  "73": {
+   "a": [
+    "craze"
+   ],
+   "b": [
+    "craze"
+   ]
+  },
+  "74": {
+   "a": [
+    "craze"
+   ],
+   "b": [
+    "craze"
+   ]
+  },
+  "75": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "76": {
+   "a": [
+    "craze"
+   ],
+   "b": [
+    "craze"
+   ]
+  },
+  "77": {
+   "a": [
+    "thunderstrike"
+   ],
+   "b": [
+    "thunderstrike"
+   ]
+  },
+  "78": {
+   "a": [
+    "crack"
+   ],
+   "b": [
+    "crack"
+   ]
+  },
+  "79": {
+   "a": [
+    "craze"
+   ],
+   "b": [
+    "craze"
+   ]
+  },
+  "80": {
+   "a": [
+    "craze"
+   ],
+   "b": [
+    "craze"
+   ]
+  },
+  "81": {
+   "a": [
+    "craze"
+   ],
+   "b": [
+    "craze"
+   ]
+  },
+  "82": {
+   "a": [
+    "crack"
+   ],
+   "b": [
+    "crack"
+   ]
+  },
+  "83": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "hide_craze"
+   ]
+  },
+  "84": {
+   "a": [
+    "thunderstrike"
+   ],
+   "b": [
+    "thunderstrike"
+   ]
+  },
+  "85": {
+   "a": [
+    "crack"
+   ],
+   "b": [
+    "crack"
+   ]
+  },
+  "86": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "hide_craze"
+   ]
+  },
+  "87": {
+   "a": [
+    "craze"
+   ],
+   "b": [
+    "craze"
+   ]
+  },
+  "88": {
+   "a": [
+    "crack"
+   ],
+   "b": [
+    "crack"
+   ]
+  },
+  "89": {
+   "a": [
+    "crack"
+   ],
+   "b": [
+    "crack"
+   ]
+  },
+  "90": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "91": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "hide_craze"
+   ]
+  },
+  "92": {
+   "a": [
+    "crack"
+   ],
+   "b": [
+    "crack"
+   ]
+  },
+  "93": {
+   "a": [
+    "craze"
+   ],
+   "b": [
+    "craze"
+   ]
+  },
+  "94": {
+   "a": [
+    "crack"
+   ],
+   "b": [
+    "crack"
+   ]
+  },
+  "95": {
+   "a": [
+    "corrosion",
+    "thunderstrike"
+   ],
+   "b": [
+    "corrosion",
+    "surface_injure",
+    "thunderstrike"
+   ]
+  },
+  "96": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "corrosion",
+    "surface_injure"
+   ]
+  },
+  "97": {
+   "a": [
+    "crack"
+   ],
+   "b": [
+    "crack"
+   ]
+  },
+  "98": {
+   "a": [
+    "craze"
+   ],
+   "b": [
+    "craze"
+   ]
+  },
+  "99": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "hide_craze"
+   ]
+  },
+  "100": {
+   "a": [
+    "thunderstrike"
+   ],
+   "b": [
+    "thunderstrike"
+   ]
+  },
+  "101": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "102": {
+   "a": [
+    "thunderstrike"
+   ],
+   "b": [
+    "thunderstrike"
+   ]
+  },
+  "103": {
+   "a": [
+    "craze"
+   ],
+   "b": [
+    "craze"
+   ]
+  },
+  "104": {
+   "a": [
+    "crack"
+   ],
+   "b": [
+    "crack"
+   ]
+  },
+  "105": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "106": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "corrosion",
+    "surface_injure"
+   ]
+  },
+  "107": {
+   "a": [
+    "crack"
+   ],
+   "b": [
+    "crack"
+   ]
+  },
+  "108": {
+   "a": [
+    "surface_injure",
+    "thunderstrike"
+   ],
+   "b": [
+    "surface_injure",
+    "thunderstrike"
+   ]
+  },
+  "109": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "110": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "corrosion"
+   ]
+  },
+  "111": {
+   "a": [
+    "crack"
+   ],
+   "b": [
+    "crack"
+   ]
+  },
+  "112": {
+   "a": [
+    "surface_injure",
+    "thunderstrike"
+   ],
+   "b": [
+    "surface_injure",
+    "thunderstrike"
+   ]
+  },
+  "113": {
+   "a": [
+    "corrosion"
+   ],
+   "b": [
+    "corrosion"
+   ]
+  },
+  "114": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "hide_craze"
+   ]
+  },
+  "115": {
+   "a": [
+    "corrosion"
+   ],
+   "b": [
+    "corrosion"
+   ]
+  },
+  "116": {
+   "a": [
+    "hide_craze",
+    "surface_injure"
+   ],
+   "b": [
+    "hide_craze",
+    "surface_injure"
+   ]
+  },
+  "117": {
+   "a": [
+    "craze"
+   ],
+   "b": [
+    "craze"
+   ]
+  },
+  "118": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "119": {
+   "a": [
+    "thunderstrike"
+   ],
+   "b": [
+    "thunderstrike"
+   ]
+  },
+  "120": {
+   "a": [
+    "corrosion"
+   ],
+   "b": [
+    "corrosion"
+   ]
+  },
+  "121": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "hide_craze"
+   ]
+  },
+  "122": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "hide_craze"
+   ]
+  },
+  "123": {
+   "a": [
+    "craze"
+   ],
+   "b": [
+    "craze"
+   ]
+  },
+  "124": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "hide_craze"
+   ]
+  },
+  "125": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "hide_craze"
+   ]
+  },
+  "126": {
+   "a": [
+    "craze",
+    "surface_injure"
+   ],
+   "b": [
+    "craze",
+    "surface_injure"
+   ]
+  },
+  "127": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "128": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "129": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "hide_craze"
+   ]
+  },
+  "130": {
+   "a": [
+    "crack"
+   ],
+   "b": [
+    "crack"
+   ]
+  },
+  "131": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "132": {
+   "a": [
+    "corrosion"
+   ],
+   "b": [
+    "corrosion"
+   ]
+  },
+  "133": {
+   "a": [
+    "crack"
+   ],
+   "b": [
+    "crack"
+   ]
+  },
+  "134": {
+   "a": [
+    "crack"
+   ],
+   "b": [
+    "crack"
+   ]
+  },
+  "135": {
+   "a": [
+    "craze"
+   ],
+   "b": [
+    "craze"
+   ]
+  },
+  "136": {
+   "a": [
+    "crack"
+   ],
+   "b": [
+    "crack"
+   ]
+  },
+  "137": {
+   "a": [
+    "crack"
+   ],
+   "b": [
+    "crack"
+   ]
+  },
+  "138": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "hide_craze"
+   ]
+  },
+  "139": {
+   "a": [
+    "craze"
+   ],
+   "b": [
+    "craze"
+   ]
+  },
+  "140": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "hide_craze"
+   ]
+  },
+  "141": {
+   "a": [
+    "craze"
+   ],
+   "b": [
+    "craze"
+   ]
+  },
+  "142": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "143": {
+   "a": [
+    "crack"
+   ],
+   "b": [
+    "crack"
+   ]
+  },
+  "144": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "hide_craze"
+   ]
+  },
+  "145": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "146": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "hide_craze"
+   ]
+  },
+  "147": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "hide_craze"
+   ]
+  },
+  "148": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "hide_craze"
+   ]
+  },
+  "149": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "150": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "151": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "craze"
+   ]
+  },
+  "152": {
+   "a": [
+    "crack"
+   ],
+   "b": [
+    "crack"
+   ]
+  },
+  "153": {
+   "a": [
+    "craze"
+   ],
+   "b": [
+    "craze"
+   ]
+  },
+  "154": {
+   "a": [
+    "corrosion"
+   ],
+   "b": [
+    "corrosion",
+    "surface_injure"
+   ]
+  },
+  "155": {
+   "a": [
+    "surface_injure",
+    "thunderstrike"
+   ],
+   "b": [
+    "surface_injure",
+    "thunderstrike"
+   ]
+  },
+  "156": {
+   "a": [
+    "craze"
+   ],
+   "b": []
+  },
+  "157": {
+   "a": [
+    "crack"
+   ],
+   "b": [
+    "crack"
+   ]
+  },
+  "158": {
+   "a": [
+    "corrosion",
+    "thunderstrike"
+   ],
+   "b": [
+    "surface_injure",
+    "thunderstrike"
+   ]
+  },
+  "159": {
+   "a": [
+    "crack"
+   ],
+   "b": [
+    "crack"
+   ]
+  },
+  "160": {
+   "a": [
+    "corrosion"
+   ],
+   "b": [
+    "corrosion"
+   ]
+  },
+  "161": {
+   "a": [
+    "corrosion"
+   ],
+   "b": [
+    "corrosion"
+   ]
+  },
+  "162": {
+   "a": [
+    "corrosion"
+   ],
+   "b": [
+    "corrosion"
+   ]
+  },
+  "163": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "hide_craze"
+   ]
+  },
+  "164": {
+   "a": [
+    "crack"
+   ],
+   "b": [
+    "crack"
+   ]
+  },
+  "165": {
+   "a": [
+    "corrosion"
+   ],
+   "b": [
+    "corrosion"
+   ]
+  },
+  "166": {
+   "a": [
+    "craze"
+   ],
+   "b": [
+    "craze"
+   ]
+  },
+  "167": {
+   "a": [
+    "craze"
+   ],
+   "b": [
+    "craze"
+   ]
+  },
+  "168": {
+   "a": [
+    "crack"
+   ],
+   "b": [
+    "crack"
+   ]
+  },
+  "169": {
+   "a": [
+    "craze",
+    "surface_injure"
+   ],
+   "b": [
+    "craze",
+    "surface_injure"
+   ]
+  },
+  "170": {
+   "a": [
+    "corrosion"
+   ],
+   "b": [
+    "corrosion"
+   ]
+  },
+  "171": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "hide_craze"
+   ]
+  },
+  "172": {
+   "a": [
+    "craze"
+   ],
+   "b": [
+    "craze",
+    "hide_craze"
+   ]
+  },
+  "173": {
+   "a": [
+    "craze"
+   ],
+   "b": [
+    "craze"
+   ]
+  },
+  "174": {
+   "a": [
+    "crack"
+   ],
+   "b": [
+    "crack"
+   ]
+  },
+  "175": {
+   "a": [
+    "craze"
+   ],
+   "b": [
+    "craze"
+   ]
+  },
+  "176": {
+   "a": [
+    "crack"
+   ],
+   "b": [
+    "crack"
+   ]
+  },
+  "177": {
+   "a": [
+    "craze"
+   ],
+   "b": [
+    "craze"
+   ]
+  },
+  "178": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "179": {
+   "a": [
+    "crack"
+   ],
+   "b": [
+    "crack"
+   ]
+  },
+  "180": {
+   "a": [
+    "craze"
+   ],
+   "b": [
+    "craze"
+   ]
+  },
+  "181": {
+   "a": [
+    "craze"
+   ],
+   "b": []
+  },
+  "182": {
+   "a": [
+    "crack"
+   ],
+   "b": [
+    "crack"
+   ]
+  },
+  "183": {
+   "a": [
+    "crack"
+   ],
+   "b": [
+    "crack"
+   ]
+  },
+  "184": {
+   "a": [
+    "craze"
+   ],
+   "b": [
+    "craze"
+   ]
+  },
+  "185": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "hide_craze"
+   ]
+  },
+  "186": {
+   "a": [
+    "thunderstrike"
+   ],
+   "b": [
+    "thunderstrike"
+   ]
+  },
+  "187": {
+   "a": [
+    "crack"
+   ],
+   "b": [
+    "crack"
+   ]
+  },
+  "188": {
+   "a": [
+    "crack"
+   ],
+   "b": [
+    "crack"
+   ]
+  },
+  "189": {
+   "a": [
+    "craze"
+   ],
+   "b": [
+    "craze"
+   ]
+  },
+  "190": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "191": {
+   "a": [
+    "thunderstrike"
+   ],
+   "b": [
+    "thunderstrike"
+   ]
+  },
+  "192": {
+   "a": [
+    "hide_craze",
+    "surface_injure"
+   ],
+   "b": [
+    "corrosion",
+    "hide_craze"
+   ]
+  },
+  "193": {
+   "a": [
+    "craze"
+   ],
+   "b": [
+    "craze"
+   ]
+  },
+  "194": {
+   "a": [
+    "thunderstrike"
+   ],
+   "b": [
+    "thunderstrike"
+   ]
+  },
+  "195": {
+   "a": [
+    "craze"
+   ],
+   "b": []
+  },
+  "196": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "197": {
+   "a": [
+    "craze"
+   ],
+   "b": [
+    "craze"
+   ]
+  },
+  "198": {
+   "a": [
+    "craze",
+    "hide_craze"
+   ],
+   "b": [
+    "craze",
+    "hide_craze"
+   ]
+  },
+  "199": {
+   "a": [
+    "crack"
+   ],
+   "b": [
+    "crack"
+   ]
+  },
+  "200": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "201": {
+   "a": [
+    "crack"
+   ],
+   "b": [
+    "crack"
+   ]
+  },
+  "202": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "203": {
+   "a": [
+    "crack"
+   ],
+   "b": [
+    "crack"
+   ]
+  },
+  "204": {
+   "a": [
+    "thunderstrike"
+   ],
+   "b": [
+    "thunderstrike"
+   ]
+  },
+  "205": {
+   "a": [
+    "corrosion",
+    "thunderstrike"
+   ],
+   "b": [
+    "corrosion",
+    "thunderstrike"
+   ]
+  },
+  "206": {
+   "a": [
+    "crack"
+   ],
+   "b": [
+    "crack"
+   ]
+  },
+  "207": {
+   "a": [
+    "corrosion"
+   ],
+   "b": [
+    "corrosion",
+    "surface_injure"
+   ]
+  },
+  "208": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "corrosion"
+   ]
+  },
+  "209": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "craze"
+   ]
+  },
+  "210": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "211": {
+   "a": [
+    "crack"
+   ],
+   "b": [
+    "crack"
+   ]
+  },
+  "212": {
+   "a": [
+    "crack"
+   ],
+   "b": [
+    "crack"
+   ]
+  },
+  "213": {
+   "a": [
+    "craze"
+   ],
+   "b": [
+    "craze"
+   ]
+  },
+  "214": {
+   "a": [
+    "craze"
+   ],
+   "b": [
+    "craze"
+   ]
+  },
+  "215": {
+   "a": [
+    "craze"
+   ],
+   "b": [
+    "craze"
+   ]
+  },
+  "216": {
+   "a": [
+    "crack"
+   ],
+   "b": [
+    "crack"
+   ]
+  },
+  "217": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "218": {
+   "a": [
+    "corrosion"
+   ],
+   "b": [
+    "corrosion"
+   ]
+  },
+  "219": {
+   "a": [
+    "craze"
+   ],
+   "b": [
+    "craze"
+   ]
+  },
+  "220": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "hide_craze"
+   ]
+  },
+  "221": {
+   "a": [
+    "crack"
+   ],
+   "b": [
+    "crack"
+   ]
+  },
+  "222": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "223": {
+   "a": [
+    "thunderstrike"
+   ],
+   "b": [
+    "thunderstrike"
+   ]
+  },
+  "224": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "hide_craze"
+   ]
+  },
+  "225": {
+   "a": [
+    "crack"
+   ],
+   "b": [
+    "crack"
+   ]
+  },
+  "226": {
+   "a": [
+    "crack"
+   ],
+   "b": []
+  },
+  "227": {
+   "a": [
+    "corrosion"
+   ],
+   "b": [
+    "corrosion"
+   ]
+  },
+  "228": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "craze",
+    "hide_craze"
+   ]
+  },
+  "229": {
+   "a": [
+    "crack"
+   ],
+   "b": [
+    "crack"
+   ]
+  },
+  "230": {
+   "a": [
+    "corrosion"
+   ],
+   "b": [
+    "corrosion",
+    "surface_injure"
+   ]
+  },
+  "231": {
+   "a": [
+    "crack"
+   ],
+   "b": [
+    "crack"
+   ]
+  },
+  "232": {
+   "a": [
+    "thunderstrike"
+   ],
+   "b": []
+  },
+  "233": {
+   "a": [
+    "crack"
+   ],
+   "b": [
+    "crack"
+   ]
+  },
+  "234": {
+   "a": [
+    "hide_craze",
+    "surface_injure"
+   ],
+   "b": [
+    "hide_craze",
+    "surface_injure"
+   ]
+  },
+  "235": {
+   "a": [
+    "craze"
+   ],
+   "b": [
+    "craze"
+   ]
+  },
+  "236": {
+   "a": [
+    "craze"
+   ],
+   "b": [
+    "craze"
+   ]
+  },
+  "237": {
+   "a": [
+    "hide_craze",
+    "surface_injure"
+   ],
+   "b": [
+    "hide_craze",
+    "surface_injure"
+   ]
+  },
+  "238": {
+   "a": [
+    "crack"
+   ],
+   "b": [
+    "crack"
+   ]
+  },
+  "239": {
+   "a": [
+    "corrosion"
+   ],
+   "b": [
+    "corrosion"
+   ]
+  },
+  "240": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "hide_craze"
+   ]
+  },
+  "241": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "hide_craze"
+   ]
+  },
+  "242": {
+   "a": [
+    "craze"
+   ],
+   "b": [
+    "craze"
+   ]
+  },
+  "243": {
+   "a": [
+    "craze"
+   ],
+   "b": [
+    "craze"
+   ]
+  },
+  "244": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "hide_craze"
+   ]
+  },
+  "245": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "246": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "247": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "248": {
+   "a": [
+    "corrosion"
+   ],
+   "b": [
+    "corrosion"
+   ]
+  },
+  "249": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "250": {
+   "a": [
+    "crack"
+   ],
+   "b": [
+    "crack"
+   ]
+  },
+  "251": {
+   "a": [
+    "craze"
+   ],
+   "b": [
+    "craze"
+   ]
+  },
+  "252": {
+   "a": [
+    "crack"
+   ],
+   "b": [
+    "crack"
+   ]
+  },
+  "253": {
+   "a": [
+    "craze"
+   ],
+   "b": [
+    "craze"
+   ]
+  },
+  "254": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "hide_craze"
+   ]
+  },
+  "255": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "256": {
+   "a": [
+    "hide_craze",
+    "surface_injure"
+   ],
+   "b": [
+    "hide_craze",
+    "surface_injure"
+   ]
+  },
+  "257": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "258": {
+   "a": [
+    "craze"
+   ],
+   "b": [
+    "craze"
+   ]
+  },
+  "259": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "260": {
+   "a": [
+    "craze"
+   ],
+   "b": [
+    "craze"
+   ]
+  },
+  "261": {
+   "a": [
+    "craze"
+   ],
+   "b": [
+    "craze"
+   ]
+  },
+  "262": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "hide_craze"
+   ]
+  },
+  "263": {
+   "a": [
+    "crack"
+   ],
+   "b": [
+    "crack"
+   ]
+  },
+  "264": {
+   "a": [
+    "crack"
+   ],
+   "b": [
+    "crack"
+   ]
+  },
+  "265": {
+   "a": [
+    "corrosion"
+   ],
+   "b": [
+    "corrosion"
+   ]
+  },
+  "266": {
+   "a": [
+    "corrosion"
+   ],
+   "b": [
+    "corrosion"
+   ]
+  },
+  "267": {
+   "a": [
+    "craze"
+   ],
+   "b": [
+    "craze"
+   ]
+  },
+  "268": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "hide_craze"
+   ]
+  },
+  "269": {
+   "a": [
+    "crack"
+   ],
+   "b": [
+    "crack"
+   ]
+  },
+  "270": {
+   "a": [
+    "craze"
+   ],
+   "b": [
+    "craze"
+   ]
+  },
+  "271": {
+   "a": [
+    "crack"
+   ],
+   "b": [
+    "crack"
+   ]
+  },
+  "272": {
+   "a": [
+    "corrosion"
+   ],
+   "b": [
+    "corrosion"
+   ]
+  },
+  "273": {
+   "a": [
+    "surface_injure",
+    "thunderstrike"
+   ],
+   "b": [
+    "surface_injure",
+    "thunderstrike"
+   ]
+  },
+  "274": {
+   "a": [
+    "thunderstrike"
+   ],
+   "b": [
+    "thunderstrike"
+   ]
+  },
+  "275": {
+   "a": [
+    "crack"
+   ],
+   "b": [
+    "crack"
+   ]
+  },
+  "276": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "craze",
+    "hide_craze"
+   ]
+  },
+  "277": {
+   "a": [
+    "crack"
+   ],
+   "b": [
+    "crack"
+   ]
+  },
+  "278": {
+   "a": [
+    "corrosion"
+   ],
+   "b": [
+    "corrosion"
+   ]
+  },
+  "279": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "hide_craze"
+   ]
+  },
+  "280": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "hide_craze"
+   ]
+  },
+  "281": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "hide_craze"
+   ]
+  },
+  "282": {
+   "a": [
+    "corrosion"
+   ],
+   "b": [
+    "corrosion"
+   ]
+  },
+  "283": {
+   "a": [
+    "hide_craze",
+    "surface_injure"
+   ],
+   "b": [
+    "hide_craze",
+    "surface_injure"
+   ]
+  },
+  "284": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "hide_craze"
+   ]
+  },
+  "285": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "286": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "hide_craze"
+   ]
+  },
+  "287": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "288": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "289": {
+   "a": [
+    "craze"
+   ],
+   "b": [
+    "craze"
+   ]
+  },
+  "290": {
+   "a": [
+    "thunderstrike"
+   ],
+   "b": []
+  },
+  "291": {
+   "a": [
+    "corrosion"
+   ],
+   "b": [
+    "corrosion"
+   ]
+  },
+  "292": {
+   "a": [
+    "crack"
+   ],
+   "b": [
+    "crack"
+   ]
+  },
+  "293": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "craze"
+   ]
+  },
+  "294": {
+   "a": [
+    "corrosion"
+   ],
+   "b": [
+    "corrosion"
+   ]
+  },
+  "295": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "296": {
+   "a": [
+    "craze"
+   ],
+   "b": [
+    "craze"
+   ]
+  },
+  "297": {
+   "a": [
+    "crack"
+   ],
+   "b": [
+    "crack"
+   ]
+  },
+  "298": {
+   "a": [
+    "corrosion"
+   ],
+   "b": [
+    "corrosion"
+   ]
+  },
+  "299": {
+   "a": [
+    "hide_craze",
+    "surface_injure"
+   ],
+   "b": [
+    "craze",
+    "hide_craze",
+    "surface_injure"
+   ]
+  },
+  "300": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "hide_craze"
+   ]
+  },
+  "301": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "302": {
+   "a": [
+    "corrosion"
+   ],
+   "b": [
+    "corrosion",
+    "surface_injure"
+   ]
+  },
+  "303": {
+   "a": [
+    "craze"
+   ],
+   "b": [
+    "craze"
+   ]
+  },
+  "304": {
+   "a": [
+    "thunderstrike"
+   ],
+   "b": [
+    "thunderstrike"
+   ]
+  },
+  "305": {
+   "a": [
+    "crack"
+   ],
+   "b": [
+    "crack"
+   ]
+  },
+  "306": {
+   "a": [
+    "craze"
+   ],
+   "b": [
+    "craze"
+   ]
+  },
+  "307": {
+   "a": [
+    "corrosion"
+   ],
+   "b": [
+    "corrosion"
+   ]
+  },
+  "308": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "hide_craze"
+   ]
+  },
+  "309": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "hide_craze"
+   ]
+  },
+  "310": {
+   "a": [
+    "crack"
+   ],
+   "b": []
+  },
+  "311": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "312": {
+   "a": [
+    "craze"
+   ],
+   "b": [
+    "craze",
+    "hide_craze"
+   ]
+  },
+  "313": {
+   "a": [
+    "corrosion"
+   ],
+   "b": [
+    "corrosion",
+    "surface_injure"
+   ]
+  },
+  "314": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "315": {
+   "a": [
+    "crack"
+   ],
+   "b": [
+    "crack"
+   ]
+  },
+  "316": {
+   "a": [
+    "thunderstrike"
+   ],
+   "b": [
+    "thunderstrike"
+   ]
+  },
+  "317": {
+   "a": [
+    "corrosion"
+   ],
+   "b": [
+    "corrosion"
+   ]
+  },
+  "318": {
+   "a": [
+    "crack"
+   ],
+   "b": [
+    "crack"
+   ]
+  },
+  "319": {
+   "a": [
+    "craze"
+   ],
+   "b": [
+    "craze"
+   ]
+  },
+  "320": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "craze",
+    "hide_craze"
+   ]
+  },
+  "321": {
+   "a": [
+    "corrosion"
+   ],
+   "b": [
+    "corrosion"
+   ]
+  },
+  "322": {
+   "a": [
+    "corrosion"
+   ],
+   "b": [
+    "corrosion"
+   ]
+  },
+  "323": {
+   "a": [
+    "corrosion"
+   ],
+   "b": [
+    "corrosion"
+   ]
+  },
+  "324": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "325": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "326": {
+   "a": [
+    "craze",
+    "surface_injure"
+   ],
+   "b": [
+    "craze",
+    "surface_injure"
+   ]
+  },
+  "327": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "328": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "329": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "craze"
+   ]
+  },
+  "330": {
+   "a": [
+    "craze"
+   ],
+   "b": [
+    "craze"
+   ]
+  },
+  "331": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "corrosion",
+    "surface_injure"
+   ]
+  },
+  "332": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "333": {
+   "a": [
+    "thunderstrike"
+   ],
+   "b": [
+    "thunderstrike"
+   ]
+  },
+  "334": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "335": {
+   "a": [
+    "crack"
+   ],
+   "b": [
+    "crack"
+   ]
+  },
+  "336": {
+   "a": [
+    "thunderstrike"
+   ],
+   "b": [
+    "thunderstrike"
+   ]
+  },
+  "337": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "338": {
+   "a": [
+    "crack"
+   ],
+   "b": [
+    "crack"
+   ]
+  },
+  "339": {
+   "a": [
+    "corrosion"
+   ],
+   "b": []
+  },
+  "340": {
+   "a": [
+    "corrosion"
+   ],
+   "b": [
+    "corrosion"
+   ]
+  },
+  "341": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "hide_craze"
+   ]
+  },
+  "342": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "343": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "344": {
+   "a": [
+    "crack"
+   ],
+   "b": [
+    "crack"
+   ]
+  },
+  "345": {
+   "a": [
+    "hide_craze",
+    "surface_injure"
+   ],
+   "b": [
+    "hide_craze",
+    "surface_injure"
+   ]
+  },
+  "346": {
+   "a": [
+    "corrosion"
+   ],
+   "b": [
+    "corrosion"
+   ]
+  },
+  "347": {
+   "a": [
+    "craze"
+   ],
+   "b": [
+    "craze"
+   ]
+  },
+  "348": {
+   "a": [
+    "crack"
+   ],
+   "b": [
+    "crack"
+   ]
+  },
+  "349": {
+   "a": [
+    "crack"
+   ],
+   "b": [
+    "crack"
+   ]
+  },
+  "350": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "hide_craze"
+   ]
+  },
+  "351": {
+   "a": [
+    "craze",
+    "hide_craze"
+   ],
+   "b": [
+    "craze",
+    "hide_craze"
+   ]
+  },
+  "352": {
+   "a": [
+    "crack"
+   ],
+   "b": [
+    "crack"
+   ]
+  },
+  "353": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "354": {
+   "a": [
+    "craze"
+   ],
+   "b": [
+    "craze"
+   ]
+  },
+  "355": {
+   "a": [
+    "crack"
+   ],
+   "b": [
+    "crack"
+   ]
+  },
+  "356": {
+   "a": [
+    "thunderstrike"
+   ],
+   "b": []
+  },
+  "357": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "358": {
+   "a": [
+    "craze"
+   ],
+   "b": [
+    "craze"
+   ]
+  },
+  "359": {
+   "a": [
+    "crack"
+   ],
+   "b": [
+    "crack"
+   ]
+  },
+  "360": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "361": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "hide_craze"
+   ]
+  },
+  "362": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "hide_craze"
+   ]
+  },
+  "363": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "364": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "craze"
+   ]
+  },
+  "365": {
+   "a": [
+    "crack"
+   ],
+   "b": [
+    "crack"
+   ]
+  },
+  "366": {
+   "a": [
+    "crack"
+   ],
+   "b": [
+    "crack"
+   ]
+  },
+  "367": {
+   "a": [
+    "crack"
+   ],
+   "b": [
+    "crack"
+   ]
+  },
+  "368": {
+   "a": [
+    "corrosion"
+   ],
+   "b": [
+    "corrosion"
+   ]
+  },
+  "369": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "370": {
+   "a": [
+    "corrosion"
+   ],
+   "b": [
+    "corrosion",
+    "surface_injure"
+   ]
+  },
+  "371": {
+   "a": [
+    "corrosion"
+   ],
+   "b": [
+    "corrosion"
+   ]
+  },
+  "372": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "hide_craze"
+   ]
+  },
+  "373": {
+   "a": [
+    "corrosion"
+   ],
+   "b": [
+    "corrosion"
+   ]
+  },
+  "374": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "hide_craze"
+   ]
+  },
+  "375": {
+   "a": [
+    "corrosion"
+   ],
+   "b": [
+    "corrosion"
+   ]
+  },
+  "376": {
+   "a": [
+    "craze",
+    "hide_craze"
+   ],
+   "b": [
+    "craze",
+    "hide_craze"
+   ]
+  },
+  "377": {
+   "a": [
+    "craze"
+   ],
+   "b": [
+    "craze"
+   ]
+  },
+  "378": {
+   "a": [
+    "crack"
+   ],
+   "b": [
+    "crack"
+   ]
+  },
+  "379": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "hide_craze"
+   ]
+  },
+  "380": {
+   "a": [
+    "craze"
+   ],
+   "b": [
+    "craze"
+   ]
+  },
+  "381": {
+   "a": [
+    "crack"
+   ],
+   "b": [
+    "crack"
+   ]
+  },
+  "382": {
+   "a": [
+    "craze",
+    "hide_craze"
+   ],
+   "b": [
+    "craze",
+    "hide_craze"
+   ]
+  },
+  "383": {
+   "a": [
+    "craze"
+   ],
+   "b": [
+    "craze"
+   ]
+  },
+  "384": {
+   "a": [
+    "corrosion"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "385": {
+   "a": [
+    "corrosion",
+    "thunderstrike"
+   ],
+   "b": [
+    "corrosion",
+    "thunderstrike"
+   ]
+  },
+  "386": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "387": {
+   "a": [
+    "craze"
+   ],
+   "b": [
+    "craze"
+   ]
+  },
+  "388": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "hide_craze"
+   ]
+  },
+  "389": {
+   "a": [
+    "crack"
+   ],
+   "b": [
+    "crack"
+   ]
+  },
+  "390": {
+   "a": [
+    "corrosion"
+   ],
+   "b": [
+    "corrosion"
+   ]
+  },
+  "391": {
+   "a": [
+    "crack"
+   ],
+   "b": [
+    "crack"
+   ]
+  },
+  "392": {
+   "a": [
+    "craze"
+   ],
+   "b": [
+    "craze"
+   ]
+  },
+  "393": {
+   "a": [
+    "thunderstrike"
+   ],
+   "b": [
+    "thunderstrike"
+   ]
+  },
+  "394": {
+   "a": [
+    "crack"
+   ],
+   "b": [
+    "crack"
+   ]
+  },
+  "395": {
+   "a": [
+    "crack"
+   ],
+   "b": [
+    "crack"
+   ]
+  },
+  "396": {
+   "a": [
+    "craze"
+   ],
+   "b": [
+    "craze",
+    "hide_craze"
+   ]
+  },
+  "397": {
+   "a": [
+    "crack"
+   ],
+   "b": [
+    "crack"
+   ]
+  },
+  "398": {
+   "a": [
+    "craze",
+    "hide_craze"
+   ],
+   "b": [
+    "craze",
+    "hide_craze"
+   ]
+  },
+  "399": {
+   "a": [
+    "corrosion"
+   ],
+   "b": [
+    "corrosion"
+   ]
+  },
+  "400": {
+   "a": [
+    "surface_injure",
+    "thunderstrike"
+   ],
+   "b": [
+    "surface_injure",
+    "thunderstrike"
+   ]
+  },
+  "401": {
+   "a": [
+    "crack"
+   ],
+   "b": [
+    "crack"
+   ]
+  },
+  "402": {
+   "a": [
+    "crack"
+   ],
+   "b": [
+    "crack"
+   ]
+  },
+  "403": {
+   "a": [
+    "crack"
+   ],
+   "b": [
+    "crack"
+   ]
+  },
+  "404": {
+   "a": [
+    "craze"
+   ],
+   "b": [
+    "craze"
+   ]
+  },
+  "405": {
+   "a": [
+    "corrosion"
+   ],
+   "b": [
+    "corrosion"
+   ]
+  },
+  "406": {
+   "a": [
+    "craze"
+   ],
+   "b": [
+    "craze"
+   ]
+  },
+  "407": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "corrosion"
+   ]
+  },
+  "408": {
+   "a": [
+    "corrosion"
+   ],
+   "b": [
+    "corrosion",
+    "surface_injure"
+   ]
+  },
+  "409": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "hide_craze"
+   ]
+  },
+  "410": {
+   "a": [
+    "corrosion"
+   ],
+   "b": [
+    "corrosion"
+   ]
+  },
+  "411": {
+   "a": [
+    "corrosion"
+   ],
+   "b": [
+    "corrosion"
+   ]
+  },
+  "412": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "413": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "414": {
+   "a": [
+    "crack"
+   ],
+   "b": [
+    "crack"
+   ]
+  },
+  "415": {
+   "a": [
+    "craze",
+    "surface_injure"
+   ],
+   "b": [
+    "craze",
+    "surface_injure"
+   ]
+  },
+  "416": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "417": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "hide_craze"
+   ]
+  },
+  "418": {
+   "a": [
+    "crack"
+   ],
+   "b": [
+    "crack"
+   ]
+  },
+  "419": {
+   "a": [
+    "crack"
+   ],
+   "b": [
+    "crack"
+   ]
+  },
+  "420": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "hide_craze"
+   ]
+  },
+  "421": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "422": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "hide_craze"
+   ]
+  },
+  "423": {
+   "a": [
+    "corrosion",
+    "hide_craze"
+   ],
+   "b": [
+    "corrosion",
+    "hide_craze"
+   ]
+  },
+  "424": {
+   "a": [
+    "hide_craze",
+    "surface_injure"
+   ],
+   "b": [
+    "hide_craze",
+    "surface_injure"
+   ]
+  },
+  "425": {
+   "a": [
+    "corrosion"
+   ],
+   "b": [
+    "corrosion"
+   ]
+  },
+  "426": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "hide_craze"
+   ]
+  },
+  "427": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "428": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "429": {
+   "a": [
+    "craze"
+   ],
+   "b": [
+    "hide_craze"
+   ]
+  },
+  "430": {
+   "a": [
+    "corrosion"
+   ],
+   "b": [
+    "corrosion",
+    "surface_injure"
+   ]
+  },
+  "431": {
+   "a": [
+    "crack"
+   ],
+   "b": [
+    "crack"
+   ]
+  },
+  "432": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "433": {
+   "a": [
+    "crack"
+   ],
+   "b": []
+  },
+  "434": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "435": {
+   "a": [
+    "craze"
+   ],
+   "b": [
+    "craze"
+   ]
+  },
+  "436": {
+   "a": [
+    "craze",
+    "hide_craze"
+   ],
+   "b": [
+    "hide_craze"
+   ]
+  },
+  "437": {
+   "a": [
+    "thunderstrike"
+   ],
+   "b": [
+    "thunderstrike"
+   ]
+  },
+  "438": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "hide_craze"
+   ]
+  },
+  "439": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "hide_craze"
+   ]
+  },
+  "440": {
+   "a": [
+    "crack"
+   ],
+   "b": [
+    "crack"
+   ]
+  },
+  "441": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": []
+  },
+  "442": {
+   "a": [
+    "corrosion"
+   ],
+   "b": [
+    "corrosion"
+   ]
+  },
+  "443": {
+   "a": [
+    "crack"
+   ],
+   "b": [
+    "crack"
+   ]
+  },
+  "444": {
+   "a": [
+    "craze"
+   ],
+   "b": [
+    "craze"
+   ]
+  },
+  "445": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "446": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "hide_craze"
+   ]
+  },
+  "447": {
+   "a": [
+    "crack"
+   ],
+   "b": [
+    "crack"
+   ]
+  },
+  "448": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "hide_craze"
+   ]
+  },
+  "449": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "hide_craze"
+   ]
+  },
+  "450": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "hide_craze"
+   ]
+  },
+  "451": {
+   "a": [
+    "corrosion"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "452": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "hide_craze"
+   ]
+  },
+  "453": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "craze"
+   ]
+  },
+  "454": {
+   "a": [
+    "craze"
+   ],
+   "b": [
+    "craze"
+   ]
+  },
+  "455": {
+   "a": [
+    "crack"
+   ],
+   "b": [
+    "crack"
+   ]
+  },
+  "456": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "craze",
+    "hide_craze"
+   ]
+  },
+  "457": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "hide_craze"
+   ]
+  },
+  "458": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "459": {
+   "a": [
+    "corrosion"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "460": {
+   "a": [
+    "crack"
+   ],
+   "b": [
+    "crack"
+   ]
+  },
+  "461": {
+   "a": [
+    "thunderstrike"
+   ],
+   "b": [
+    "thunderstrike"
+   ]
+  },
+  "462": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "463": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "hide_craze"
+   ]
+  },
+  "464": {
+   "a": [
+    "craze",
+    "hide_craze"
+   ],
+   "b": [
+    "craze",
+    "hide_craze"
+   ]
+  },
+  "465": {
+   "a": [
+    "crack"
+   ],
+   "b": [
+    "crack"
+   ]
+  },
+  "466": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "corrosion"
+   ]
+  },
+  "467": {
+   "a": [
+    "corrosion",
+    "thunderstrike"
+   ],
+   "b": [
+    "corrosion",
+    "thunderstrike"
+   ]
+  },
+  "468": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "craze",
+    "hide_craze"
+   ]
+  },
+  "469": {
+   "a": [
+    "craze"
+   ],
+   "b": [
+    "craze"
+   ]
+  },
+  "470": {
+   "a": [
+    "crack"
+   ],
+   "b": [
+    "crack"
+   ]
+  },
+  "471": {
+   "a": [
+    "crack"
+   ],
+   "b": [
+    "crack"
+   ]
+  },
+  "472": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "hide_craze"
+   ]
+  },
+  "473": {
+   "a": [
+    "crack"
+   ],
+   "b": [
+    "crack"
+   ]
+  },
+  "474": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "475": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "476": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "477": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "hide_craze"
+   ]
+  },
+  "478": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "479": {
+   "a": [
+    "surface_injure",
+    "thunderstrike"
+   ],
+   "b": [
+    "surface_injure",
+    "thunderstrike"
+   ]
+  },
+  "480": {
+   "a": [
+    "corrosion"
+   ],
+   "b": [
+    "corrosion"
+   ]
+  },
+  "481": {
+   "a": [
+    "corrosion"
+   ],
+   "b": [
+    "corrosion"
+   ]
+  },
+  "482": {
+   "a": [
+    "craze"
+   ],
+   "b": [
+    "craze"
+   ]
+  },
+  "483": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "hide_craze"
+   ]
+  },
+  "484": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "corrosion",
+    "surface_injure"
+   ]
+  },
+  "485": {
+   "a": [
+    "corrosion"
+   ],
+   "b": [
+    "corrosion"
+   ]
+  },
+  "486": {
+   "a": [
+    "crack"
+   ],
+   "b": [
+    "crack"
+   ]
+  },
+  "487": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "488": {
+   "a": [
+    "thunderstrike"
+   ],
+   "b": [
+    "thunderstrike"
+   ]
+  },
+  "489": {
+   "a": [
+    "corrosion"
+   ],
+   "b": [
+    "corrosion"
+   ]
+  },
+  "490": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "corrosion"
+   ]
+  },
+  "491": {
+   "a": [
+    "corrosion"
+   ],
+   "b": [
+    "corrosion"
+   ]
+  },
+  "492": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "493": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "corrosion",
+    "surface_injure"
+   ]
+  },
+  "494": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "495": {
+   "a": [
+    "corrosion"
+   ],
+   "b": [
+    "corrosion"
+   ]
+  },
+  "496": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "hide_craze"
+   ]
+  },
+  "497": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "hide_craze"
+   ]
+  },
+  "498": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "499": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "500": {
+   "a": [
+    "corrosion"
+   ],
+   "b": [
+    "corrosion"
+   ]
+  },
+  "501": {
+   "a": [
+    "corrosion"
+   ],
+   "b": [
+    "corrosion"
+   ]
+  },
+  "502": {
+   "a": [
+    "corrosion"
+   ],
+   "b": [
+    "corrosion"
+   ]
+  },
+  "503": {
+   "a": [
+    "corrosion"
+   ],
+   "b": [
+    "corrosion"
+   ]
+  },
+  "504": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "505": {
+   "a": [
+    "corrosion"
+   ],
+   "b": [
+    "corrosion"
+   ]
+  },
+  "506": {
+   "a": [
+    "crack"
+   ],
+   "b": [
+    "crack"
+   ]
+  },
+  "507": {
+   "a": [
+    "crack"
+   ],
+   "b": [
+    "crack"
+   ]
+  },
+  "508": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "hide_craze"
+   ]
+  },
+  "509": {
+   "a": [
+    "corrosion"
+   ],
+   "b": [
+    "corrosion"
+   ]
+  },
+  "510": {
+   "a": [
+    "corrosion"
+   ],
+   "b": [
+    "corrosion"
+   ]
+  },
+  "511": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "hide_craze"
+   ]
+  },
+  "512": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "513": {
+   "a": [
+    "craze"
+   ],
+   "b": [
+    "craze"
+   ]
+  },
+  "514": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "515": {
+   "a": [
+    "corrosion"
+   ],
+   "b": [
+    "corrosion"
+   ]
+  },
+  "516": {
+   "a": [
+    "corrosion"
+   ],
+   "b": [
+    "corrosion"
+   ]
+  },
+  "517": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "hide_craze"
+   ]
+  },
+  "518": {
+   "a": [
+    "craze"
+   ],
+   "b": [
+    "craze"
+   ]
+  },
+  "519": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "hide_craze"
+   ]
+  },
+  "520": {
+   "a": [
+    "crack"
+   ],
+   "b": [
+    "crack"
+   ]
+  },
+  "521": {
+   "a": [
+    "corrosion"
+   ],
+   "b": [
+    "corrosion"
+   ]
+  },
+  "522": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "corrosion",
+    "surface_injure"
+   ]
+  },
+  "523": {
+   "a": [
+    "thunderstrike"
+   ],
+   "b": [
+    "thunderstrike"
+   ]
+  },
+  "524": {
+   "a": [
+    "craze"
+   ],
+   "b": [
+    "craze"
+   ]
+  },
+  "525": {
+   "a": [
+    "crack"
+   ],
+   "b": [
+    "crack"
+   ]
+  },
+  "526": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "hide_craze"
+   ]
+  },
+  "527": {
+   "a": [
+    "corrosion"
+   ],
+   "b": [
+    "corrosion"
+   ]
+  },
+  "528": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "hide_craze"
+   ]
+  },
+  "529": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "530": {
+   "a": [
+    "corrosion"
+   ],
+   "b": [
+    "corrosion"
+   ]
+  },
+  "531": {
+   "a": [
+    "crack"
+   ],
+   "b": [
+    "crack"
+   ]
+  },
+  "532": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "533": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "hide_craze"
+   ]
+  },
+  "534": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "hide_craze"
+   ]
+  },
+  "535": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "536": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "537": {
+   "a": [
+    "crack"
+   ],
+   "b": [
+    "crack"
+   ]
+  },
+  "538": {
+   "a": [
+    "craze"
+   ],
+   "b": [
+    "craze"
+   ]
+  },
+  "539": {
+   "a": [
+    "corrosion"
+   ],
+   "b": [
+    "corrosion"
+   ]
+  },
+  "540": {
+   "a": [
+    "corrosion"
+   ],
+   "b": [
+    "corrosion"
+   ]
+  },
+  "541": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "hide_craze"
+   ]
+  },
+  "542": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "hide_craze"
+   ]
+  },
+  "543": {
+   "a": [
+    "surface_injure",
+    "thunderstrike"
+   ],
+   "b": [
+    "surface_injure",
+    "thunderstrike"
+   ]
+  },
+  "544": {
+   "a": [
+    "crack"
+   ],
+   "b": [
+    "crack"
+   ]
+  },
+  "545": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "546": {
+   "a": [
+    "corrosion"
+   ],
+   "b": [
+    "corrosion"
+   ]
+  },
+  "547": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "548": {
+   "a": [
+    "crack"
+   ],
+   "b": [
+    "crack"
+   ]
+  },
+  "549": {
+   "a": [
+    "corrosion"
+   ],
+   "b": [
+    "corrosion"
+   ]
+  },
+  "550": {
+   "a": [
+    "corrosion"
+   ],
+   "b": [
+    "corrosion"
+   ]
+  },
+  "551": {
+   "a": [
+    "surface_injure",
+    "thunderstrike"
+   ],
+   "b": [
+    "surface_injure",
+    "thunderstrike"
+   ]
+  },
+  "552": {
+   "a": [
+    "crack"
+   ],
+   "b": [
+    "crack"
+   ]
+  },
+  "553": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "554": {
+   "a": [
+    "craze"
+   ],
+   "b": [
+    "craze"
+   ]
+  },
+  "555": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "556": {
+   "a": [
+    "craze"
+   ],
+   "b": [
+    "craze"
+   ]
+  },
+  "557": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "hide_craze"
+   ]
+  },
+  "558": {
+   "a": [
+    "crack"
+   ],
+   "b": [
+    "crack"
+   ]
+  },
+  "559": {
+   "a": [
+    "craze"
+   ],
+   "b": [
+    "craze"
+   ]
+  },
+  "560": {
+   "a": [
+    "corrosion"
+   ],
+   "b": [
+    "corrosion"
+   ]
+  },
+  "561": {
+   "a": [
+    "corrosion"
+   ],
+   "b": [
+    "corrosion"
+   ]
+  },
+  "562": {
+   "a": [
+    "crack"
+   ],
+   "b": [
+    "crack"
+   ]
+  },
+  "563": {
+   "a": [
+    "craze"
+   ],
+   "b": [
+    "craze"
+   ]
+  },
+  "564": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "craze"
+   ]
+  },
+  "565": {
+   "a": [
+    "craze"
+   ],
+   "b": [
+    "craze"
+   ]
+  },
+  "566": {
+   "a": [
+    "corrosion"
+   ],
+   "b": [
+    "corrosion"
+   ]
+  },
+  "567": {
+   "a": [
+    "crack"
+   ],
+   "b": [
+    "crack"
+   ]
+  },
+  "568": {
+   "a": [
+    "crack"
+   ],
+   "b": [
+    "crack"
+   ]
+  },
+  "569": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": []
+  },
+  "570": {
+   "a": [
+    "crack"
+   ],
+   "b": [
+    "crack"
+   ]
+  },
+  "571": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "hide_craze"
+   ]
+  },
+  "572": {
+   "a": [
+    "craze"
+   ],
+   "b": [
+    "craze"
+   ]
+  },
+  "573": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "574": {
+   "a": [
+    "craze"
+   ],
+   "b": [
+    "craze"
+   ]
+  },
+  "575": {
+   "a": [
+    "craze"
+   ],
+   "b": [
+    "craze"
+   ]
+  },
+  "576": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "577": {
+   "a": [
+    "crack"
+   ],
+   "b": [
+    "crack"
+   ]
+  },
+  "578": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "hide_craze"
+   ]
+  },
+  "579": {
+   "a": [
+    "corrosion"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "580": {
+   "a": [
+    "craze"
+   ],
+   "b": [
+    "craze"
+   ]
+  },
+  "581": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "582": {
+   "a": [
+    "crack"
+   ],
+   "b": [
+    "crack"
+   ]
+  },
+  "583": {
+   "a": [
+    "corrosion"
+   ],
+   "b": [
+    "corrosion"
+   ]
+  },
+  "584": {
+   "a": [
+    "crack"
+   ],
+   "b": [
+    "crack"
+   ]
+  },
+  "585": {
+   "a": [
+    "crack"
+   ],
+   "b": [
+    "crack"
+   ]
+  },
+  "586": {
+   "a": [
+    "crack"
+   ],
+   "b": [
+    "crack"
+   ]
+  },
+  "587": {
+   "a": [
+    "hide_craze",
+    "surface_injure"
+   ],
+   "b": [
+    "hide_craze",
+    "surface_injure"
+   ]
+  },
+  "588": {
+   "a": [
+    "corrosion"
+   ],
+   "b": [
+    "corrosion"
+   ]
+  },
+  "589": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "hide_craze"
+   ]
+  },
+  "590": {
+   "a": [
+    "corrosion"
+   ],
+   "b": [
+    "corrosion"
+   ]
+  },
+  "591": {
+   "a": [
+    "surface_injure",
+    "thunderstrike"
+   ],
+   "b": [
+    "surface_injure",
+    "thunderstrike"
+   ]
+  },
+  "592": {
+   "a": [
+    "craze"
+   ],
+   "b": [
+    "craze"
+   ]
+  },
+  "593": {
+   "a": [
+    "crack"
+   ],
+   "b": [
+    "crack"
+   ]
+  },
+  "594": {
+   "a": [
+    "crack"
+   ],
+   "b": [
+    "crack"
+   ]
+  },
+  "595": {
+   "a": [
+    "hide_craze",
+    "surface_injure"
+   ],
+   "b": [
+    "corrosion",
+    "hide_craze"
+   ]
+  },
+  "596": {
+   "a": [
+    "crack"
+   ],
+   "b": [
+    "crack"
+   ]
+  },
+  "597": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "hide_craze"
+   ]
+  },
+  "598": {
+   "a": [
+    "corrosion"
+   ],
+   "b": [
+    "corrosion"
+   ]
+  },
+  "599": {
+   "a": [
+    "corrosion"
+   ],
+   "b": [
+    "corrosion"
+   ]
+  },
+  "600": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "hide_craze"
+   ]
+  },
+  "601": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "602": {
+   "a": [
+    "crack"
+   ],
+   "b": []
+  },
+  "603": {
+   "a": [
+    "surface_injure",
+    "thunderstrike"
+   ],
+   "b": [
+    "surface_injure",
+    "thunderstrike"
+   ]
+  },
+  "604": {
+   "a": [
+    "crack"
+   ],
+   "b": [
+    "crack"
+   ]
+  },
+  "605": {
+   "a": [
+    "corrosion"
+   ],
+   "b": [
+    "corrosion"
+   ]
+  },
+  "606": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "607": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "craze"
+   ]
+  },
+  "608": {
+   "a": [
+    "crack"
+   ],
+   "b": [
+    "crack"
+   ]
+  },
+  "609": {
+   "a": [
+    "craze",
+    "surface_injure"
+   ],
+   "b": [
+    "craze",
+    "surface_injure"
+   ]
+  },
+  "610": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "hide_craze"
+   ]
+  },
+  "611": {
+   "a": [
+    "corrosion"
+   ],
+   "b": [
+    "corrosion"
+   ]
+  },
+  "612": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "hide_craze"
+   ]
+  },
+  "613": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "hide_craze"
+   ]
+  },
+  "614": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "hide_craze"
+   ]
+  },
+  "615": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "hide_craze"
+   ]
+  },
+  "616": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "craze"
+   ]
+  },
+  "617": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "hide_craze"
+   ]
+  },
+  "618": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "hide_craze"
+   ]
+  },
+  "619": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "hide_craze"
+   ]
+  },
+  "620": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "621": {
+   "a": [
+    "hide_craze",
+    "surface_injure"
+   ],
+   "b": [
+    "hide_craze",
+    "surface_injure"
+   ]
+  },
+  "622": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "hide_craze"
+   ]
+  },
+  "623": {
+   "a": [
+    "hide_craze",
+    "surface_injure"
+   ],
+   "b": [
+    "hide_craze",
+    "surface_injure"
+   ]
+  },
+  "624": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": []
+  },
+  "625": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "hide_craze"
+   ]
+  },
+  "626": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "hide_craze"
+   ]
+  },
+  "627": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "628": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "hide_craze"
+   ]
+  },
+  "629": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "630": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "corrosion"
+   ]
+  },
+  "631": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "632": {
+   "a": [
+    "craze"
+   ],
+   "b": [
+    "craze"
+   ]
+  },
+  "633": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "hide_craze"
+   ]
+  },
+  "634": {
+   "a": [
+    "craze"
+   ],
+   "b": [
+    "craze"
+   ]
+  },
+  "635": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "636": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "637": {
+   "a": [
+    "craze"
+   ],
+   "b": [
+    "craze"
+   ]
+  },
+  "638": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "hide_craze"
+   ]
+  },
+  "639": {
+   "a": [
+    "hide_craze",
+    "surface_injure"
+   ],
+   "b": [
+    "corrosion",
+    "hide_craze"
+   ]
+  },
+  "640": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "641": {
+   "a": [
+    "craze",
+    "hide_craze"
+   ],
+   "b": [
+    "craze",
+    "hide_craze"
+   ]
+  },
+  "642": {
+   "a": [
+    "hide_craze",
+    "surface_injure"
+   ],
+   "b": [
+    "hide_craze",
+    "surface_injure"
+   ]
+  },
+  "643": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "hide_craze"
+   ]
+  },
+  "644": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "hide_craze"
+   ]
+  },
+  "645": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "646": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "647": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "648": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "craze",
+    "hide_craze"
+   ]
+  },
+  "649": {
+   "a": [
+    "corrosion"
+   ],
+   "b": [
+    "corrosion"
+   ]
+  },
+  "650": {
+   "a": [
+    "corrosion"
+   ],
+   "b": [
+    "corrosion"
+   ]
+  },
+  "651": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "corrosion"
+   ]
+  },
+  "652": {
+   "a": [
+    "craze",
+    "hide_craze"
+   ],
+   "b": [
+    "craze",
+    "hide_craze"
+   ]
+  },
+  "653": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "654": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "craze"
+   ]
+  },
+  "655": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "hide_craze"
+   ]
+  },
+  "656": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "657": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "658": {
+   "a": [
+    "corrosion"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "659": {
+   "a": [
+    "thunderstrike"
+   ],
+   "b": [
+    "thunderstrike"
+   ]
+  },
+  "660": {
+   "a": [
+    "craze",
+    "surface_injure"
+   ],
+   "b": [
+    "craze",
+    "surface_injure"
+   ]
+  },
+  "661": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "662": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "663": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "craze"
+   ]
+  },
+  "664": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "corrosion",
+    "surface_injure"
+   ]
+  },
+  "665": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "hide_craze"
+   ]
+  },
+  "666": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "craze",
+    "hide_craze"
+   ]
+  },
+  "667": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "hide_craze"
+   ]
+  },
+  "668": {
+   "a": [
+    "craze"
+   ],
+   "b": [
+    "craze"
+   ]
+  },
+  "669": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "670": {
+   "a": [
+    "hide_craze",
+    "surface_injure"
+   ],
+   "b": [
+    "hide_craze",
+    "surface_injure"
+   ]
+  },
+  "671": {
+   "a": [
+    "hide_craze",
+    "surface_injure"
+   ],
+   "b": [
+    "corrosion",
+    "craze"
+   ]
+  },
+  "672": {
+   "a": [
+    "corrosion",
+    "surface_injure"
+   ],
+   "b": [
+    "corrosion",
+    "surface_injure"
+   ]
+  },
+  "673": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "674": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "675": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "hide_craze"
+   ]
+  },
+  "676": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "hide_craze"
+   ]
+  },
+  "677": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "hide_craze"
+   ]
+  },
+  "678": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": []
+  },
+  "679": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "680": {
+   "a": [
+    "corrosion"
+   ],
+   "b": [
+    "corrosion"
+   ]
+  },
+  "681": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "682": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "hide_craze"
+   ]
+  },
+  "683": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "684": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "685": {
+   "a": [
+    "craze"
+   ],
+   "b": [
+    "craze"
+   ]
+  },
+  "686": {
+   "a": [
+    "thunderstrike"
+   ],
+   "b": [
+    "thunderstrike"
+   ]
+  },
+  "687": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "688": {
+   "a": [
+    "thunderstrike"
+   ],
+   "b": [
+    "thunderstrike"
+   ]
+  },
+  "689": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "690": {
+   "a": [
+    "thunderstrike"
+   ],
+   "b": [
+    "thunderstrike"
+   ]
+  },
+  "691": {
+   "a": [
+    "craze"
+   ],
+   "b": [
+    "craze"
+   ]
+  },
+  "692": {
+   "a": [
+    "craze"
+   ],
+   "b": [
+    "craze"
+   ]
+  },
+  "693": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "hide_craze"
+   ]
+  },
+  "694": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "hide_craze"
+   ]
+  },
+  "695": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "hide_craze"
+   ]
+  },
+  "696": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "hide_craze"
+   ]
+  },
+  "697": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "hide_craze"
+   ]
+  },
+  "698": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "hide_craze"
+   ]
+  },
+  "699": {
+   "a": [
+    "thunderstrike"
+   ],
+   "b": [
+    "thunderstrike"
+   ]
+  },
+  "700": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "corrosion"
+   ]
+  },
+  "701": {
+   "a": [
+    "craze"
+   ],
+   "b": [
+    "craze"
+   ]
+  },
+  "702": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "703": {
+   "a": [
+    "corrosion"
+   ],
+   "b": [
+    "corrosion"
+   ]
+  },
+  "704": {
+   "a": [
+    "corrosion"
+   ],
+   "b": [
+    "corrosion"
+   ]
+  },
+  "705": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "hide_craze"
+   ]
+  },
+  "706": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "hide_craze"
+   ]
+  },
+  "707": {
+   "a": [
+    "corrosion"
+   ],
+   "b": [
+    "corrosion"
+   ]
+  },
+  "708": {
+   "a": [
+    "thunderstrike"
+   ],
+   "b": [
+    "thunderstrike"
+   ]
+  },
+  "709": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "hide_craze"
+   ]
+  },
+  "710": {
+   "a": [
+    "craze"
+   ],
+   "b": [
+    "craze"
+   ]
+  },
+  "711": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "corrosion"
+   ]
+  },
+  "712": {
+   "a": [
+    "corrosion"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "713": {
+   "a": [
+    "craze"
+   ],
+   "b": [
+    "craze"
+   ]
+  },
+  "714": {
+   "a": [
+    "craze"
+   ],
+   "b": [
+    "craze"
+   ]
+  },
+  "715": {
+   "a": [
+    "craze"
+   ],
+   "b": [
+    "craze"
+   ]
+  },
+  "716": {
+   "a": [
+    "craze"
+   ],
+   "b": [
+    "craze"
+   ]
+  },
+  "717": {
+   "a": [
+    "craze",
+    "hide_craze"
+   ],
+   "b": [
+    "craze",
+    "hide_craze"
+   ]
+  },
+  "718": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "hide_craze"
+   ]
+  },
+  "719": {
+   "a": [
+    "corrosion"
+   ],
+   "b": [
+    "corrosion"
+   ]
+  },
+  "720": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "hide_craze"
+   ]
+  },
+  "721": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "hide_craze"
+   ]
+  },
+  "722": {
+   "a": [
+    "corrosion"
+   ],
+   "b": [
+    "corrosion"
+   ]
+  },
+  "723": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "hide_craze"
+   ]
+  },
+  "724": {
+   "a": [
+    "corrosion"
+   ],
+   "b": [
+    "corrosion"
+   ]
+  },
+  "725": {
+   "a": [
+    "craze"
+   ],
+   "b": [
+    "craze"
+   ]
+  },
+  "726": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "727": {
+   "a": [
+    "corrosion"
+   ],
+   "b": [
+    "corrosion"
+   ]
+  },
+  "728": {
+   "a": [
+    "craze",
+    "hide_craze"
+   ],
+   "b": [
+    "craze",
+    "hide_craze"
+   ]
+  },
+  "729": {
+   "a": [
+    "corrosion"
+   ],
+   "b": [
+    "corrosion"
+   ]
+  },
+  "730": {
+   "a": [
+    "craze",
+    "hide_craze"
+   ],
+   "b": [
+    "hide_craze"
+   ]
+  },
+  "731": {
+   "a": [
+    "craze"
+   ],
+   "b": [
+    "craze"
+   ]
+  },
+  "732": {
+   "a": [
+    "corrosion"
+   ],
+   "b": []
+  },
+  "733": {
+   "a": [
+    "corrosion"
+   ],
+   "b": [
+    "corrosion"
+   ]
+  },
+  "734": {
+   "a": [
+    "crack"
+   ],
+   "b": []
+  },
+  "735": {
+   "a": [
+    "crack"
+   ],
+   "b": [
+    "crack"
+   ]
+  },
+  "736": {
+   "a": [
+    "craze"
+   ],
+   "b": [
+    "craze"
+   ]
+  },
+  "737": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "craze",
+    "hide_craze"
+   ]
+  },
+  "738": {
+   "a": [
+    "crack"
+   ],
+   "b": []
+  },
+  "739": {
+   "a": [
+    "crack"
+   ],
+   "b": [
+    "crack"
+   ]
+  },
+  "740": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "741": {
+   "a": [
+    "craze"
+   ],
+   "b": [
+    "craze"
+   ]
+  },
+  "742": {
+   "a": [
+    "craze"
+   ],
+   "b": [
+    "craze"
+   ]
+  },
+  "743": {
+   "a": [
+    "surface_injure",
+    "thunderstrike"
+   ],
+   "b": [
+    "surface_injure",
+    "thunderstrike"
+   ]
+  },
+  "744": {
+   "a": [
+    "thunderstrike"
+   ],
+   "b": [
+    "thunderstrike"
+   ]
+  },
+  "745": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "746": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "747": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "748": {
+   "a": [
+    "surface_injure",
+    "thunderstrike"
+   ],
+   "b": [
+    "surface_injure",
+    "thunderstrike"
+   ]
+  },
+  "749": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "corrosion"
+   ]
+  },
+  "750": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "751": {
+   "a": [
+    "crack"
+   ],
+   "b": [
+    "crack"
+   ]
+  },
+  "752": {
+   "a": [
+    "corrosion"
+   ],
+   "b": [
+    "corrosion"
+   ]
+  },
+  "753": {
+   "a": [
+    "hide_craze",
+    "surface_injure"
+   ],
+   "b": [
+    "hide_craze",
+    "surface_injure"
+   ]
+  },
+  "754": {
+   "a": [
+    "hide_craze",
+    "thunderstrike"
+   ],
+   "b": [
+    "craze",
+    "hide_craze",
+    "thunderstrike"
+   ]
+  },
+  "755": {
+   "a": [
+    "corrosion"
+   ],
+   "b": [
+    "corrosion"
+   ]
+  },
+  "756": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "hide_craze"
+   ]
+  },
+  "757": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "hide_craze"
+   ]
+  },
+  "758": {
+   "a": [
+    "craze"
+   ],
+   "b": [
+    "craze"
+   ]
+  },
+  "759": {
+   "a": [
+    "craze",
+    "surface_injure"
+   ],
+   "b": [
+    "craze",
+    "surface_injure"
+   ]
+  },
+  "760": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "761": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "hide_craze"
+   ]
+  },
+  "762": {
+   "a": [
+    "crack"
+   ],
+   "b": [
+    "crack"
+   ]
+  },
+  "763": {
+   "a": [
+    "crack"
+   ],
+   "b": [
+    "crack"
+   ]
+  },
+  "764": {
+   "a": [
+    "hide_craze",
+    "surface_injure"
+   ],
+   "b": [
+    "corrosion",
+    "hide_craze"
+   ]
+  },
+  "765": {
+   "a": [
+    "craze"
+   ],
+   "b": [
+    "craze"
+   ]
+  },
+  "766": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "hide_craze"
+   ]
+  },
+  "767": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "768": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "hide_craze"
+   ]
+  },
+  "769": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "hide_craze"
+   ]
+  },
+  "770": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "771": {
+   "a": [
+    "craze"
+   ],
+   "b": [
+    "craze"
+   ]
+  },
+  "772": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "773": {
+   "a": [
+    "crack"
+   ],
+   "b": [
+    "crack"
+   ]
+  },
+  "774": {
+   "a": [
+    "crack"
+   ],
+   "b": [
+    "crack"
+   ]
+  },
+  "775": {
+   "a": [
+    "corrosion",
+    "thunderstrike"
+   ],
+   "b": [
+    "corrosion",
+    "thunderstrike"
+   ]
+  },
+  "776": {
+   "a": [
+    "crack"
+   ],
+   "b": [
+    "crack"
+   ]
+  },
+  "777": {
+   "a": [
+    "corrosion"
+   ],
+   "b": [
+    "corrosion"
+   ]
+  },
+  "778": {
+   "a": [
+    "corrosion"
+   ],
+   "b": [
+    "corrosion"
+   ]
+  },
+  "779": {
+   "a": [
+    "craze"
+   ],
+   "b": [
+    "craze"
+   ]
+  },
+  "780": {
+   "a": [
+    "crack"
+   ],
+   "b": [
+    "crack"
+   ]
+  },
+  "781": {
+   "a": [
+    "thunderstrike"
+   ],
+   "b": [
+    "thunderstrike"
+   ]
+  },
+  "782": {
+   "a": [
+    "corrosion"
+   ],
+   "b": [
+    "corrosion"
+   ]
+  },
+  "783": {
+   "a": [
+    "craze"
+   ],
+   "b": [
+    "craze"
+   ]
+  },
+  "784": {
+   "a": [
+    "craze"
+   ],
+   "b": [
+    "craze"
+   ]
+  },
+  "785": {
+   "a": [
+    "craze"
+   ],
+   "b": [
+    "craze"
+   ]
+  },
+  "786": {
+   "a": [
+    "craze"
+   ],
+   "b": [
+    "craze"
+   ]
+  },
+  "787": {
+   "a": [
+    "craze"
+   ],
+   "b": [
+    "craze"
+   ]
+  },
+  "788": {
+   "a": [
+    "craze"
+   ],
+   "b": [
+    "craze"
+   ]
+  },
+  "789": {
+   "a": [
+    "crack"
+   ],
+   "b": [
+    "crack"
+   ]
+  },
+  "790": {
+   "a": [
+    "crack"
+   ],
+   "b": [
+    "crack"
+   ]
+  },
+  "791": {
+   "a": [
+    "thunderstrike"
+   ],
+   "b": [
+    "thunderstrike"
+   ]
+  },
+  "792": {
+   "a": [
+    "crack"
+   ],
+   "b": [
+    "crack"
+   ]
+  },
+  "793": {
+   "a": [
+    "craze"
+   ],
+   "b": [
+    "craze"
+   ]
+  },
+  "794": {
+   "a": [
+    "thunderstrike"
+   ],
+   "b": [
+    "thunderstrike"
+   ]
+  },
+  "795": {
+   "a": [
+    "craze"
+   ],
+   "b": [
+    "craze"
+   ]
+  },
+  "796": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "797": {
+   "a": [
+    "craze"
+   ],
+   "b": [
+    "craze"
+   ]
+  },
+  "798": {
+   "a": [
+    "crack"
+   ],
+   "b": [
+    "crack"
+   ]
+  },
+  "799": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "800": {
+   "a": [
+    "craze"
+   ],
+   "b": [
+    "craze"
+   ]
+  },
+  "801": {
+   "a": [
+    "corrosion"
+   ],
+   "b": [
+    "corrosion"
+   ]
+  },
+  "802": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "803": {
+   "a": [
+    "craze"
+   ],
+   "b": [
+    "craze"
+   ]
+  },
+  "804": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "805": {
+   "a": [
+    "crack"
+   ],
+   "b": [
+    "crack"
+   ]
+  },
+  "806": {
+   "a": [
+    "craze"
+   ],
+   "b": []
+  },
+  "807": {
+   "a": [
+    "craze"
+   ],
+   "b": [
+    "craze"
+   ]
+  },
+  "808": {
+   "a": [
+    "corrosion"
+   ],
+   "b": [
+    "corrosion"
+   ]
+  },
+  "809": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "810": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "hide_craze"
+   ]
+  },
+  "811": {
+   "a": [
+    "crack"
+   ],
+   "b": [
+    "crack"
+   ]
+  },
+  "812": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "hide_craze"
+   ]
+  },
+  "813": {
+   "a": [
+    "crack"
+   ],
+   "b": [
+    "crack"
+   ]
+  },
+  "814": {
+   "a": [
+    "corrosion"
+   ],
+   "b": [
+    "corrosion"
+   ]
+  },
+  "815": {
+   "a": [
+    "corrosion"
+   ],
+   "b": [
+    "corrosion",
+    "surface_injure"
+   ]
+  },
+  "816": {
+   "a": [
+    "crack"
+   ],
+   "b": [
+    "crack"
+   ]
+  },
+  "817": {
+   "a": [
+    "thunderstrike"
+   ],
+   "b": [
+    "thunderstrike"
+   ]
+  },
+  "818": {
+   "a": [
+    "hide_craze",
+    "surface_injure"
+   ],
+   "b": [
+    "hide_craze",
+    "surface_injure"
+   ]
+  },
+  "819": {
+   "a": [
+    "craze"
+   ],
+   "b": [
+    "craze"
+   ]
+  },
+  "820": {
+   "a": [
+    "hide_craze",
+    "surface_injure"
+   ],
+   "b": [
+    "hide_craze",
+    "surface_injure"
+   ]
+  },
+  "821": {
+   "a": [
+    "crack"
+   ],
+   "b": [
+    "crack"
+   ]
+  },
+  "822": {
+   "a": [
+    "corrosion"
+   ],
+   "b": [
+    "corrosion"
+   ]
+  },
+  "823": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "hide_craze"
+   ]
+  },
+  "824": {
+   "a": [
+    "craze"
+   ],
+   "b": [
+    "craze"
+   ]
+  },
+  "825": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "hide_craze"
+   ]
+  },
+  "826": {
+   "a": [
+    "craze"
+   ],
+   "b": [
+    "craze"
+   ]
+  },
+  "827": {
+   "a": [
+    "hide_craze",
+    "surface_injure"
+   ],
+   "b": [
+    "craze",
+    "hide_craze",
+    "surface_injure"
+   ]
+  },
+  "828": {
+   "a": [
+    "craze"
+   ],
+   "b": [
+    "craze"
+   ]
+  },
+  "829": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "830": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": []
+  },
+  "831": {
+   "a": [
+    "crack"
+   ],
+   "b": [
+    "crack"
+   ]
+  },
+  "832": {
+   "a": [
+    "crack"
+   ],
+   "b": [
+    "crack"
+   ]
+  },
+  "833": {
+   "a": [
+    "corrosion"
+   ],
+   "b": [
+    "corrosion"
+   ]
+  },
+  "834": {
+   "a": [
+    "thunderstrike"
+   ],
+   "b": [
+    "thunderstrike"
+   ]
+  },
+  "835": {
+   "a": [
+    "thunderstrike"
+   ],
+   "b": [
+    "thunderstrike"
+   ]
+  },
+  "836": {
+   "a": [
+    "corrosion"
+   ],
+   "b": [
+    "corrosion"
+   ]
+  },
+  "837": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "hide_craze"
+   ]
+  },
+  "838": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "hide_craze"
+   ]
+  },
+  "839": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "840": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "hide_craze"
+   ]
+  },
+  "841": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": []
+  },
+  "842": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "843": {
+   "a": [
+    "thunderstrike"
+   ],
+   "b": [
+    "thunderstrike"
+   ]
+  },
+  "844": {
+   "a": [
+    "crack"
+   ],
+   "b": [
+    "crack"
+   ]
+  },
+  "845": {
+   "a": [
+    "corrosion"
+   ],
+   "b": [
+    "corrosion"
+   ]
+  },
+  "846": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "847": {
+   "a": [
+    "craze"
+   ],
+   "b": [
+    "craze"
+   ]
+  },
+  "848": {
+   "a": [
+    "thunderstrike"
+   ],
+   "b": [
+    "thunderstrike"
+   ]
+  },
+  "849": {
+   "a": [
+    "crack"
+   ],
+   "b": [
+    "crack"
+   ]
+  },
+  "850": {
+   "a": [
+    "corrosion"
+   ],
+   "b": [
+    "corrosion"
+   ]
+  },
+  "851": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "852": {
+   "a": [
+    "corrosion"
+   ],
+   "b": [
+    "corrosion",
+    "surface_injure"
+   ]
+  },
+  "853": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "854": {
+   "a": [
+    "thunderstrike"
+   ],
+   "b": [
+    "thunderstrike"
+   ]
+  },
+  "855": {
+   "a": [
+    "crack"
+   ],
+   "b": [
+    "crack"
+   ]
+  },
+  "856": {
+   "a": [
+    "craze"
+   ],
+   "b": [
+    "craze",
+    "hide_craze"
+   ]
+  },
+  "857": {
+   "a": [
+    "thunderstrike"
+   ],
+   "b": [
+    "thunderstrike"
+   ]
+  },
+  "858": {
+   "a": [
+    "corrosion"
+   ],
+   "b": [
+    "corrosion"
+   ]
+  },
+  "859": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "860": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "corrosion",
+    "surface_injure"
+   ]
+  },
+  "861": {
+   "a": [
+    "craze"
+   ],
+   "b": [
+    "craze"
+   ]
+  },
+  "862": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "863": {
+   "a": [
+    "thunderstrike"
+   ],
+   "b": [
+    "thunderstrike"
+   ]
+  },
+  "864": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "865": {
+   "a": [
+    "corrosion"
+   ],
+   "b": [
+    "corrosion"
+   ]
+  },
+  "866": {
+   "a": [
+    "corrosion"
+   ],
+   "b": [
+    "corrosion"
+   ]
+  },
+  "867": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "868": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "869": {
+   "a": [
+    "crack"
+   ],
+   "b": [
+    "crack"
+   ]
+  },
+  "870": {
+   "a": [
+    "corrosion"
+   ],
+   "b": [
+    "corrosion"
+   ]
+  },
+  "871": {
+   "a": [
+    "craze",
+    "hide_craze"
+   ],
+   "b": [
+    "craze",
+    "hide_craze"
+   ]
+  },
+  "872": {
+   "a": [
+    "crack"
+   ],
+   "b": [
+    "crack"
+   ]
+  },
+  "873": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "874": {
+   "a": [
+    "thunderstrike"
+   ],
+   "b": [
+    "thunderstrike"
+   ]
+  },
+  "875": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "hide_craze"
+   ]
+  },
+  "876": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "877": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "878": {
+   "a": [
+    "corrosion"
+   ],
+   "b": [
+    "corrosion"
+   ]
+  },
+  "879": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "880": {
+   "a": [
+    "thunderstrike"
+   ],
+   "b": [
+    "thunderstrike"
+   ]
+  },
+  "881": {
+   "a": [
+    "corrosion"
+   ],
+   "b": [
+    "corrosion"
+   ]
+  },
+  "882": {
+   "a": [
+    "corrosion"
+   ],
+   "b": [
+    "corrosion"
+   ]
+  },
+  "883": {
+   "a": [
+    "craze",
+    "hide_craze"
+   ],
+   "b": [
+    "craze",
+    "hide_craze"
+   ]
+  },
+  "884": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "craze",
+    "hide_craze"
+   ]
+  },
+  "885": {
+   "a": [
+    "craze",
+    "hide_craze"
+   ],
+   "b": [
+    "craze",
+    "hide_craze"
+   ]
+  },
+  "886": {
+   "a": [
+    "craze"
+   ],
+   "b": [
+    "hide_craze"
+   ]
+  },
+  "887": {
+   "a": [
+    "corrosion"
+   ],
+   "b": [
+    "corrosion"
+   ]
+  },
+  "888": {
+   "a": [
+    "craze"
+   ],
+   "b": [
+    "craze"
+   ]
+  },
+  "889": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "hide_craze"
+   ]
+  },
+  "890": {
+   "a": [
+    "crack"
+   ],
+   "b": [
+    "crack"
+   ]
+  },
+  "891": {
+   "a": [
+    "corrosion"
+   ],
+   "b": [
+    "corrosion"
+   ]
+  },
+  "892": {
+   "a": [
+    "crack"
+   ],
+   "b": [
+    "crack"
+   ]
+  },
+  "893": {
+   "a": [
+    "craze"
+   ],
+   "b": [
+    "craze"
+   ]
+  },
+  "894": {
+   "a": [
+    "thunderstrike"
+   ],
+   "b": [
+    "thunderstrike"
+   ]
+  },
+  "895": {
+   "a": [
+    "craze",
+    "hide_craze"
+   ],
+   "b": [
+    "craze",
+    "hide_craze"
+   ]
+  },
+  "896": {
+   "a": [
+    "thunderstrike"
+   ],
+   "b": [
+    "thunderstrike"
+   ]
+  },
+  "897": {
+   "a": [
+    "thunderstrike"
+   ],
+   "b": [
+    "thunderstrike"
+   ]
+  },
+  "898": {
+   "a": [
+    "crack"
+   ],
+   "b": [
+    "crack"
+   ]
+  },
+  "899": {
+   "a": [
+    "corrosion"
+   ],
+   "b": [
+    "corrosion"
+   ]
+  },
+  "900": {
+   "a": [
+    "craze"
+   ],
+   "b": [
+    "hide_craze"
+   ]
+  },
+  "901": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "902": {
+   "a": [
+    "corrosion"
+   ],
+   "b": [
+    "corrosion",
+    "surface_injure"
+   ]
+  },
+  "903": {
+   "a": [
+    "crack"
+   ],
+   "b": [
+    "crack"
+   ]
+  },
+  "904": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "hide_craze"
+   ]
+  },
+  "905": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "906": {
+   "a": [
+    "crack"
+   ],
+   "b": [
+    "crack"
+   ]
+  },
+  "907": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "908": {
+   "a": [
+    "craze"
+   ],
+   "b": [
+    "craze"
+   ]
+  },
+  "909": {
+   "a": [
+    "craze",
+    "hide_craze"
+   ],
+   "b": [
+    "craze",
+    "hide_craze"
+   ]
+  },
+  "910": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "hide_craze"
+   ]
+  },
+  "911": {
+   "a": [
+    "crack"
+   ],
+   "b": [
+    "crack"
+   ]
+  },
+  "912": {
+   "a": [
+    "craze"
+   ],
+   "b": [
+    "craze"
+   ]
+  },
+  "913": {
+   "a": [
+    "crack"
+   ],
+   "b": [
+    "crack"
+   ]
+  },
+  "914": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "915": {
+   "a": [
+    "corrosion"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "916": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "hide_craze"
+   ]
+  },
+  "917": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "hide_craze"
+   ]
+  },
+  "918": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "hide_craze"
+   ]
+  },
+  "919": {
+   "a": [
+    "corrosion"
+   ],
+   "b": [
+    "corrosion"
+   ]
+  },
+  "920": {
+   "a": [
+    "corrosion"
+   ],
+   "b": [
+    "corrosion"
+   ]
+  },
+  "921": {
+   "a": [
+    "crack"
+   ],
+   "b": [
+    "crack"
+   ]
+  },
+  "922": {
+   "a": [
+    "thunderstrike"
+   ],
+   "b": [
+    "thunderstrike"
+   ]
+  },
+  "923": {
+   "a": [
+    "crack"
+   ],
+   "b": [
+    "crack"
+   ]
+  },
+  "924": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "925": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "926": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "hide_craze"
+   ]
+  },
+  "927": {
+   "a": [
+    "surface_injure",
+    "thunderstrike"
+   ],
+   "b": [
+    "surface_injure",
+    "thunderstrike"
+   ]
+  },
+  "928": {
+   "a": [
+    "craze"
+   ],
+   "b": [
+    "hide_craze"
+   ]
+  },
+  "929": {
+   "a": [
+    "corrosion"
+   ],
+   "b": [
+    "corrosion"
+   ]
+  },
+  "930": {
+   "a": [
+    "craze"
+   ],
+   "b": [
+    "craze"
+   ]
+  },
+  "931": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "932": {
+   "a": [
+    "corrosion"
+   ],
+   "b": [
+    "corrosion"
+   ]
+  },
+  "933": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "934": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "935": {
+   "a": [
+    "corrosion"
+   ],
+   "b": [
+    "corrosion"
+   ]
+  },
+  "936": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "937": {
+   "a": [
+    "corrosion"
+   ],
+   "b": [
+    "corrosion"
+   ]
+  },
+  "938": {
+   "a": [
+    "corrosion"
+   ],
+   "b": [
+    "corrosion"
+   ]
+  },
+  "939": {
+   "a": [
+    "craze"
+   ],
+   "b": [
+    "craze"
+   ]
+  },
+  "940": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "941": {
+   "a": [
+    "corrosion"
+   ],
+   "b": []
+  },
+  "942": {
+   "a": [
+    "corrosion"
+   ],
+   "b": [
+    "corrosion"
+   ]
+  },
+  "943": {
+   "a": [
+    "thunderstrike"
+   ],
+   "b": [
+    "thunderstrike"
+   ]
+  },
+  "944": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "945": {
+   "a": [
+    "thunderstrike"
+   ],
+   "b": [
+    "thunderstrike"
+   ]
+  },
+  "946": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "hide_craze"
+   ]
+  },
+  "947": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "948": {
+   "a": [
+    "crack"
+   ],
+   "b": [
+    "crack"
+   ]
+  },
+  "949": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "950": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "951": {
+   "a": [
+    "corrosion"
+   ],
+   "b": [
+    "corrosion"
+   ]
+  },
+  "952": {
+   "a": [
+    "thunderstrike"
+   ],
+   "b": [
+    "thunderstrike"
+   ]
+  },
+  "953": {
+   "a": [
+    "crack"
+   ],
+   "b": [
+    "crack"
+   ]
+  },
+  "954": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "955": {
+   "a": [
+    "corrosion"
+   ],
+   "b": [
+    "corrosion"
+   ]
+  },
+  "956": {
+   "a": [
+    "surface_injure",
+    "thunderstrike"
+   ],
+   "b": [
+    "corrosion",
+    "surface_injure",
+    "thunderstrike"
+   ]
+  },
+  "957": {
+   "a": [
+    "craze"
+   ],
+   "b": [
+    "craze"
+   ]
+  },
+  "958": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "hide_craze"
+   ]
+  },
+  "959": {
+   "a": [
+    "corrosion"
+   ],
+   "b": []
+  },
+  "960": {
+   "a": [
+    "crack"
+   ],
+   "b": [
+    "crack"
+   ]
+  },
+  "961": {
+   "a": [
+    "craze"
+   ],
+   "b": [
+    "craze"
+   ]
+  },
+  "962": {
+   "a": [
+    "corrosion"
+   ],
+   "b": [
+    "corrosion"
+   ]
+  },
+  "963": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "hide_craze"
+   ]
+  },
+  "964": {
+   "a": [
+    "crack"
+   ],
+   "b": [
+    "crack"
+   ]
+  },
+  "965": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": []
+  },
+  "966": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "967": {
+   "a": [
+    "crack"
+   ],
+   "b": [
+    "crack"
+   ]
+  },
+  "968": {
+   "a": [
+    "corrosion"
+   ],
+   "b": [
+    "corrosion"
+   ]
+  },
+  "969": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "hide_craze"
+   ]
+  },
+  "970": {
+   "a": [
+    "craze"
+   ],
+   "b": [
+    "craze"
+   ]
+  },
+  "971": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "972": {
+   "a": [
+    "corrosion"
+   ],
+   "b": [
+    "corrosion"
+   ]
+  },
+  "973": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "hide_craze"
+   ]
+  },
+  "974": {
+   "a": [
+    "surface_injure",
+    "thunderstrike"
+   ],
+   "b": [
+    "surface_injure",
+    "thunderstrike"
+   ]
+  },
+  "975": {
+   "a": [
+    "hide_craze",
+    "surface_injure"
+   ],
+   "b": [
+    "hide_craze",
+    "surface_injure"
+   ]
+  },
+  "976": {
+   "a": [
+    "crack"
+   ],
+   "b": [
+    "crack"
+   ]
+  },
+  "977": {
+   "a": [
+    "corrosion"
+   ],
+   "b": [
+    "corrosion"
+   ]
+  },
+  "978": {
+   "a": [
+    "corrosion"
+   ],
+   "b": [
+    "corrosion"
+   ]
+  },
+  "979": {
+   "a": [
+    "craze"
+   ],
+   "b": [
+    "craze"
+   ]
+  },
+  "980": {
+   "a": [
+    "surface_injure",
+    "thunderstrike"
+   ],
+   "b": [
+    "surface_injure",
+    "thunderstrike"
+   ]
+  },
+  "981": {
+   "a": [
+    "craze",
+    "surface_injure"
+   ],
+   "b": [
+    "corrosion",
+    "craze"
+   ]
+  },
+  "982": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "hide_craze"
+   ]
+  },
+  "983": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "hide_craze"
+   ]
+  },
+  "984": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "hide_craze"
+   ]
+  },
+  "985": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "hide_craze"
+   ]
+  },
+  "986": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "hide_craze"
+   ]
+  },
+  "987": {
+   "a": [
+    "thunderstrike"
+   ],
+   "b": [
+    "thunderstrike"
+   ]
+  },
+  "988": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "989": {
+   "a": [
+    "hide_craze",
+    "surface_injure"
+   ],
+   "b": [
+    "corrosion",
+    "hide_craze",
+    "surface_injure"
+   ]
+  },
+  "990": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "hide_craze"
+   ]
+  },
+  "991": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "hide_craze"
+   ]
+  },
+  "992": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "993": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "994": {
+   "a": [
+    "craze"
+   ],
+   "b": [
+    "craze"
+   ]
+  },
+  "995": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "996": {
+   "a": [
+    "craze"
+   ],
+   "b": [
+    "craze"
+   ]
+  },
+  "997": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "hide_craze"
+   ]
+  },
+  "998": {
+   "a": [
+    "corrosion"
+   ],
+   "b": [
+    "corrosion"
+   ]
+  },
+  "999": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "1000": {
+   "a": [
+    "hide_craze",
+    "surface_injure"
+   ],
+   "b": [
+    "hide_craze",
+    "surface_injure"
+   ]
+  },
+  "1001": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "1002": {
+   "a": [
+    "corrosion"
+   ],
+   "b": [
+    "corrosion"
+   ]
+  },
+  "1003": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "1004": {
+   "a": [
+    "craze",
+    "hide_craze"
+   ],
+   "b": [
+    "craze",
+    "hide_craze"
+   ]
+  },
+  "1005": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "1006": {
+   "a": [
+    "thunderstrike"
+   ],
+   "b": [
+    "thunderstrike"
+   ]
+  },
+  "1007": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "1008": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "1009": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "1010": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "hide_craze"
+   ]
+  },
+  "1011": {
+   "a": [
+    "craze"
+   ],
+   "b": [
+    "craze"
+   ]
+  },
+  "1012": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "hide_craze"
+   ]
+  },
+  "1013": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "1014": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "hide_craze"
+   ]
+  },
+  "1015": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": []
+  },
+  "1016": {
+   "a": [
+    "corrosion"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "1017": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "hide_craze"
+   ]
+  },
+  "1018": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "1019": {
+   "a": [
+    "thunderstrike"
+   ],
+   "b": [
+    "thunderstrike"
+   ]
+  },
+  "1020": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "1021": {
+   "a": [
+    "thunderstrike"
+   ],
+   "b": [
+    "thunderstrike"
+   ]
+  },
+  "1022": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "1023": {
+   "a": [
+    "thunderstrike"
+   ],
+   "b": [
+    "thunderstrike"
+   ]
+  },
+  "1024": {
+   "a": [
+    "craze"
+   ],
+   "b": [
+    "craze"
+   ]
+  },
+  "1025": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "hide_craze"
+   ]
+  },
+  "1026": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "hide_craze"
+   ]
+  },
+  "1027": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "hide_craze"
+   ]
+  },
+  "1028": {
+   "a": [
+    "thunderstrike"
+   ],
+   "b": [
+    "thunderstrike"
+   ]
+  },
+  "1029": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "1030": {
+   "a": [
+    "craze"
+   ],
+   "b": [
+    "craze"
+   ]
+  },
+  "1031": {
+   "a": [
+    "corrosion"
+   ],
+   "b": [
+    "corrosion"
+   ]
+  },
+  "1032": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "hide_craze"
+   ]
+  },
+  "1033": {
+   "a": [
+    "thunderstrike"
+   ],
+   "b": [
+    "thunderstrike"
+   ]
+  },
+  "1034": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "hide_craze"
+   ]
+  },
+  "1035": {
+   "a": [
+    "craze"
+   ],
+   "b": [
+    "craze"
+   ]
+  },
+  "1036": {
+   "a": [
+    "craze"
+   ],
+   "b": [
+    "craze"
+   ]
+  },
+  "1037": {
+   "a": [
+    "corrosion"
+   ],
+   "b": [
+    "corrosion"
+   ]
+  },
+  "1038": {
+   "a": [
+    "craze"
+   ],
+   "b": []
+  },
+  "1039": {
+   "a": [
+    "craze"
+   ],
+   "b": [
+    "craze"
+   ]
+  },
+  "1040": {
+   "a": [
+    "craze"
+   ],
+   "b": [
+    "craze"
+   ]
+  },
+  "1041": {
+   "a": [
+    "craze",
+    "hide_craze"
+   ],
+   "b": [
+    "craze",
+    "hide_craze"
+   ]
+  },
+  "1042": {
+   "a": [
+    "corrosion"
+   ],
+   "b": [
+    "corrosion"
+   ]
+  },
+  "1043": {
+   "a": [
+    "corrosion"
+   ],
+   "b": [
+    "corrosion"
+   ]
+  },
+  "1044": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "hide_craze"
+   ]
+  },
+  "1045": {
+   "a": [
+    "corrosion"
+   ],
+   "b": [
+    "corrosion"
+   ]
+  },
+  "1046": {
+   "a": [
+    "craze"
+   ],
+   "b": [
+    "craze"
+   ]
+  },
+  "1047": {
+   "a": [
+    "craze"
+   ],
+   "b": []
+  },
+  "1048": {
+   "a": [
+    "corrosion"
+   ],
+   "b": [
+    "corrosion"
+   ]
+  },
+  "1049": {
+   "a": [
+    "corrosion"
+   ],
+   "b": [
+    "corrosion"
+   ]
+  },
+  "1050": {
+   "a": [
+    "crack"
+   ],
+   "b": [
+    "crack"
+   ]
+  },
+  "1051": {
+   "a": [
+    "craze"
+   ],
+   "b": [
+    "craze"
+   ]
+  },
+  "1052": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "1053": {
+   "a": [
+    "craze"
+   ],
+   "b": [
+    "craze"
+   ]
+  },
+  "1054": {
+   "a": [
+    "crack"
+   ],
+   "b": [
+    "crack"
+   ]
+  },
+  "1055": {
+   "a": [
+    "crack"
+   ],
+   "b": [
+    "crack"
+   ]
+  },
+  "1056": {
+   "a": [
+    "thunderstrike"
+   ],
+   "b": [
+    "thunderstrike"
+   ]
+  },
+  "1057": {
+   "a": [
+    "crack"
+   ],
+   "b": [
+    "crack"
+   ]
+  },
+  "1058": {
+   "a": [
+    "crack"
+   ],
+   "b": [
+    "crack"
+   ]
+  },
+  "1059": {
+   "a": [
+    "hide_craze"
+   ],
+   "b": [
+    "hide_craze"
+   ]
+  },
+  "1060": {
+   "a": [
+    "surface_injure"
+   ],
+   "b": [
+    "surface_injure"
+   ]
+  },
+  "1061": {
+   "a": [
+    "craze"
+   ],
+   "b": [
+    "craze"
+   ]
+  },
+  "1062": {
+   "a": [
+    "crack"
+   ],
+   "b": [
+    "crack"
+   ]
+  },
+  "1063": {
+   "a": [
+    "corrosion"
+   ],
+   "b": [
+    "corrosion"
+   ]
+  },
+  "1064": {
+   "a": [
+    "craze"
+   ],
+   "b": [
+    "craze"
+   ]
+  }
+ }
+}

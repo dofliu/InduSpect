@@ -1,0 +1,55 @@
+{
+ "version": "b1-2026-09-14",
+ "source": "Multiclass Dataset ... figshare 10.6084/m9.figshare.30210175.v1, CC BY 4.0",
+ "method": "1-NN（Lab 4×4 格描述子）在語料官方 test 的 161 張上跑兩次，訓練池分別為官方 train 的 745 張、以及其中扣掉與該張同 split_group 的影像。只變這一個變數。",
+ "caveat": "1-NN 對記憶最敏感，所以 0.204 是**這類抄鄰居行為**能拿到的虛高幅度，不是任何特定模型的預測值。它證明的是切分會獎勵記憶，不是某個模型會漲幾分。",
+ "test_images": 161,
+ "train_images": 745,
+ "test_images_with_same_group_in_train": 102,
+ "note": "同一組 test、同一個 1-NN，只差訓練池裡有沒有同群照片。差值就是洩漏值多少分。",
+ "per_class": [
+  {
+   "cls": "surface_injure",
+   "n": 41,
+   "with_leak": 0.659,
+   "without_leak": 0.39,
+   "delta": 0.268
+  },
+  {
+   "cls": "hide_craze",
+   "n": 40,
+   "with_leak": 0.7,
+   "without_leak": 0.675,
+   "delta": 0.025
+  },
+  {
+   "cls": "corrosion",
+   "n": 36,
+   "with_leak": 0.444,
+   "without_leak": 0.306,
+   "delta": 0.139
+  },
+  {
+   "cls": "craze",
+   "n": 34,
+   "with_leak": 0.618,
+   "without_leak": 0.235,
+   "delta": 0.382
+  },
+  {
+   "cls": "crack",
+   "n": 23,
+   "with_leak": null,
+   "without_leak": null,
+   "delta": null
+  },
+  {
+   "cls": "thunderstrike",
+   "n": 16,
+   "with_leak": null,
+   "without_leak": null,
+   "delta": null
+  }
+ ],
+ "mean_recall_delta": 0.204
+}

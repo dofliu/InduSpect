@@ -67,11 +67,24 @@ def test_intake_declares_single_annotator(intake: dict) -> None:
 
 # --- 正常結構普查：抽樣 ⊆ 合格影像 ---------------------------------------
 
-def test_ns_sample_is_subset_of_passing(intake: dict, ns: dict) -> None:
+def test_ns_survey_covers_every_passing_image(intake: dict, ns: dict) -> None:
+    """普查要**逐張都有**，不是抽樣。
+
+    評估協定的誤報歸因（規格 §6 第 4 條）把「未普查」自成一格，覆蓋率一掉，
+    那一格就會吃掉大部分誤報、歸因失去鑑別力（第一版 192 張抽樣時是 523/656）。
+    """
     passing = {k for k, v in intake["labels"].items() if v == "P"}
     keys = set(ns["labels"])
-    assert len(keys) == 192
-    assert keys <= passing, f"抽樣裡有沒通過取像判定的：{sorted(keys - passing)[:5]}"
+    assert keys == passing, (f"漏普查 {len(passing - keys)} 張、"
+                            f"多出 {len(keys - passing)} 張非取像合格的")
+    assert ns["coverage"]["surveyed"] == len(passing)
+
+
+def test_ns_declares_where_the_two_passes_disagree(ns: dict) -> None:
+    """同一標註者兩批之間判準不一致的碼要明講，不可以混進盛行率。"""
+    caveat = ns["consistency_caveat"]
+    assert "`s`" in caveat and "不可用" in caveat
+    assert "`L`" in caveat and "`v`" in caveat, "L 與 v 全 0 是全普查的結論，要留著"
 
 
 def test_ns_codes_are_declared(ns: dict) -> None:
