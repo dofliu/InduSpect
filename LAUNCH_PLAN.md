@@ -29,7 +29,7 @@ P0 八項中的七項已關閉，剩下的全部卡在**實體世界不是程式
 - **申報用 PDF 報告**（第 5-8 週項目）：裝置端純 Dart 離線產生
 - **拍照品質閘門 + 連線可達性探測**：現場惡劣環境因應
 - **後端 SDK 汰換**：`google-generativeai` → `google-genai`，統一走 `gemini_client.py`
-- **CI 全量收緊**：三軌全綠（Flutter 506 / 後端 191 / 葉片原型 144；GitHub Actions 自 2026-09-14 因用量預算暫停，改本機驗證），
+- **CI 全量收緊**：三軌全綠（Flutter 506 / 後端 191 / 葉片原型 157；GitHub Actions 自 2026-09-14 因用量預算暫停，改本機驗證），
   `flutter analyze` 改為硬性門檻，另加**死角查核**擋 PR
 - **葉片模組**：Phase 1–3 App 化完成，Mode B 規格與 B0 產出完成（見 [`ROADMAP.md`](ROADMAP.md)）
 

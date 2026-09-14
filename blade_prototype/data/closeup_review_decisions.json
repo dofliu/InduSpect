@@ -1,0 +1,11 @@
+{
+ "version": "b1-2026-09-14",
+ "note": "Mode B 人工複核的決策。由 scripts/closeup_review_tool.py ingest 寫入，每一筆都帶簽核人與當下的顯示倍率。沒有決策的候選維持 unreviewed——跳過不等於乾淨。",
+ "rules": [
+  "healthy／confirmed 只能由人給；annotator 長得像模型的整批拒絕。",
+  "跳過與未看的不寫進來。",
+  "顯示倍率 < 1.0 的升格不收（654：印樣上判錯過）。",
+  "item_id 綁座標；候選重新產生後對不上的由 status 列為失效，不會被沿用。"
+ ],
+ "entries": []
+}

@@ -23,6 +23,7 @@
    **這是比缺健康照更迫切的洩漏風險**，訓練前要先處理。
 4. **從框外區域挖出約 1,200 格可用的健康候選。** 6,880 格候選中 1,842 格看起來像葉片表面，
    目視抽 64 格約 64% 真的是；全部 `unreviewed`，等人篩。
+   **篩的工具做好了（§6），但一筆都還沒篩**——決策檔目前 0 筆。
 
 ---
 
@@ -34,6 +35,7 @@
 | Pass 2 正常結構普查 | 合格 839 張等距抽 **192 張** | 4×4 接觸印樣（每格 460 px）標影像級存在 | [`data/closeup_normal_structures_wtb.json`](data/closeup_normal_structures_wtb.json) |
 | Pass 3 健康候選挖掘 | 合格 839 張 | 程式：兩位標註者框聯集外擴 48 px，鋪 256 px 網格取無交集的格 | `scripts/closeup_healthy_candidates.py` → manifest（不進版控） |
 | Pass 4 概略框 | 8 張 | 1024×1024 全解析度逐張畫框 | [`data/closeup_normal_structure_boxes_wtb.json`](data/closeup_normal_structure_boxes_wtb.json) |
+| 複核工具 | 上面三者共 1,866 筆 | 離線工作區 + 四條簽核規則（§6） | `scripts/closeup_review_tool.py` → [`data/closeup_review_decisions.json`](data/closeup_review_decisions.json) |
 
 Pass 1 與 2 在印樣上判，解析度夠判「取景」與「畫面裡有沒有某類東西」，不夠判細部。
 Pass 4 是全解析度，但只有 8 張，框是概略的（`approx: true`）。
@@ -165,7 +167,53 @@ python scripts/closeup_healthy_candidates.py <語料根目錄> <輸出目錄>
 
 ---
 
-## 6. 對規格與分類表的回饋
+## 6. 複核工具：把第一版標記變成可簽核的東西
+
+上面三份產出全部停在 `unreviewed`／`pending`，而在有人看過之前它們一筆都不能用。
+`scripts/closeup_review_tool.py` 是那道門：
+
+```bash
+# 1. 產離線工作區（切圖 + 單檔 HTML，約 32 MB／1,866 筆）
+python scripts/closeup_review_tool.py build <語料根目錄> <工作區目錄> \
+       --manifest <Pass 3 的 healthy_candidates.json>
+# 2. 瀏覽器開 <工作區目錄>/review.html，鍵盤 y／n／u／s 逐筆判，可中斷續做，做完「匯出決策」
+# 3. 併進版控中的決策檔（這一步才會擋不合格的簽核）
+python scripts/closeup_review_tool.py ingest <下載的 decisions.json> \
+       --items <工作區目錄>/items.json --annotator "你的名字"
+python scripts/closeup_review_tool.py status --items <工作區目錄>/items.json   # 還差多少
+```
+
+三個佇列，各自宣告「yes 是什麼意思」：
+
+| 佇列 | 筆數 | yes 代表 | 寫進去的狀態 |
+|---|---|---|---|
+| `healthy` 健康候選格 | 1,842（`blade_like`，可用 `--bg` 改） | 這 256 px 是葉片表面且乾淨 | `healthy` |
+| `ns_recheck` `x` 全解析度複核 | 6 | 印樣上標的陰影／反光成立 | `confirmed` |
+| `boxes` 概略框複核 | 18（19 筆中 654 那筆無框） | 框的位置與類別都對 | `confirmed` |
+
+畫面一次給兩樣東西：**被判的切圖**（原尺寸，256 px 的自動放大到 2×）與**整張的上下文**（長邊 512，
+上面標出這一格的位置）。判「這格是不是葉片表面」需要上下文，判「乾不乾淨」需要原尺寸，缺一個都會判錯。
+
+四條不可退化的約定，每一條都有反向測試（`tests/test_closeup_review_tool.py`）：
+
+1. **升格一定要人名。** `annotator` 長得像模型（`claude*`／`gpt*`／`model*`／空的）整批拒收——
+   第一版標記用的 `claude-first-pass` 不可以經由這條路變成簽核。
+2. **跳過 ≠ 乾淨。** 跳過與沒看的都不寫進決策檔，維持 `unreviewed`。「兩位標註者都沒框」本來就
+   不等於確認乾淨，複核工具不可以把「沒看」再變成一次「沒問題」。
+3. **不得在縮圖上升格。** 每筆決策記下當下量到的顯示倍率（顯示 px ÷ 原圖 px），
+   倍率 < 1.0 的 `yes` 在匯入時被擋下；否決不受限（縮圖也看得出不是葉片）。
+   來由是 §5 的 654：印樣上看成硬邊陰影，全解析度看是葉片與天空的邊界。
+   畫面上這條是**靠構造成立**的——切圖一律以原尺寸顯示、容器自己捲，不會被版面縮掉，
+   匯入時的檢查是外部匯入與瀏覽器縮放的後備。
+4. **決策綁在像素上。** `item_id` 是「佇列＋檔名＋座標」的雜湊。候選用不同 `--tile`／`--margin`
+   重新產生後，對不上的決策會被 `status` 列為失效，不會被默默套到別的像素上。
+
+決策檔 [`data/closeup_review_decisions.json`](data/closeup_review_decisions.json) 進版控，
+目前 **0 筆**——沒有人簽核過任何一筆。測試守著它：裡面若出現沒有人名、或在縮圖上做的升格，會紅。
+
+---
+
+## 7. 對規格與分類表的回饋
 
 1. **§6 加一條：帶標註／前處理痕跡的影像單獨切子集報數字。** 理由見 §3.3。
 2. **§6 第 4 條在這份語料上做不到，要另外拍健康照。** 拍攝清單就是分類表 §2 的 12 項，
@@ -176,7 +224,7 @@ python scripts/closeup_healthy_candidates.py <語料根目錄> <輸出目錄>
 
 ---
 
-## 7. 誠實的邊界
+## 8. 誠實的邊界
 
 - **單一標註者、未複核。** 三份標記檔與所有數字都是。§5 的 654 就是一個判錯後修正的例子——
   其他沒重看的很可能還有。
@@ -185,14 +233,17 @@ python scripts/closeup_healthy_candidates.py <語料根目錄> <輸出目錄>
   全解析度普查會不會找到幾張，不確定；但即使找到，也不會多到能撐一個類別。
 - **Pass 3 的候選只是候選**：精確度 64% 是 64 格抽樣的目視數字。
 - **沒有跑任何模型。**
+- **複核工具做好了，但一筆都還沒複核。** 工具讓那件事可以被執行，不代表已經被執行；
+  決策檔目前 0 筆，§0 的「約 1,200 格可用」仍然是目視抽樣的推估，不是逐格看過的結果。
 
 ---
 
-## 8. 重現
+## 9. 重現
 
 ```bash
 cd blade_prototype
 pytest tests/test_closeup_healthy_set.py            # 三份標記檔的一致性與「不得偷偷簽核」
+pytest tests/test_closeup_review_tool.py            # 複核工具四條規則的反向測試
 python scripts/closeup_healthy_candidates.py <語料根目錄> out/   # 需要 figshare 語料（79 MB，CC BY 4.0）
 ```
 
