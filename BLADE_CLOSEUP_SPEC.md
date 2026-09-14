@@ -233,10 +233,20 @@ Blades Using Knowledge-Augmented Vision Language Models*, arXiv:2510.22868v2（2
 
 1. **測試集按葉片切，不按照片切。** 同一支葉片的相鄰影格極為相似，按照片隨機切會讓
    訓練與測試共享同一支葉片，分數虛高。切分依據是「哪一支葉片、哪一次飛行」。
+   **執行依據**：multiclass WTB 語料沒有 `blade_id`／`flight_id`，改用實測的
+   `split_group`（[`blade_prototype/data/closeup_blade_groups_wtb.json`](blade_prototype/data/closeup_blade_groups_wtb.json)，
+   做法與驗證見 [`CLOSEUP_SPLIT_GROUPS.md`](blade_prototype/CLOSEUP_SPLIT_GROUPS.md)）——
+   影像重疊連出來的「不可拆到不同子集」單位，整群一起走。
+   **語料自己附的 `train_val_test_split.txt` 不可以用**：它是 `random.shuffle` 按照片切，
+   實測 **63.4% 的 test 影像在 train 裡有已驗證的近重複**。
+   群組是**下界**（不重疊的同葉片照片連不起來），所以它是必要條件不是充分條件。
 2. **主指標是逐類 recall，不是 accuracy。** 報告一律附逐類表與混淆矩陣。
    整體 accuracy 只能當附註，不能當標題（理由見 §5.2）。
 3. **每類最少 30 張才報數字。** 少於 30 的類別只列張數與定性觀察，不列 P/R/F1。
    （Zhang 等人在 2 張上報 1.00/1.00，我們不重複這個做法。）
+   **這一條與第 1 條在這份語料上會打架**：群整群走之後，單一 70/15/15 的 test 只剩
+   9 張 `thunderstrike`、15 張 `craze`。解法是**群感知 5 折**（群組檔的 `folds`），
+   每張影像當過一次 test，逐類測試張數回到 89–264，兩條規則才同時成立。
 4. **健康照要夠多且要含容易誤判的正常結構。** 測試集裡至少 1/3 是健康照，
    且其中要刻意包含接縫、LEP 邊緣、VG 板、標記貼紙、汙漬。
    **誤報率要分開報「誤報在正常結構上」與「誤報在乾淨表面上」**，前者才是真問題。
@@ -319,7 +329,7 @@ Blades Using Knowledge-Augmented Vision Language Models*, arXiv:2510.22868v2（2
 |---|---|---|---|
 | B0 | 分類表、資料集清單與授權表、語料實際 cm/px 量測（§2 待量） | 學生 | 一張分類表 + 一張資料集表 + 每份語料的 cm/px 分布。**已完成：[`BLADE_CLOSEUP_TAXONOMY.md`](BLADE_CLOSEUP_TAXONOMY.md) 與 [`blade_prototype/CLOSEUP_BASELINE_REPORT.md`](blade_prototype/CLOSEUP_BASELINE_REPORT.md)**，回饋見 §12 |
 | B0.5 | 健康照與正常結構第一版 + **人工複核** | 本專案（工具）／學生（複核） | 候選與工具已就位（[`blade_prototype/CLOSEUP_HEALTHY_SET.md`](blade_prototype/CLOSEUP_HEALTHY_SET.md)，`scripts/closeup_review_tool.py`）；**出口條件是簽核過的決策筆數 > 0**，目前 0 |
-| B1 | 評估協定實作：葉片級切分、逐類指標、低光照子集 | 學生 | 一支評估腳本，吃預測檔出逐類表。**先決條件**：語料沒有葉片編號，「按葉片切」要先解（見 CLOSEUP_HEALTHY_SET §4 末段） |
+| B1 | 評估協定實作：葉片級切分、逐類指標、低光照子集 | 學生 | 一支評估腳本，吃預測檔出逐類表。**切分已備妥**：用 `closeup_blade_groups_wtb.json` 的 `folds`（群感知 5 折，零洩漏），不要自己重切（見 [`CLOSEUP_SPLIT_GROUPS.md`](blade_prototype/CLOSEUP_SPLIT_GROUPS.md）） |
 | B2 | 三條基線各跑一次（§8.1–8.3） | 學生 | 三組逐類數字，含 structural recall |
 | B3 | 知識庫建置與消融 | 學生 | 四個知識庫各自缺一次的逐類數字 |
 | B4 | 兩段式合流、接進 App | 本專案 | `bboxJson` 有生產端、死角名單條目移除 |

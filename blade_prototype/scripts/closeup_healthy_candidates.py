@@ -12,6 +12,8 @@
 3. 在影像上鋪 `--tile` × `--tile` 的網格，凡與擴框有交集的格子一律不要。
 4. 每格記 HSV 平均與一個粗略的背景猜測（天空／植被／葉片樣），讓人先篩掉明顯不是葉片的。
    **這個猜測不是標籤**，只是排序用。
+5. 每格帶上來源影像的 `split_group`（`data/closeup_blade_groups_wtb.json`）——健康候選與缺陷影像
+   同源，切分時必須分在同一側，否則健康樣本會洩漏到測試集。
 
 輸出 manifest + 一張隨機抽樣的接觸印樣（看一眼就知道挖出來的東西長什麼樣）。
 影像本體不進版控。
@@ -34,6 +36,7 @@ import numpy as np
 ROOT = Path(__file__).resolve().parents[1]
 INTAKE = ROOT / "data" / "closeup_intake_wtb.json"
 NS = ROOT / "data" / "closeup_normal_structures_wtb.json"
+GROUPS = ROOT / "data" / "closeup_blade_groups_wtb.json"
 
 
 def parse_boxes(xml_path: Path) -> list[tuple[str, tuple[int, int, int, int]]]:
@@ -85,6 +88,9 @@ def main() -> int:
     out.mkdir(parents=True, exist_ok=True)
     intake = json.loads(INTAKE.read_text(encoding="utf-8"))["labels"]
     ns = json.loads(NS.read_text(encoding="utf-8"))["labels"] if NS.exists() else {}
+    # 每格帶上來源影像的 split_group：候選與缺陷影像同源，切分時必須分在同一側
+    # （規格 §6 第 1 條）。群組檔見 scripts/closeup_blade_groups.py。
+    groups = json.loads(GROUPS.read_text(encoding="utf-8"))["groups"] if GROUPS.exists() else {}
     passing = sorted(int(k) for k, v in intake.items() if v == "P")
 
     tiles: list[dict] = []
@@ -115,6 +121,7 @@ def main() -> int:
                     both_annotators_clear=True, bg_guess=guess,
                     hsv_mean=[round(v, 1) for v in hsv],
                     image_artifact_tags=ns.get(str(i), None),
+                    split_group=groups.get(str(i)),
                     human_status="unreviewed", annotator=None,
                 ))
                 n_here += 1
@@ -133,6 +140,8 @@ def main() -> int:
         blade_like_tiles=by_guess.get("blade_like", 0),
         blade_like_from_images_without_artifact_tags=sum(
             1 for t in tiles if t["bg_guess"] == "blade_like" and not (t["image_artifact_tags"] or "")),
+        split_groups_present=bool(groups),
+        distinct_split_groups=len({t["split_group"] for t in tiles if t["split_group"] is not None}),
     )
     json.dump(dict(summary=summary, tiles=tiles), open(out / "healthy_candidates.json", "w", encoding="utf-8"),
               indent=1, ensure_ascii=False)
