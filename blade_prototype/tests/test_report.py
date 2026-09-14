@@ -14,9 +14,10 @@ import pytest
 from blade_proto.charts import SERIES_ROLES, Series, bar_chart, line_chart
 from blade_proto.report import CaseMeta, build_report, image_data_uri, write_report
 from blade_proto.segmentation import find_structure, segment_turbine
-from blade_proto.geometry import compare_blades, profiles_from_structure
+from blade_proto.geometry import compare_blades, profiles_from_structure, side_view_summary
+from blade_proto.quality import assess_capture
 from blade_proto.surface import analyze_blade_edges
-from blade_proto.synth import SceneSpec, render_blade_segment, render_front
+from blade_proto.synth import SceneSpec, render_blade_segment, render_front, render_side
 
 
 def _still_payload(tmp_path, deflection_cm=(500, 0, 0)):
@@ -235,3 +236,36 @@ def test_report_shows_capture_warnings_but_keeps_results_when_passed(tmp_path):
                         still=still, still_overlay=still_img)
     assert "判定結果請降權看待" in html
     assert "互比指標" in html
+
+
+def _side_payload(tmp_path):
+    """合成側視照走完閘門 + side_view_summary 的 still payload（與 cli._analyze_still_payload 同形）。"""
+    img, _ = render_side(SceneSpec.for_scale(6.0, "side", (1500, 2000), seed=2))
+    path = str(tmp_path / "side.png")
+    cv2.imwrite(path, img)
+    seg = segment_turbine(img)
+    st = find_structure(seg.mask, horizon_y=seg.horizon_y)
+    v = assess_capture(seg, st)
+    assert v.metrics["view"] == "side", v.to_dict()
+    profs = profiles_from_structure(st)
+    return {
+        "image": path, "size": [img.shape[1], img.shape[0]],
+        "segmentation": {"threshold_sigma": seg.threshold, "mask_area_frac": float((seg.mask > 0).mean()),
+                         "horizon_y": seg.horizon_y},
+        "capture_quality": v.to_dict(),
+        "structure": {"hub": st.hub, "hub_radius_px": st.hub_radius_px, "hub_refined": st.hub_refined,
+                      "tower_found": st.tower_found, "tower_roll_deg": st.tower_angle_deg,
+                      "tower_width_px": st.tower_width_px, "n_blades": len(st.blades), "notes": st.notes},
+        "blades": [p.to_dict() for p in profs],
+        "comparison": side_view_summary(profs, v.metrics["hanging_blade_index"], rotor_radius_m=60.0),
+    }, path
+
+
+def test_report_side_view_shows_hanging_blade_and_no_three_blade_verdict(tmp_path):
+    """側視：報告要說「不互比、只量垂掛葉片」，不能出現三片一致／離群的判定，也不能出現「合格」。"""
+    still, path = _side_payload(tmp_path)
+    html = build_report(CaseMeta(asset_id="SIDE-01"), still=still, still_overlay=path)
+    assert "側視垂掛葉片彎曲" in html and "垂掛葉片量測" in html and "垂掛葉片葉尖偏移" in html
+    assert "三片一致" not in html and "離群，需人工確認" not in html
+    assert "不適用（側視）" in html
+    assert "合格" not in html.replace("不合格", "")

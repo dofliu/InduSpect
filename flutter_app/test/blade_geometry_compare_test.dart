@@ -225,6 +225,35 @@ void main() {
       expect(v.reasons.join(), contains('六點鐘'));
     });
 
+    // n = 0 與 n = 1/2 的成因不同。75 張真實照片裡 18 張是 n = 0，而 2026-09-14 之前
+    // 三種都印「可能有葉片貼在塔架上，請等轉子轉開」——那會把現場的人帶去等一件不會發生的事。
+    test('一片都沒定位到 → 指向取景與分割，不叫人等轉子', () {
+      final v = BladeStructureGate.judge(
+          structure: const BladeStructure(blades: [], towerFound: true),
+          checkSecondRotor: false);
+      expect(v.ok, isFalse);
+      final msg = v.reasons.join();
+      expect(msg, contains('一片葉片都沒有定位到'));
+      expect(msg, contains('完整入鏡'));
+      expect(msg, contains('分割'));
+      expect(msg, isNot(contains('等轉子轉到')),
+          reason: 'n = 0 時轉子轉不轉都一樣，不可以叫人等');
+    });
+
+    test('定位到超過三片 → 指向取景，不指向塔架', () {
+      final v = BladeStructureGate.judge(
+          structure: BladeStructure(
+              blades: [_tip(100), _tip(101), _tip(102), _tip(99)],
+              towerFound: true,
+              hubRefined: true),
+          checkSecondRotor: false);
+      expect(v.ok, isFalse);
+      final msg = v.reasons.join();
+      expect(msg, contains('多於 3'));
+      expect(msg, contains('不只一台風機'));
+      expect(msg, isNot(contains('等轉子轉到')));
+    });
+
     test('沒塔架、輪轂未精修 → 只警告不拒收', () {
       final v = BladeStructureGate.judge(
           structure: BladeStructure(
@@ -243,6 +272,118 @@ void main() {
       expect(BladeStructureGate.maxMaskFrac, 0.15);
       expect(BladeStructureGate.minMaskFrac, 0.0015);
       expect(BladeStructureGate.secondRotorWarnRatio, 0.5);
+      expect(BladeStructureGate.sideViewMaxTiltDeg, 12.0);
+    });
+
+    // 側視（§13-12）：規格 §5.1 的側視模式原本會被「葉片數 ≠ 3」與「半徑離散」拒收。
+    // 側視另走一組規則，但判定要嚴——恰好兩片、一上一下、都在垂直 ±12° 內、有塔架。
+    // 對照 Python tests/test_quality.py 的同名情境。
+    test('側視：一上一下兩片近垂直、有塔架 → 放行，不套三片規則，但明說不能互比', () {
+      final st = BladeStructure(
+          blades: [_tipAt(300, 270), _tipAt(150, 90)],
+          towerFound: true,
+          hubRefined: true);
+      final v = BladeStructureGate.judge(structure: st, checkSecondRotor: false);
+      expect(v.ok, isTrue, reason: v.reasons.join('；'));
+      expect(v.metrics['view'], 'side');
+      expect(v.metrics['hanging_blade_index'], 0);
+      expect((v.metrics['tip_radius_spread'] as num).toDouble(),
+          greaterThan(BladeStructureGate.maxRadiusSpread),
+          reason: '離散度照記錄，只是不拿來判');
+      expect(v.warnings.join(), contains('互比不適用'));
+    });
+
+    test('側視要一上一下：兩片都朝上不是側視，照正視規則拒收', () {
+      final v = BladeStructureGate.judge(
+          structure: BladeStructure(
+              blades: [_tipAt(300, 90), _tipAt(150, 92)],
+              towerFound: true,
+              hubRefined: true),
+          checkSecondRotor: false);
+      expect(v.ok, isFalse);
+      expect(v.metrics['view'], 'front');
+      expect(v.reasons.join(), contains('六點鐘'));
+    });
+
+    test('斜視不是側視（真實照片 1573f056：6.6° 與 19.2°）', () {
+      final v = BladeStructureGate.judge(
+          structure: BladeStructure(
+              blades: [_tipAt(277, 289.2), _tipAt(215.8, 83.4)],
+              towerFound: true,
+              hubRefined: true),
+          checkSecondRotor: false);
+      expect(v.ok, isFalse, reason: '斜視的垂掛葉片彎曲含透視分量，放行只會多一個假訊號來源');
+      expect(v.metrics['view'], 'front');
+    });
+
+    test('側視要有塔架；單獨一根垂直的東西也不是側視', () {
+      final noTower = BladeStructureGate.judge(
+          structure: BladeStructure(
+              blades: [_tipAt(300, 270), _tipAt(150, 90)],
+              towerFound: false,
+              hubRefined: true),
+          checkSecondRotor: false);
+      expect(noTower.ok, isFalse);
+      final lone = BladeStructureGate.judge(
+          structure: BladeStructure(
+              blades: [_tipAt(300, 270)], towerFound: true, hubRefined: true),
+          checkSecondRotor: false);
+      expect(lone.ok, isFalse);
+      expect(lone.metrics['view'], 'front');
+    });
+
+    test('側視門檻 12° 含邊界，與 Python 相同', () {
+      expect(
+          BladeStructureGate.detectSideView(BladeStructure(
+              blades: [_tipAt(300, 282.0), _tipAt(150, 90)], towerFound: true)),
+          0);
+      expect(
+          BladeStructureGate.detectSideView(BladeStructure(
+              blades: [_tipAt(300, 282.5), _tipAt(150, 90)], towerFound: true)),
+          isNull);
+    });
+  });
+
+  group('側視（與 Python 的夾具對照）', () {
+    late Map<String, dynamic> sideRef;
+    setUpAll(() {
+      sideRef = jsonDecode(
+        File('test/assets/blade_side_reference.json').readAsStringSync(),
+      ) as Map<String, dynamic>;
+    });
+
+    test('合成側視照：閘門判成側視放行、不互比、垂掛葉片與 Python 同一片同一個數', () {
+      final bytes = File('test/assets/blade_side_scene.png').readAsBytesSync();
+      final out = runGeometryPipeline(Uint8List.fromList(bytes));
+      final want = sideRef['capture_verdict'] as Map<String, dynamic>;
+      expect(out.ok, want['ok'] as bool, reason: out.reasons.join('；'));
+      expect(out.metrics['view'], want['view']);
+      expect(out.metrics['hanging_blade_index'], want['hanging_blade_index']);
+      expect(out.metrics['n_blades'], sideRef['n_blades']);
+      expect(out.comparisons, isEmpty, reason: '側視不做三片互比');
+      expect(out.warnings.length, want['n_warnings'] as int,
+          reason: out.warnings.join('；'));
+      final hb = sideRef['hanging_blade'] as Map<String, dynamic>;
+      expect((out.metrics['hanging_radius_px'] as num).toDouble(),
+          closeTo((hb['radius_px'] as num).toDouble(), 2.0));
+      expect((out.metrics['hanging_tip_deflection_px'] as num).toDouble(),
+          closeTo((hb['tip_deflection_px'] as num).toDouble(), 1.0));
+    });
+
+    test('sideViewSummary 的形狀與 compareBlades 相容', () {
+      final st = structureOf();
+      final profiles = BladeGeometryCompare.profilesFromStructure(st);
+      final s = BladeGeometryCompare.sideViewSummary(profiles, 0);
+      expect(s.comparisons, isEmpty);
+      expect(s.anyFlagged, isFalse);
+      expect(s.view, 'side');
+      expect(s.hangingBlade!['index'], 0);
+      final json = s.toJson();
+      expect(json['view'], 'side');
+      expect(json['hanging_blade'], isA<Map<String, dynamic>>());
+      expect(BladeGeometryCompare.compareBlades(profiles).toJson().containsKey('view'),
+          isFalse,
+          reason: '正視的 JSON 形狀不變');
     });
   });
 
@@ -275,6 +416,16 @@ void main() {
     });
   });
 }
+
+BladeTip _tipAt(double radius, double angleDeg) => BladeTip(
+      area: 500,
+      tipX: 0,
+      tipY: 0,
+      tipRadiusPx: radius,
+      tipAngleDeg: angleDeg,
+      xs: Int32List(0),
+      ys: Int32List(0),
+    );
 
 BladeTip _tip(double radius) => BladeTip(
       area: 500,

@@ -1,0 +1,41 @@
+{
+ "_readme": "由 blade_prototype/scripts/make_side_fixture.py 產生，勿手改。側視閘門（§13-12）的 Dart 交叉驗證：同一張圖、同一個結論。",
+ "size": [
+  600,
+  900
+ ],
+ "cm_per_px": 15.0,
+ "side_view_max_tilt_deg": 12.0,
+ "n_blades": 2,
+ "tip_angles_deg": [
+  85.41,
+  272.24
+ ],
+ "tip_radii_px": [
+  205.9,
+  396.1
+ ],
+ "tower_found": true,
+ "capture_verdict": {
+  "ok": true,
+  "view": "side",
+  "hanging_blade_index": 1,
+  "n_reasons": 0,
+  "n_warnings": 2
+ },
+ "hanging_blade": {
+  "index": 1,
+  "label": "B",
+  "axis_angle_deg": 272.3017,
+  "radius_px": 394.0673,
+  "bend_coeff": 0.0329,
+  "tip_deflection_px": 12.9573,
+  "residual_rms_px": 0.181,
+  "n_contaminated_bins": 0
+ },
+ "truth": {
+  "azimuth_deg": 270.0,
+  "prebend_px": 13.333333333333334,
+  "tip_deflection_px": 0.0
+ }
+}

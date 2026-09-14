@@ -161,9 +161,16 @@ def _geometry_section(still: dict, overlay_uri: str | None, meta: CaseMeta) -> t
     st = still.get("structure") or {}
     findings: list[str] = []
 
-    parts = ['<section id="geometry"><h2>幾何層 — 三片葉片互比</h2>',
-             '<p class="lede">同一台風機三片葉片同批同型，在同一轉子位置的剪影應該一致；'
-             '差異本身就是訊號，不需要絕對量測也不需要歷史基線。</p>']
+    side = cmp_.get("view") == "side"
+    if side:
+        parts = ['<section id="geometry"><h2>幾何層 — 側視垂掛葉片彎曲</h2>',
+                 '<p class="lede">側視時三片葉片的投影落在同一條垂直線上，三片互比不適用；'
+                 '本層只量垂掛葉片的 flapwise 彎曲。單幀值含預彎，要與同一台的基線或正視互比結果'
+                 '對照才有意義，所以這裡不設門檻、不做離群判定。</p>']
+    else:
+        parts = ['<section id="geometry"><h2>幾何層 — 三片葉片互比</h2>',
+                 '<p class="lede">同一台風機三片葉片同批同型，在同一轉子位置的剪影應該一致；'
+                 '差異本身就是訊號，不需要絕對量測也不需要歷史基線。</p>']
     parts.append('<div class="split">')
     parts.append(_figure(overlay_uri, f"分割與結構定位疊圖（{escape(os.path.basename(still.get('image', '')))}）"))
     parts.append(_kv_table([
@@ -195,9 +202,41 @@ def _geometry_section(still: dict, overlay_uri: str | None, meta: CaseMeta) -> t
     for w in q.get("warnings", []):
         parts.append(f'<p class="warn">{escape(w)}</p>')
 
+    if side:
+        # 側視：只有垂掛那片的中心線有意義，上方那段是另兩片疊在一起。
+        hb = cmp_.get("hanging_blade") or {}
+        hi = hb.get("index")
+        hang = blades[hi] if isinstance(hi, int) and 0 <= hi < len(blades) else None
+        if hang:
+            u = [x for x in (hang.get("u") or []) if x is not None]
+            R = hang.get("radius_px") or 1.0
+            ys = [(v * R if v is not None else float("nan")) for v in (hang.get("center") or [])][:len(u)]
+            if len(u) >= 2 and len(ys) >= 2:
+                parts.append(line_chart(
+                    [Series(name="垂掛葉片", xs=u[:len(ys)], ys=ys, role=SERIES_ROLES[0])],
+                    title="垂掛葉片中心線側向偏移", x_label="沿葉片長度位置（0 = 根部，1 = 葉尖）",
+                    y_label="側向偏移 (px)", unit=" px", y_digits=1,
+                    caption="單幀的彎曲含製造預彎；與同一台的基線或另一幀相減才是變化量。"))
+        dev_cm = hb.get("tip_deflection_cm")
+        parts.append("<h3>垂掛葉片量測</h3>")
+        parts.append(_kv_table([
+            ("垂掛葉片", f"葉片 {escape(str(hb.get('label', '—')))}（投影長度 {_fmt(hb.get('radius_px'), 0, ' px')}）"),
+            ("彎曲係數", _fmt(hb.get("bend_coeff"), 4)),
+            ("葉尖偏移（含預彎）", _fmt(hb.get("tip_deflection_px"), 1, " px")
+             + (f"（{_fmt(dev_cm, 0, ' cm')}）" if dev_cm is not None else "")),
+            ("擬合殘差 rms", _fmt(hb.get("residual_rms_px"), 2, " px")),
+            ("三片互比", "不適用（側視）"),
+        ]))
+        if cmp_.get("note"):
+            parts.append(f'<p class="note">{escape(cmp_["note"])}</p>')
+        blades_chart: list = []
+        comps = []
+    else:
+        blades_chart = blades
+
     # 中心線曲線（三片各一系列）
     series = []
-    for i, b in enumerate(blades[:3]):
+    for i, b in enumerate(blades_chart[:3]):
         u = [x for x in (b.get("u") or []) if x is not None]
         c = b.get("center") or []
         R = b.get("radius_px") or 1.0
@@ -651,9 +690,14 @@ def build_report(
                         "需人工確認" if findings else "本次未檢出異常", level)]
     if still:
         cmpd = still.get("comparison") or {}
-        flagged = sum(1 for c in (cmpd.get("comparisons") or []) if c.get("flagged"))
-        tiles.append(_stat_tile("幾何離群指標", f"{flagged} / {len(cmpd.get('comparisons') or [])}",
-                                "三片互比", "critical" if flagged else "good"))
+        if cmpd.get("view") == "side":
+            hb = cmpd.get("hanging_blade") or {}
+            tiles.append(_stat_tile("垂掛葉片葉尖偏移", _fmt(hb.get("tip_deflection_px"), 1, " px"),
+                                    "側視，含預彎；不做三片互比", "good"))
+        else:
+            flagged = sum(1 for c in (cmpd.get("comparisons") or []) if c.get("flagged"))
+            tiles.append(_stat_tile("幾何離群指標", f"{flagged} / {len(cmpd.get('comparisons') or [])}",
+                                    "三片互比", "critical" if flagged else "good"))
     if edge:
         r = edge.get("le_over_te_rms_ratio")
         tiles.append(_stat_tile("前緣/後緣粗糙度比", _fmt(r, 2), "≥ 2 為侵蝕徵兆",

@@ -147,6 +147,15 @@ class BladeStructureGate {
   /// 前景太少代表風機根本沒被分出來（白葉片對上亮雲天空）
   static const double minMaskFrac = 0.0015;
 
+  /// 側視：相機垂直轉子面，三片葉片的投影落在通過輪轂的同一條垂直線上——正視用的
+  /// 「葉片數 ≠ 3」與「三片半徑離散」兩條規則在這裡本來就不成立（另兩片疊成一段、
+  /// 投影長度只有 R·sin），照套會把規格 §5.1 的側視模式整個擋掉。
+  /// 判定側視的條件刻意嚴格：**恰好 2 個伸長元件、全部在垂直 ±12° 內、一上一下、
+  /// 塔架找到**。12° 是拿 75 張真實照片定的：≤12° 沒有任何一張命中，唯一標成
+  /// 「轉子近側視」的那張兩片是 6.6° 與 19.2°——那是斜視不是側視，斜視的垂掛葉片
+  /// 彎曲含透視分量，放行只會多一個假訊號來源。與 `quality.py::SIDE_VIEW_MAX_TILT_DEG` 相同。
+  static const double sideViewMaxTiltDeg = 12.0;
+
   static BladeStructureVerdict judge({
     BladeSegmentation? seg,
     BladeStructure? structure,
@@ -201,10 +210,34 @@ class BladeStructureGate {
 
     final n = structure.blades.length;
     metrics['n_blades'] = n;
-    if (n != nBladesExpected) {
-      reasons.add('只定位到 $n 片葉片（應為 $nBladesExpected）：'
-          '可能有葉片正好貼在塔架上（六點鐘方位）或沒入雲層，'
-          '請等轉子轉到三片都離開塔架再拍');
+    // 側視走另一組規則（見 sideViewMaxTiltDeg）：不要求三片、不看半徑離散，
+    // 但要明說這張只能量垂掛葉片的彎曲、不能做三片互比。
+    final hanging = nBladesExpected == 3 ? detectSideView(structure) : null;
+    metrics['view'] = hanging != null ? 'side' : 'front';
+    if (hanging != null) {
+      metrics['hanging_blade_index'] = hanging;
+      warnings.add('側視：三片投影共線，三片互比不適用。本張只量垂掛葉片的 flapwise 彎曲，'
+          '而且單幀值含預彎，要與同一台的基線或正視互比結果對照才有意義');
+    } else if (n != nBladesExpected) {
+      // 依葉片數分開講。n = 0 與 n = 1/2 的成因完全不同，而 2026-09-14 之前三種都印
+      // 「可能有葉片貼在塔架上，請等轉子轉開」——75 張真實照片裡 18 張是 n = 0，
+      // 那句話會把現場的人帶去等轉子，但真正的成因是轉子沒有完整入鏡或根本沒被分割出來。
+      // （「葉尖貼近畫面邊界」當拒收條件量過，不可用：正確放行的真實照片葉尖到邊界只有
+      //  0.02–0.03 R，設計範圍內的 12 MP 合成照更只有 0.007 R。所以只修訊息，不新增規則。）
+      if (n == 0) {
+        reasons.add('一片葉片都沒有定位到：'
+            '多半是轉子沒有完整入鏡（請退後到整個轉子連同塔架都進得了畫面），'
+            '或風機根本沒被分割出來（雲層、逆光或前景物撐壞天空模型，'
+            '請換雲量少的時段、讓葉片背景是乾淨天空）');
+      } else if (n < nBladesExpected) {
+        reasons.add('只定位到 $n 片葉片（應為 $nBladesExpected）：'
+            '可能有葉片正好貼在塔架上（六點鐘方位）或沒入雲層，'
+            '請等轉子轉到三片都離開塔架再拍');
+      } else {
+        reasons.add('定位到 $n 片葉片（多於 $nBladesExpected）：'
+            '畫面裡可能不只一台風機，或雲塊、電線被當成葉片，'
+            '請重拍並確保只有一台風機在框內');
+      }
     }
 
     final radii = structure.blades.map((b) => b.tipRadiusPx).toList();
@@ -212,7 +245,8 @@ class BladeStructureGate {
     if (radii.length >= 2) {
       final sp = _spread(radii);
       metrics['tip_radius_spread'] = _round(sp, 3);
-      if (sp > maxRadiusSpread) {
+      // 側視時上方那段是另兩片疊在一起、長度只有 R·sin，離散度沒有「是不是同一台」的意義
+      if (hanging == null && sp > maxRadiusSpread) {
         reasons.add('三片葉尖半徑差 ${(sp * 100).toStringAsFixed(0)}%'
             '（上限 ${(maxRadiusSpread * 100).toStringAsFixed(0)}%）：'
             '同一台風機三片等長，差這麼多代表有一片其實是地物、電線或別台風機，'
@@ -272,6 +306,33 @@ class BladeStructureGate {
       metrics: metrics,
     );
   }
+
+  /// 是側視就回傳垂掛葉片（朝下那片）的索引，否則 null。
+  ///
+  /// 條件見 [sideViewMaxTiltDeg]。只收「兩片、一上一下」：單獨一根垂直的東西也可能是
+  /// 桿子、桅杆或被雲切掉的別台風機，沒有上方那段就沒有「這是轉子」的證據；
+  /// 三片分得開就不是側視，走正視規則。對照 `quality.py::detect_side_view`。
+  static int? detectSideView(BladeStructure structure,
+      {double maxTiltDeg = sideViewMaxTiltDeg}) {
+    if (structure.blades.length != 2 || !structure.towerFound) return null;
+    final angles = structure.blades.map((b) => b.tipAngleDeg).toList();
+    if (angles.any((a) => _tiltFromVerticalDeg(a) > maxTiltDeg)) return null;
+    final down = <int>[];
+    final up = <int>[];
+    for (var i = 0; i < angles.length; i++) {
+      if (_wrapDeg(angles[i] - 270.0).abs() <= maxTiltDeg) down.add(i);
+      if (_wrapDeg(angles[i] - 90.0).abs() <= maxTiltDeg) up.add(i);
+    }
+    if (down.length != 1 || up.length != 1) return null;
+    return down.first;
+  }
+
+  /// 折到 (−180, 180]
+  static double _wrapDeg(double a) => ((a + 180.0) % 360.0) - 180.0;
+
+  /// 葉片軸線離垂直（90° 朝上或 270° 朝下）的角度
+  static double _tiltFromVerticalDeg(double angleDeg) => math.min(
+      _wrapDeg(angleDeg - 90.0).abs(), _wrapDeg(angleDeg - 270.0).abs());
 
   static double _spread(List<double> v) {
     if (v.length < 2) return double.nan;
