@@ -145,6 +145,49 @@ python scripts/closeup_eval.py eval --predictions preds.json --split folds --mar
 
 §8.1／8.2／8.3 仍然沒跑過。這一節是**地板的第二個點**，不是基線論文的複現。
 
+## 3.7 線性探針：凍結 ResNet18 特徵 + 同一個邏輯迴歸（B2 的對照組）
+
+§3.6 的結論「手工特徵打不贏抄鄰居」有兩種讀法：語料沒訊號，或手工特徵漏掉一半。
+分辨的方法是**只換特徵、其他全部不動**：`closeup_features_cnn.py` 用凍結的 ImageNet ResNet18
+（torchvision `IMAGENET1K_V1`，224 px，fc 拿掉，權重 sha256[:16] `de620ffcedf6c281`）抽 512 維，
+`closeup_probe.py` 餵進 B2 **同一個** numpy 邏輯迴歸、同一套標準化、同一組群感知 5 折。
+特徵檔 `data/closeup_features_resnet18_wtb.npz`（1,065 × 512，float16，約 1 MB）已進版控，
+所以探針與評估**不需要 torch、不需要語料本體**；torch 只在抽特徵那一步（`requirements-cnn.txt`）。
+
+| 類別 | 真值 | recall | precision | F1 | B2 recall | 1-NN recall |
+|---|---|---|---|---|---|---|
+| `surface_injure` | 272 | **0.651** | 0.714 | 0.681 | 0.360 | 0.426 |
+| `hide_craze` | 245 | **0.706** | 0.776 | 0.739 | 0.380 | 0.506 |
+| `craze` | 206 | **0.631** | 0.714 | 0.670 | 0.340 | 0.262 |
+| `corrosion` | 191 | **0.555** | 0.707 | 0.622 | 0.236 | 0.277 |
+| `thunderstrike` | 89 | **0.618** | 0.859 | 0.719 | 0.225 | 0.247 |
+| `crack` | 0 | 不報 | 不報 | 不報 | 不報 | 不報 |
+
+**平均逐類 recall 0.632（B2 0.308、1-NN 0.344）、平均 F1 0.686（B2 0.374）。** 每一類都翻倍，
+`thunderstrike` precision 0.859。同一個分類器、同一個切分、同一個評估域——差的只有特徵，
+所以 §3.6 的正確讀法是**手工特徵漏掉一半訊號**，不是語料沒訊號。
+
+三件要一起講的：
+
+1. **這不是 §8.3 的重訓。** 沒有反向傳播、沒有調權重，是線性探針——它是 §8.3 的**地板**，
+   §8.3 真做了要明顯高過 0.632 才算有價值。
+2. **逐折範圍仍然寬**（`surface_injure` 0.51–0.78、`thunderstrike` 0.50–0.77）。單折數字不可讀，這點沒變。
+3. **痕跡子集的差距縮小但沒消失**：`corrosion` 帶痕跡 0.471 vs 無痕跡 0.586、`surface_injure` 0.558 vs 0.687；
+   `hide_craze` 反過來（0.786 vs 0.674）——灰色矩形塗抹正好常出現在 hide_craze 的標註旁，
+   模型可能在學痕跡不是學裂紋。這是 §12「痕跡子集單獨報」要繼續盯的理由。
+
+域外 226 張整機照：預測 62／65／64／23／4、命中 3／16／7／10／0——比 B2 多命中一些，
+但 `corrosion` 62 張預測只中 3、`hide_craze` 64 中 7，**分布外一樣不可用**。§1.2 取像閘門的必要性沒有變。
+
+確定性：探針重跑兩次輸出逐位元相同；與 2026-09-16 盤點時獨立跑的一份逐張 839/839 一致。
+
+```bash
+pip install -r requirements-cnn.txt                                            # 只有抽特徵這一步要 torch
+python scripts/closeup_features_cnn.py <語料根目錄>                           # → data/closeup_features_resnet18_wtb.npz
+python scripts/closeup_probe.py run --out preds_probe.json                      # 不需要 torch、不需要語料
+python scripts/closeup_eval.py eval --predictions preds_probe.json --split folds
+```
+
 ## 4. 預測檔格式
 
 ```json
@@ -179,6 +222,8 @@ python scripts/closeup_eval.py nn-baseline <語料根目錄> --split folds --out
 python scripts/closeup_eval.py eval --predictions preds.json --markdown report.md
 python scripts/closeup_eval.py leakage-demo <語料根目錄>                  # §2 的配對實驗
 pytest tests/test_closeup_eval.py                                         # 四條規則的反向測試
+python scripts/closeup_intake_gate.py run --dataset <語料根目錄> --out data/closeup_intake_gate_wtb.json  # §1.2 取像閘門（見 CLOSEUP_INTAKE_GATE.md）
+python scripts/closeup_intake_gate.py report                              # 不需要語料：讀進版控的逐張結果
 ```
 
 真值 [`data/closeup_truth_wtb.json`](data/closeup_truth_wtb.json)（兩位標註者的聯集）與

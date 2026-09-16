@@ -106,26 +106,53 @@
 
 - 適用：`surface/leading_edge_erosion`
 - 需要尺度：**是**
-- 來源：IEA Wind TCP Task 46, Leading Edge Erosion Classification System, 2023
+- 來源：IEA Wind TCP Task 46, Leading Edge Erosion Classification System, Technical Report, December 2022 (SAND2023-11986R), Table 4-1 + §4.3.1 Visual Condition
 
-| 等級 | 判準 | 可偵測 | 需要的解析度 |
-|---|---|---|---|
-| 0 | 針孔，單一尺寸 < 1 mm | **✗** | — |
-| 1 | 單一實例面積 1–10 cm² | ✓ | ≤ 0.07 cm/px |
-| 2 | 單一實例面積 10 cm² – 1 m² | ✓ | ≤ 0.17 cm/px |
-| 3 | 待從 IEA 原文逐條抄錄核對 | ✓ | ≤ 0.46 cm/px |
-| 4 | 待從 IEA 原文逐條抄錄核對 | ✓ | ≤ 0.46 cm/px |
-| 5 | 待從 IEA 原文逐條抄錄核對 | ✓ | ≤ 0.46 cm/px |
+- 核對日期：2026-09-16（https://iea-wind.org/wp-content/uploads/2023/02/IEA-Wind-Task-46-Erosion-Classification-System-report.pdf）
+- 逐條對原文 §4.3.1 的 Damage threshold 抄錄。原文的 Visual Condition 是**兩條軌**（有 LEP／無 LEP），Level 1–3 定義不同，Level 0 與 4–5 共用；舊版把兩軌壓成一軌且 Level 3–5 留白。第 2 章文獻回顧裡 Gaudern (2014) 的深度／直徑表與 Bladena (2021) 的分類**不是** Task 46 的系統，不得混用
+- 判 Level 1–3 之前必須先知道葉片有沒有上 LEP（資產屬性 `has_lep`），否則只能報「Level 1–3 區間、軌別未定」
+- min_cm_per_px = √(threshold_cm2) / 15：門檻面積在畫面上至少要佔 15×15 px（§2.2 的可偵測慣例）。全部由公式算，不手填
 
-- Level 0：§2 已證明合規取像條件下都做不到
+#### 軌別 `lep`：有前緣保護（LEP）
 
-> **未決**：Level 0–2 的門檻取自 BLADE_CLOSEUP_SPEC.md §2.2，已可用。Level 3–5 **尚未從 IEA 原始文件核對**，在核對完成前不得寫進報告——安全分級的門檻不可以憑印象填。
+| 等級 | 原文名稱 | 損傷門檻 | 判準 | 可偵測 | 需要的解析度 |
+|---|---|---|---|---|---|
+| 0 | Initial factory condition | 無單一實例 ≥ 1 cm² | 出廠狀態；若有損傷幾乎不可見。針孔個別 < 1 mm，且**未聚合成 > 1 cm² 的區域** | **✗** | ≤ 0.067 cm/px |
+| 1 | Lightly worn external coating/LEP · Instances of reduced LEP adhesion | 單一實例 ≥ 1 cm² 且 ≤ 10 cm² | LEP 仍完整、仍提供保護；孵化期已過，出現局部損傷；LEP 邊緣可見剝離／附著力下降 | ✓ | ≤ 0.067 cm/px |
+| 2 | Notable areas of localized damage · Individual instances of LEP adhesive failure | 單一實例 ≥ 10 cm² 且 ≤ 1 m² | LEP 大體仍在，但個別位置損傷明顯或聚合 > 10 cm²；LEP 已被穿透但範圍不大；前緣多處附著失效 | ✓ | ≤ 0.211 cm/px |
+| 3 | LEP compromised over a large area | LEP 毀損 ≥ 1 m² | LEP 在相當長度的前緣上明顯毀損，不再保護底層；附著失效使相當長度的前緣裸露 | ✓ | ≤ 6.667 cm/px |
+| 4 | Erosion of topcoat with immediate layer underneath visible and exposed | 塗層侵蝕 ≥ 10 cm² **且** 積層侵蝕 ≤ 1 cm² | 侵蝕已穿到積層，填料層或表層積層在 > 10 cm² 的面積上可見；基材損傷不明顯或很小 | ✓ | ≤ 0.067 cm/px |
+| 5 | Notable damage to substrate | 積層侵蝕 ≥ 1 cm² | 積層明顯損傷；超過門檻的任何損傷都仍列 Level 5 | ✓ | ≤ 0.067 cm/px |
+
+- Level 0：判 Level 0 等於證明整段前緣沒有 ≥ 1 cm² 的實例，需要全覆蓋取像；單張近身照只能說「這一格沒看到」。原文操作判準是 1 cm² 聚合面積，不是解析 1 mm 針孔
+- Level 3：1 m² 在任何 Mode A／Mode B 組態都看得到；Mode A 地面整機照也判得出來
+- Level 4：雙門檻。決定等級的是積層那條（≤ 1 cm²），所以需要的解析度是 1 cm² 等級，**不是**「Level 3 以上任何組態都可以」
+
+#### 軌別 `no_lep`：無前緣保護
+
+| 等級 | 原文名稱 | 損傷門檻 | 判準 | 可偵測 | 需要的解析度 |
+|---|---|---|---|---|---|
+| 0 | Initial factory condition | 無單一實例 ≥ 1 cm² | 出廠狀態；若有損傷幾乎不可見。針孔個別 < 1 mm，且**未聚合成 > 1 cm² 的區域** | **✗** | ≤ 0.067 cm/px |
+| 1 | Erosion barely visible or pinholes | 單一實例 ≤ 1 cm² | 影像上看得到侵蝕，但小到不會立刻注意到 | ✓ | ≤ 0.067 cm/px |
+| 2 | Localized pitting | 單一實例 ≥ 1 cm² | 多個個別的凹點 | ✓ | ≤ 0.067 cm/px |
+| 3 | Widespread or coherent pits, some gouges | 塗層侵蝕 ≤ 10 cm²（單一實例） | 凹點遍布且在相當長度上連成一片；底層複材可能可見但整體面積不大 | ✓ | ≤ 0.067 cm/px |
+| 4 | Erosion of topcoat with immediate layer underneath visible and exposed | 塗層侵蝕 ≥ 10 cm² **且** 積層侵蝕 ≤ 1 cm² | 侵蝕已穿到積層，填料層或表層積層在 > 10 cm² 的面積上可見；基材損傷不明顯或很小 | ✓ | ≤ 0.067 cm/px |
+| 5 | Notable damage to substrate | 積層侵蝕 ≥ 1 cm² | 積層明顯損傷；超過門檻的任何損傷都仍列 Level 5 | ✓ | ≤ 0.067 cm/px |
+
+- Level 0：判 Level 0 等於證明整段前緣沒有 ≥ 1 cm² 的實例，需要全覆蓋取像；單張近身照只能說「這一格沒看到」。原文操作判準是 1 cm² 聚合面積，不是解析 1 mm 針孔
+- Level 1：門檻是上限不是下限：要看到 < 1 cm² 的點，0.07 cm/px 只是剛好看到 1 cm²；更小的看不到，會被漏成 Level 0
+- Level 3：與 Level 2 的差別在「連成一片」與「底層可見」，不在單一實例面積；分辨要能解析 1 cm² 等級的凹點
+- Level 4：雙門檻。決定等級的是積層那條（≤ 1 cm²），所以需要的解析度是 1 cm² 等級，**不是**「Level 3 以上任何組態都可以」
+
+
+> **未決**：Level 4 的「積層 ≤ 1 cm²」與 Level 5 的「≥ 1 cm²」都要能區分塗層與積層——單張 RGB 近身照能不能分，尚未實測
 
 ### 3.2 `generic_1_5`
 
 - 適用：`environmental/*`、`structural/*`、`surface/* 無尺度時`
 - 需要尺度：否
 - 來源：沿用 Mode A 既有 severity 1–5
+
 
 | 等級 | 判準 | 可偵測 | 需要的解析度 |
 |---|---|---|---|
@@ -134,6 +161,7 @@
 | 3 | 中度，排程修補 | — | — |
 | 4 | 嚴重，近期停機處理 | — | — |
 | 5 | 危急，立即停機 | — | — |
+
 
 
 ---

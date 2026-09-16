@@ -1,7 +1,6 @@
 import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:induspect_ai/models/analysis_result.dart';
 import 'package:induspect_ai/utils/constants.dart';
 import 'package:induspect_ai/services/ai/ai_backend.dart';
 import 'package:induspect_ai/services/ai/gemma_local_backend.dart';

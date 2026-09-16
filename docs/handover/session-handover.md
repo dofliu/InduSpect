@@ -17,7 +17,7 @@
 | 葉片 Mode A（地面整機） | App 端完整實作（表面／幾何／聲音層）。影片抽幀的 Kotlin **從未被編譯過** |
 | 葉片 Mode B（近身影像） | 規格 + 分類表 + 語料實測完成，**演算法一行都還沒寫** |
 
-三軌全綠：Flutter 575 / 後端 197 / 葉片原型 207（2026-09-14 本機實測；GitHub Actions 已因用量預算暫停），另有死角查核擋 PR。
+三軌全綠：Flutter 575 / 後端 197 / 葉片原型 228（2026-09-16 本機實測；GitHub Actions 已因用量預算暫停），另有死角查核擋 PR。
 
 ### 這一輪做了什麼
 
@@ -196,6 +196,15 @@ App 端同樣）；③`synth-still` 給的尺度塞不下轉子時會靜靜產�
 ③**約 7,900 行 Dart 沒有入口**（23%）、後端 12 個端點沒有客戶端——所謂「隱藏功能」其實沒有旗標，就是死碼。
 `ROADMAP.md` 80% 的功能願望清單已歸檔到 `docs/archive/ROADMAP_FEATURE_IDEAS_2026-04.md`。
 下一步順序以 `ROADMAP.md`「下一步」一節為準。
+
+### 2026-09-16 追加：葉片 Mode B 桌面三件（A1／A2／A3）
+
+- **A1 IEA Task 46 分級表**：對原文 §4.3.1 核對，改成 LEP／No-LEP 兩軌，`min_cm_per_px` 由 √面積/15 px 算出；舊版三級共用 0.46 無依據。SPEC §2.2 同步改寫。
+- **A2 線性探針落地**：`closeup_features_cnn.py` 是唯一 import torch 的檔案，512 維特徵已進版控；`closeup_probe.py` 不需 torch 也不需語料。平均逐類 recall 0.632（B2 0.308）。
+- **A3 §1.2 取像閘門程式化**（`blade_prototype/CLOSEUP_INTAKE_GATE.md`）：前景占比判不出來；改成「Mode A 正視放行 = 硬拒收」+ 探針判 P／W／T，平衡準確率 0.910。
+  兩個順帶發現要有人接：①**Mode A 側視規則在 8 張近身照上誤放行**（SPEC §13-13 待決策，Mode A 端未改）；
+  ②`closeup_intake_wtb.json` 的 **T 碼混了兩種東西**，30 張 `false_accept` 是複核佇列，不要用模型改標記。
+- 環境：本容器現在**有** torch 2.14 CPU 與 Flutter 3.47（前一段「本容器沒有」已過時）；`closeup_intake_gate.py run --dataset` 幾何那層約 30 分鐘。
 
 ### 下一步建議（依可行性排序）
 

@@ -15,7 +15,6 @@ import 'services/photo_sync_service.dart';
 import 'services/blade_ai_retry_service.dart';
 import 'services/share_queue_service.dart';
 import 'services/ai/flutter_gemma_runner.dart';
-import 'services/ai/local_model_manager.dart';
 import 'utils/constants.dart';
 
 void main() async {

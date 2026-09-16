@@ -95,21 +95,66 @@ def test_structural_subclasses_have_geometric_rule(tax: dict) -> None:
         assert len(s["geometric_rule"]) >= 10, f"structural/{s['id']} 的幾何規則太空泛"
 
 
+def _iea(tax: dict) -> dict:
+    return tax["severity_scales"]["iea_task46"]
+
+
+def _iea_levels(tax: dict):
+    for track, tr in _iea(tax)["tracks"].items():
+        for lv in tr["levels"]:
+            yield track, lv
+
+
 def test_level_zero_marked_undetectable(tax: dict) -> None:
-    """IEA Level 0（針孔 < 1 mm）在合規取像條件下做不到（規格 §2.2），不可標成可偵測。"""
-    lv0 = next(l for l in tax["severity_scales"]["iea_task46"]["levels"] if l["level"] == 0)
-    assert lv0["detectable"] is False
+    """IEA Level 0 在單張近身照上判不了（要證明「沒有 ≥ 1 cm² 的實例」需要全覆蓋），不可標成可偵測。"""
+    for track, lv in _iea_levels(tax):
+        if lv["level"] == 0:
+            assert lv["detectable"] is False, track
 
 
-def test_unverified_iea_levels_are_marked(tax: dict) -> None:
-    """Level 3–5 的門檻尚未從 IEA 原文核對，判準欄必須明寫待核對。
+def test_iea_has_two_tracks_that_differ_only_where_the_source_does(tax: dict) -> None:
+    """原文 §4.3.1 是兩條軌：有 LEP／無 LEP 的 Level 1–3 定義不同，Level 0 與 4–5 共用。
 
-    安全分級的門檻不可以憑印象填；這條測試擋的是「先寫個大概之後再說」。
-    核對完成後把判準改成原文內容，這條測試自然會要求同步更新。
+    舊版把兩軌壓成一軌——沒上 LEP 的葉片會被系統性判錯一到兩級。
     """
-    for lv in tax["severity_scales"]["iea_task46"]["levels"]:
-        if lv["level"] >= 3:
-            assert "核對" in lv["criterion"], f"Level {lv['level']} 的判準看起來已填但未標示來源核對狀態"
+    tracks = _iea(tax)["tracks"]
+    assert set(tracks) == {"lep", "no_lep"}
+    by = {k: {lv["level"]: lv for lv in tr["levels"]} for k, tr in tracks.items()}
+    for k in by:
+        assert sorted(by[k]) == [0, 1, 2, 3, 4, 5], k
+    for shared in (0, 4, 5):
+        assert by["lep"][shared]["threshold"] == by["no_lep"][shared]["threshold"], shared
+    for own in (1, 2, 3):
+        assert by["lep"][own]["threshold"] != by["no_lep"][own]["threshold"], own
+
+
+def test_iea_thresholds_are_the_source_text_not_a_guess(tax: dict) -> None:
+    """安全分級的門檻不可以憑印象填：每一級都要有原文名稱、面積門檻、核對日期與來源網址。"""
+    sc = _iea(tax)
+    assert sc["verified_on"] and sc["source_url"].startswith("https://iea-wind.org/")
+    for track, lv in _iea_levels(tax):
+        assert "核對" not in lv["criterion"], f"{track}/L{lv['level']} 還是佔位文字"
+        assert lv.get("title"), f"{track}/L{lv['level']} 缺原文名稱"
+        assert "cm²" in lv["threshold"] or "m²" in lv["threshold"], f"{track}/L{lv['level']} 門檻不是面積"
+    # 原文逐條：LEP 軌 L1 是 1–10 cm²、L3 是 ≥ 1 m²；No-LEP 軌 L1 是 ≤ 1 cm²；L4 雙門檻、L5 積層 ≥ 1 cm²
+    lep = {lv["level"]: lv for lv in sc["tracks"]["lep"]["levels"]}
+    nol = {lv["level"]: lv for lv in sc["tracks"]["no_lep"]["levels"]}
+    assert "1 cm²" in lep[1]["threshold"] and "10 cm²" in lep[1]["threshold"]
+    assert "1 m²" in lep[3]["threshold"]
+    assert "≤ 1 cm²" in nol[1]["threshold"]
+    assert "且" in lep[4]["threshold"] and "積層" in lep[4]["threshold"]
+    assert "積層" in lep[5]["threshold"] and "≥ 1 cm²" in lep[5]["threshold"]
+
+
+def test_iea_min_cm_per_px_follows_the_declared_rule(tax: dict) -> None:
+    """解析度需求由公式算（√面積 / 15 px），不手填。舊版三級共用 0.46 沒有任何依據。"""
+    import math
+    for track, lv in _iea_levels(tax):
+        expect = round(math.sqrt(lv["threshold_cm2"]) / 15, 3)
+        assert lv["min_cm_per_px"] == expect, f"{track}/L{lv['level']}: {lv['min_cm_per_px']} != {expect}"
+    # Level 4/5 的解析度需求與 Level 1 同級——「Level 3 以上任何組態都可以」是錯的
+    lep = {lv["level"]: lv for lv in _iea(tax)["tracks"]["lep"]["levels"]}
+    assert lep[5]["min_cm_per_px"] == lep[1]["min_cm_per_px"]
 
 
 def test_decision_rules_ordered(tax: dict) -> None:

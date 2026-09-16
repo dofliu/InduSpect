@@ -116,17 +116,43 @@ def render(d: dict) -> str:
         add(f"- 需要尺度：{'**是**' if sc['requires_scale'] else '否'}")
         add(f"- 來源：{sc['source']}")
         add("")
-        add("| 等級 | 判準 | 可偵測 | 需要的解析度 |")
-        add("|---|---|---|---|")
-        for lv in sc["levels"]:
-            det = lv.get("detectable")
-            det_s = "—" if det is None else ("✓" if det else "**✗**")
-            add(f"| {lv['level']} | {_cell(lv['criterion'])} | {det_s} | "
-                f"{_scale(lv.get('min_cm_per_px'))} |")
+        if sc.get("verified_on"):
+            add(f"- 核對日期：{sc['verified_on']}（{sc.get('source_url', '')}）")
+        for k in ("verification_note", "track_required", "min_cm_per_px_rule"):
+            if sc.get(k):
+                add(f"- {sc[k]}")
         add("")
-        for lv in sc["levels"]:
-            if lv.get("note"):
-                add(f"- Level {lv['level']}：{lv['note']}")
+
+        def _levels_table(levels: list) -> None:
+            has_thr = any("threshold" in lv for lv in levels)
+            if has_thr:
+                add("| 等級 | 原文名稱 | 損傷門檻 | 判準 | 可偵測 | 需要的解析度 |")
+                add("|---|---|---|---|---|---|")
+            else:
+                add("| 等級 | 判準 | 可偵測 | 需要的解析度 |")
+                add("|---|---|---|---|")
+            for lv in levels:
+                det = lv.get("detectable")
+                det_s = "—" if det is None else ("✓" if det else "**✗**")
+                if has_thr:
+                    add(f"| {lv['level']} | {_cell(lv.get('title', ''))} | {_cell(lv.get('threshold', ''))} | "
+                        f"{_cell(lv['criterion'])} | {det_s} | {_scale(lv.get('min_cm_per_px'))} |")
+                else:
+                    add(f"| {lv['level']} | {_cell(lv['criterion'])} | {det_s} | "
+                        f"{_scale(lv.get('min_cm_per_px'))} |")
+            add("")
+            for lv in levels:
+                if lv.get("note"):
+                    add(f"- Level {lv['level']}：{lv['note']}")
+            add("")
+
+        if "tracks" in sc:
+            for tk, tr in sc["tracks"].items():
+                add(f"#### 軌別 `{tk}`：{tr['label']}")
+                add("")
+                _levels_table(tr["levels"])
+        else:
+            _levels_table(sc["levels"])
         if sc.get("open_item"):
             add("")
             add(f"> **未決**：{sc['open_item']}")

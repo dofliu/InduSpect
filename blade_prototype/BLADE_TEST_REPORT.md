@@ -55,16 +55,17 @@
 
 ## 2. 自動化測試
 
-### 2.1 葉片原型（Python）— 207 passed
+### 2.1 葉片原型（Python）— 228 passed
 
-報告初版量到 131；同日修掉 §8 的第 2、3 項（側視閘門、拒收訊息）各加了測試成為 144，再加上 Mode B 人工複核工具的 13 條（`tests/test_closeup_review_tool.py`）、切分群組的 10 條（`tests/test_closeup_blade_groups.py`）與評估協定的 15 條（`tests/test_closeup_eval.py`）後為 182；普查補滿再加 2 條後為 184，第一遍標記的守門 16 條（`tests/test_closeup_firstpass.py`）與離線基線的 7 條（`tests/test_closeup_baseline.py`）後為 207。
+報告初版量到 131；同日修掉 §8 的第 2、3 項（側視閘門、拒收訊息）各加了測試成為 144，再加上 Mode B 人工複核工具的 13 條（`tests/test_closeup_review_tool.py`）、切分群組的 10 條（`tests/test_closeup_blade_groups.py`）與評估協定的 15 條（`tests/test_closeup_eval.py`）後為 182；普查補滿再加 2 條後為 184，第一遍標記的守門 16 條（`tests/test_closeup_firstpass.py`）與離線基線的 7 條（`tests/test_closeup_baseline.py`）後為 207；2026-09-16 IEA 兩軌核對（分類表 +2）、線性探針 6 條（`tests/test_closeup_probe.py`）、§1.2 取像閘門 13 條（`tests/test_closeup_intake_gate.py`）後為 **228**。
 
 | 檔案 | 條數 | 守什麼 |
 |---|---|---|
 | `test_quality.py` | 27 | 拍攝閘門：地平線、拒收條件、第二個轉子只警告不拒收、**側視另一組規則**、**拒收訊息依葉片數分開** |
 | `test_acoustics.py` | 17 | 週期估計、逐片互比、`tonal_exclusive`、三重守門 |
 | `test_closeup_eval.py` / `test_closeup_firstpass.py` | 16 / 16 | Mode B 評估協定四條規則的反向測試；**第一遍標記永遠不能變成簽核**（模型名被擋、先驗只改順序、身分綁像素） |
-| `test_closeup_taxonomy.py` | 15 | Mode B 分類表單一來源與渲染同步、Mode A 閘門對非 Mode A 照片零放行 |
+| `test_closeup_taxonomy.py` | 17 | Mode B 分類表單一來源與渲染同步、Mode A 閘門對非 Mode A 照片零放行、**IEA 兩軌只在原文有差處不同、門檻是原文、`min_cm_per_px` 跟規則** |
+| `test_closeup_intake_gate.py` | 13 | §1.2 取像閘門：整機照硬拒收、**側視放行不硬拒收**、近身照不因幾何放行、逐張結果檔自我對帳、Mode A 漏進近身照的回歸清單、數字地板（T 刻意不設） |
 | `test_closeup_review_tool.py` | 13 | 複核工具四條簽核規則：升格要人名、跳過 ≠ 乾淨、縮圖上不得升格、決策綁座標 |
 | `test_closeup_healthy_set.py` | 12 | Mode B 標記檔：839 張全覆蓋釘死、沒有人簽核不得 confirmed |
 | `test_segmentation.py` / `test_report.py` | 12 / 12 | 局部天空模型與結構定位；圖文報告不出現「合格」、待確認欄、**側視段不出現三片判定** |
@@ -72,6 +73,7 @@
 | `test_closeup_blade_groups.py` | 10 | 切分群組：union-find、群完整性、語料自附切分的洩漏量 |
 | `test_geometry.py` / `test_motion_hub.py` | 8 / 8 | 三片互比與**側視只報垂掛葉片彎曲**；運動分割奇偶幀一致、靜態場景不報轉子 |
 | `test_closeup_baseline.py` | 7 | B2 基線：維度、逐位元可重現、**折與折不相通**、標準化只用訓練集統計量 |
+| `test_closeup_probe.py` | 6 | 線性探針：**只有一個檔案准 import torch**、特徵檔涵蓋全語料、沿用 B2 分類器且可重現 |
 | `test_validation_report.py` | 6 | 真實影像驗證報告產生器 |
 | `test_surface.py` / `test_blade_test_report.py` | 5 / 5 | 前緣粗糙度；**本報告的聚合腳本**（拒收原因收桶、誤放行要算得出來、逐張比對） |
 | `test_dynamics.py` / `test_synth.py` | 4 / 3 | 影片轉速與六點鐘幀、合成場景 |
@@ -302,8 +304,11 @@ README「已知限制」寫的「偏軸會引入透視差，塔架轉正只能�
 | 複核工具 | 三佇列離線工作區 + 四條簽核規則；**決策 0 筆**（工具有了不代表複核做了） | `CLOSEUP_HEALTHY_SET.md` §6 |
 | 切分 | 524 個 `split_group` + 群感知 5 折（逐折洩漏 0）；**語料自己附的切分洩漏 63.4%，不可用** | `CLOSEUP_SPLIT_GROUPS.md` |
 | 評估協定 | §6 四條變成會拒跑的程式；**洩漏值 0.204**（配對實驗）；1-NN 地板逐類 recall 0.25–0.51（域＝取像合格 839 張）；誤報歸因「未普查」由 523 張降到 **0** | `CLOSEUP_EVAL_PROTOCOL.md` |
-| 基線（B2） | 手工特徵 + 邏輯迴歸：平均逐類 recall **0.308**，與 1-NN 的 0.344 **打平**；域外 226 張命中 2/2/8/5/0（§8.3 的縮影）。**§8.1/8.2 需 Gemini 金鑰、§8.3 需 PyTorch，本容器都沒有，未跑** | `CLOSEUP_EVAL_PROTOCOL.md` §3.6 |
+| 基線（B2） | 手工特徵 + 邏輯迴歸：平均逐類 recall **0.308**，與 1-NN 的 0.344 打平；域外 226 張命中 2/2/8/5/0 | `CLOSEUP_EVAL_PROTOCOL.md` §3.6 |
+| 線性探針 | 凍結 ResNet18 + **同一個**邏輯迴歸：平均逐類 recall **0.632**、F1 0.686——只換特徵就翻倍，§3.6 該讀成「手工特徵漏掉一半」；域外仍不可用。§8.1/8.2 仍需 Gemini 金鑰未跑；§8.3 重訓要高過 0.632 才算有價值 | `CLOSEUP_EVAL_PROTOCOL.md` §3.7 |
+| IEA Task 46 分級表 | 2026-09-16 逐條對原文 §4.3.1 核對：改成 **LEP／No-LEP 兩軌**、Level 0 錨點改為「未聚合成 > 1 cm²」、`min_cm_per_px` 全部由 √面積/15 px 算出（舊版三級共用 0.46 無依據）。Level 4/5 需 1 cm² 解析度，「Level 3 以上任何組態都可以」不成立 | `BLADE_CLOSEUP_TAXONOMY.md` §3.1 |
 | Mode A 閘門對非 Mode A 照片 | 179 張放行 0 張，釘在 `test_mode_a_gate_rejects_everything_out_of_domain` | `test_closeup_taxonomy.py` |
+| §1.2 取像閘門（程式化） | 全語料 1,065 張：Mode A **正視**放行 2 張（都是 W）→ 硬拒收；探針 P 0.992／W 0.946／**T 0.195**，平衡準確率 0.910。Mode A 放行的 10 張裡 **8 張是近身照、全走側視規則**（SPEC §13-13）；「前景占比」P 中位 0.018 < W 0.047，不可用 | `CLOSEUP_INTAKE_GATE.md` |
 
 ---
 
