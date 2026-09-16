@@ -1,6 +1,6 @@
 # Flutter App 開發指南
 
-> **最後更新**: 2026-09-06
+> **最後更新**: 2026-09-16
 
 ---
 
@@ -350,6 +350,84 @@ flutter build apk --debug
 ---
 
 ## 變更紀錄
+
+### 2026-09-16（定檢主線三個接反的地方）
+
+三個缺口疊在同一個出口：**使用者拿到的回填定檢表與申報 PDF**。三個單獨看都是 bug，
+合起來是「產品做的事跟它說的事不一樣」。全部桌面就驗得完，不需要實機。
+
+#### ① 核心流程的 Gemini 是死的
+
+`form_inspection_screen.dart` 的 `_initGemini()` 呼叫**無參數**的 `GeminiService.init()`，
+而無參數只讀得到 `dotenv.env['GEMINI_API_KEY']`。`.env` 被 gitignore（`flutter_app/.gitignore:45`），
+而 `pubspec.yaml` 又把它列為 asset——**打包進 APK 的是那個空檔**。於是：
+
+```
+init() → 沒金鑰 → throw → catch → _geminiService = null → AI 靜默關閉、退回手動模式
+```
+
+設定頁的金鑰欄位是有作用的，但只對 `inspection_provider`（隱藏的舊流程）有作用；
+**核心功能 #1 完全沒接到**。
+
+| 改了什麼 | 為什麼 |
+|---|---|
+| 抽出頂層 `resolveGeminiConfig()` + `GeminiConfig` | `init()` 要建 `GenerativeModel`，測不到；「金鑰從哪來」才是出事的那一段 |
+| 新增 `MissingGeminiKeyException` | 葉片線只 `catch (e)` 會把「沒金鑰」和「真的離線」當成同一件事；前者要引導去設定頁，後者要排離線佇列 |
+| `SettingsProvider.applyToGeminiService()` | 使用者金鑰**唯一的出口**。載入／換金鑰／換模型三處都推，核心流程與葉片線一次都接上 |
+| `init()` 加「已初始化且沒帶新設定就沿用現狀」 | `GeminiService` 是 singleton。沒有這一關，一個無參數呼叫會把已經可用的服務丟掉 |
+| 核心流程改成**每次用之前重新解析** | 使用者可能開了檢測頁之後才去設定頁填金鑰；只在 initState 解析一次的話要等下次開頁才生效 |
+
+順手修掉兩個同源的問題：`SettingsProvider` 的建構子與 `init()` **各發一次沒人 await 的
+`_loadSettings()`**，晚完成的那個會用 prefs 舊值把使用者剛存的金鑰蓋回去（改成共用同一個
+future）；`getEffectiveApiKey` 零呼叫端，移除。
+
+#### ② 讀數被填進不同量別的欄位
+
+`_findBestReadingMatch` 的關鍵字比對是交叉乘積：
+
+```dart
+if (kwList.any((kw) => fieldLabel.contains(kw) || entry.key.contains(kw))) {
+  return entry.value;   // ← 條件可能只由 fieldLabel 滿足，回傳的卻是當下這筆讀數
+}
+```
+
+「軸承溫度」命中 `溫度` 這一組 → 回傳迴圈當下的那一筆，可能是「A 相電流 12.4 A」。
+更糟的是下游：那個值會被送去對法規標準判定，印出「12.4 ≤ 70 °C **合格**，依據 ISO 10816」。
+
+改法不是再寫一份硬編對照表，而是用**專案已有的單一來源**：
+`StandardsEngine.convertValue(1.0, 讀數單位, 標準單位)` 回傳的 `ok = false` 就是量綱不合。
+
+- `findBestReadingMatch` 抽成頂層純函式（比照 `shouldRejudgeOnReconnect` 的慣例）
+- 關鍵字改成**兩邊要命中同一組**
+- 「只有一筆讀數」那條退路分兩種：**有標準**時要求它自己帶對得上的單位（那筆值會被判定，
+  沒單位就會出現「3.0 ≤ 70 °C 合格」這種憑空成立的判定）；**沒有標準**時放行
+  （不會被判定，只是填進表單讓人看，丟掉它沒有好處）
+- `_extractNumericReading`（判定路徑）用**同一份標準表**取期望單位，不會出現
+  「用溫度標準判一個電流值」
+
+#### ③ `/map-fields` 把整包檢測資料丟掉
+
+App 核心流程送的是：
+
+```json
+{"field_label": "軸承溫度", "value": 68.0, "ai_result": {"readings": {...}}}
+```
+
+而 `InspectionResult`（pydantic）一個都沒宣告。預設 `extra='ignore'` → **靜默丟掉**。
+實測 `model_dump()` 出來全是 `None`，`ai_map_fields` 讀 `equipment_name`／`extracted_values`
+自然都是空的，prompt 裡是一串空記錄，AI 憑欄位名臆造值，端點回報 `success: true`。
+
+- 宣告 App 真的送的三個欄位；`_summarise_inspection_result` 兩種形狀都吃得下
+  （讀值可能攤平在 `extracted_values`，也可能藏在 `ai_result['readings']`）
+- **全空的輸入不准送進 AI**——送了就是請它編。改回 `success: false` 並說明形狀不符
+- `extra='forbid'`：下一次契約漂開當場紅，不要又靜默吃掉
+
+#### 驗證
+
+三軌全綠：Flutter **533**（+27，新增 `gemini_config_test.dart` 14 條、`reading_match_test.dart` 13 條）／
+後端 **197**（+6，`test_map_fields_contract.py`）／葉片原型 207；`flutter analyze` 6 條已知 info；
+死角查核通過。
+
 
 ### 2026-09-07（解碼守門收斂到一處）
 

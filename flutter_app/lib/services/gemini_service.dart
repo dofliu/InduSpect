@@ -1,9 +1,90 @@
-import 'dart:typed_data';
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:google_generative_ai/google_generative_ai.dart';
 import '../models/analysis_result.dart';
 import '../utils/constants.dart';
+
+/// 沒有可用的 Gemini 金鑰。
+///
+/// 與「有金鑰但連不上」是兩件事，所以給它一個型別而不是泛用 `Exception`：
+/// 前者要引導使用者去設定頁填金鑰，後者要走離線佇列稍後補跑。
+/// 呼叫端只 `catch (e)` 的話這兩種情況會被當成同一種處理。
+class MissingGeminiKeyException implements Exception {
+  const MissingGeminiKeyException();
+
+  @override
+  String toString() =>
+      'MissingGeminiKeyException: 沒有 Gemini API 金鑰。請在設定頁填入，或在 .env 設定 GEMINI_API_KEY。';
+}
+
+/// 一次初始化要用的金鑰與模型 ID。
+class GeminiConfig {
+  final String apiKey;
+  final String flashModel;
+  final String proModel;
+
+  const GeminiConfig({
+    required this.apiKey,
+    required this.flashModel,
+    required this.proModel,
+  });
+}
+
+/// 讀 `.env` 的唯一地方。
+///
+/// dotenv 沒載入（測試環境、或使用者根本沒有 .env）時回空 map——
+/// 「沒有 .env」是正常狀態不是錯誤，讓它丟例外會把整個解析流程炸掉。
+Map<String, String> _dotenvOrEmpty() {
+  try {
+    return dotenv.env;
+  } catch (_) {
+    return const {};
+  }
+}
+
+String? _clean(String? value) {
+  final trimmed = value?.trim();
+  return (trimmed == null || trimmed.isEmpty) ? null : trimmed;
+}
+
+/// 解析金鑰與模型：明確參數 > `.env` > `AppConstants` 預設。
+///
+/// 抽成頂層純函式是為了測得到——`init()` 本身要建 `GenerativeModel`，
+/// 而「金鑰從哪裡來」才是出過事的那一段：核心流程呼叫無參數 `init()`，
+/// 於是只讀得到被 gitignore 的 `.env`（打包進 APK 的是空檔），
+/// 使用者在設定頁填的金鑰對核心功能完全無效。
+///
+/// [env] 可注入，預設讀 dotenv。
+GeminiConfig resolveGeminiConfig({
+  String? apiKey,
+  String? flashModel,
+  String? proModel,
+  Map<String, String>? env,
+}) {
+  final e = env ?? _dotenvOrEmpty();
+  final key = _clean(apiKey) ?? _clean(e['GEMINI_API_KEY']);
+  if (key == null) throw const MissingGeminiKeyException();
+
+  return GeminiConfig(
+    apiKey: key,
+    flashModel: _clean(flashModel) ??
+        _clean(e['GEMINI_FLASH_MODEL']) ??
+        AppConstants.geminiFlashModel,
+    proModel: _clean(proModel) ??
+        _clean(e['GEMINI_PRO_MODEL']) ??
+        AppConstants.geminiProModel,
+  );
+}
+
+/// `GeminiService.init` 的形狀。`SettingsProvider` 靠它開一條測試縫——
+/// singleton 的 init 會建真的 `GenerativeModel`，測「有沒有把金鑰推出去」不需要那個。
+typedef GeminiConfigSink = void Function({
+  String? apiKey,
+  String? flashModel,
+  String? proModel,
+  Map<String, String>? env,
+});
 
 /// Gemini AI 服務
 /// Prompt 策略：結構化 JSON 輸出 + 思維鏈引導（原始設計見 docs/archive/aimodel.md，
@@ -20,31 +101,55 @@ class GeminiService {
   String? _currentFlashModel;
   String? _currentProModel;
 
-  /// 解析模型 ID：明確參數 > .env 覆寫 > AppConstants 預設
-  /// （P0-6：preview 模型可能被下架，模型 ID 不可寫死，需可不改版切換）
-  static String _resolveModel(String? explicit, String envKey, String fallback) {
-    if (explicit != null && explicit.trim().isNotEmpty) return explicit.trim();
-    final fromEnv = dotenv.env[envKey];
-    if (fromEnv != null && fromEnv.trim().isNotEmpty) return fromEnv.trim();
-    return fallback;
+  bool get isInitialized => _initialized;
+
+  @visibleForTesting
+  String? get currentApiKeyForTesting => _currentApiKey;
+
+  @visibleForTesting
+  String? get currentFlashModelForTesting => _currentFlashModel;
+
+  /// 把 singleton 清乾淨。測試之間不清會互相污染。
+  @visibleForTesting
+  static void resetForTesting() {
+    _instance._initialized = false;
+    _instance._currentApiKey = null;
+    _instance._currentFlashModel = null;
+    _instance._currentProModel = null;
   }
 
   /// 初始化 Gemini 服務
   /// [apiKey] 如果提供，使用此 API key；否則從 .env 讀取
   /// [flashModel]/[proModel] 如果提供，覆寫模型 ID（例如設定頁的使用者選擇）
-  void init({String? apiKey, String? flashModel, String? proModel}) {
-    final effectiveApiKey = apiKey ?? dotenv.env['GEMINI_API_KEY'];
-
-    if (effectiveApiKey == null || effectiveApiKey.isEmpty) {
-      throw Exception(
-        'GEMINI_API_KEY not found. Please provide API key or add it to .env file.',
-      );
+  /// [env] 測試用的環境變數注入。
+  ///
+  /// **已初始化且呼叫端沒帶任何新設定時直接沿用現狀。**
+  /// 這一關是必要的：`GeminiService` 是 singleton，設定頁的金鑰由
+  /// `SettingsProvider` 推進來，而核心流程呼叫的是無參數 `init()`。
+  /// 沒有這一關，那個無參數呼叫會因為 .env 空的而丟例外，
+  /// 呼叫端 catch 之後就把一個已經可用的服務丟掉了。
+  void init({
+    String? apiKey,
+    String? flashModel,
+    String? proModel,
+    Map<String, String>? env,
+  }) {
+    if (_initialized &&
+        _clean(apiKey) == null &&
+        _clean(flashModel) == null &&
+        _clean(proModel) == null) {
+      return;
     }
 
-    final effectiveFlash = _resolveModel(
-        flashModel, 'GEMINI_FLASH_MODEL', AppConstants.geminiFlashModel);
-    final effectivePro = _resolveModel(
-        proModel, 'GEMINI_PRO_MODEL', AppConstants.geminiProModel);
+    final cfg = resolveGeminiConfig(
+      apiKey: apiKey,
+      flashModel: flashModel,
+      proModel: proModel,
+      env: env,
+    );
+    final effectiveApiKey = cfg.apiKey;
+    final effectiveFlash = cfg.flashModel;
+    final effectivePro = cfg.proModel;
 
     // API key 與模型皆未變更時不重新初始化
     if (_initialized &&

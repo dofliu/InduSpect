@@ -90,11 +90,11 @@
 ## 測試
 ```bash
 python3 scripts/audit_dead_ends.py   # 死角查核（service 零引用／DB 欄位只讀不寫）；--report 看全部
-flutter test          # 全部 506 tests（widget_test 已修復，不再排除）
-cd backend && GEMINI_API_KEY=ci-fake-key pytest tests/ --asyncio-mode=auto   # 191 pytest
+flutter test          # 全部 533 tests（widget_test 已修復，不再排除）
+cd backend && GEMINI_API_KEY=ci-fake-key pytest tests/ --asyncio-mode=auto   # 197 pytest
 cd blade_prototype && pip install -r requirements.txt && pytest              # 207 tests（葉片原型，合成影像/音軌夾具 + Mode B 分類表與標記檔守門 + 測試報告聚合器 + 側視閘門 + 複核工具 + 切分群組 + 評估協定 + 普查覆蓋 + 第一遍標記守門 + 離線基線）
 ```
-Flutter 506 tests / 後端 191 pytest / 葉片原型 207 pytest 全綠（2026-09-14 本機實測；**GitHub Actions 因用量預算已停用，CI 不再跑**，本機驗證見下方「本機 Flutter」條目）。DB 測試使用 `sqflite_common_ffi` in-memory。標準資料為單一來源：改 `backend/app/data/inspection_standards.py` 後必須跑 `python backend/scripts/export_standards.py` 重新匯出 JSON（有同步守門測試）。
+Flutter 533 tests / 後端 197 pytest / 葉片原型 207 pytest 全綠（2026-09-16 本機實測；**GitHub Actions 因用量預算已停用，CI 不再跑**，本機驗證見下方「本機 Flutter」條目）。DB 測試使用 `sqflite_common_ffi` in-memory。標準資料為單一來源：改 `backend/app/data/inspection_standards.py` 後必須跑 `python backend/scripts/export_standards.py` 重新匯出 JSON（有同步守門測試）。
 
 ## 已知問題追蹤
 - GitHub Issues #14-#19 已全數修復並關閉（2026-04-16）
@@ -147,6 +147,12 @@ Flutter 506 tests / 後端 191 pytest / 葉片原型 207 pytest 全綠（2026-09
 - 葉片近身影像檢測 Mode B 規格（2026-09-12，`BLADE_CLOSEUP_SPEC.md`）：與既有地面模式並列的**第二個模式**，輸入是「填滿畫面的葉片近身照」，靠外觀與領域知識判讀而非三片互比與物理。**輸入以無人機的距離與角度為硬約束**（8–16 m、上仰 15°、葉片弦向占畫面 ≥ 1/3），這個限縮讓 DTU 與 Blade30 等公開語料從「領域不匹配」變成可直接使用。物理上算出一個違反直覺的結果：**無人機 12 m 用廣角（24 mm eq）是 0.341 cm/px，與地面模式 5x 在 50 m 的 0.37 cm/px 幾乎相同**——提升解析度的是「近距離 **加上** 中長焦」，光是靠近沒有用；12 m / 120 mm eq 的 0.068 cm/px 才讓 IEA Level 1（1 cm² 約 15×15 px）可偵測，Level 0 針孔（< 1 mm，1.5 px）任何組態都做不到。基線是 Zhang 等人的知識增強 VLM（arXiv:2510.22868v2）：整體準確率 94.55% 看似很好，但**逐類拆開後 structural（裂縫）recall 只有 0.5**（12 張裡 6 張被判成健康，多為低光照），而 environmental 的 1.00/1.00 是在 **2 張**上得到的；重新訓練的 YOLOv8n 則是 structural 2/12、environmental 0/2，且 11 張健康照誤報在製造接縫與結構標記上。所以 §6 把評估協定寫成不可退化的四條：**按葉片切不按照片切**、**主指標是逐類 recall 不是 accuracy**、**每類少於 30 張不報 P/R/F1**、**健康照要含容易誤判的正常結構且誤報要分開報**。兩條新的不可退化約定：沒有尺度就不報 IEA 面積等級、取像條件不合就拒收並說明原因。輸出沿用 `WtDetection`，實作後 `wt_detections.bbox_json` 會第一次有生產端，屆時要移除 `audit_allowlist.json` 的對應條目
 
 - Mode B 健康候選第一遍標記 + B2 離線基線（2026-09-14）：兩件都是「讓下一步變得可能」。①**1,842 格健康候選逐格看過一遍**（`closeup_candidate_sheets.py` 出印樣、`closeup_candidate_firstpass.py` 收成版控檔）：`b` 純表面 **788（42.8%）**、`e` 邊界格 648、`n` 不是葉片 274、`u` 判不了 132。**它改掉一個數字**——可用候選從「約 1,200 格」降到 788，原本的 64% 是 64 格抽樣，**抽樣把邊界格算成了葉片表面**（邊界格的對比來自天空不是漆面，混進健康記憶庫會讓模型把「有邊」學成正常）。三條不可退化（16 條反向測試）：`annotator` 一律 `claude-first-pass`、狀態一律 `unreviewed`，這個名字正好落在複核工具的模型名黑名單裡**進不了決策檔**（`pack` 會自我對帳，黑名單放寬到擋不住它就拒絕產出）；它只改**複核順序與先驗**（`build` 把 `b` 排最前、每格標「第一遍 b（…，未複核）」、`status` 印出各碼還差多少），不寫任何決策；`item_id` 與 `healthy` 佇列同一套雜湊，候選重新產生後對不上的由 `verify` 點名。決策檔仍 **0 筆**——先驗不是簽核。②**B2 離線基線**（`closeup_baseline.py`，寫進 `CLOSEUP_EVAL_PROTOCOL.md` §3.6）：123 維手工特徵 + 純 numpy 一對多邏輯迴歸（零初始化、無隨機種子，重跑逐位元相同）、群感知 5 折，**平均逐類 recall 0.308 對 1-NN 的 0.344、平均 F1 0.374 對 0.369——打平**，一組設計過的紋理特徵贏不了「抄最像的鄰居」。它把 `crack` 的 117 個誤報清成 0；`craze` 反贏、`hide_craze` 反輸，而那正是標註者一致率最低的一對（多半在量標註噪音）。域外 226 張整機照預測 26/56/39/23/14、命中 2/2/8/5/0——**§8.3 的縮影，§1.2 的取像閘門不是形式要求**。**規格 §8 三條基線仍未跑**：§8.1/8.2 要 Gemini API key、§8.3 要 PyTorch，本容器兩樣都沒有（環境事實不是取捨）
+
+- **定檢主線三個接反的地方**（2026-09-16）：三個缺口疊在同一個出口——使用者拿到的回填定檢表與申報 PDF。全部是已出貨、桌面就驗得完的。
+  ①**核心流程的 Gemini 是死的**：`form_inspection_screen.dart` 呼叫無參數 `init()`，而那只讀得到被 gitignore 的 `.env`（`pubspec.yaml` 把它列為 asset，打包進 APK 的是空檔）→ throw → catch → `_geminiService = null` → AI 靜默關閉退回手動模式。**設定頁的金鑰欄位對隱藏的舊流程有效、對核心功能無效。** 修法：金鑰解析抽成頂層純函式 `resolveGeminiConfig()`、缺金鑰丟具名 `MissingGeminiKeyException`（葉片線的 `catch` 要靠型別分辨「沒金鑰」與「真的離線」）、`SettingsProvider.applyToGeminiService()` 成為使用者金鑰**唯一的出口**（載入／換金鑰／換模型三處都推），核心流程改成**每次用之前重新解析**（使用者可能開頁之後才去填金鑰）。`init()` 加上「已初始化且沒帶新設定就沿用現狀」——`GeminiService` 是 singleton，沒有這一關，一個無參數呼叫會把已經可用的服務丟掉。順手修掉 `SettingsProvider` 的 race（建構子與 `init()` 各發一次沒人 await 的 `_loadSettings()`，晚完成的那個會把使用者剛存的金鑰蓋回 null）與死碼 `getEffectiveApiKey`（零呼叫端）
+  ②**讀數跨量別假陽性**：`_findBestReadingMatch` 的關鍵字比對寫成交叉乘積——只要**欄位名**命中某組關鍵字就回傳**當下那一筆**讀數，於是「軸承溫度」會被填進「A 相電流 12.4 A」，而且下游拿它去判成「≤70 °C 合格／ISO 10816」。修法：抽成頂層純函式 `findBestReadingMatch`，用 `StandardsEngine.convertValue` 回傳的 `ok` 當**量綱閘門**（不寫第二份硬編表），關鍵字改成**兩邊要命中同一組**。「只有一筆讀數」那條退路分兩種：**有標準**時要求它自己帶對得上的單位（那筆值會被送去判定，沒單位就可能出現「3.0 ≤ 70 °C 合格」），**沒有標準**時放行（不會被判定，丟掉它沒有好處）。判定路徑的 `_extractNumericReading` 用**同一份標準表**取期望單位，不會出現「用溫度標準判一個電流值」
+  ③**`/map-fields` 契約斷裂**：App 核心流程送 `{field_label, value, ai_result}`，而 `InspectionResult` 一個都沒宣告——pydantic 預設 `extra='ignore'`，**整包檢測資料被靜默丟掉**（實測 `model_dump()` 全是 None），AI 憑欄位名臆造值，端點還回報 `success: true`。修法：宣告 App 真的送的三個欄位、`ai_map_fields` 兩種形狀都吃得下（讀值藏在 `ai_result['readings']` 裡）、**全空的輸入不准送進 AI**（送了就是請它編，改回 `success: false` 說明形狀不符）、`extra='forbid'` 讓下一次契約漂開當場紅
+  三軌：Flutter **533**（+27）／後端 **197**（+6）／葉片原型 207，死角查核通過
 
 ## 既有 error（已修復）
 - ~~`measurement.dart`: `sqrt` 未 import `dart:math`~~ → 已修復

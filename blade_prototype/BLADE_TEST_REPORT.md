@@ -79,10 +79,10 @@
 最慢的是合成影片類：`test_side_view_six_oclock_by_projected_length` 19.0 s、`test_rpm_tracking_and_six_oclock_with_shake` 15.1 s、
 `test_motion_hub` 各 6–11 s。整套約 2–3 分鐘。
 
-### 2.2 App 端（Flutter）— 506 passed（本機）
+### 2.2 App 端（Flutter）— 533 passed（本機）
 
 > **報告初版是引用 CI 的 497**（run 34771101372，head `ed31970`）。同日 GitHub Actions 因用量預算暫停，
-> 改成在本容器裝 Flutter 3.47.4（與 CI 同版；步驟見 `CLAUDE.md`）本機跑：`flutter test` **506 passed**（約 40 秒）、
+> 改成在本容器裝 Flutter 3.47.4（與 CI 同版；步驟見 `CLAUDE.md`）本機跑：`flutter test` **533 passed**（約 40 秒）、
 > `flutter analyze` 6 條既有 info。多出來的 9 條是側視閘門（7）與拒收訊息（2）。下表的分佈是初版量到的。
 
 其中 `test/blade_*_test.dart` 18 個檔約 **270 條**是葉片模組的

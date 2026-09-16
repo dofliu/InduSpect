@@ -9,6 +9,8 @@ import 'package:intl/intl.dart';
 import 'package:path/path.dart' as p;
 import 'package:uuid/uuid.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:provider/provider.dart';
+import '../providers/settings_provider.dart';
 import '../models/inspection_template.dart';
 import '../models/template_field.dart';
 import '../models/form_inspection_record.dart';
@@ -175,6 +177,94 @@ bool shouldRejudgeOnReconnect(Iterable<InspectionItemState> items) =>
 List<InspectionItemState> rejudgeTargets(Iterable<InspectionItemState> items) =>
     items.where((i) => i.standardJudgmentPending).toList();
 
+/// 讀數是否可能就是這個欄位要的量。
+///
+/// [expectedUnit] 為空 → 沒有對應標準，無從否決，放行交給名稱比對。
+/// 讀數自己沒帶單位 → 同樣無從否決。兩邊都有單位時，**量綱不合就是不合**：
+/// `StandardsEngine.convertValue` 回 `ok = false` 代表換算不過去（A 換不到 °C）。
+bool readingUnitFitsField(String? readingUnit, String? expectedUnit) {
+  final want = StandardsEngine.normalizeUnit(expectedUnit);
+  if (want.isEmpty) return true;
+  final got = StandardsEngine.normalizeUnit(readingUnit);
+  if (got.isEmpty) return true;
+  final (_, ok) = StandardsEngine.convertValue(1.0, got, want);
+  return ok;
+}
+
+/// 同一組量的別名。**兩邊要命中同一組**才算匹配。
+///
+/// 原本的寫法是交叉乘積——只要欄位名命中任何一組，就回傳當下迴圈的那一筆讀數，
+/// 於是「軸承溫度」會拿到「A 相電流」。
+const Map<String, List<String>> _readingKeywordGroups = {
+  '溫度': ['溫度', 'temperature', '°C'],
+  '電壓': ['電壓', 'voltage', 'V'],
+  '電流': ['電流', 'current', 'A'],
+  '壓力': ['壓力', 'pressure', 'MPa', 'kPa'],
+  '絕緣': ['絕緣', 'insulation', 'MΩ'],
+  '頻率': ['頻率', 'frequency', 'Hz'],
+  '轉速': ['轉速', 'rpm'],
+};
+
+bool _hitsGroup(String text, List<String> group) =>
+    group.any((kw) => text.contains(kw));
+
+/// 從 AI／OCR 的 readings 中挑出這個欄位要的那一筆。
+///
+/// 挑不到就回 null——**寧可留空讓人工填，也不要填一個會被判成合格的錯值**。
+/// 三道順序：名稱對得上 → 關鍵字同組 → 只有一筆。每一道都要先過量綱閘門。
+Map<String, dynamic>? findBestReadingMatch(
+  String fieldLabel,
+  Map<String, dynamic> readings, {
+  String? expectedUnit,
+}) {
+  Map<String, dynamic>? accept(dynamic value) {
+    if (value is! Map) return null;
+    final reading = Map<String, dynamic>.from(value);
+    if (!readingUnitFitsField(reading['unit'] as String?, expectedUnit)) {
+      return null;
+    }
+    return reading;
+  }
+
+  // 1. 名稱對得上
+  for (final entry in readings.entries) {
+    if (fieldLabel.contains(entry.key) || entry.key.contains(fieldLabel)) {
+      final hit = accept(entry.value);
+      if (hit != null) return hit;
+    }
+  }
+
+  // 2. 關鍵字：欄位名與讀數名要命中**同一組**
+  for (final entry in readings.entries) {
+    for (final group in _readingKeywordGroups.values) {
+      if (_hitsGroup(fieldLabel, group) && _hitsGroup(entry.key, group)) {
+        final hit = accept(entry.value);
+        if (hit != null) return hit;
+      }
+    }
+  }
+
+  // 3. 只有一筆讀數——證據最弱的一條路，規則也最嚴。
+  //
+  //    **這個欄位有標準時**（expectedUnit 非空），那筆值會被送去判定，
+  //    所以要求它自己帶著對得上的單位；沒帶單位就不敢用，
+  //    否則會出現「3.0 ≤ 70 °C 合格」這種憑空成立的判定。
+  //    **沒有標準時**閘門放行：那筆值不會被判定，只是填進表單讓人看，
+  //    丟掉它沒有好處（這也是這條退路原本的用途）。
+  if (readings.length == 1) {
+    final only = readings.values.first;
+    final hasStandard = StandardsEngine.normalizeUnit(expectedUnit).isNotEmpty;
+    if (hasStandard &&
+        (only is! Map ||
+            StandardsEngine.normalizeUnit(only['unit'] as String?).isEmpty)) {
+      return null;
+    }
+    return accept(only);
+  }
+
+  return null;
+}
+
 /// 依判定結果回傳對應顏色（不合格紅、警告橘、待判定灰、其餘綠）
 Color verdictColor(String verdict) {
   switch (verdict) {
@@ -282,12 +372,31 @@ class _FormInspectionScreenState extends State<FormInspectionScreen> {
   }
 
   void _initGemini() {
+    _geminiService = _resolveGemini();
+  }
+
+  /// 取得目前可用的 Gemini 服務；沒有金鑰就回 null（手動模式）。
+  ///
+  /// 金鑰來自**設定頁**（`SettingsProvider`），不是 `.env`。
+  /// 這裡曾經呼叫無參數的 `init()`，而那只讀得到被 gitignore 的 `.env`——
+  /// 打包進 APK 的是空檔，於是使用者填了金鑰，核心流程的 AI 仍然是關的。
+  ///
+  /// **每次要用之前都重新解析**：使用者可能在開啟檢測頁之後才去設定頁填金鑰，
+  /// 只在 initState 解析一次的話，那支金鑰要等下次開頁才會生效。
+  GeminiService? _resolveGemini() {
+    if (!mounted) return _geminiService;
     try {
-      _geminiService = GeminiService();
-      _geminiService!.init();
+      final settings = context.read<SettingsProvider>();
+      return GeminiService()
+        ..init(
+          apiKey: settings.customApiKey,
+          flashModel: settings.selectedModel,
+        );
+    } on MissingGeminiKeyException {
+      return null; // 還沒填金鑰是正常狀態，走手動模式
     } catch (e) {
       debugPrint('Gemini 初始化失敗: $e (可使用手動模式)');
-      _geminiService = null;
+      return null;
     }
   }
 
@@ -699,6 +808,8 @@ class _FormInspectionScreenState extends State<FormInspectionScreen> {
     Uint8List imageBytes,
     String photoPath,
   ) async {
+    // 設定頁可能在開頁之後才填金鑰，所以用之前重新解析一次。
+    _geminiService = _resolveGemini();
     if (_geminiService != null) {
       // 先確認「真的」連得到網路：廠區常見連上 AP 卻沒有 uplink，
       // 只看介面狀態會讓每張照片都空等 Gemini 逾時（60 秒 × N 張）。
@@ -735,11 +846,18 @@ class _FormInspectionScreenState extends State<FormInspectionScreen> {
           'estimated_size': analysisResult.aiEstimatedSize,
         };
 
+        // 欄位對應標準的單位：量測欄位靠它擋掉量綱不合的讀數。
+        // 引擎已快取，第二次之後是常數時間。
+        final expectedUnit = (await StandardsEngine.load()).findMatchingStandard(
+              item.label,
+              equipmentType: analysisResult.equipmentType ?? '',
+            )?['unit'] as String?;
+
         setState(() {
           item.aiResult = resultMap;
           item.isAnalyzing = false;
           item.isCompleted = true;
-          _mapAIResultToField(item, resultMap);
+          _mapAIResultToField(item, resultMap, expectedUnit: expectedUnit);
         });
 
         // 自動存檔
@@ -804,7 +922,7 @@ class _FormInspectionScreenState extends State<FormInspectionScreen> {
       setState(() {
         item.aiResult = resultMap;
         item.isCompleted = true;
-        _mapAIResultToField(item, resultMap);
+        _mapAIResultToField(item, resultMap, expectedUnit: expectedUnit);
       });
       _saveDraft();
       _showNotice('離線：以裝置端 OCR 讀得「${reading.display}」（${item.label}），請確認讀值',
@@ -839,7 +957,15 @@ class _FormInspectionScreenState extends State<FormInspectionScreen> {
   }
 
   /// 將 AI 分析結果映射到表單欄位
-  void _mapAIResultToField(InspectionItemState item, Map<String, dynamic> result) {
+  /// 把 AI／OCR 的結果映射到欄位。
+  ///
+  /// [expectedUnit] 是這個欄位對應法規標準的單位（`StandardsEngine.findMatchingStandard`）。
+  /// 量測欄位靠它擋掉量綱不合的讀數；null 代表這個欄位沒有對應標準，閘門放行。
+  void _mapAIResultToField(
+    InspectionItemState item,
+    Map<String, dynamic> result, {
+    String? expectedUnit,
+  }) {
     final fieldId = item.fieldId;
 
     // 根據欄位類型映射
@@ -851,8 +977,13 @@ class _FormInspectionScreenState extends State<FormInspectionScreen> {
       // 量測欄位：嘗試從 readings 中提取
       final readings = result['readings'] as Map<String, dynamic>?;
       if (readings != null && readings.isNotEmpty) {
-        // 找到最匹配的讀數
-        final bestMatch = _findBestReadingMatch(item.label, readings);
+        // 找到最匹配的讀數。expectedUnit 是量綱閘門——
+        // 沒有它的時候「軸承溫度」欄位會被填進「A 相電流 12.4 A」。
+        final bestMatch = findBestReadingMatch(
+          item.label,
+          readings,
+          expectedUnit: expectedUnit,
+        );
         if (bestMatch != null) {
           _filledData[fieldId] = bestMatch['value'];
         }
@@ -866,63 +997,25 @@ class _FormInspectionScreenState extends State<FormInspectionScreen> {
     }
   }
 
-  /// 從 AI readings 中找到最匹配的讀數
-  Map<String, dynamic>? _findBestReadingMatch(
-    String fieldLabel,
-    Map<String, dynamic> readings,
-  ) {
-    // 完全匹配
-    for (final entry in readings.entries) {
-      if (fieldLabel.contains(entry.key) || entry.key.contains(fieldLabel)) {
-        if (entry.value is Map) {
-          return Map<String, dynamic>.from(entry.value as Map);
-        }
-      }
-    }
-
-    // 關鍵字匹配
-    final keywords = {
-      '溫度': ['溫度', 'temperature', '°C'],
-      '電壓': ['電壓', 'voltage', 'V'],
-      '電流': ['電流', 'current', 'A'],
-      '壓力': ['壓力', 'pressure', 'MPa', 'kPa'],
-      '絕緣': ['絕緣', 'insulation', 'MΩ'],
-      '頻率': ['頻率', 'frequency', 'Hz'],
-      '轉速': ['轉速', 'rpm'],
-    };
-
-    for (final entry in readings.entries) {
-      for (final kwEntry in keywords.entries) {
-        final kwList = kwEntry.value;
-        if (kwList.any((kw) => fieldLabel.contains(kw) || entry.key.contains(kw))) {
-          if (entry.value is Map) {
-            return Map<String, dynamic>.from(entry.value as Map);
-          }
-        }
-      }
-    }
-
-    // 如果只有一個讀數，直接使用
-    if (readings.length == 1) {
-      final val = readings.values.first;
-      if (val is Map) return Map<String, dynamic>.from(val);
-    }
-
-    return null;
-  }
-
   /// 從項目的 AI 結果中萃取可供法規判定的數值讀數
   ///
   /// 回傳 {'value': double, 'unit': String}；若無數值讀數則回傳 null。
-  Map<String, dynamic>? _extractNumericReading(InspectionItemState item) {
+  ///
+  /// [expectedUnit] 是量綱閘門，**這條路徑上它最要緊**：這裡挑出來的值會被送去
+  /// 對法規標準判定，挑錯了就會印出「12.4 A ≤ 70 °C 合格，依據 ISO 10816」。
+  Map<String, dynamic>? _extractNumericReading(
+    InspectionItemState item, {
+    String? expectedUnit,
+  }) {
     final result = item.aiResult;
     if (result == null) return null;
     final readings = result['readings'];
     if (readings is! Map || readings.isEmpty) return null;
 
-    final best = _findBestReadingMatch(
+    final best = findBestReadingMatch(
       item.label,
       Map<String, dynamic>.from(readings),
+      expectedUnit: expectedUnit,
     );
     if (best == null) return null;
 
@@ -972,13 +1065,21 @@ class _FormInspectionScreenState extends State<FormInspectionScreen> {
     final targets = <InspectionItemState>[];
     String equipmentType = '';
 
+    // 判定用的標準表：同時也是量綱閘門的來源。挑讀數與判讀數用的是同一份標準，
+    // 不會出現「用溫度標準判一個電流值」。
+    final engine = await StandardsEngine.load();
+
     for (final item in source) {
       if (item.aiResult == null) continue;
       if (equipmentType.isEmpty) {
         final et = item.aiResult!['equipment_type'] as String?;
         if (et != null && et.isNotEmpty) equipmentType = et;
       }
-      final reading = _extractNumericReading(item);
+      final expectedUnit = engine.findMatchingStandard(
+        item.label,
+        equipmentType: equipmentType,
+      )?['unit'] as String?;
+      final reading = _extractNumericReading(item, expectedUnit: expectedUnit);
       if (reading == null) continue;
       readings.add({
         'field_name': item.label,
@@ -1243,9 +1344,10 @@ class _FormInspectionScreenState extends State<FormInspectionScreen> {
 
   /// 產生 AI 總結報告
   Future<void> _generateSummaryReport() async {
+    _geminiService = _resolveGemini();
     if (_geminiService == null) {
       setState(() {
-        _summaryReport = '⚠️ AI 服務未初始化，無法產生摘要報告。';
+        _summaryReport = '⚠️ 尚未設定 Gemini API 金鑰，無法產生摘要報告。請到設定頁填入。';
       });
       return;
     }
