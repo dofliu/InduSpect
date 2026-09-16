@@ -67,9 +67,17 @@ Level 1 篩檢，「未檢出異常」不等於「整支葉片都查過了」。
 > 另以 14 段真實地面影片驗證了**運動分割輪轂定位**（設計範圍內 5/5，同樣五段顏色法只有 1/5）。
 > **還沒有真實手機拍的葉片語料**，所以葉片拍攝閘門刻意保守，原始量測值全部存進 DB 供外業回來重新定門檻。
 
-### 目前隱藏的功能
+### 現況與定位（2026-09-16）
 
-快速分析、範本系統、設備管理、雲端同步、RAG 管理等已有實作但未連結到主頁，非當前開發重點。
+**工程面接近完成、驗證面幾乎為零。** 三軌測試全綠（Flutter 533／後端 197／葉片原型 207），
+但**從未在實機上跑過一次完整流程**、真實手機拍的葉片照片 0 張、Mode B 人工簽核 0 筆、
+56 條法規標準至少 4 筆引用錯。這個專案現在最有價值的地方是**方法學與文件**——
+不可退化的約定、死角查核、跨語言夾具交叉驗證、Mode B 的評估協定（洩漏量化、一致率上限）——
+適合當研究所／專題的範本 repo，也有一篇 dataset-audit 短文可寫。
+
+另外，repo 裡「快速分析、範本系統、雲端同步」等**不是隱藏功能，是沒有入口的死碼**
+（約 7,900 行，App 端 23%），排定分批移除。完整評估、證據與該砍什麼的討論見
+[`docs/PROJECT_ASSESSMENT.md`](docs/PROJECT_ASSESSMENT.md)。
 
 ---
 
@@ -220,7 +228,8 @@ python blade_prototype/scripts/render_closeup_taxonomy.py
 | [docs/USER_GUIDE.md](docs/USER_GUIDE.md) | **使用手冊** — 操作步驟、離線行為、常見問題 |
 | [CLAUDE.md](CLAUDE.md) | 開發規則速查（關鍵檔案表、慣例、已知問題） |
 | [LAUNCH_PLAN.md](LAUNCH_PLAN.md) | 產品化評估與 90 天上線計畫（含離線 AI 深度評估、目標市場、風險） |
-| [ROADMAP.md](ROADMAP.md) | 功能規劃藍圖 |
+| [docs/PROJECT_ASSESSMENT.md](docs/PROJECT_ASSESSMENT.md) | **專案評估** — 現況數字、值不值得推廣（實用／學術／教學）、該砍什麼、下一步排序 |
+| [ROADMAP.md](ROADMAP.md) | 已完成／卡在哪／下一步／刻意不做（功能願望清單已歸檔） |
 | [flutter_app/DEVELOPMENT.md](flutter_app/DEVELOPMENT.md) | Flutter 開發指南（架構、DB schema、測試、變更紀錄） |
 
 ### 模組規格

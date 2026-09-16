@@ -7,7 +7,8 @@
 1. **完整檢測 Pipeline**：上傳定檢表 → 一鍵自動檢測（引導拍照 → AI 批次分析 → 自動回填 → 自動 AI 報告）→ 分享（離線暫存）
 2. **歷史紀錄**：GPS 定位、可編輯標題、搜尋、重新分享
 
-其餘功能（快速分析、範本系統、設備管理、雲端同步等）目前為隱藏狀態，非核心開發重點。
+其餘功能（快速分析、範本系統、雲端同步、舊四步流程等）**不是隱藏，是沒有入口的死碼**（約 7,900 行，App 端 23%），
+排定分批移除；清單見 `docs/PROJECT_ASSESSMENT.md` §3.A／§5。**不要往那些檔案加東西。**
 
 另有一條平行產品線：**風力機葉片檢測**（Mode A 地面整機已上線、Mode B 近身影像規格完成未實作），
 與定檢表 pipeline 不共用流程也不共用資料。
@@ -18,7 +19,9 @@
 | 系統總覽、運作原理、快速開始 | `README.md` |
 | 操作步驟、離線行為、常見問題 | `docs/USER_GUIDE.md` |
 | App 架構、DB schema、變更紀錄 | `flutter_app/DEVELOPMENT.md` |
-| 功能規劃 / 上線計畫 | `ROADMAP.md` / `LAUNCH_PLAN.md` |
+| **專案評估：現況／值不值得推廣／該砍什麼／下一步** | `docs/PROJECT_ASSESSMENT.md`（2026-09-16） |
+| 已完成／卡在哪／下一步／刻意不做 | `ROADMAP.md`（功能願望清單已歸檔到 `docs/archive/`） |
+| 產品化評估與上線計畫（快照） | `LAUNCH_PLAN.md` |
 | 接棒筆記（下一個 session 先讀這個） | `docs/handover/session-handover.md` |
 | **已完成或已被取代的文件** | `docs/archive/`——留作決策紀錄，**不要照著做** |
 
