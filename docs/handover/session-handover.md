@@ -17,7 +17,7 @@
 | 葉片 Mode A（地面整機） | App 端完整實作（表面／幾何／聲音層）。影片抽幀的 Kotlin **從未被編譯過** |
 | 葉片 Mode B（近身影像） | 規格 + 分類表 + 語料實測完成，**演算法一行都還沒寫** |
 
-三軌全綠：Flutter 506 / 後端 191 / 葉片原型 207（2026-09-14 本機實測；GitHub Actions 已因用量預算暫停），另有死角查核擋 PR。
+三軌全綠：Flutter 575 / 後端 197 / 葉片原型 228（2026-09-16 本機實測；GitHub Actions 已因用量預算暫停），另有死角查核擋 PR。
 
 ### 這一輪做了什麼
 
@@ -163,6 +163,48 @@ App 端同樣）；③`synth-still` 給的尺度塞不下轉子時會靜靜產�
   §1.2 的取像閘門不是形式要求。
 - **規格 §8 的三條基線仍然沒跑**：§8.1／8.2 要 Gemini API key（本容器 `GEMINI_API_KEY`／`GOOGLE_API_KEY` 皆未設定）、
   §8.3 要 PyTorch（未安裝）。這是**環境的事實不是取捨**，B2 只是地板的第二個點。
+
+### 2026-09-16 追加：定檢主線三個接反的地方
+
+盤點 workflow（41 個 agent）指出的最高價值項目，三個缺口疊在同一個出口——
+**使用者拿到的回填定檢表與申報 PDF**。全部已修並有測試守。
+
+1. **核心流程的 Gemini 是死的**：`form_inspection_screen.dart` 呼叫無參數 `init()`，
+   只讀得到被 gitignore 的 `.env`（`pubspec.yaml` 列為 asset，打包進 APK 的是空檔）。
+   設定頁的金鑰欄位對**隱藏的舊流程**有效、對**核心功能**無效。
+   修法：`SettingsProvider.applyToGeminiService()` 成為使用者金鑰唯一的出口，
+   核心流程每次用之前重新解析，`MissingGeminiKeyException` 讓葉片線分得出「沒金鑰」與「離線」。
+2. **讀數跨量別假陽性**：關鍵字比對寫成交叉乘積，「軸承溫度」會拿到「A 相電流 12.4 A」
+   並被判成「≤70 °C 合格／ISO 10816」。用 `StandardsEngine.convertValue` 的 `ok` 當量綱閘門。
+3. **`/map-fields` 契約斷裂**：App 送的 `{field_label, value, ai_result}` 一個都沒宣告，
+   pydantic 靜默丟掉整包，AI 憑欄位名臆造值還回報成功。已宣告 + `extra='forbid'` + 全空拒跑。
+
+**這是同一個失敗模式的第三、四例**（前兩例：`capture_points` 有人讀沒人寫、
+`blade_report_export` 的 `pendingShare` 兩個呼叫端都沒決定）。死角查核抓不到這一類——
+它查的是「有沒有人叫」，而這些是**叫了但傳錯東西**。
+
+**環境備註**：查證過程中 agent 在容器裡裝了 `torch 2.14.0+cpu` 與 `/opt/android-sdk`
+（`/opt/flutter` 是更早裝的）。所以規格 §8.3「重訓模型」不再是「環境做不到」，
+是「要花約 1.2 GB 磁碟裝回來」——容器是 ephemeral 的，下個 session 不在。
+剩餘磁碟 7.2 GB。
+
+### 2026-09-16 追加：專案評估文件
+
+回答「做到哪裡、值不值得推廣、該砍什麼」三個問題，獨立成 [`docs/PROJECT_ASSESSMENT.md`](../PROJECT_ASSESSMENT.md)。
+三個結論：①工程面接近完成、驗證面幾乎為零（實機 0 次、真實葉片照 0 張、人工簽核 0 筆、法規引用至少 4 筆錯）；
+②最有價值的是**方法學與文件**（教學範本 + 一篇 dataset-audit 短文），不是 App；
+③**約 7,900 行 Dart 沒有入口**（23%）、後端 12 個端點沒有客戶端——所謂「隱藏功能」其實沒有旗標，就是死碼。
+`ROADMAP.md` 80% 的功能願望清單已歸檔到 `docs/archive/ROADMAP_FEATURE_IDEAS_2026-04.md`。
+下一步順序以 `ROADMAP.md`「下一步」一節為準。
+
+### 2026-09-16 追加：葉片 Mode B 桌面三件（A1／A2／A3）
+
+- **A1 IEA Task 46 分級表**：對原文 §4.3.1 核對，改成 LEP／No-LEP 兩軌，`min_cm_per_px` 由 √面積/15 px 算出；舊版三級共用 0.46 無依據。SPEC §2.2 同步改寫。
+- **A2 線性探針落地**：`closeup_features_cnn.py` 是唯一 import torch 的檔案，512 維特徵已進版控；`closeup_probe.py` 不需 torch 也不需語料。平均逐類 recall 0.632（B2 0.308）。
+- **A3 §1.2 取像閘門程式化**（`blade_prototype/CLOSEUP_INTAKE_GATE.md`）：前景占比判不出來；改成「Mode A 正視放行 = 硬拒收」+ 探針判 P／W／T，平衡準確率 0.910。
+  兩個順帶發現要有人接：①**Mode A 側視規則在 8 張近身照上誤放行**（SPEC §13-13 待決策，Mode A 端未改）；
+  ②`closeup_intake_wtb.json` 的 **T 碼混了兩種東西**，30 張 `false_accept` 是複核佇列，不要用模型改標記。
+- 環境：本容器現在**有** torch 2.14 CPU 與 Flutter 3.47（前一段「本容器沒有」已過時）；`closeup_intake_gate.py run --dataset` 幾何那層約 30 分鐘。
 
 ### 下一步建議（依可行性排序）
 

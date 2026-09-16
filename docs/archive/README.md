@@ -9,7 +9,8 @@
 | [`../USER_GUIDE.md`](../USER_GUIDE.md) | 使用手冊 |
 | [`../../CLAUDE.md`](../../CLAUDE.md) | 開發規則與已知問題 |
 | [`../../flutter_app/DEVELOPMENT.md`](../../flutter_app/DEVELOPMENT.md) | App 架構、DB schema、變更紀錄 |
-| [`../../ROADMAP.md`](../../ROADMAP.md) | 功能規劃 |
+| [`../PROJECT_ASSESSMENT.md`](../PROJECT_ASSESSMENT.md) | **專案評估**：現況／價值／該砍什麼 |
+| [`../../ROADMAP.md`](../../ROADMAP.md) | 已完成／下一步／刻意不做 |
 | [`../../LAUNCH_PLAN.md`](../../LAUNCH_PLAN.md) | 上線計畫 |
 
 ---
@@ -22,6 +23,12 @@
 | [`REFACTORING_PLAN.md`](REFACTORING_PLAN.md) | 後端重構計畫（2026-03） | 已完成，`form_fill.py` 由 3,053 行拆到現在的 405 行；成果表在文件末 |
 | [`DEVELOPMENT_PLAN.md`](DEVELOPMENT_PLAN.md) | Sprint 1–6 定檢系統改善計畫（2026-03） | 六個 Sprint 皆已完成。**注意：文件內的 checkbox 從未被勾選**，完成狀態看每個 Sprint 的「完成時 ✅」標題 |
 | [`CLOUD_RUN_ASSESSMENT.md`](CLOUD_RUN_ASSESSMENT.md) | Cloud Run 部署就緒度評估（2026-03） | 五項問題已在產品化 P0 批次處理（Artifact Registry、Secret Manager、後端認證、CORS 收緊）。部署現況看 `LAUNCH_PLAN.md` |
+
+## 歸檔的規劃
+
+| 文件 | 內容 | 為什麼歸檔 |
+|---|---|---|
+| [`ROADMAP_FEATURE_IDEAS_2026-04.md`](ROADMAP_FEATURE_IDEAS_2026-04.md) | 五階段十個功能的願望清單（設備管理、團隊協作、智能提醒…），原為 `ROADMAP.md` 的 80% | 沒有一項有排程，也不會在有第一個使用者之前開始；與「核心只有兩個功能」的定位矛盾。2026-09-16 移出 |
 
 ## 凍結的規格
 

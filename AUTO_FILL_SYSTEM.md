@@ -1,6 +1,12 @@
 # 自動回填系統技術文件
 
-> 最後更新：2026-03-05
+> 最後更新：2026-09-16（原 2026-03-05）
+>
+> **2026-09-16 備註**：本文描述的四條端點（`analyze-structure`／`map-fields`／`preview`／`execute`）是後端**活的核心**，
+> App 的核心流程都在用。`/map-fields` 的請求契約在 [PR #77](https://github.com/dofliu/InduSpect/pull/77) 修正：
+> `InspectionResult` 現在同時接受 App 核心流程送的 `{field_label, value, ai_result}` 與舊的攤平形狀，
+> `extra='forbid'`，全空輸入不送 AI。同一 router 下的 `generate-photo-tasks`／`insert-photos`／`one-stop-process`／
+> `precision-map-fields`／`batch-process` **沒有任何客戶端**，排定移除（`docs/PROJECT_ASSESSMENT.md` §3.A A6）。
 
 ## 概述
 

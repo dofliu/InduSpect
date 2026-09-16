@@ -1,0 +1,5 @@
+# 只有 scripts/closeup_features_cnn.py 需要。主線的 207 條測試不碰它。
+# CPU 版就夠：抽 1,065 張的 ResNet18 特徵約半分鐘。
+--extra-index-url https://download.pytorch.org/whl/cpu
+torch>=2.2
+torchvision>=0.17

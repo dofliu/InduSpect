@@ -701,6 +701,57 @@ class FormAnalysisService:
     # AI 欄位映射
     # ================================================================
 
+    # AI 映射的輸入整理：兩種形狀（App 核心流程 / 舊自動回填流程）都要吃得下。
+    _EMPTY = (None, "", {}, [])
+
+    @staticmethod
+    def _summarise_inspection_result(idx: int, result: dict) -> dict:
+        """把一筆檢查結果整理成 prompt 要的欄位。
+
+        App 核心流程送的是 `{field_label, value, ai_result}`，
+        讀值藏在 `ai_result["readings"]` 裡；舊流程送的是攤平的
+        `{equipment_name, extracted_values, ...}`。兩邊都要進得了 prompt，
+        少收一種就等於請 AI 憑空編那一種。
+        """
+        ai_result = result.get("ai_result") or {}
+
+        readings = result.get("extracted_values") or ai_result.get("readings") or {}
+        # App 把量到的值也單獨帶在 value 上（已經過欄位映射的那一個）
+        field_label = result.get("field_label")
+        value = result.get("value")
+        if field_label and value is not None and field_label not in readings:
+            readings = {**readings, field_label: value}
+
+        return {
+            "index": idx,
+            "field_label": field_label or "",
+            "equipment_name": result.get("equipment_name", "") or "",
+            "equipment_type": result.get("equipment_type")
+            or ai_result.get("equipment_type", "")
+            or "",
+            "condition": result.get("condition_assessment")
+            or ai_result.get("condition_assessment", "")
+            or "",
+            "is_anomaly": result.get("is_anomaly")
+            if result.get("is_anomaly") is not None
+            else ai_result.get("is_anomaly", False),
+            "readings": readings,
+            "anomaly": result.get("anomaly_description")
+            or ai_result.get("anomaly_description", "")
+            or "",
+            "notes": result.get("notes", "") or "",
+        }
+
+    @classmethod
+    def _has_usable_content(cls, summary: dict) -> bool:
+        """這一筆有沒有任何能讓 AI 做判斷的內容。`index` 與 `is_anomaly` 不算——
+        前者是序號，後者預設 False 會讓每一筆看起來都有內容。"""
+        return any(
+            summary.get(k) not in cls._EMPTY
+            for k in ("field_label", "equipment_name", "equipment_type",
+                      "condition", "readings", "anomaly", "notes")
+        )
+
     async def ai_map_fields(
         self,
         field_map: list[dict],
@@ -717,17 +768,23 @@ class FormAnalysisService:
 
         results_summary = []
         for idx, result in enumerate(inspection_results):
-            item = {
-                "index": idx,
-                "equipment_name": result.get("equipment_name", ""),
-                "equipment_type": result.get("equipment_type", ""),
-                "condition": result.get("condition_assessment", ""),
-                "is_anomaly": result.get("is_anomaly", False),
-                "readings": result.get("extracted_values", {}),
-                "anomaly": result.get("anomaly_description", ""),
-                "notes": result.get("notes", ""),
-            }
+            item = self._summarise_inspection_result(idx, result)
             results_summary.append(item)
+
+        # 全空的輸入不准送進 AI。送了等於請它憑欄位名編值，而端點還會回報成功——
+        # 這正是 App 契約斷裂時發生的事（整包檢測資料被靜默丟掉）。
+        if not any(self._has_usable_content(r) for r in results_summary):
+            logger.warning(
+                "ai_map_fields: %d 筆檢查結果全部沒有可用內容，拒絕送 AI",
+                len(results_summary),
+            )
+            return {
+                "success": False,
+                "error": "檢查結果裡沒有可用的內容（欄位名稱、讀值或狀態評估都是空的）。"
+                         "這通常代表送來的資料形狀與 InspectionResult 不符。",
+                "mappings": [],
+                "unmapped_fields": [f["field_id"] for f in field_map],
+            }
 
         try:
             prompt = f"""你是一位工業定檢表單自動填寫專家。請將 AI 檢查結果映射到定檢表格欄位。
@@ -751,7 +808,7 @@ class FormAnalysisService:
 
 規則：
 1. 日期欄位填入檢查日期
-2. 數值欄位從 readings 中匹配相關讀數
+2. 數值欄位從 readings 中匹配相關讀數；field_label 是該筆結果對應的檢測項目名稱，優先用它比對欄位名
 3. 狀態/判定欄位填入「合格」或「不合格」（根據 is_anomaly）
 4. 文字欄位填入對應的描述文字
 5. 無法映射的欄位不要包含在結果中

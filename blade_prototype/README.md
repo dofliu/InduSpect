@@ -48,7 +48,7 @@
 cd blade_prototype
 python3 -m venv .venv && . .venv/bin/activate
 pip install -r requirements.txt
-pytest            # 207 tests，約 2–3 分鐘（動態層與運動分割的合成影片測試最慢）
+pytest            # 228 tests，約 2–3 分鐘（動態層與運動分割的合成影片測試最慢）
 ```
 
 ## 三種輸入、三個指令
@@ -127,6 +127,9 @@ python -m blade_proto report --asset WTG-07 --still still.json --still-overlay s
 | `scripts/closeup_blade_groups.py` | **Mode B 切分群組**：全域描述子取候選鄰居 → ORB+RANSAC 內點數驗證 → 連通分量 = 「不可拆到不同子集」的單位（`split_group`，**不是 blade_id**）。產出群組檔、群感知 5 折，並量語料自己附的切分洩漏多少（實測 test 63.4% 在 train 有近重複）。說明見 `CLOSEUP_SPLIT_GROUPS.md` | Mode B 評估協定 |
 | `scripts/closeup_candidate_sheets.py` | **健康候選格的接觸印樣**：1,842 格 `blade_like` 候選排成一頁 48 格，**原尺寸 256 px 不縮放**（縮了就看不出紋理，也就回到 654 那個錯誤），並寫出 `layout.json` 讓標記對得回座標 | Mode B 標註 |
 | `scripts/closeup_candidate_firstpass.py` | **第一遍逐格標記（不是簽核）**：印樣上的碼串 → 版控檔（`pack`）、與候選對帳（`verify`）。`annotator` 一律 `claude-first-pass`、狀態一律 `unreviewed`——這個名字正好被複核工具的模型名規則擋住，所以它只能改變**複核的順序與先驗**，不能變成決策。實測 788 格是純表面（42.8%），比抽樣推估的 64% 低 21 個百分點 | Mode B 標註 |
+| `scripts/closeup_features_cnn.py` | **全 repo 唯一 import torch 的檔案**：凍結 ImageNet ResNet18 抽 512 維特徵存成 npz（已進版控，約 1 MB，帶權重雜湊）。之後的探針與評估都不需要 torch 與語料本體 | Mode B 評估 |
+| `scripts/closeup_intake_gate.py` + `blade_proto/intake.py` | **§1.2 取像閘門程式化（A3）**：整張丟進 Mode A，**正視放行 = 整機照 = 硬拒收**；凍結 ResNet18 + 同一個邏輯迴歸判 P／W／T 並給拒收理由。P 對非 P 平衡準確率 **0.910**、P recall 0.992、W 0.946、**T 0.195**（T 的標記本身混了兩種東西）。「簡單的前景占比」實測判不出來；Mode A 側視規則在 8 張近身照上誤放行。報告 `CLOSEUP_INTAKE_GATE.md`，逐張結果 `data/closeup_intake_gate_wtb.json` | Mode B 閘門 |
+| `scripts/closeup_probe.py` | **線性探針（B2 的對照組）**：凍結特徵 + B2 同一個 numpy 邏輯迴歸 + 同一套群感知 5 折。平均逐類 recall **0.632**（B2 0.308）——只換特徵就翻倍，證明 §3.6 該讀成「手工特徵漏掉一半」不是「語料沒訊號」。不是 §8.3 的重訓，是它的地板 | Mode B 評估 |
 | `scripts/closeup_baseline.py` | **Mode B 離線基線（B2）**：123 維手工特徵 + 純 numpy 一對多邏輯迴歸（零初始化、無隨機種子，重跑逐位元相同），群感知 5 折。**不是規格 §8 的三條基線**（§8.1/8.2 要 Gemini 金鑰、§8.3 要 PyTorch，本容器都沒有），它是地板的第二個點：平均逐類 recall 0.308，與 1-NN 的 0.344 打平 | Mode B 評估 |
 | `scripts/closeup_review_tool.py` | **Mode B 人工複核工作區**：把健康候選格、`x` 全解析度複核、概略框三個佇列切成離線工作區（切圖 + 單檔 HTML，鍵盤操作、可中斷續做），`ingest` 併進版控的決策檔。四條規則在匯入處執行：升格要人名（模型名整批拒收）、跳過 ≠ 乾淨、顯示倍率 < 1 的升格不收、決策綁座標。說明見 `CLOSEUP_HEALTHY_SET.md` §6 | Mode B 標註 |
 | `report.py` / `charts.py` | 圖文報告：把數值排成 HTML（區段、統計磚、數值表、待確認欄）＋內嵌 SVG 圖表。無外部相依、無 JS；照片以 base64 內嵌 | 交付物 |

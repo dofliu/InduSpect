@@ -1,8 +1,10 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import '../providers/inspection_provider.dart';
 import '../providers/settings_provider.dart';
+import '../services/ai/local_model_manager.dart';
 import '../providers/app_state_provider.dart';
 import '../models/form_inspection_record.dart';
 import '../services/database_service.dart';
@@ -32,6 +34,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final appState = context.read<AppStateProvider>();
     final inspection = context.read<InspectionProvider>();
     final settings = context.read<SettingsProvider>();
+    // 端側模型裝了沒——問一次原生，失敗就當沒裝（refresh 內部接住）。
+    unawaited(context.read<LocalModelManager>().refresh());
 
     await Future.wait([
       appState.init(),

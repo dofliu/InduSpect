@@ -10,8 +10,8 @@
 
 from fastapi import APIRouter, HTTPException, UploadFile, File, Form
 from fastapi.responses import StreamingResponse
-from pydantic import BaseModel, Field, field_validator
-from typing import Optional
+from pydantic import BaseModel, ConfigDict, Field, field_validator
+from typing import Any, Optional
 import logging
 import io
 
@@ -62,7 +62,25 @@ class StructureAnalysisResponse(BaseModel):
 
 
 class InspectionResult(BaseModel):
-    """單筆 AI 檢查結果"""
+    """單筆 AI 檢查結果。
+
+    **兩種形狀都要收**：App 的核心 5 步驟流程送
+    `{field_label, value, ai_result}`（`form_inspection_screen.dart`），
+    舊的自動回填流程送 `{equipment_name, extracted_values, ...}`。
+
+    這三個欄位原本一個都沒宣告，而 pydantic 預設會**靜默丟掉**未宣告的欄位——
+    於是核心流程送過來的檢測資料整包消失，AI 收到一串空記錄仍照樣回報成功。
+    `extra="forbid"` 就是為了讓下一次契約漂開當場紅掉，而不是再默默吃掉。
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    # App 核心流程的形狀
+    field_label: Optional[str] = None
+    value: Optional[Any] = None
+    ai_result: Optional[dict] = None
+
+    # 舊自動回填流程的形狀
     equipment_name: Optional[str] = None
     equipment_type: Optional[str] = None
     equipment_id: Optional[str] = None

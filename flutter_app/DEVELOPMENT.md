@@ -1,6 +1,6 @@
 # Flutter App 開發指南
 
-> **最後更新**: 2026-09-06
+> **最後更新**: 2026-09-16
 
 ---
 
@@ -350,6 +350,125 @@ flutter build apk --debug
 ---
 
 ## 變更紀錄
+
+### 2026-09-16（Tier 1b 端側 AI：桌面能做的那一半）
+
+`LAUNCH_PLAN.md` §5.3 的四層裡，Tier 0 判定與 Tier 1a OCR 早就做完，這一批補**Tier 1b 端側 VLM 的骨架**：
+選層、抽象層、模型管理、設定頁、`flutter_gemma` 綁定。**實機沒跑過**——三個只有手機才能回答的問題
+（初判與 Gemini 的一致率、一項檢測要多久、JSON 遵循率）留給有裝置的那一趟。
+
+| 新東西 | 在哪 | 守它的測試 |
+|---|---|---|
+| `AiBackend` 介面（三個方法：照片判讀／總結／自訂 prompt）+ `AiSource` | `services/ai/ai_backend.dart` | — |
+| `GeminiCloudBackend`（包既有 singleton，行為不變） | `services/ai/gemini_cloud_backend.dart` | — |
+| `GemmaLocalBackend`：收一個 `LocalVlmRunner` 函式，**不產生讀值**、解不出 JSON 就丟 `LocalVlmUnusableException` | `services/ai/gemma_local_backend.dart` | `gemma_local_backend_test.dart` |
+| 端側 prompt（**只要四個欄位**）與寬容解析（`is_anomaly` 分不出來就當異常） | `services/ai/local_vlm_prompt.dart` | `local_vlm_prompt_test.dart` |
+| `chooseAiTier` 純函式 + 裝置門檻 + 下載條件 | `services/ai/ai_tier_policy.dart` | `ai_tier_policy_test.dart` |
+| `LocalModelManager`（裝了沒／正在裝／壞了；三個縫） | `services/ai/local_model_manager.dart` | `gemma_local_backend_test.dart` |
+| `AiRouter`：湊齊四個輸入 → 選層 → 回後端 | `services/ai/ai_router.dart` | `ai_router_test.dart` |
+| `FlutterGemmaRunner`：**全 App 唯一 import `flutter_gemma` 的檔案** | `services/ai/flutter_gemma_runner.dart` | 無（沒有原生可跑；靠實機） |
+| `DeviceInfoChannel` + `DeviceInfo.kt`：總記憶體／剩餘空間 | `services/device_info_channel.dart`、`android/.../DeviceInfo.kt` | — |
+| 設定頁「離線 AI」卡片 | `widgets/offline_ai_card.dart` | — |
+
+**四條不可退化**：
+
+1. **端側只是備援，不是取代。** 連得上且有金鑰一律雲端，端側就緒也不搶（`chooseAiTier` 第一條測試）。
+2. **端側不做讀值。** 模型看的是縮到 768 px 的圖，錶面數字剩幾個像素；讀值交給全解析度 OCR。
+   模型硬塞 `readings` 也不收（測試守著）。
+3. **結果要看得出是誰判的。** `aiResult['source'] = 'local_llm'`，`condition_assessment` 前面掛「【離線初判】」，
+   總結報告開頭一行說明——報告與 PDF 讀這兩個欄位就會印出來，不用改 PDF 服務。
+4. **查不到就不開。** 裝置記憶體查不到（非 Android）→ 不合格；這個平台沒有執行器 → 退回 OCR 不假裝；
+   `flutter_gemma` 初始化失敗 → 記 log 繼續啟動，端側永遠不會被選到。
+
+**硬事實**（2026-09-16 查）：E2B int4 `.litertlm` **3.66 GB**（HF gated，使用者要自己接受 Gemma 授權）；
+`flutter_gemma` 1.8.3 要 **Dart ≥3.12 / Flutter ≥3.44**——專案下限從 3.5/3.27 升上去（當初壓低是為了
+開發環境，本機 Flutter 已是 3.47）；連帶 `share_plus` 7→10（`mime` 版本衝突）。`.litertlm` FFI **只出 arm64-v8a**，
+`build.gradle` 加了 `abiFilters`——不加的話 Play 會把裝不了模型的 APK 派給 x86_64 機型。
+
+**刻意沒做**：①雲端覆核端側初判的自動佇列（`blade_ai_retry_service` 有現成模式，等實機有第一批初判再接）；
+②葉片線接端側（`BladeImageAnalyzer` 的形狀與 `AiBackend.analyzeImageWithPrompt` 一致，接法是一行，但先看定檢線實測）；
+③Gemini Nano（ML Kit GenAI）那條零下載的路。
+
+三軌：Flutter **575**（+42）／後端 197／葉片原型 207；死角查核通過。
+
+
+### 2026-09-16（定檢主線三個接反的地方）
+
+三個缺口疊在同一個出口：**使用者拿到的回填定檢表與申報 PDF**。三個單獨看都是 bug，
+合起來是「產品做的事跟它說的事不一樣」。全部桌面就驗得完，不需要實機。
+
+#### ① 核心流程的 Gemini 是死的
+
+`form_inspection_screen.dart` 的 `_initGemini()` 呼叫**無參數**的 `GeminiService.init()`，
+而無參數只讀得到 `dotenv.env['GEMINI_API_KEY']`。`.env` 被 gitignore（`flutter_app/.gitignore:45`），
+而 `pubspec.yaml` 又把它列為 asset——**打包進 APK 的是那個空檔**。於是：
+
+```
+init() → 沒金鑰 → throw → catch → _geminiService = null → AI 靜默關閉、退回手動模式
+```
+
+設定頁的金鑰欄位是有作用的，但只對 `inspection_provider`（隱藏的舊流程）有作用；
+**核心功能 #1 完全沒接到**。
+
+| 改了什麼 | 為什麼 |
+|---|---|
+| 抽出頂層 `resolveGeminiConfig()` + `GeminiConfig` | `init()` 要建 `GenerativeModel`，測不到；「金鑰從哪來」才是出事的那一段 |
+| 新增 `MissingGeminiKeyException` | 葉片線只 `catch (e)` 會把「沒金鑰」和「真的離線」當成同一件事；前者要引導去設定頁，後者要排離線佇列 |
+| `SettingsProvider.applyToGeminiService()` | 使用者金鑰**唯一的出口**。載入／換金鑰／換模型三處都推，核心流程與葉片線一次都接上 |
+| `init()` 加「已初始化且沒帶新設定就沿用現狀」 | `GeminiService` 是 singleton。沒有這一關，一個無參數呼叫會把已經可用的服務丟掉 |
+| 核心流程改成**每次用之前重新解析** | 使用者可能開了檢測頁之後才去設定頁填金鑰；只在 initState 解析一次的話要等下次開頁才生效 |
+
+順手修掉兩個同源的問題：`SettingsProvider` 的建構子與 `init()` **各發一次沒人 await 的
+`_loadSettings()`**，晚完成的那個會用 prefs 舊值把使用者剛存的金鑰蓋回去（改成共用同一個
+future）；`getEffectiveApiKey` 零呼叫端，移除。
+
+#### ② 讀數被填進不同量別的欄位
+
+`_findBestReadingMatch` 的關鍵字比對是交叉乘積：
+
+```dart
+if (kwList.any((kw) => fieldLabel.contains(kw) || entry.key.contains(kw))) {
+  return entry.value;   // ← 條件可能只由 fieldLabel 滿足，回傳的卻是當下這筆讀數
+}
+```
+
+「軸承溫度」命中 `溫度` 這一組 → 回傳迴圈當下的那一筆，可能是「A 相電流 12.4 A」。
+更糟的是下游：那個值會被送去對法規標準判定，印出「12.4 ≤ 70 °C **合格**，依據 ISO 10816」。
+
+改法不是再寫一份硬編對照表，而是用**專案已有的單一來源**：
+`StandardsEngine.convertValue(1.0, 讀數單位, 標準單位)` 回傳的 `ok = false` 就是量綱不合。
+
+- `findBestReadingMatch` 抽成頂層純函式（比照 `shouldRejudgeOnReconnect` 的慣例）
+- 關鍵字改成**兩邊要命中同一組**
+- 「只有一筆讀數」那條退路分兩種：**有標準**時要求它自己帶對得上的單位（那筆值會被判定，
+  沒單位就會出現「3.0 ≤ 70 °C 合格」這種憑空成立的判定）；**沒有標準**時放行
+  （不會被判定，只是填進表單讓人看，丟掉它沒有好處）
+- `_extractNumericReading`（判定路徑）用**同一份標準表**取期望單位，不會出現
+  「用溫度標準判一個電流值」
+
+#### ③ `/map-fields` 把整包檢測資料丟掉
+
+App 核心流程送的是：
+
+```json
+{"field_label": "軸承溫度", "value": 68.0, "ai_result": {"readings": {...}}}
+```
+
+而 `InspectionResult`（pydantic）一個都沒宣告。預設 `extra='ignore'` → **靜默丟掉**。
+實測 `model_dump()` 出來全是 `None`，`ai_map_fields` 讀 `equipment_name`／`extracted_values`
+自然都是空的，prompt 裡是一串空記錄，AI 憑欄位名臆造值，端點回報 `success: true`。
+
+- 宣告 App 真的送的三個欄位；`_summarise_inspection_result` 兩種形狀都吃得下
+  （讀值可能攤平在 `extracted_values`，也可能藏在 `ai_result['readings']`）
+- **全空的輸入不准送進 AI**——送了就是請它編。改回 `success: false` 並說明形狀不符
+- `extra='forbid'`：下一次契約漂開當場紅，不要又靜默吃掉
+
+#### 驗證
+
+三軌全綠：Flutter **533**（+27，新增 `gemini_config_test.dart` 14 條、`reading_match_test.dart` 13 條）／
+後端 **197**（+6，`test_map_fields_contract.py`）／葉片原型 207；`flutter analyze` 6 條已知 info；
+死角查核通過。
+
 
 ### 2026-09-07（解碼守門收斂到一處）
 
