@@ -55,9 +55,9 @@
 
 ## 2. 自動化測試
 
-### 2.1 葉片原型（Python）— 228 passed
+### 2.1 葉片原型（Python）— 234 passed
 
-報告初版量到 131；同日修掉 §8 的第 2、3 項（側視閘門、拒收訊息）各加了測試成為 144，再加上 Mode B 人工複核工具的 13 條（`tests/test_closeup_review_tool.py`）、切分群組的 10 條（`tests/test_closeup_blade_groups.py`）與評估協定的 15 條（`tests/test_closeup_eval.py`）後為 182；普查補滿再加 2 條後為 184，第一遍標記的守門 16 條（`tests/test_closeup_firstpass.py`）與離線基線的 7 條（`tests/test_closeup_baseline.py`）後為 207；2026-09-16 IEA 兩軌核對（分類表 +2）、線性探針 6 條（`tests/test_closeup_probe.py`）、§1.2 取像閘門 13 條（`tests/test_closeup_intake_gate.py`）後為 **228**。
+報告初版量到 131；同日修掉 §8 的第 2、3 項（側視閘門、拒收訊息）各加了測試成為 144，再加上 Mode B 人工複核工具的 13 條（`tests/test_closeup_review_tool.py`）、切分群組的 10 條（`tests/test_closeup_blade_groups.py`）與評估協定的 15 條（`tests/test_closeup_eval.py`）後為 182；普查補滿再加 2 條後為 184，第一遍標記的守門 16 條（`tests/test_closeup_firstpass.py`）與離線基線的 7 條（`tests/test_closeup_baseline.py`）後為 207；2026-09-16 IEA 兩軌核對（分類表 +2）、線性探針 6 條（`tests/test_closeup_probe.py`）、§1.2 取像閘門 13 條（`tests/test_closeup_intake_gate.py`）後為 228；同日偏軸透視夾具 6 條（`tests/test_offaxis.py`）後為 **234**。
 
 | 檔案 | 條數 | 守什麼 |
 |---|---|---|
@@ -75,16 +75,17 @@
 | `test_closeup_baseline.py` | 7 | B2 基線：維度、逐位元可重現、**折與折不相通**、標準化只用訓練集統計量 |
 | `test_closeup_probe.py` | 6 | 線性探針：**只有一個檔案准 import torch**、特徵檔涵蓋全語料、沿用 B2 分類器且可重現 |
 | `test_validation_report.py` | 6 | 真實影像驗證報告產生器 |
+| `test_offaxis.py` | 6 | **偏軸透視夾具**：正軸平面 = `render_front`、投影半徑對解析式、平面葉片偏軸只改半徑不改彎曲、**預彎 + yaw 20° → 約 250 cm 假葉尖偏移**、仰角 30° 被半徑離散擋下、錐角被 PCA 軸吸收而預彎不會 |
 | `test_surface.py` / `test_blade_test_report.py` | 5 / 5 | 前緣粗糙度；**本報告的聚合腳本**（拒收原因收桶、誤放行要算得出來、逐張比對） |
 | `test_dynamics.py` / `test_synth.py` | 4 / 3 | 影片轉速與六點鐘幀、合成場景 |
 
 最慢的是合成影片類：`test_side_view_six_oclock_by_projected_length` 19.0 s、`test_rpm_tracking_and_six_oclock_with_shake` 15.1 s、
 `test_motion_hub` 各 6–11 s。整套約 2–3 分鐘。
 
-### 2.2 App 端（Flutter）— 575 passed（本機）
+### 2.2 App 端（Flutter）— 588 passed（本機）
 
 > **報告初版是引用 CI 的 497**（run 34771101372，head `ed31970`）。同日 GitHub Actions 因用量預算暫停，
-> 改成在本容器裝 Flutter 3.47.4（與 CI 同版；步驟見 `CLAUDE.md`）本機跑：`flutter test` **575 passed**（約 40 秒）、
+> 改成在本容器裝 Flutter 3.47.4（與 CI 同版；步驟見 `CLAUDE.md`）本機跑：`flutter test` **588 passed**（約 40 秒）、
 > `flutter analyze` 6 條既有 info。多出來的 9 條是側視閘門（7）與拒收訊息（2）。下表的分佈是初版量到的。
 
 其中 `test/blade_*_test.dart` 18 個檔約 **270 條**是葉片模組的
@@ -178,6 +179,10 @@ README「已知限制」寫的「偏軸會引入透視差，塔架轉正只能�
 
 葉尖方位角間距偏離 120° 本來想拿來當偏軸指標，結果**鑑別力不夠**：有標記者中位 6°、無標記者 2°，但 b78792bf 只偏 3° 也被標、
 309348db 偏 16° 只有兩個指標被標。這一項不能直接進閘門。決策項寫在 `BLADE_INSPECTION_SPEC.md` §13 第 11 項。
+
+**2026-09-16 補：合成夾具把這件事量出來了**（`OFFAXIS_SENSITIVITY.md`）。針孔投影 + 預彎 3 m 的葉片、地面 300 m、yaw 0–30°：
+互比標出 167–299 cm 的葉尖偏移（z 19–30），與上表 ed894e7a 的 226 cm 同一個量級，而場景裡沒有缺陷。平面葉片怎麼偏都量不到彎曲——
+假訊號的來源是**預彎被投影成 in-plane 彎曲**。間距偏離 120° 在那些情境是 3–9°，與真實照片一致地分不開。
 
 ### 3.4 兩張真實照片的完整報告（`case`）
 

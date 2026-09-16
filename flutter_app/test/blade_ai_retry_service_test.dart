@@ -83,6 +83,49 @@ void main() {
         return reply;
       };
 
+  test('★ 端側初判抬過的等級不是雲端覆核的下限：下限是演算法那一筆（A6）', () async {
+    final local = WtDetection(
+      detectionId: 'd-local',
+      sessionId: 's1',
+      layer: WtLayer.surface,
+      blade: 'A',
+      zone: 'mid_LE',
+      defectClass: 'leading_edge_erosion',
+      severity: 4, // 端側從演算法的 2 抬到 4
+      confidence: 0.55,
+      metricJson: const {
+        'le_over_te_rms_ratio': 2.4,
+        'ai_source': 'local_llm',
+        'algorithm_severity': 2,
+      },
+      mediaPath: '/tmp/seg.jpg',
+      source: WtDetectionSource.geminiOfflinePending,
+      aiDescription: '【離線初判】前緣可見剝落',
+    );
+    final store = _FakeStore(
+      pending: [local],
+      sessions: {'s1': sessionWith('/tmp/seg.jpg')},
+    );
+    final out = await BladeAiRetryService.retryOnce(
+      store: store,
+      loadBytes: (_) async => bytes,
+      analyzer: stub({
+        'defect_class': 'leading_edge_erosion',
+        'severity': 1,
+        'confidence': 0.9,
+        'description': '雲端：輕微，觀察即可',
+      }),
+    );
+    expect(out.completed, 1);
+    final saved = store.saved.single;
+    expect(saved.severity, 2, reason: '雲端說 1、演算法 2、端側曾抬到 4 → 取演算法與雲端的較高者 2');
+    expect(saved.source, WtDetectionSource.gemini);
+    expect(saved.metricJson['ai_source'], 'cloud');
+    expect(saved.metricJson.containsKey('algorithm_severity'), isFalse);
+    expect(saved.aiDescription, isNot(contains('離線初判')));
+    expect(saved.aiDescription, contains('雲端'));
+  });
+
   test('補跑成功後來源轉為 gemini，演算法的數值與等級都留著', () async {
     final store = _FakeStore(
       pending: [pendingDet('d1')],

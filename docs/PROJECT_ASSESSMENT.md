@@ -26,7 +26,7 @@
 | Flutter `test/` | 8,584 | 35 | 533 tests |
 | Backend `app/` | 8,357 | — | 24 個端點，App 端只呼叫 12 個 |
 | Backend `tests/` | 8,573 | 21 | 197 tests |
-| `blade_prototype/`（Python） | 13,261 | — | 228 tests |
+| `blade_prototype/`（Python） | 13,261 | — | 234 tests |
 | 葉片文件（`blade_prototype/*.md`） | 2,411 | 8 | |
 | 根目錄文件 | 2,698 | 8 | `ROADMAP.md` 有 80% 是沒有排程的功能願望 |
 | git | 204 commits | 45 個工作日 | 2025-10-08 → 2026-09-16 |

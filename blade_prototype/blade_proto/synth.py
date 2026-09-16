@@ -326,6 +326,169 @@ def render_side(spec: SceneSpec) -> tuple[np.ndarray, dict]:
     return _finish(img, spec, rng), truth
 
 
+# ---------------------------------------------------------------- 偏軸透視（A5）
+
+
+@dataclass
+class CameraSpec:
+    """相機相對輪轂的位置 + 轉子的三維姿態。`render_front` 假設相機在轉子軸線上、
+    葉片是平面剪影；這裡把那兩個假設拿掉，量「站偏了會多量到什麼」（SPEC §13-11）。
+
+    座標：輪轂中心為原點，x 向右、y 向上、z 朝上風側（相機在 +z 那一側）。
+    - distance_m：相機到輪轂中心的直線距離
+    - yaw_deg：相機水平偏離轉子軸線的角度（0 = 站在軸線上；正 = 站在 +x 側）
+    - elevation_deg：仰角（相機在輪轂下方為正；地面拍攝一定 > 0）
+    - rotor_tilt_deg：轉子軸上仰（現代機型 4–6°）
+    - cone_deg：葉片錐角（朝上風側前傾，沿 span **線性**——PCA 軸會吸收，不是彎曲）
+    - prebend_m：葉尖預彎（朝上風側，沿 span **t²**——這才是偏軸時被看成 in-plane 彎曲的東西）
+    - nacelle_overhang_m：輪轂中心在塔軸前方多遠（`render_side` 的塔架在機艙中點 → 預設一半機艙長）
+    """
+
+    distance_m: float = 300.0
+    yaw_deg: float = 0.0
+    elevation_deg: float = 0.0
+    rotor_tilt_deg: float = 0.0
+    cone_deg: float = 0.0
+    prebend_m: float = 0.0
+    nacelle_overhang_m: float = 6.0
+
+    @classmethod
+    def ground(cls, horizontal_m: float, hub_height_m: float, **kw) -> "CameraSpec":
+        """站在地面：直線距離與仰角由水平距離與輪轂高度決定。"""
+        d = float(np.hypot(horizontal_m, hub_height_m))
+        el = float(np.degrees(np.arctan2(hub_height_m, horizontal_m)))
+        return cls(distance_m=d, elevation_deg=el, **kw)
+
+    @property
+    def position(self) -> np.ndarray:
+        yaw, el = np.deg2rad(self.yaw_deg), np.deg2rad(self.elevation_deg)
+        return self.distance_m * np.array([np.sin(yaw) * np.cos(el), -np.sin(el), np.cos(yaw) * np.cos(el)])
+
+    def axes(self) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+        """(forward, right, up)：相機對準輪轂中心、roll 為零（世界的上就是畫面的上）。"""
+        c = self.position
+        f = -c / np.linalg.norm(c)
+        r = np.cross(f, np.array([0.0, 1.0, 0.0]))
+        r /= np.linalg.norm(r)
+        u = np.cross(r, f)
+        return f, r, u
+
+
+def perspective_project(points_xyz: np.ndarray, cam: CameraSpec, spec: SceneSpec) -> np.ndarray:
+    """針孔投影：世界座標（公尺，輪轂為原點）→ 影像座標（px）。
+
+    焦距取 `distance_m × px_per_m`，所以**輪轂那一平面上 1 m 就是 spec 的 px_per_m**——
+    yaw = elevation = 0 且葉片平面時與 `render_front` 逐像素一致，其他情況下多出來的
+    就是透視。"""
+    f, r, u = cam.axes()
+    q = np.asarray(points_xyz, dtype=np.float64) - cam.position[None, :]
+    depth = q @ f
+    f_px = cam.distance_m * spec.px_per_m
+    hx, hy = spec.hub_xy
+    x = hx + f_px * (q @ r) / depth
+    y = hy - f_px * (q @ u) / depth
+    return np.stack([x, y], 1)
+
+
+def _rotor_basis(cam: CameraSpec) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """(e1, e2, a)：轉子面內的兩個單位向量與轉子軸（朝上風側、上仰 rotor_tilt）。"""
+    t = np.deg2rad(cam.rotor_tilt_deg)
+    a = np.array([0.0, np.sin(t), np.cos(t)])
+    e1 = np.array([1.0, 0.0, 0.0])
+    e2 = np.array([0.0, np.cos(t), -np.sin(t)])
+    return e1, e2, a
+
+
+def blade_points_3d(spec: SceneSpec, cam: CameraSpec, azimuth_deg: float, pts_uv_px: np.ndarray) -> np.ndarray:
+    """葉片座標 (u 沿軸, v 垂直；px) → 三維（公尺）。預彎 t² 與錐角線性都朝 +a（上風側）。"""
+    e1, e2, a = _rotor_basis(cam)
+    az = np.deg2rad(azimuth_deg)
+    d = np.cos(az) * e1 + np.sin(az) * e2
+    n = -np.sin(az) * e1 + np.cos(az) * e2
+    u_m = pts_uv_px[:, 0] / spec.px_per_m
+    v_m = pts_uv_px[:, 1] / spec.px_per_m
+    t = np.clip(u_m / spec.rotor_radius_m, 0.0, 1.0)
+    w_m = cam.prebend_m * t**2 + u_m * np.tan(np.deg2rad(cam.cone_deg))
+    return u_m[:, None] * d[None, :] + v_m[:, None] * n[None, :] + w_m[:, None] * a[None, :]
+
+
+def render_perspective(spec: SceneSpec, cam: CameraSpec) -> tuple[np.ndarray, dict]:
+    """正視整機照的**透視版**：相機可以偏軸、可以在地面仰拍，葉片可以有預彎與錐角。
+
+    與 `render_front` 的差別只有投影：同一個 `blade_outline`、同一個天空、同一個收尾。
+    truth 多了每片的**投影半徑**（apparent_radii_px）與投影方位角——它們與 `rotor_radius_px`
+    的差就是純透視造成的「假半徑差」，`compare_blades` 在這種照片上標出來的東西沒有一項是缺陷。
+    """
+    rng = np.random.default_rng(spec.seed)
+    img = render_sky(spec, rng)
+    mask = np.zeros((spec.height, spec.width), np.uint8)
+    hx, hy = spec.hub_xy
+    R_m = spec.rotor_radius_m
+    o = cam.nacelle_overhang_m
+
+    def poly3d(pts3d, color):
+        xy = perspective_project(pts3d, cam, spec)
+        _poly(img, xy, color)
+        _poly(mask, xy, 255)
+
+    # 塔架：軸在輪轂正下方、往下風側退 overhang；上窄下寬，長度足夠伸出畫面底部。
+    hub_height = max(cam.distance_m * np.sin(np.deg2rad(cam.elevation_deg)), 2.5 * R_m)
+    tower_len = hub_height + 1.5 * R_m
+    ks = np.linspace(0.0, 1.0, 12)
+    left, right = [], []
+    for k in ks:
+        y = -tower_len * k
+        # 錐度只在「輪轂高度」那一段算，再往下維持底部直徑
+        frac = min(1.0, (tower_len * k) / hub_height)
+        dia = spec.tower_top_diameter_m + (spec.tower_base_diameter_m - spec.tower_top_diameter_m) * frac
+        left.append([-dia / 2, y, -o])
+        right.append([dia / 2, y, -o])
+    poly3d(np.array(left + right[::-1]), (spec.tower_gray,) * 3)
+
+    # 機艙：長方體，從輪轂往下風側延伸，投影後取凸包
+    L, Hn, Wn = spec.nacelle_length_m, spec.nacelle_height_m, spec.nacelle_height_m
+    corners = np.array([[sx * Wn / 2, sy * Hn / 2, z] for sx in (-1, 1) for sy in (-1, 1) for z in (-L, 0.0)])
+    xy = perspective_project(corners, cam, spec).astype(np.float32)
+    hull = cv2.convexHull(xy.reshape(-1, 1, 2)).reshape(-1, 2)
+    _poly(img, hull, (spec.tower_gray,) * 3)
+    _poly(mask, hull, 255)
+
+    azimuths, tips, apparent, defl_px, image_az = [], [], [], [], []
+    for i in range(3):
+        az = spec.azimuth_deg + 120.0 * i
+        dpx = spec.tip_deflection_cm[i] / spec.cm_per_px
+        pts = blade_outline(spec, dpx, spec.erosion.get(i), rng)
+        poly3d(blade_points_3d(spec, cam, az, pts), (spec.blade_gray,) * 3)
+        tip3d = blade_points_3d(spec, cam, az, np.array([[spec.rotor_radius_px, dpx]]))
+        tip = perspective_project(tip3d, cam, spec)[0]
+        tips.append((float(tip[0]), float(tip[1])))
+        apparent.append(float(np.hypot(tip[0] - hx, tip[1] - hy)))
+        image_az.append(float(np.degrees(np.arctan2(-(tip[1] - hy), tip[0] - hx)) % 360.0))
+        azimuths.append(az % 360.0)
+        defl_px.append(dpx)
+
+    hub_r = spec.hub_radius_m * spec.px_per_m  # 輪轂在原點，深度正好是 distance_m
+    _circle(img, (hx, hy), hub_r, (spec.blade_gray,) * 3)
+    _circle(mask, (hx, hy), hub_r, 255)
+
+    truth = {
+        "view": "front",
+        "camera": {"distance_m": cam.distance_m, "yaw_deg": cam.yaw_deg, "elevation_deg": cam.elevation_deg,
+                   "rotor_tilt_deg": cam.rotor_tilt_deg, "cone_deg": cam.cone_deg, "prebend_m": cam.prebend_m},
+        "hub": (hx, hy),
+        "hub_radius_px": hub_r,
+        "rotor_radius_px": spec.rotor_radius_px,
+        "cm_per_px": spec.cm_per_px,
+        "azimuths_deg": azimuths,
+        "image_azimuths_deg": image_az,
+        "tips": tips,
+        "apparent_radii_px": apparent,
+        "tip_deflection_px": defl_px,
+        "mask": mask,
+    }
+    return _finish(img, spec, rng), truth
+
+
 def render_blade_segment(
     width: int = 1600,
     height: int = 900,

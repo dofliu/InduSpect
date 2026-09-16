@@ -114,6 +114,11 @@ class MetricComparison {
   /// 除非看得到它是被方向性擋掉的。
   final MetricDirection direction;
 
+  /// [outlierDeviation] 換成公分（有尺度時才有；對照 Python 的 `outlier_deviation_cm`）。
+  /// **只是單位換算，不改判定**——標記與 z 一律在 px 上算，尺度不對只會讓 cm 值不對，
+  /// 不會多標或少標。
+  final double? outlierDeviationCm;
+
   const MetricComparison({
     required this.metric,
     required this.values,
@@ -124,7 +129,23 @@ class MetricComparison {
     required this.z,
     required this.flagged,
     this.direction = MetricDirection.both,
+    this.outlierDeviationCm,
   });
+
+  /// 套上尺度：回一份帶 [outlierDeviationCm] 的複本。NaN 的離群量不換算。
+  MetricComparison withScale(double cmPerPx) => MetricComparison(
+        metric: metric,
+        values: values,
+        deviations: deviations,
+        outlierIndex: outlierIndex,
+        outlierDeviation: outlierDeviation,
+        othersSpread: othersSpread,
+        z: z,
+        flagged: flagged,
+        direction: direction,
+        outlierDeviationCm:
+            outlierDeviation.isFinite ? outlierDeviation * cmPerPx : null,
+      );
 
   Map<String, dynamic> toJson() => {
         'metric': metric,
@@ -135,6 +156,7 @@ class MetricComparison {
         'z': z,
         'flagged': flagged,
         'direction': direction.wire,
+        if (outlierDeviationCm != null) 'outlier_deviation_cm': outlierDeviationCm,
       };
 }
 
@@ -147,8 +169,13 @@ class BladeComparison {
   final String? view;
 
   /// 側視時垂掛葉片的量測（index／radius_px／bend_coeff／tip_deflection_px／
-  /// residual_rms_px／n_contaminated_bins）；正視為 null。
+  /// residual_rms_px／n_contaminated_bins，有尺度時多 tip_deflection_cm）；正視為 null。
   final Map<String, dynamic>? hangingBlade;
+
+  /// 這張照片的尺度（cm/px）。呼叫端直接給，或由型錄轉子半徑與量到的葉長反推
+  /// （對照 `geometry.py::compare_blades` 的 `cm_per_px`）；兩者都沒有就是 null，
+  /// 此時所有 `*_cm` 欄位都不存在——**不猜尺度**。
+  final double? cmPerPx;
 
   const BladeComparison({
     required this.nBlades,
@@ -156,6 +183,7 @@ class BladeComparison {
     this.note,
     this.view,
     this.hangingBlade,
+    this.cmPerPx,
   });
 
   bool get anyFlagged => comparisons.any((c) => c.flagged);
@@ -167,6 +195,7 @@ class BladeComparison {
         if (note != null) 'note': note,
         if (view != null) 'view': view,
         if (hangingBlade != null) 'hanging_blade': hangingBlade,
+        if (cmPerPx != null) 'cm_per_px': cmPerPx,
       };
 }
 
@@ -177,6 +206,11 @@ class BladeComparison {
 /// **三片互比不需要絕對量測，也不需要歷史基線**：同一台風機三片同批同型，
 /// 在同一轉子位置的剪影應一致。這是幾何層能在手機尺度上成立的唯一理由——
 /// 絕對量測需要知道 cm/px，而那個數字在現場拿不到。
+///
+/// 有型錄轉子直徑時（`WtAsset.rotorDiameterM`）可以**反推**尺度：三片量到的葉長中位數
+/// 就是轉子半徑，cm/px = 半徑 ÷ 中位葉長。這只把 px 換成 cm 讓報告看得懂、跨次可比，
+/// **判定一律在 px 上做**（對照 `geometry.py::compare_blades`）。正視合成夾具上反推誤差
+/// 見 `blade_geometry_reference.json` 的 `comparison.cm_per_px` 對 `truth.cm_per_px`。
 class BladeGeometryCompare {
   BladeGeometryCompare._();
 
@@ -494,10 +528,15 @@ class BladeGeometryCompare {
   /// [noiseFloorPx]：單片量測雜訊底。**預設 1.5 px 來自合成影像的靈敏度分析，
   /// 還沒有真實手機語料背書**（規格 §10 外業待辦）——它決定 z 值，也就決定要不要
   /// 標記，所以外業回來第一件要校準的就是它。
+  ///
+  /// [cmPerPx] 直接給尺度；沒給而有 [rotorRadiusM]（型錄轉子半徑，公尺）時，
+  /// 以三片葉長中位數反推。兩者都沒有就不出任何 cm 值。
   static BladeComparison compareBlades(
     List<BladeProfile> profiles, {
     double noiseFloorPx = 1.5,
     double zThresh = 3.0,
+    double? cmPerPx,
+    double? rotorRadiusM,
   }) {
     if (profiles.length < 2) {
       return BladeComparison(
@@ -506,36 +545,58 @@ class BladeGeometryCompare {
         note: '少於兩片，無法互比',
       );
     }
+    final radii = profiles.map((p) => p.radiusPx).toList();
+    final scale = resolveScale(cmPerPx, rotorRadiusM, _median(radii));
+    final comps = [
+      compareMetric('tip_deflection_px',
+          profiles.map((p) => p.tipDeflectionPx).toList(), noiseFloorPx,
+          zThresh: zThresh),
+      compareMetric('radius_px', radii, noiseFloorPx * 2.0, zThresh: zThresh),
+      compareMetric('mean_width_px',
+          profiles.map((p) => p.meanWidthPx).toList(), noiseFloorPx,
+          zThresh: zThresh),
+      compareMetric('residual_rms_px',
+          profiles.map((p) => p.residualRmsPx).toList(), noiseFloorPx * 0.5,
+          zThresh: zThresh),
+    ];
     return BladeComparison(
       nBlades: profiles.length,
-      comparisons: [
-        compareMetric('tip_deflection_px',
-            profiles.map((p) => p.tipDeflectionPx).toList(), noiseFloorPx,
-            zThresh: zThresh),
-        compareMetric('radius_px', profiles.map((p) => p.radiusPx).toList(),
-            noiseFloorPx * 2.0,
-            zThresh: zThresh),
-        compareMetric('mean_width_px',
-            profiles.map((p) => p.meanWidthPx).toList(), noiseFloorPx,
-            zThresh: zThresh),
-        compareMetric('residual_rms_px',
-            profiles.map((p) => p.residualRmsPx).toList(), noiseFloorPx * 0.5,
-            zThresh: zThresh),
-      ],
+      comparisons:
+          scale == null ? comps : comps.map((c) => c.withScale(scale)).toList(),
+      cmPerPx: scale,
     );
+  }
+
+  /// 尺度的單一規則（對照 Python `if cm_per_px is None and rotor_radius_m:`）：
+  /// 直接給的優先；否則型錄半徑 ÷ 參考葉長（px）；半徑或葉長不是正數就沒有尺度。
+  static double? resolveScale(
+      double? cmPerPx, double? rotorRadiusM, double referenceRadiusPx) {
+    if (cmPerPx != null) return cmPerPx;
+    if (rotorRadiusM == null || !(rotorRadiusM > 0)) return null;
+    if (!(referenceRadiusPx > 0) || !referenceRadiusPx.isFinite) return null;
+    return rotorRadiusM * 100.0 / referenceRadiusPx;
   }
 
   /// 側視（閘門 `BladeStructureGate.detectSideView` 判定）：不做三片互比，只回報垂掛
   /// 葉片的彎曲。回傳與 [compareBlades] 同形（`comparisons` 為空），報告與分析編排
   /// 不必另開一條路徑。單幀的 tipDeflection **含預彎**，不是缺陷量——要與同一台的
   /// 基線或另一幀比才有意義，所以這裡不設門檻、不標記。對照 `geometry.py::side_view_summary`。
+  ///
+  /// 尺度只能由**垂掛那片**反推：六點鐘那片的投影長度 ≈ 轉子半徑（sin 90° = 1），
+  /// 上方那段是另兩片疊在一起、只有 R·sin 30°，不能拿來反推。
   static BladeComparison sideViewSummary(
-      List<BladeProfile> profiles, int hangingIndex) {
+    List<BladeProfile> profiles,
+    int hangingIndex, {
+    double? cmPerPx,
+    double? rotorRadiusM,
+  }) {
     final p = profiles[hangingIndex];
+    final scale = resolveScale(cmPerPx, rotorRadiusM, p.radiusPx);
     return BladeComparison(
       nBlades: profiles.length,
       comparisons: const [],
       view: 'side',
+      cmPerPx: scale,
       hangingBlade: {
         'index': hangingIndex,
         'label': hangingIndex < 3 ? 'ABC'[hangingIndex] : '$hangingIndex',
@@ -545,6 +606,7 @@ class BladeGeometryCompare {
         'tip_deflection_px': p.tipDeflectionPx,
         'residual_rms_px': p.residualRmsPx,
         'n_contaminated_bins': p.nContaminatedBins,
+        if (scale != null) 'tip_deflection_cm': p.tipDeflectionPx * scale,
       },
       note: '側視：三片投影共線，互比不適用；量測項目為垂掛葉片的 flapwise 彎曲'
           '（單幀值含預彎，需與同一台的基線比對）',
@@ -671,6 +733,10 @@ class BladeGeometryOutcome {
   /// 是這條路上最貴的一步。[ok] 為 false 時是空的。
   final List<BladeProfile> profiles;
 
+  /// 這張照片的尺度（cm/px）；沒有型錄轉子直徑、或閘門拒收時是 null。
+  /// 也複製在 `metrics['cm_per_px']`，讓它跟著其他數值一起進 `metricJson`。
+  final double? cmPerPx;
+
   const BladeGeometryOutcome({
     required this.ok,
     this.reasons = const [],
@@ -678,21 +744,29 @@ class BladeGeometryOutcome {
     this.metrics = const {},
     this.comparisons = const [],
     this.profiles = const [],
+    this.cmPerPx,
   });
 }
 
-/// 幾何層分析的注入點（測試不必進 isolate、也不必有真影像）
+/// 幾何層分析的注入點（測試不必進 isolate、也不必有真影像）。
+///
+/// [rotorRadiusM]：型錄轉子半徑（公尺），有的話結果會多一組 cm 值；影片抽幀那條路
+/// 不傳（多幀互比只看 px 的一致性）。
 typedef BladeGeometryAnalyzer = Future<BladeGeometryOutcome> Function(
-    Uint8List bytes);
+    Uint8List bytes, {double? rotorRadiusM});
 
 /// 一張整機照 → 分割 → 結構定位 → **拍攝閘門** → 三片互比。
 ///
 /// 閘門在互比之前，而且拒收時直接回傳、不算互比。這個順序是幾何層能不能用的關鍵：
 /// 真實影像驗證量到的問題不是演算法偶爾算錯，是它算錯的時候看起來和算對的時候一樣。
+///
+/// [rotorRadiusM]：型錄轉子半徑（公尺）。有的話由量到的葉長反推 cm/px，互比結果多一組
+/// cm 值（`outlierDeviationCm`／`tip_deflection_cm`）；**判定不變**，只是單位換算。
 BladeGeometryOutcome runGeometryPipeline(
   Uint8List bytes, {
   BladeGeometryParams params = const BladeGeometryParams(),
   double noiseFloorPx = 1.5,
+  double? rotorRadiusM,
 }) {
   final decoded = BladeImageOps.safeDecode(bytes);
   if (decoded == null) {
@@ -719,9 +793,10 @@ BladeGeometryOutcome runGeometryPipeline(
       hangingIndex >= 0 &&
       hangingIndex < profiles.length;
   final cmp = side
-      ? BladeGeometryCompare.sideViewSummary(profiles, hangingIndex)
+      ? BladeGeometryCompare.sideViewSummary(profiles, hangingIndex,
+          rotorRadiusM: rotorRadiusM)
       : BladeGeometryCompare.compareBlades(profiles,
-          noiseFloorPx: noiseFloorPx);
+          noiseFloorPx: noiseFloorPx, rotorRadiusM: rotorRadiusM);
   final hb = cmp.hangingBlade;
   return BladeGeometryOutcome(
     ok: true,
@@ -733,14 +808,18 @@ BladeGeometryOutcome runGeometryPipeline(
       'n_profiles': profiles.length,
       'contaminated_bins':
           profiles.fold<int>(0, (a, pr) => a + pr.nContaminatedBins),
+      if (cmp.cmPerPx != null) 'cm_per_px': cmp.cmPerPx,
       if (hb != null) ...{
         'hanging_radius_px': hb['radius_px'],
         'hanging_bend_coeff': hb['bend_coeff'],
         'hanging_tip_deflection_px': hb['tip_deflection_px'],
         'hanging_residual_rms_px': hb['residual_rms_px'],
+        if (hb.containsKey('tip_deflection_cm'))
+          'hanging_tip_deflection_cm': hb['tip_deflection_cm'],
       },
     },
     comparisons: cmp.comparisons,
     profiles: profiles,
+    cmPerPx: cmp.cmPerPx,
   );
 }

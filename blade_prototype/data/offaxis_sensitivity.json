@@ -1,0 +1,973 @@
+{
+ "rotor_radius_m": 60.0,
+ "hub_height_m": 100.0,
+ "sensor": [
+  4000,
+  3000
+ ],
+ "cm_per_px": 6.0,
+ "real_blade": {
+  "prebend_m": 3.0,
+  "rotor_tilt_deg": 5.0,
+  "cone_deg": 2.5
+ },
+ "rows": [
+  {
+   "group": "A",
+   "label": "仰角 0°",
+   "camera": {
+    "distance_m": 300.0,
+    "yaw_deg": 0.0,
+    "elevation_deg": 0.0,
+    "rotor_tilt_deg": 0.0,
+    "cone_deg": 0.0,
+    "prebend_m": 0.0
+   },
+   "rotor_azimuth_deg": 90.0,
+   "truth_apparent_spread": 0.0,
+   "truth_spacing_dev_deg": 0.0,
+   "gate_ok": true,
+   "gate_view": "front",
+   "n_blades": 3,
+   "tip_radius_spread": 0.001,
+   "spacing_dev_deg": 0.7192928552975104,
+   "seconds": 2.48,
+   "cm_per_px": 6.021261743787341,
+   "any_flagged": false,
+   "tip_deflection": {
+    "flagged": false,
+    "z": 1.0,
+    "deviation_px": -1.5,
+    "deviation_cm": -9.0,
+    "outlier_axis_deg": 330.0,
+    "values_px": [
+     -0.14,
+     0.79,
+     -1.17
+    ]
+   },
+   "radius": {
+    "flagged": false,
+    "z": 0.15,
+    "deviation_px": 0.45,
+    "deviation_cm": 2.7,
+    "outlier_axis_deg": 90.0,
+    "values_px": [
+     996.91,
+     996.47,
+     996.45
+    ]
+   },
+   "shortest_is_topmost": false
+  },
+  {
+   "group": "A",
+   "label": "仰角 10°",
+   "camera": {
+    "distance_m": 304.6279835657235,
+    "yaw_deg": 0.0,
+    "elevation_deg": 10.0,
+    "rotor_tilt_deg": 0.0,
+    "cone_deg": 0.0,
+    "prebend_m": 0.0
+   },
+   "rotor_azimuth_deg": 90.0,
+   "truth_apparent_spread": 0.06049711401669134,
+   "truth_spacing_dev_deg": 0.7566962496089502,
+   "gate_ok": true,
+   "gate_view": "front",
+   "n_blades": 3,
+   "tip_radius_spread": 0.06,
+   "spacing_dev_deg": 0.5105614335857638,
+   "seconds": 2.32,
+   "cm_per_px": 5.9417461694122915,
+   "any_flagged": true,
+   "tip_deflection": {
+    "flagged": false,
+    "z": 1.58,
+    "deviation_px": -2.37,
+    "deviation_cm": -14.1,
+    "outlier_axis_deg": 330.4,
+    "values_px": [
+     0.67,
+     0.42,
+     -1.83
+    ]
+   },
+   "radius": {
+    "flagged": true,
+    "z": 20.26,
+    "deviation_px": -60.77,
+    "deviation_cm": -361.1,
+    "outlier_axis_deg": 90.0,
+    "values_px": [
+     949.07,
+     1009.8,
+     1009.88
+    ]
+   },
+   "shortest_is_topmost": true
+  },
+  {
+   "group": "A",
+   "label": "仰角 18°",
+   "camera": {
+    "distance_m": 315.4386672714802,
+    "yaw_deg": 0.0,
+    "elevation_deg": 18.0,
+    "rotor_tilt_deg": 0.0,
+    "cone_deg": 0.0,
+    "prebend_m": 0.0
+   },
+   "rotor_azimuth_deg": 90.0,
+   "truth_apparent_spread": 0.11754391458333535,
+   "truth_spacing_dev_deg": 2.458262540028386,
+   "gate_ok": true,
+   "gate_view": "front",
+   "n_blades": 3,
+   "tip_radius_spread": 0.117,
+   "spacing_dev_deg": 2.641698583156341,
+   "seconds": 2.48,
+   "cm_per_px": 5.916182601455551,
+   "any_flagged": true,
+   "tip_deflection": {
+    "flagged": false,
+    "z": 1.16,
+    "deviation_px": -1.75,
+    "deviation_cm": -10.3,
+    "outlier_axis_deg": 331.2,
+    "values_px": [
+     0.28,
+     0.04,
+     -1.59
+    ]
+   },
+   "radius": {
+    "flagged": true,
+    "z": 39.76,
+    "deviation_px": -119.28,
+    "deviation_cm": -705.7,
+    "outlier_axis_deg": 90.0,
+    "values_px": [
+     894.97,
+     1014.17,
+     1014.34
+    ]
+   },
+   "shortest_is_topmost": true
+  },
+  {
+   "group": "A",
+   "label": "仰角 25°",
+   "camera": {
+    "distance_m": 331.01337568874754,
+    "yaw_deg": 0.0,
+    "elevation_deg": 25.0,
+    "rotor_tilt_deg": 0.0,
+    "cone_deg": 0.0,
+    "prebend_m": 0.0
+   },
+   "rotor_azimuth_deg": 90.0,
+   "truth_apparent_spread": 0.17171984937696108,
+   "truth_spacing_dev_deg": 4.757739304884268,
+   "gate_ok": false,
+   "gate_view": "front",
+   "n_blades": 3,
+   "tip_radius_spread": 0.172,
+   "spacing_dev_deg": 4.0039608189451315,
+   "seconds": 2.34
+  },
+  {
+   "group": "A",
+   "label": "仰角 30°",
+   "camera": {
+    "distance_m": 346.41016151377545,
+    "yaw_deg": 0.0,
+    "elevation_deg": 30.0,
+    "rotor_tilt_deg": 0.0,
+    "cone_deg": 0.0,
+    "prebend_m": 0.0
+   },
+   "rotor_azimuth_deg": 90.0,
+   "truth_apparent_spread": 0.21250197221164452,
+   "truth_spacing_dev_deg": 6.869897645843963,
+   "gate_ok": false,
+   "gate_view": "front",
+   "n_blades": 3,
+   "tip_radius_spread": 0.213,
+   "spacing_dev_deg": 7.497129978144727,
+   "seconds": 2.35
+  },
+  {
+   "group": "B",
+   "label": "yaw 0°",
+   "camera": {
+    "distance_m": 300.0,
+    "yaw_deg": 0.0,
+    "elevation_deg": 0.0,
+    "rotor_tilt_deg": 0.0,
+    "cone_deg": 0.0,
+    "prebend_m": 0.0
+   },
+   "rotor_azimuth_deg": 90.0,
+   "truth_apparent_spread": 0.0,
+   "truth_spacing_dev_deg": 0.0,
+   "gate_ok": true,
+   "gate_view": "front",
+   "n_blades": 3,
+   "tip_radius_spread": 0.001,
+   "spacing_dev_deg": 0.7192928552975104,
+   "seconds": 2.46,
+   "cm_per_px": 6.021261743787341,
+   "any_flagged": false,
+   "tip_deflection": {
+    "flagged": false,
+    "z": 1.0,
+    "deviation_px": -1.5,
+    "deviation_cm": -9.0,
+    "outlier_axis_deg": 330.0,
+    "values_px": [
+     -0.14,
+     0.79,
+     -1.17
+    ]
+   },
+   "radius": {
+    "flagged": false,
+    "z": 0.15,
+    "deviation_px": 0.45,
+    "deviation_cm": 2.7,
+    "outlier_axis_deg": 90.0,
+    "values_px": [
+     996.91,
+     996.47,
+     996.45
+    ]
+   },
+   "shortest_is_topmost": false
+  },
+  {
+   "group": "B",
+   "label": "yaw 10°",
+   "camera": {
+    "distance_m": 300.0,
+    "yaw_deg": 10.0,
+    "elevation_deg": 0.0,
+    "rotor_tilt_deg": 0.0,
+    "cone_deg": 0.0,
+    "prebend_m": 0.0
+   },
+   "rotor_azimuth_deg": 90.0,
+   "truth_apparent_spread": 0.05952325518260999,
+   "truth_spacing_dev_deg": 0.7625102849410439,
+   "gate_ok": true,
+   "gate_view": "front",
+   "n_blades": 3,
+   "tip_radius_spread": 0.059,
+   "spacing_dev_deg": 0.8997958680556053,
+   "seconds": 2.31,
+   "cm_per_px": 6.018844796323108,
+   "any_flagged": true,
+   "tip_deflection": {
+    "flagged": false,
+    "z": 0.94,
+    "deviation_px": 1.41,
+    "deviation_cm": 8.5,
+    "outlier_axis_deg": 329.6,
+    "values_px": [
+     0.13,
+     -0.33,
+     1.31
+    ]
+   },
+   "radius": {
+    "flagged": true,
+    "z": 16.63,
+    "deviation_px": -49.88,
+    "deviation_cm": -300.2,
+    "outlier_axis_deg": 210.4,
+    "values_px": [
+     996.87,
+     956.59,
+     1016.07
+    ]
+   },
+   "shortest_is_topmost": false
+  },
+  {
+   "group": "B",
+   "label": "yaw 20°",
+   "camera": {
+    "distance_m": 300.0,
+    "yaw_deg": 20.0,
+    "elevation_deg": 0.0,
+    "rotor_tilt_deg": 0.0,
+    "cone_deg": 0.0,
+    "prebend_m": 0.0
+   },
+   "rotor_azimuth_deg": 90.0,
+   "truth_apparent_spread": 0.11356120061699275,
+   "truth_spacing_dev_deg": 3.1334079322820116,
+   "gate_ok": true,
+   "gate_view": "front",
+   "n_blades": 3,
+   "tip_radius_spread": 0.113,
+   "spacing_dev_deg": 3.768484446052298,
+   "seconds": 2.31,
+   "cm_per_px": 6.019392839753048,
+   "any_flagged": true,
+   "tip_deflection": {
+    "flagged": false,
+    "z": 2.0,
+    "deviation_px": -3.0,
+    "deviation_cm": -18.0,
+    "outlier_axis_deg": 211.5,
+    "values_px": [
+     0.44,
+     -2.14,
+     1.27
+    ]
+   },
+   "radius": {
+    "flagged": true,
+    "z": 35.1,
+    "deviation_px": -105.31,
+    "deviation_cm": -633.9,
+    "outlier_axis_deg": 211.5,
+    "values_px": [
+     996.78,
+     898.94,
+     1011.72
+    ]
+   },
+   "shortest_is_topmost": false
+  },
+  {
+   "group": "B",
+   "label": "yaw 30°",
+   "camera": {
+    "distance_m": 300.0,
+    "yaw_deg": 30.0,
+    "elevation_deg": 0.0,
+    "rotor_tilt_deg": 0.0,
+    "cone_deg": 0.0,
+    "prebend_m": 0.0
+   },
+   "rotor_azimuth_deg": 90.0,
+   "truth_apparent_spread": 0.1727240853128846,
+   "truth_spacing_dev_deg": 7.3801350519595985,
+   "gate_ok": false,
+   "gate_view": "front",
+   "n_blades": 3,
+   "tip_radius_spread": 0.172,
+   "spacing_dev_deg": 8.26999131864821,
+   "seconds": 2.31
+  },
+  {
+   "group": "C",
+   "label": "水平 180 m（仰角 29°）、yaw 0°",
+   "camera": {
+    "distance_m": 205.91260281974002,
+    "yaw_deg": 0.0,
+    "elevation_deg": 29.054604099077146,
+    "rotor_tilt_deg": 5.0,
+    "cone_deg": 2.5,
+    "prebend_m": 3.0
+   },
+   "rotor_azimuth_deg": 90.0,
+   "truth_apparent_spread": 0.26280313495332014,
+   "truth_spacing_dev_deg": 14.65211039868808,
+   "gate_ok": false,
+   "gate_view": "front",
+   "n_blades": 3,
+   "tip_radius_spread": 0.26,
+   "spacing_dev_deg": 15.544542437893597,
+   "seconds": 2.47
+  },
+  {
+   "group": "C",
+   "label": "水平 180 m（仰角 29°）、yaw 10°",
+   "camera": {
+    "distance_m": 205.91260281974002,
+    "yaw_deg": 10.0,
+    "elevation_deg": 29.054604099077146,
+    "rotor_tilt_deg": 5.0,
+    "cone_deg": 2.5,
+    "prebend_m": 3.0
+   },
+   "rotor_azimuth_deg": 90.0,
+   "truth_apparent_spread": 0.2687963249775635,
+   "truth_spacing_dev_deg": 14.299206659502971,
+   "gate_ok": false,
+   "gate_view": "front",
+   "n_blades": 3,
+   "tip_radius_spread": 0.265,
+   "spacing_dev_deg": 15.167721060133147,
+   "seconds": 2.33
+  },
+  {
+   "group": "C",
+   "label": "水平 180 m（仰角 29°）、yaw 20°",
+   "camera": {
+    "distance_m": 205.91260281974002,
+    "yaw_deg": 20.0,
+    "elevation_deg": 29.054604099077146,
+    "rotor_tilt_deg": 5.0,
+    "cone_deg": 2.5,
+    "prebend_m": 3.0
+   },
+   "rotor_azimuth_deg": 90.0,
+   "truth_apparent_spread": 0.2630994562062619,
+   "truth_spacing_dev_deg": 13.722632166287212,
+   "gate_ok": false,
+   "gate_view": "front",
+   "n_blades": 3,
+   "tip_radius_spread": 0.259,
+   "spacing_dev_deg": 14.6337230291345,
+   "seconds": 2.3
+  },
+  {
+   "group": "C",
+   "label": "水平 180 m（仰角 29°）、yaw 30°",
+   "camera": {
+    "distance_m": 205.91260281974002,
+    "yaw_deg": 30.0,
+    "elevation_deg": 29.054604099077146,
+    "rotor_tilt_deg": 5.0,
+    "cone_deg": 2.5,
+    "prebend_m": 3.0
+   },
+   "rotor_azimuth_deg": 90.0,
+   "truth_apparent_spread": 0.2495217761539151,
+   "truth_spacing_dev_deg": 16.555183966620064,
+   "gate_ok": false,
+   "gate_view": "front",
+   "n_blades": 3,
+   "tip_radius_spread": 0.229,
+   "spacing_dev_deg": 18.25780334885917,
+   "seconds": 2.7
+  },
+  {
+   "group": "C",
+   "label": "水平 300 m（仰角 18°）、yaw 0°",
+   "camera": {
+    "distance_m": 316.22776601683796,
+    "yaw_deg": 0.0,
+    "elevation_deg": 18.43494882292201,
+    "rotor_tilt_deg": 5.0,
+    "cone_deg": 2.5,
+    "prebend_m": 3.0
+   },
+   "rotor_azimuth_deg": 90.0,
+   "truth_apparent_spread": 0.11465082687014577,
+   "truth_spacing_dev_deg": 8.094356588426109,
+   "gate_ok": true,
+   "gate_view": "front",
+   "n_blades": 3,
+   "tip_radius_spread": 0.112,
+   "spacing_dev_deg": 9.187343311923115,
+   "seconds": 2.4,
+   "cm_per_px": 5.918263368345321,
+   "any_flagged": true,
+   "tip_deflection": {
+    "flagged": false,
+    "z": 18.84,
+    "deviation_px": -28.27,
+    "deviation_cm": -167.3,
+    "outlier_axis_deg": 205.8,
+    "values_px": [
+     -0.2,
+     -19.36,
+     18.02
+    ]
+   },
+   "radius": {
+    "flagged": true,
+    "z": 37.95,
+    "deviation_px": -113.85,
+    "deviation_cm": -673.8,
+    "outlier_axis_deg": 90.0,
+    "values_px": [
+     900.03,
+     1013.81,
+     1013.95
+    ]
+   },
+   "shortest_is_topmost": true
+  },
+  {
+   "group": "C",
+   "label": "水平 300 m（仰角 18°）、yaw 10°",
+   "camera": {
+    "distance_m": 316.22776601683796,
+    "yaw_deg": 10.0,
+    "elevation_deg": 18.43494882292201,
+    "rotor_tilt_deg": 5.0,
+    "cone_deg": 2.5,
+    "prebend_m": 3.0
+   },
+   "rotor_azimuth_deg": 90.0,
+   "truth_apparent_spread": 0.12157587710092321,
+   "truth_spacing_dev_deg": 7.502044295997308,
+   "gate_ok": true,
+   "gate_view": "front",
+   "n_blades": 3,
+   "tip_radius_spread": 0.119,
+   "spacing_dev_deg": 7.773286292208098,
+   "seconds": 2.35,
+   "cm_per_px": 6.091295354372415,
+   "any_flagged": true,
+   "tip_deflection": {
+    "flagged": true,
+    "z": 23.45,
+    "deviation_px": -35.18,
+    "deviation_cm": -214.3,
+    "outlier_axis_deg": 208.0,
+    "values_px": [
+     8.47,
+     -23.24,
+     15.42
+    ]
+   },
+   "radius": {
+    "flagged": true,
+    "z": 33.55,
+    "deviation_px": -100.64,
+    "deviation_cm": -613.0,
+    "outlier_axis_deg": 90.2,
+    "values_px": [
+     900.87,
+     1018.01,
+     985.01
+    ]
+   },
+   "shortest_is_topmost": true
+  },
+  {
+   "group": "C",
+   "label": "水平 300 m（仰角 18°）、yaw 20°",
+   "camera": {
+    "distance_m": 316.22776601683796,
+    "yaw_deg": 20.0,
+    "elevation_deg": 18.43494882292201,
+    "rotor_tilt_deg": 5.0,
+    "cone_deg": 2.5,
+    "prebend_m": 3.0
+   },
+   "rotor_azimuth_deg": 90.0,
+   "truth_apparent_spread": 0.10955531814011064,
+   "truth_spacing_dev_deg": 6.565177077455019,
+   "gate_ok": true,
+   "gate_view": "front",
+   "n_blades": 3,
+   "tip_radius_spread": 0.107,
+   "spacing_dev_deg": 7.232701283720758,
+   "seconds": 2.42,
+   "cm_per_px": 6.45953140182858,
+   "any_flagged": true,
+   "tip_deflection": {
+    "flagged": true,
+    "z": 26.24,
+    "deviation_px": -39.36,
+    "deviation_cm": -254.2,
+    "outlier_axis_deg": 210.8,
+    "values_px": [
+     15.95,
+     -25.82,
+     11.13
+    ]
+   },
+   "radius": {
+    "flagged": true,
+    "z": 28.69,
+    "deviation_px": 86.06,
+    "deviation_cm": 555.9,
+    "outlier_axis_deg": 210.8,
+    "values_px": [
+     900.72,
+     1000.85,
+     928.86
+    ]
+   },
+   "shortest_is_topmost": true
+  },
+  {
+   "group": "C",
+   "label": "水平 300 m（仰角 18°）、yaw 30°",
+   "camera": {
+    "distance_m": 316.22776601683796,
+    "yaw_deg": 30.0,
+    "elevation_deg": 18.43494882292201,
+    "rotor_tilt_deg": 5.0,
+    "cone_deg": 2.5,
+    "prebend_m": 3.0
+   },
+   "rotor_azimuth_deg": 90.0,
+   "truth_apparent_spread": 0.13041410476958348,
+   "truth_spacing_dev_deg": 6.739245817817277,
+   "gate_ok": true,
+   "gate_view": "front",
+   "n_blades": 3,
+   "tip_radius_spread": 0.135,
+   "spacing_dev_deg": 7.353303182286652,
+   "seconds": 2.4,
+   "cm_per_px": 6.662967132590632,
+   "any_flagged": true,
+   "tip_deflection": {
+    "flagged": true,
+    "z": 29.93,
+    "deviation_px": -44.89,
+    "deviation_cm": -299.1,
+    "outlier_axis_deg": 214.4,
+    "values_px": [
+     23.67,
+     -29.57,
+     6.98
+    ]
+   },
+   "radius": {
+    "flagged": false,
+    "z": 30.94,
+    "deviation_px": 92.83,
+    "deviation_cm": 618.5,
+    "outlier_axis_deg": 214.4,
+    "values_px": [
+     900.5,
+     965.71,
+     845.26
+    ]
+   },
+   "shortest_is_topmost": false
+  },
+  {
+   "group": "C",
+   "label": "水平 480 m（仰角 12°）、yaw 0°",
+   "camera": {
+    "distance_m": 490.3060268852505,
+    "yaw_deg": 0.0,
+    "elevation_deg": 11.768288932020644,
+    "rotor_tilt_deg": 5.0,
+    "cone_deg": 2.5,
+    "prebend_m": 3.0
+   },
+   "rotor_azimuth_deg": 90.0,
+   "truth_apparent_spread": 0.04417871024712947,
+   "truth_spacing_dev_deg": 4.906966851734296,
+   "gate_ok": true,
+   "gate_view": "front",
+   "n_blades": 3,
+   "tip_radius_spread": 0.043,
+   "spacing_dev_deg": 5.535364339769103,
+   "seconds": 2.44,
+   "cm_per_px": 5.992302505234514,
+   "any_flagged": true,
+   "tip_deflection": {
+    "flagged": false,
+    "z": 13.87,
+    "deviation_px": -20.81,
+    "deviation_cm": -124.7,
+    "outlier_axis_deg": 207.4,
+    "values_px": [
+     -0.12,
+     -14.7,
+     12.33
+    ]
+   },
+   "radius": {
+    "flagged": true,
+    "z": 14.06,
+    "deviation_px": -42.19,
+    "deviation_cm": -252.8,
+    "outlier_axis_deg": 90.0,
+    "values_px": [
+     959.39,
+     1001.28,
+     1001.89
+    ]
+   },
+   "shortest_is_topmost": true
+  },
+  {
+   "group": "C",
+   "label": "水平 480 m（仰角 12°）、yaw 10°",
+   "camera": {
+    "distance_m": 490.3060268852505,
+    "yaw_deg": 10.0,
+    "elevation_deg": 11.768288932020644,
+    "rotor_tilt_deg": 5.0,
+    "cone_deg": 2.5,
+    "prebend_m": 3.0
+   },
+   "rotor_azimuth_deg": 90.0,
+   "truth_apparent_spread": 0.0514616559880602,
+   "truth_spacing_dev_deg": 4.209525323904813,
+   "gate_ok": true,
+   "gate_view": "front",
+   "n_blades": 3,
+   "tip_radius_spread": 0.05,
+   "spacing_dev_deg": 4.828738983926883,
+   "seconds": 2.56,
+   "cm_per_px": 6.179876744270567,
+   "any_flagged": true,
+   "tip_deflection": {
+    "flagged": true,
+    "z": 17.56,
+    "deviation_px": -26.34,
+    "deviation_cm": -162.8,
+    "outlier_axis_deg": 208.6,
+    "values_px": [
+     8.95,
+     -17.86,
+     8.01
+    ]
+   },
+   "radius": {
+    "flagged": true,
+    "z": 14.19,
+    "deviation_px": 42.58,
+    "deviation_cm": 263.1,
+    "outlier_axis_deg": 208.6,
+    "values_px": [
+     960.26,
+     1008.16,
+     970.89
+    ]
+   },
+   "shortest_is_topmost": true
+  },
+  {
+   "group": "C",
+   "label": "水平 480 m（仰角 12°）、yaw 20°",
+   "camera": {
+    "distance_m": 490.3060268852505,
+    "yaw_deg": 20.0,
+    "elevation_deg": 11.768288932020644,
+    "rotor_tilt_deg": 5.0,
+    "cone_deg": 2.5,
+    "prebend_m": 3.0
+   },
+   "rotor_azimuth_deg": 90.0,
+   "truth_apparent_spread": 0.07768743273878817,
+   "truth_spacing_dev_deg": 2.7475937619178126,
+   "gate_ok": true,
+   "gate_view": "front",
+   "n_blades": 3,
+   "tip_radius_spread": 0.081,
+   "spacing_dev_deg": 3.4256563008963212,
+   "seconds": 2.38,
+   "cm_per_px": 6.255160998586214,
+   "any_flagged": true,
+   "tip_deflection": {
+    "flagged": true,
+    "z": 21.9,
+    "deviation_px": -32.85,
+    "deviation_cm": -205.5,
+    "outlier_axis_deg": 210.6,
+    "values_px": [
+     17.35,
+     -21.86,
+     4.62
+    ]
+   },
+   "radius": {
+    "flagged": false,
+    "z": 20.28,
+    "deviation_px": -60.85,
+    "deviation_cm": -380.6,
+    "outlier_axis_deg": 332.9,
+    "values_px": [
+     959.21,
+     992.14,
+     914.82
+    ]
+   },
+   "shortest_is_topmost": false
+  },
+  {
+   "group": "C",
+   "label": "水平 480 m（仰角 12°）、yaw 30°",
+   "camera": {
+    "distance_m": 490.3060268852505,
+    "yaw_deg": 30.0,
+    "elevation_deg": 11.768288932020644,
+    "rotor_tilt_deg": 5.0,
+    "cone_deg": 2.5,
+    "prebend_m": 3.0
+   },
+   "rotor_azimuth_deg": 90.0,
+   "truth_apparent_spread": 0.12620990053232145,
+   "truth_spacing_dev_deg": 3.4211593741284076,
+   "gate_ok": true,
+   "gate_view": "front",
+   "n_blades": 3,
+   "tip_radius_spread": 0.131,
+   "spacing_dev_deg": 3.510144008923376,
+   "seconds": 2.74,
+   "cm_per_px": 6.2709643528808074,
+   "any_flagged": true,
+   "tip_deflection": {
+    "flagged": false,
+    "z": 24.21,
+    "deviation_px": -36.32,
+    "deviation_cm": -227.7,
+    "outlier_axis_deg": 213.3,
+    "values_px": [
+     23.59,
+     -23.81,
+     1.43
+    ]
+   },
+   "radius": {
+    "flagged": true,
+    "z": 41.15,
+    "deviation_px": -123.45,
+    "deviation_cm": -774.2,
+    "outlier_axis_deg": 331.7,
+    "values_px": [
+     958.89,
+     956.79,
+     834.38
+    ]
+   },
+   "shortest_is_topmost": false
+  },
+  {
+   "group": "D",
+   "label": "葉片 A 方位角 90°",
+   "camera": {
+    "distance_m": 316.22776601683796,
+    "yaw_deg": 20.0,
+    "elevation_deg": 18.43494882292201,
+    "rotor_tilt_deg": 5.0,
+    "cone_deg": 2.5,
+    "prebend_m": 3.0
+   },
+   "rotor_azimuth_deg": 90.0,
+   "truth_apparent_spread": 0.10955531814011064,
+   "truth_spacing_dev_deg": 6.565177077455019,
+   "gate_ok": true,
+   "gate_view": "front",
+   "n_blades": 3,
+   "tip_radius_spread": 0.107,
+   "spacing_dev_deg": 7.232701283720758,
+   "seconds": 2.37,
+   "cm_per_px": 6.45953140182858,
+   "any_flagged": true,
+   "tip_deflection": {
+    "flagged": true,
+    "z": 26.24,
+    "deviation_px": -39.36,
+    "deviation_cm": -254.2,
+    "outlier_axis_deg": 210.8,
+    "values_px": [
+     15.95,
+     -25.82,
+     11.13
+    ]
+   },
+   "radius": {
+    "flagged": true,
+    "z": 28.69,
+    "deviation_px": 86.06,
+    "deviation_cm": 555.9,
+    "outlier_axis_deg": 210.8,
+    "values_px": [
+     900.72,
+     1000.85,
+     928.86
+    ]
+   },
+   "shortest_is_topmost": true
+  },
+  {
+   "group": "D",
+   "label": "葉片 A 方位角 60°",
+   "camera": {
+    "distance_m": 316.22776601683796,
+    "yaw_deg": 20.0,
+    "elevation_deg": 18.43494882292201,
+    "rotor_tilt_deg": 5.0,
+    "cone_deg": 2.5,
+    "prebend_m": 3.0
+   },
+   "rotor_azimuth_deg": 60.0,
+   "truth_apparent_spread": 0.06650179141934483,
+   "truth_spacing_dev_deg": 4.021565138677801,
+   "gate_ok": true,
+   "gate_view": "front",
+   "n_blades": 3,
+   "tip_radius_spread": 0.066,
+   "spacing_dev_deg": 5.747706616958141,
+   "seconds": 2.37,
+   "cm_per_px": 6.346507271958572,
+   "any_flagged": true,
+   "tip_deflection": {
+    "flagged": true,
+    "z": 26.13,
+    "deviation_px": -39.19,
+    "deviation_cm": -248.7,
+    "outlier_axis_deg": 184.0,
+    "values_px": [
+     22.23,
+     -21.81,
+     12.52
+    ]
+   },
+   "radius": {
+    "flagged": false,
+    "z": 16.4,
+    "deviation_px": -49.19,
+    "deviation_cm": -312.2,
+    "outlier_axis_deg": 300.2,
+    "values_px": [
+     970.11,
+     945.4,
+     908.57
+    ]
+   },
+   "shortest_is_topmost": false
+  },
+  {
+   "group": "D",
+   "label": "葉片 A 方位角 30°",
+   "camera": {
+    "distance_m": 316.22776601683796,
+    "yaw_deg": 20.0,
+    "elevation_deg": 18.43494882292201,
+    "rotor_tilt_deg": 5.0,
+    "cone_deg": 2.5,
+    "prebend_m": 3.0
+   },
+   "rotor_azimuth_deg": 30.0,
+   "truth_apparent_spread": 0.16918975015754675,
+   "truth_spacing_dev_deg": 10.454798652634963,
+   "gate_ok": false,
+   "gate_view": "front",
+   "n_blades": 3,
+   "tip_radius_spread": 0.187,
+   "spacing_dev_deg": 9.611189177620815,
+   "seconds": 2.37
+  },
+  {
+   "group": "D",
+   "label": "葉片 A 方位角 0°",
+   "camera": {
+    "distance_m": 316.22776601683796,
+    "yaw_deg": 20.0,
+    "elevation_deg": 18.43494882292201,
+    "rotor_tilt_deg": 5.0,
+    "cone_deg": 2.5,
+    "prebend_m": 3.0
+   },
+   "rotor_azimuth_deg": 0.0,
+   "truth_apparent_spread": 0.17738090831125736,
+   "truth_spacing_dev_deg": 11.918506733510554,
+   "gate_ok": false,
+   "gate_view": "front",
+   "n_blades": 3,
+   "tip_radius_spread": 0.178,
+   "spacing_dev_deg": 13.699779791038907,
+   "seconds": 2.38
+  }
+ ]
+}

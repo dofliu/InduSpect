@@ -107,6 +107,38 @@ void main() {
     expect(item.anomalyDescription, '前緣塗層剝落，露出底層複材');
   });
 
+  test('幾何層的 cm 值有產生端也有顯示端：葉尖偏移／葉片長度差／尺度（A4）', () {
+    final d = WtDetection(
+      detectionId: 'geo-1',
+      sessionId: 'S1',
+      layer: WtLayer.geometry,
+      blade: 'C',
+      defectClass: 'tip_deflection',
+      severity: 2,
+      metricJson: const {
+        'tip_deflection_px': 20.0,
+        'tip_deflection_cm': 226.4,
+        'radius_px_deviation_cm': -275.2,
+        'cm_per_px': 11.32,
+      },
+    );
+    final v = BladeReportBuilder.valueOf(d)!;
+    expect(v, contains('葉尖偏移 20.0 px'));
+    expect(v, contains('葉尖偏移 226 cm'));
+    expect(v, contains('葉片長度差 -275 cm'));
+    expect(v, contains('尺度 11.32 cm/px'), reason: 'cm 是怎麼換的要印出來');
+    // 沒尺度時一個 cm 都不出現
+    final noScale = WtDetection(
+      detectionId: 'geo-2',
+      sessionId: 'S1',
+      layer: WtLayer.geometry,
+      defectClass: 'tip_deflection',
+      severity: 2,
+      metricJson: const {'tip_deflection_px': 20.0},
+    );
+    expect(BladeReportBuilder.valueOf(noScale), isNot(contains('cm')));
+  });
+
   test('標題與圖層標示：一眼看出哪一片、哪一段、哪一層', () {
     final data = BladeReportBuilder.buildData(
       asset: asset,

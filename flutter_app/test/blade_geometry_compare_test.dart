@@ -100,6 +100,55 @@ void main() {
       }
     });
 
+    test('★ 型錄轉子半徑 → 由三片葉長中位數反推 cm/px，與 Python 同一個數（A4）', () {
+      final profiles =
+          BladeGeometryCompare.profilesFromStructure(structureOf());
+      final wantCmp = ref['comparison'] as Map<String, dynamic>;
+      final rotorRadiusM = (wantCmp['rotor_radius_m'] as num).toDouble();
+      final cmp = BladeGeometryCompare.compareBlades(profiles,
+          rotorRadiusM: rotorRadiusM);
+      final wantCm = (wantCmp['cm_per_px'] as num).toDouble();
+      final truthCm = (ref['truth']['cm_per_px'] as num).toDouble();
+      expect(cmp.cmPerPx, isNotNull);
+      // Dart 的葉長與 Python 差在 4% 內（輪廓測試那條的容忍），尺度跟著差
+      expect(cmp.cmPerPx!, closeTo(wantCm, 0.04 * wantCm),
+          reason: 'cm/px 要與 Python 反推的一致');
+      expect(cmp.cmPerPx!, closeTo(truthCm, 0.04 * truthCm),
+          reason: '合成場景的真值是 $truthCm cm/px');
+      for (final c in cmp.comparisons) {
+        expect(c.outlierDeviationCm, isNotNull, reason: c.metric);
+        expect(c.outlierDeviationCm!,
+            closeTo(c.outlierDeviation * cmp.cmPerPx!, 1e-9),
+            reason: '${c.metric}：cm 只是 px × 尺度，不改任何判定');
+        expect(c.toJson()['outlier_deviation_cm'], isNotNull);
+      }
+      expect(cmp.toJson()['cm_per_px'], cmp.cmPerPx);
+    });
+
+    test('沒有型錄半徑就沒有任何 cm 值——不猜尺度', () {
+      final cmp = BladeGeometryCompare.compareBlades(
+          BladeGeometryCompare.profilesFromStructure(structureOf()));
+      expect(cmp.cmPerPx, isNull);
+      for (final c in cmp.comparisons) {
+        expect(c.outlierDeviationCm, isNull, reason: c.metric);
+        expect(c.toJson().containsKey('outlier_deviation_cm'), isFalse);
+      }
+      expect(cmp.toJson().containsKey('cm_per_px'), isFalse,
+          reason: '沒尺度時 JSON 形狀與以前完全一樣');
+    });
+
+    test('resolveScale：直接給的尺度優先；半徑或葉長不是正數就沒有尺度', () {
+      expect(BladeGeometryCompare.resolveScale(12.0, 60.0, 500.0), 12.0);
+      expect(BladeGeometryCompare.resolveScale(null, 60.0, 500.0),
+          closeTo(12.0, 1e-12));
+      expect(BladeGeometryCompare.resolveScale(null, null, 500.0), isNull);
+      expect(BladeGeometryCompare.resolveScale(null, 0.0, 500.0), isNull,
+          reason: '半徑 0 與 Python 的 `if rotor_radius_m:` 一樣算沒給');
+      expect(BladeGeometryCompare.resolveScale(null, -60.0, 500.0), isNull);
+      expect(BladeGeometryCompare.resolveScale(null, 60.0, 0.0), isNull);
+      expect(BladeGeometryCompare.resolveScale(null, 60.0, double.nan), isNull);
+    });
+
     test('單片注入 24 px 偏移：只有葉尖偏移被標記，且指對那一片', () {
       final d = ref['deflected'] as Map<String, dynamic>;
       final pr = (d['profiles'] as List).cast<Map<String, dynamic>>();
@@ -124,13 +173,19 @@ void main() {
             tipY: 0,
           )
       ];
-      final cmp = BladeGeometryCompare.compareBlades(profiles);
+      final cmp = BladeGeometryCompare.compareBlades(profiles,
+          rotorRadiusM: (d['rotor_radius_m'] as num).toDouble());
       expect(cmp.anyFlagged, isTrue);
+      // 同一組輪廓數值 → 同一個尺度（純算術，要到小數第四位）
+      expect(cmp.cmPerPx!, closeTo((d['cm_per_px'] as num).toDouble(), 1e-4));
 
       final wm = (d['metrics'] as Map<String, dynamic>);
       for (final c in cmp.comparisons) {
         final w = wm[c.metric] as Map<String, dynamic>;
         expect(c.flagged, w['flagged'] as bool, reason: '${c.metric} 的標記');
+        expect(c.outlierDeviationCm!,
+            closeTo((w['outlier_deviation_cm'] as num).toDouble(), 0.5),
+            reason: '${c.metric} 的偏差（cm）');
         expect(c.z, closeTo((w['z'] as num).toDouble(), 0.05),
             reason: '${c.metric} 的 z');
         expect(c.outlierDeviation,
@@ -368,6 +423,27 @@ void main() {
           closeTo((hb['radius_px'] as num).toDouble(), 2.0));
       expect((out.metrics['hanging_tip_deflection_px'] as num).toDouble(),
           closeTo((hb['tip_deflection_px'] as num).toDouble(), 1.0));
+      expect(out.cmPerPx, isNull, reason: '沒給型錄半徑就沒有尺度');
+      expect(out.metrics.containsKey('hanging_tip_deflection_cm'), isFalse);
+    });
+
+    test('★ 側視 + 型錄半徑：尺度由垂掛那片反推，與 Python 同一個數（A4）', () {
+      final bytes = File('test/assets/blade_side_scene.png').readAsBytesSync();
+      final rotorRadiusM = (sideRef['rotor_radius_m'] as num).toDouble();
+      final out = runGeometryPipeline(Uint8List.fromList(bytes),
+          rotorRadiusM: rotorRadiusM);
+      expect(out.ok, isTrue, reason: out.reasons.join('；'));
+      final wantCm = (sideRef['cm_per_px_estimated'] as num).toDouble();
+      expect(out.cmPerPx!, closeTo(wantCm, 0.01 * wantCm),
+          reason: '垂掛葉片葉長差 ≤ 2 px（上一條），尺度跟著差不到 1%');
+      expect(out.metrics['cm_per_px'], out.cmPerPx);
+      final hb = sideRef['hanging_blade'] as Map<String, dynamic>;
+      expect((out.metrics['hanging_tip_deflection_cm'] as num).toDouble(),
+          closeTo((hb['tip_deflection_cm'] as num).toDouble(), 20.0),
+          reason: '1 px 的葉尖偏移容忍 × 15 cm/px');
+      // 合成真值 15 cm/px：反推誤差是「垂掛葉片投影長度含預彎」那一點，記在報告裡
+      final truthCm = (sideRef['cm_per_px'] as num).toDouble();
+      expect(out.cmPerPx!, closeTo(truthCm, 0.03 * truthCm));
     });
 
     test('sideViewSummary 的形狀與 compareBlades 相容', () {
@@ -396,6 +472,23 @@ void main() {
       expect(out.comparisons, hasLength(4));
       expect(out.metrics['n_blades'], 3);
       expect(out.metrics['rotor_radius_px'], isNotNull);
+      expect(out.cmPerPx, isNull);
+      expect(out.metrics.containsKey('cm_per_px'), isFalse);
+    });
+
+    test('正視 + 型錄半徑：整條管線出 cm/px，與合成真值差 < 4%（A4）', () {
+      final bytes = File('test/assets/blade_front_scene.png').readAsBytesSync();
+      final rotorRadiusM =
+          (ref['comparison']['rotor_radius_m'] as num).toDouble();
+      final out = runGeometryPipeline(Uint8List.fromList(bytes),
+          params: paramsOf(), rotorRadiusM: rotorRadiusM);
+      expect(out.ok, isTrue, reason: out.reasons.join('；'));
+      final truthCm = (ref['truth']['cm_per_px'] as num).toDouble();
+      expect(out.cmPerPx!, closeTo(truthCm, 0.04 * truthCm));
+      expect(out.metrics['cm_per_px'], out.cmPerPx);
+      for (final c in out.comparisons) {
+        expect(c.outlierDeviationCm, isNotNull, reason: c.metric);
+      }
     });
 
     test('壞掉的位元組 → 明確失敗，不丟例外', () {
