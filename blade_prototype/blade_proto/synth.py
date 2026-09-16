@@ -412,10 +412,13 @@ def blade_points_3d(spec: SceneSpec, cam: CameraSpec, azimuth_deg: float, pts_uv
     return u_m[:, None] * d[None, :] + v_m[:, None] * n[None, :] + w_m[:, None] * a[None, :]
 
 
-def render_perspective(spec: SceneSpec, cam: CameraSpec) -> tuple[np.ndarray, dict]:
+def render_perspective(spec: SceneSpec, cam: CameraSpec,
+                       blade_length_frac: tuple[float, float, float] = (1.0, 1.0, 1.0)) -> tuple[np.ndarray, dict]:
     """正視整機照的**透視版**：相機可以偏軸、可以在地面仰拍，葉片可以有預彎與錐角。
 
     與 `render_front` 的差別只有投影：同一個 `blade_outline`、同一個天空、同一個收尾。
+    blade_length_frac：各片葉長相對型錄值的比例（1.0 = 完整；0.95 = 葉尖少了 5%），
+    給「半徑互比補償後還抓得到真的短葉片嗎」那類測試用；正視 `render_front` 沒有這個參數。
     truth 多了每片的**投影半徑**（apparent_radii_px）與投影方位角——它們與 `rotor_radius_px`
     的差就是純透視造成的「假半徑差」，`compare_blades` 在這種照片上標出來的東西沒有一項是缺陷。
     """
@@ -457,9 +460,12 @@ def render_perspective(spec: SceneSpec, cam: CameraSpec) -> tuple[np.ndarray, di
     for i in range(3):
         az = spec.azimuth_deg + 120.0 * i
         dpx = spec.tip_deflection_cm[i] / spec.cm_per_px
-        pts = blade_outline(spec, dpx, spec.erosion.get(i), rng)
+        frac = float(blade_length_frac[i])
+        sub = spec if frac == 1.0 else replace(spec, rotor_radius_m=spec.rotor_radius_m * frac)
+        pts = blade_outline(sub, dpx, spec.erosion.get(i), rng)
+        # 預彎與錐角仍以完整葉長算 t（`blade_points_3d` 用 spec 不用 sub）：短掉的是葉尖那一段，形狀不變
         poly3d(blade_points_3d(spec, cam, az, pts), (spec.blade_gray,) * 3)
-        tip3d = blade_points_3d(spec, cam, az, np.array([[spec.rotor_radius_px, dpx]]))
+        tip3d = blade_points_3d(spec, cam, az, np.array([[sub.rotor_radius_px, dpx]]))
         tip = perspective_project(tip3d, cam, spec)[0]
         tips.append((float(tip[0]), float(tip[1])))
         apparent.append(float(np.hypot(tip[0] - hx, tip[1] - hy)))
@@ -484,6 +490,7 @@ def render_perspective(spec: SceneSpec, cam: CameraSpec) -> tuple[np.ndarray, di
         "tips": tips,
         "apparent_radii_px": apparent,
         "tip_deflection_px": defl_px,
+        "blade_length_frac": list(blade_length_frac),
         "mask": mask,
     }
     return _finish(img, spec, rng), truth

@@ -72,6 +72,8 @@ ref = {
     'tower_found': bool(st.tower_found),
     'tower_angle_deg': round(float(st.tower_angle_deg), 3),
     'tower_width_px': round(float(st.tower_width_px), 2),
+    # 塔軸外推到輪轂那一列的 x（姿態估計的 yaw 線索）；正視合成照它應該就在輪轂正下方
+    'tower_x_at_hub_px': None if st.tower_x_at_hub_px is None else round(float(st.tower_x_at_hub_px), 2),
     'n_blades': len(st.blades),
     'blades': sorted([
         {'tip_radius_px': round(float(b.tip_radius_px), 2),

@@ -139,6 +139,30 @@ void main() {
     expect(BladeReportBuilder.valueOf(noScale), isNot(contains('cm')));
   });
 
+  test('幾何層判定依據：補過透視寫補過，沒補就明說含透視分量', () {
+    WtDetection geo(Map<String, dynamic> m) => WtDetection(
+          detectionId: 'g',
+          sessionId: 'S1',
+          layer: WtLayer.geometry,
+          defectClass: 'tip_deflection',
+          severity: 2,
+          metricJson: m,
+        );
+    final plain = BladeReportBuilder.basisOf(geo(const {}))!;
+    expect(plain, contains('三片同批同型'));
+    expect(plain, contains('含透視分量'));
+    expect(plain, contains('僅供近距離複檢參考'));
+    final comp = BladeReportBuilder.basisOf(geo(const {'perspective_compensated': true}))!;
+    expect(comp, contains('補償透視'));
+    expect(comp, isNot(contains('僅供近距離複檢參考')));
+    expect(
+        BladeReportBuilder.basisOf(WtDetection(
+            detectionId: 'g2', sessionId: 'S1', layer: WtLayer.geometry,
+            defectClass: 'blade_mismatch', severity: 2,
+            metricJson: const {'perspective_compensated': true})),
+        contains('補償透視'));
+  });
+
   test('標題與圖層標示：一眼看出哪一片、哪一段、哪一層', () {
     final data = BladeReportBuilder.buildData(
       asset: asset,

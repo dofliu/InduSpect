@@ -55,9 +55,9 @@
 
 ## 2. 自動化測試
 
-### 2.1 葉片原型（Python）— 234 passed
+### 2.1 葉片原型（Python）— 249 passed
 
-報告初版量到 131；同日修掉 §8 的第 2、3 項（側視閘門、拒收訊息）各加了測試成為 144，再加上 Mode B 人工複核工具的 13 條（`tests/test_closeup_review_tool.py`）、切分群組的 10 條（`tests/test_closeup_blade_groups.py`）與評估協定的 15 條（`tests/test_closeup_eval.py`）後為 182；普查補滿再加 2 條後為 184，第一遍標記的守門 16 條（`tests/test_closeup_firstpass.py`）與離線基線的 7 條（`tests/test_closeup_baseline.py`）後為 207；2026-09-16 IEA 兩軌核對（分類表 +2）、線性探針 6 條（`tests/test_closeup_probe.py`）、§1.2 取像閘門 13 條（`tests/test_closeup_intake_gate.py`）後為 228；同日偏軸透視夾具 6 條（`tests/test_offaxis.py`）後為 **234**。
+報告初版量到 131；同日修掉 §8 的第 2、3 項（側視閘門、拒收訊息）各加了測試成為 144，再加上 Mode B 人工複核工具的 13 條（`tests/test_closeup_review_tool.py`）、切分群組的 10 條（`tests/test_closeup_blade_groups.py`）與評估協定的 15 條（`tests/test_closeup_eval.py`）後為 182；普查補滿再加 2 條後為 184，第一遍標記的守門 16 條（`tests/test_closeup_firstpass.py`）與離線基線的 7 條（`tests/test_closeup_baseline.py`）後為 207；2026-09-16 IEA 兩軌核對（分類表 +2）、線性探針 6 條（`tests/test_closeup_probe.py`）、§1.2 取像閘門 13 條（`tests/test_closeup_intake_gate.py`）後為 228；同日偏軸透視夾具 6 條（`tests/test_offaxis.py`）後為 234；姿態估計 + 透視補償 15 條（`tests/test_pose.py`）後為 **249**。
 
 | 檔案 | 條數 | 守什麼 |
 |---|---|---|
@@ -75,6 +75,7 @@
 | `test_closeup_baseline.py` | 7 | B2 基線：維度、逐位元可重現、**折與折不相通**、標準化只用訓練集統計量 |
 | `test_closeup_probe.py` | 6 | 線性探針：**只有一個檔案准 import torch**、特徵檔涵蓋全語料、沿用 B2 分類器且可重現 |
 | `test_validation_report.py` | 6 | 真實影像驗證報告產生器 |
+| `test_pose.py` | 15 | **姿態估計 + 透視補償**：單項估計是純幾何、合成偏軸照上估回相機參數（仰角 < 2°）、健康風機 yaw ≤ 20° 補償後不標記且預彎擬合 3 m ± 0.8、**注入 400 cm 缺陷留得住且指對片**、半徑只在 |yaw| ≤ 15° 補且短葉片仍抓到、近塔架葉片被點名、沒姿態就沒補償 |
 | `test_offaxis.py` | 6 | **偏軸透視夾具**：正軸平面 = `render_front`、投影半徑對解析式、平面葉片偏軸只改半徑不改彎曲、**預彎 + yaw 20° → 約 250 cm 假葉尖偏移**、仰角 30° 被半徑離散擋下、錐角被 PCA 軸吸收而預彎不會 |
 | `test_surface.py` / `test_blade_test_report.py` | 5 / 5 | 前緣粗糙度；**本報告的聚合腳本**（拒收原因收桶、誤放行要算得出來、逐張比對） |
 | `test_dynamics.py` / `test_synth.py` | 4 / 3 | 影片轉速與六點鐘幀、合成場景 |
@@ -82,10 +83,10 @@
 最慢的是合成影片類：`test_side_view_six_oclock_by_projected_length` 19.0 s、`test_rpm_tracking_and_six_oclock_with_shake` 15.1 s、
 `test_motion_hub` 各 6–11 s。整套約 2–3 分鐘。
 
-### 2.2 App 端（Flutter）— 588 passed（本機）
+### 2.2 App 端（Flutter）— 599 passed（本機）
 
 > **報告初版是引用 CI 的 497**（run 34771101372，head `ed31970`）。同日 GitHub Actions 因用量預算暫停，
-> 改成在本容器裝 Flutter 3.47.4（與 CI 同版；步驟見 `CLAUDE.md`）本機跑：`flutter test` **588 passed**（約 40 秒）、
+> 改成在本容器裝 Flutter 3.47.4（與 CI 同版；步驟見 `CLAUDE.md`）本機跑：`flutter test` **599 passed**（約 40 秒）、
 > `flutter analyze` 6 條既有 info。多出來的 9 條是側視閘門（7）與拒收訊息（2）。下表的分佈是初版量到的。
 
 其中 `test/blade_*_test.dart` 18 個檔約 **270 條**是葉片模組的
@@ -183,6 +184,9 @@ README「已知限制」寫的「偏軸會引入透視差，塔架轉正只能�
 **2026-09-16 補：合成夾具把這件事量出來了**（`OFFAXIS_SENSITIVITY.md`）。針孔投影 + 預彎 3 m 的葉片、地面 300 m、yaw 0–30°：
 互比標出 167–299 cm 的葉尖偏移（z 19–30），與上表 ed894e7a 的 226 cm 同一個量級，而場景裡沒有缺陷。平面葉片怎麼偏都量不到彎曲——
 假訊號的來源是**預彎被投影成 in-plane 彎曲**。間距偏離 120° 在那些情境是 3–9°，與真實照片一致地分不開。
+**處置（同日）**：`pose.py`／`blade_pose_service.dart` 估站位（仰角由輪轂高 + 焦距、yaw 由塔軸偏移）並補償——同一批情境用估計姿態補償後
+原始標記 5/8 → 5/8 不再標記，預彎擬合 2.8–3.6 m；站位規範改成 3–4× 輪轂高；沒補償的正視發現一律寫「含透視分量」。
+真實照片那 8 張**還沒有**輪轂高度與焦距（公開照片），所以這一段只在合成上驗過。
 
 ### 3.4 兩張真實照片的完整報告（`case`）
 

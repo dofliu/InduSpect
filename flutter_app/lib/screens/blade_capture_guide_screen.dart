@@ -116,9 +116,10 @@ class _BladeCaptureGuideScreenState extends State<BladeCaptureGuideScreen> {
           id: 'front',
           view: WtMediaView.front,
           title: '正視全機',
-          instruction: '站在轉子正面，三片葉片都在畫面內，'
-              '背對太陽（逆光是硬限制，事後無法補救）。'
-              '天空越乾淨越好，有大片雲塊時換角度或等雲走。',
+          instruction: '站在**轉子軸線上**（機艙正前方或正後方，不要斜著拍），'
+              '水平退到 3–4 倍輪轂高度外，用 2x 把轉子填到畫面約一半；三片葉片都在畫面內。'
+              '斜著拍或站太近會把葉片預彎看成假的葉尖偏移，閘門在仰角 25° 以上會直接拒收。'
+              '背對太陽（逆光是硬限制，事後無法補救）。天空越乾淨越好，有大片雲塊時換角度或等雲走。',
           capturePointName: 'front',
           isRequired: true,
         ),

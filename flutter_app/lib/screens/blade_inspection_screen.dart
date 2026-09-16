@@ -526,8 +526,10 @@ class _BladeInspectionScreenState extends State<BladeInspectionScreen> {
         useAi: backend != null,
         analyzer: backend?.analyzeImageWithPrompt,
         aiSource: backend?.source ?? AiSource.cloud,
-        // 型錄轉子直徑有填才有 cm 值；沒填就只有 px，不猜尺度
+        // 型錄轉子直徑有填才有 cm 值；沒填就只有 px，不猜尺度。
+        // 輪轂高度 + 照片 EXIF 焦距 → 估站位、補償正視照的透視假訊號
         rotorRadiusM: _asset?.rotorRadiusM,
+        hubHeightM: _asset?.hubHeightM,
         // 裝置端抽幀：目前只有 Android 有原生實作；其他平台回 null，
         // 服務層照原本的路寫「尚未接上」而不是炸掉
         frameExtractor: BladeVideoFrames.extractorOrNull,
@@ -779,7 +781,8 @@ class _BladeInspectionScreenState extends State<BladeInspectionScreen> {
               if (_weatherNote != null && _weatherNote!.isNotEmpty) '天氣：$_weatherNote',
               if (_inspector != null && _inspector!.isNotEmpty) '人員：$_inspector',
               if (_asset?.standingDistanceHint != null)
-                '全機照建議站在 ${_asset!.standingDistanceHint} 外（1.5–2 倍輪轂高度）',
+                '全機照請站在轉子軸線上、水平 ${_asset!.standingDistanceHint} 外（3–4 倍輪轂高度；'
+                '再近閘門會因三片透視半徑差拒收）',
             ].join('\n')),
             isThreeLine: true,
             trailing: IconButton(
@@ -1199,7 +1202,7 @@ class _AssetDialogState extends State<_AssetDialog> {
                 keyboardType: TextInputType.number,
                 decoration: const InputDecoration(
                   labelText: '輪轂高度（m）',
-                  hintText: '全機照要站在 1.5–2 倍輪轂高度外，填了會提示距離',
+                  hintText: '全機照要站在 3–4 倍輪轂高度外，填了會提示距離並用來估相機仰角',
                 ),
               ),
             ],

@@ -69,7 +69,7 @@ Level 1 篩檢，「未檢出異常」不等於「整支葉片都查過了」。
 
 ### 現況與定位（2026-09-16）
 
-**工程面接近完成、驗證面幾乎為零。** 三軌測試全綠（Flutter 588／後端 197／葉片原型 234），
+**工程面接近完成、驗證面幾乎為零。** 三軌測試全綠（Flutter 599／後端 197／葉片原型 249），
 但**從未在實機上跑過一次完整流程**、真實手機拍的葉片照片 0 張、Mode B 人工簽核 0 筆、
 56 條法規標準至少 4 筆引用錯。這個專案現在最有價值的地方是**方法學與文件**——
 不可退化的約定、死角查核、跨語言夾具交叉驗證、Mode B 的評估協定（洩漏量化、一致率上限）——
@@ -197,7 +197,7 @@ python -m blade_proto --help
 
 ```bash
 cd flutter_app && python3 scripts/audit_dead_ends.py                        # 死角查核（CI 排在 analyze 之前）
-cd flutter_app && flutter analyze && flutter test                           # 588 tests
+cd flutter_app && flutter analyze && flutter test                           # 599 tests
 cd backend && GEMINI_API_KEY=ci-fake-key pytest tests/ --asyncio-mode=auto  # 197 tests
 cd blade_prototype && pytest                                                # 115 tests
 ```

@@ -119,7 +119,11 @@ class BladeReportBuilder {
         return '同一張照片內前緣與後緣互比，rms 比 ≥ 2 且往內凹 p95 ≥ 3× 乾淨值';
       case 'tip_deflection':
       case 'blade_mismatch':
-        return '三片同批同型，同一轉子位置的剪影應一致；偏差 ≥ 3× 量測雜訊底';
+        // 正視照的透視：預彎在偏軸／仰拍下會被投影成假的葉尖偏移（OFFAXIS_SENSITIVITY.md）。
+        // 補過就寫補過；沒補就明說這不是缺陷量。
+        final compensated = d.metricJson['perspective_compensated'] == true;
+        return '三片同批同型，同一轉子位置的剪影應一致；偏差 ≥ 3× 量測雜訊底'
+            '${compensated ? '；已依估計站位（輪轂高度 + 照片焦距）補償透視' : '；正視照含透視分量，站位未驗證前僅供近距離複檢參考'}';
       case 'capture_quality':
         return '拍攝品質閘門：結構定位可信度不足，數值不可採信';
       case 'blade_noise':

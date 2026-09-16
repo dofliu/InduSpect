@@ -74,7 +74,7 @@ void main() {
     List<String> reasons = const [],
     List<MetricComparison> comparisons = const [],
   }) =>
-      (Uint8List b, {double? rotorRadiusM}) async => BladeGeometryOutcome(
+      (Uint8List b, {double? rotorRadiusM, double? hubHeightM}) async => BladeGeometryOutcome(
             ok: ok,
             reasons: reasons,
             metrics: const {'n_blades': 3},
@@ -129,12 +129,14 @@ void main() {
     BladeFrameExtractor? frameExtractor,
     bool useAi = false,
     double? rotorRadiusM,
+    double? hubHeightM,
     AiSource aiSource = AiSource.cloud,
   }) =>
       BladeAnalysisService.analyzeSession(
         session: session(media),
         useAi: useAi,
         rotorRadiusM: rotorRadiusM,
+        hubHeightM: hubHeightM,
         aiSource: aiSource,
         loadBytes: (_) async => bytes,
         surface: surface ?? fakeSurface(1.0),
@@ -375,7 +377,7 @@ void main() {
           levels: const [0.0, 0.1, 0.2],
         ),
         frameExtractor: (_, __) async => bytes,
-        geometry: (_, {double? rotorRadiusM}) async {
+        geometry: (_, {double? rotorRadiusM, double? hubHeightM}) async {
           final r = radii[call % radii.length];
           call++;
           return BladeGeometryOutcome(ok: true, profiles: [
@@ -401,7 +403,7 @@ void main() {
       var called = 0;
       await run(
         [WtMedia(path: 'front.jpg', view: WtMediaView.front)],
-        geometry: (b, {double? rotorRadiusM}) async {
+        geometry: (b, {double? rotorRadiusM, double? hubHeightM}) async {
           called++;
           return const BladeGeometryOutcome(ok: true);
         },
@@ -598,7 +600,7 @@ void main() {
       final out = await run(
         [WtMedia(path: 'front.jpg', view: WtMediaView.front, qualityJson: const {'ok': true})],
         rotorRadiusM: 60.0,
-        geometry: (b, {double? rotorRadiusM}) async {
+        geometry: (b, {double? rotorRadiusM, double? hubHeightM}) async {
           seen = rotorRadiusM;
           return BladeGeometryOutcome(
             ok: true,
@@ -623,11 +625,83 @@ void main() {
       expect(len.aiDescription, contains('275 cm'));
     });
 
+    test('★ 已補償透視的發現：描述與摘要寫補了多少；輪轂高度傳到幾何層', () async {
+      double? seenHub;
+      final out = await run(
+        [WtMedia(path: 'front.jpg', view: WtMediaView.front, qualityJson: const {'ok': true})],
+        rotorRadiusM: 60.0,
+        hubHeightM: 100.0,
+        geometry: (b, {double? rotorRadiusM, double? hubHeightM}) async {
+          seenHub = hubHeightM;
+          return BladeGeometryOutcome(
+            ok: true,
+            metrics: const {
+              'n_blades': 3,
+              'view': 'front',
+              'perspective_compensated': true,
+              'pose': {'elevation_deg': 16.9, 'yaw_deg': 24.6, 'usable': true},
+              'prebend_fit_m': 3.2,
+              'tip_deflection_raw_px': [4.2, -5.9, 2.7],
+              'compensation_note': '|yaw| 25° 超過 15°：半徑未補償',
+            },
+            comparisons: [flagged('radius_px', 1, 21.5, devCm: 554.0)],
+          );
+        },
+      );
+      expect(seenHub, 100.0);
+      final d = out.detections.single;
+      expect(d.aiDescription, contains('已依估計站位補償透視'));
+      expect(d.aiDescription, contains('仰角 17°'));
+      expect(d.aiDescription, contains('偏軸 25°'));
+      expect(d.aiDescription, contains('原始三片葉尖偏移 4.2／-5.9／2.7 px'));
+      expect(d.aiDescription, isNot(contains('不是缺陷量')));
+      expect(out.notes.join(), contains('已依估計站位補償透視'));
+      expect(out.notes.join(), contains('預彎擬合 3.2 m'));
+      expect(out.notes.join(), contains('半徑未補償'));
+    });
+
+    test('★ 沒補償的正視發現：明說含透視分量、不是缺陷量，摘要說為什麼沒補', () async {
+      final out = await run(
+        [WtMedia(path: 'front.jpg', view: WtMediaView.front, qualityJson: const {'ok': true})],
+        geometry: (b, {double? rotorRadiusM, double? hubHeightM}) async =>
+            BladeGeometryOutcome(
+          ok: true,
+          metrics: const {
+            'n_blades': 3,
+            'view': 'front',
+            'perspective_compensated': false,
+            'pose_note': '沒有型錄轉子直徑與輪轂高度，無法估相機站位',
+          },
+          comparisons: [flagged('tip_deflection_px', 2, 20.0)],
+        ),
+      );
+      final d = out.detections.single;
+      expect(d.aiDescription, contains('含透視分量'));
+      expect(d.aiDescription, contains('不是缺陷量'));
+      expect(d.severity, 2, reason: '措辭改了，等級規則不變');
+      expect(out.notes.join(), contains('未補償透視'));
+      expect(out.notes.join(), contains('無法估相機站位（沒有型錄轉子直徑與輪轂高度'));
+    });
+
+    test('側視照的發現不掛透視那句（側視另一條路）', () async {
+      final out = await run(
+        [WtMedia(path: 'side.jpg', view: WtMediaView.side, qualityJson: const {'ok': true})],
+        geometry: (b, {double? rotorRadiusM, double? hubHeightM}) async =>
+            BladeGeometryOutcome(
+          ok: true,
+          metrics: const {'n_blades': 2, 'view': 'side', 'hanging_tip_deflection_px': 12.9},
+          comparisons: const [],
+        ),
+      );
+      expect(out.detections, isEmpty);
+      expect(out.notes.join(), isNot(contains('透視')));
+    });
+
     test('沒有型錄半徑：幾何層收到 null，發現裡沒有任何 cm 欄位', () async {
       Object? seen = 'unset';
       final out = await run(
         [WtMedia(path: 'front.jpg', view: WtMediaView.front, qualityJson: const {'ok': true})],
-        geometry: (b, {double? rotorRadiusM}) async {
+        geometry: (b, {double? rotorRadiusM, double? hubHeightM}) async {
           seen = rotorRadiusM;
           return BladeGeometryOutcome(
             ok: true,

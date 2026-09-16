@@ -164,6 +164,13 @@ void main() {
           reason: '合成正視的塔架是垂直的');
       expect(st.towerWidthPx,
           closeTo((ref['tower_width_px'] as num).toDouble(), 3.0));
+      // 塔軸外推到輪轂那一列的 x（姿態估計的 yaw 線索）：正視合成照它就在輪轂正下方，
+      // 與 Python 同一個算法（塔架像素質心 + 軸方向外推）
+      final wantX = ref['tower_x_at_hub_px'];
+      expect(st.towerXAtHub, isNotNull);
+      expect(st.towerXAtHub!, closeTo((wantX as num).toDouble(), 3.0));
+      expect((st.towerXAtHub! - st.hubX).abs(), lessThan(0.02 * st.rotorRadiusPx),
+          reason: '站在軸線上：輪轂不離開塔軸');
     });
 
     test('三片葉片：數量、葉尖半徑、方位角都與 Python 一致', () {

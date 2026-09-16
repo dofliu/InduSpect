@@ -1,10 +1,13 @@
 import 'dart:math' as math;
 import 'dart:typed_data';
 
+import 'package:image/image.dart' as img;
+
 import 'blade_capture_gate.dart';
 import 'blade_dsp.dart';
 import 'blade_geometry_service.dart';
 import 'blade_image_ops.dart';
+import 'blade_pose_service.dart';
 import 'blade_structure_service.dart';
 
 /// 單片葉片的輪廓（對照 `geometry.py::BladeProfile`）。
@@ -737,6 +740,12 @@ class BladeGeometryOutcome {
   /// 也複製在 `metrics['cm_per_px']`，讓它跟著其他數值一起進 `metricJson`。
   final double? cmPerPx;
 
+  /// 相機姿態估計（正視、三片、有型錄直徑與輪轂高度時才估；估不出來的項目是 null）。
+  final BladePoseEstimate? pose;
+
+  /// 透視補償的帳目；姿態不可用時 null，此時 [comparisons] 是原始互比。
+  final BladeCompensation? compensation;
+
   const BladeGeometryOutcome({
     required this.ok,
     this.reasons = const [],
@@ -745,6 +754,8 @@ class BladeGeometryOutcome {
     this.comparisons = const [],
     this.profiles = const [],
     this.cmPerPx,
+    this.pose,
+    this.compensation,
   });
 }
 
@@ -753,7 +764,7 @@ class BladeGeometryOutcome {
 /// [rotorRadiusM]：型錄轉子半徑（公尺），有的話結果會多一組 cm 值；影片抽幀那條路
 /// 不傳（多幀互比只看 px 的一致性）。
 typedef BladeGeometryAnalyzer = Future<BladeGeometryOutcome> Function(
-    Uint8List bytes, {double? rotorRadiusM});
+    Uint8List bytes, {double? rotorRadiusM, double? hubHeightM});
 
 /// 一張整機照 → 分割 → 結構定位 → **拍攝閘門** → 三片互比。
 ///
@@ -762,11 +773,20 @@ typedef BladeGeometryAnalyzer = Future<BladeGeometryOutcome> Function(
 ///
 /// [rotorRadiusM]：型錄轉子半徑（公尺）。有的話由量到的葉長反推 cm/px，互比結果多一組
 /// cm 值（`outlierDeviationCm`／`tip_deflection_cm`）；**判定不變**，只是單位換算。
+///
+/// [hubHeightM]（+ 照片 EXIF 的 35 mm 等效焦距，或 [focal35mm]／[horizontalDistanceM]）：
+/// 估相機站位（仰角、yaw）並**補償透視**——正視照的葉片預彎在偏軸／仰拍下會被投影成
+/// 一到三公尺的假葉尖偏移（`OFFAXIS_SENSITIVITY.md`）。估不出姿態就不補、回原始互比。
+/// 拍攝閘門一律看原始半徑離散，補償只在放行之後做。
 BladeGeometryOutcome runGeometryPipeline(
   Uint8List bytes, {
   BladeGeometryParams params = const BladeGeometryParams(),
   double noiseFloorPx = 1.5,
   double? rotorRadiusM,
+  double? hubHeightM,
+  double? focal35mm,
+  double? horizontalDistanceM,
+  double cameraHeightM = BladePoseService.defaultCameraHeightM,
 }) {
   final decoded = BladeImageOps.safeDecode(bytes);
   if (decoded == null) {
@@ -798,6 +818,38 @@ BladeGeometryOutcome runGeometryPipeline(
       : BladeGeometryCompare.compareBlades(profiles,
           noiseFloorPx: noiseFloorPx, rotorRadiusM: rotorRadiusM);
   final hb = cmp.hangingBlade;
+
+  // 姿態估計 + 透視補償：只在正視、三片、有型錄直徑與輪轂高度時做。
+  BladePoseEstimate? pose;
+  BladeCompensation? comp;
+  String? poseNote;
+  if (!side && profiles.length == 3) {
+    if (rotorRadiusM == null || hubHeightM == null) {
+      poseNote = '沒有型錄轉子直徑與輪轂高度，無法估相機站位';
+    } else {
+      final f35 = focal35mm ?? exifFocal35mm(decoded);
+      pose = BladePoseService.estimate(
+        structure: st,
+        hubHeightM: hubHeightM,
+        rotorRadiusM: rotorRadiusM,
+        imageLongSidePx: math.max(decoded.width, decoded.height),
+        focal35mm: f35,
+        horizontalDistanceM: horizontalDistanceM,
+        cameraHeightM: cameraHeightM,
+        cmPerPx: cmp.cmPerPx,
+      );
+      if (pose.usable) {
+        comp = BladePoseService.compensate(profiles, pose, rotorRadiusM,
+            noiseFloorPx: noiseFloorPx, cmPerPx: cmp.cmPerPx);
+      } else {
+        poseNote = pose.notes.join('；');
+      }
+    }
+  }
+  final comparisons = comp == null
+      ? cmp.comparisons
+      : cmp.comparisons.map((c) => comp!.metric(c.metric) ?? c).toList();
+
   return BladeGeometryOutcome(
     ok: true,
     warnings: verdict.warnings,
@@ -805,6 +857,7 @@ BladeGeometryOutcome runGeometryPipeline(
       ...verdict.metrics,
       'rotor_radius_px': st.rotorRadiusPx,
       'tower_angle_deg': st.towerAngleDeg,
+      if (st.towerXAtHub != null) 'tower_x_at_hub_px': st.towerXAtHub,
       'n_profiles': profiles.length,
       'contaminated_bins':
           profiles.fold<int>(0, (a, pr) => a + pr.nContaminatedBins),
@@ -817,9 +870,41 @@ BladeGeometryOutcome runGeometryPipeline(
         if (hb.containsKey('tip_deflection_cm'))
           'hanging_tip_deflection_cm': hb['tip_deflection_cm'],
       },
+      if (!side && profiles.length == 3) 'perspective_compensated': comp != null,
+      if (pose != null) 'pose': pose.toJson(),
+      if (poseNote != null) 'pose_note': poseNote,
+      if (comp != null) ...{
+        'prebend_fit_m': comp.prebendFitM,
+        'deflection_compensated': comp.deflectionCompensated,
+        'radius_compensated': comp.radiusCompensated,
+        'tip_offset_prior_m': comp.tipOffsetPriorM,
+        'tip_deflection_raw_px': comp.tipDeflectionRawPx,
+        'tip_deflection_compensated_px': comp.tipDeflectionCompensatedPx,
+        'radius_raw_px': comp.radiusRawPx,
+        'radius_compensated_px': comp.radiusCompensatedPx,
+        'blades_near_tower': comp.bladesNearTower,
+        if (comp.note != null) 'compensation_note': comp.note,
+      },
     },
-    comparisons: cmp.comparisons,
+    comparisons: comparisons,
     profiles: profiles,
     cmPerPx: cmp.cmPerPx,
+    pose: pose,
+    compensation: comp,
   );
+}
+
+/// 照片 EXIF 的 35 mm 等效焦距（`FocalLengthIn35mmFilm`，0xA405）。沒有、讀不到、非正數一律 null——
+/// 沒有焦距就估不出距離與仰角，**不猜**。PNG 與被圖床重編碼過的 JPEG 通常沒有。
+double? exifFocal35mm(img.Image im) {
+  try {
+    final v = im.exif.exifIfd[0xa405];
+    if (v == null) return null;
+    final i = v.toInt();
+    if (i > 0) return i.toDouble();
+    final d = v.toDouble();
+    return d > 0 ? d : null;
+  } catch (_) {
+    return null;
+  }
 }

@@ -42,6 +42,11 @@ class BladeStructure {
   /// 塔架軸相對垂直的偏差（正 = 順時鐘）；無塔架時 0
   final double towerAngleDeg;
   final double towerWidthPx;
+
+  /// 塔架軸外推到輪轂那一列的 x（px）。偏軸拍攝時輪轂中心會離開塔軸（機艙把轉子往
+  /// 上風側推了 overhang 那麼遠），`BladePoseService` 拿 hubX 與它的差估 yaw。
+  /// 無塔架時 null。對照 Python `TurbineStructure.tower_x_at_hub_px`。
+  final double? towerXAtHub;
   final List<BladeTip> blades;
   final List<String> notes;
 
@@ -55,6 +60,7 @@ class BladeStructure {
     this.towerFound = false,
     this.towerAngleDeg = 0,
     this.towerWidthPx = 0,
+    this.towerXAtHub,
     this.blades = const [],
     this.notes = const [],
   });
@@ -274,11 +280,23 @@ class BladeStructureService {
         _classify(split.comps, hubX, hubY, hubR, maxBlades, split.tower);
 
     var towerAngle = 0.0, towerWidth = 0.0;
+    double? towerXAtHub;
     if (cls.tower != null && cls.towerDir != null) {
       final d = cls.towerDir!;
       final ax = d.dy > 0 ? d : _Axis(d.cx, d.cy, -d.dx, -d.dy, d.elong);
       towerAngle = math.atan2(ax.dx, ax.dy) * 180.0 / math.pi;
       towerWidth = _medianRowWidth(cls.tower!);
+      if (ax.dy > 1e-6) {
+        // 與 Python 同一個算法：塔架像素質心 + 軸方向，外推到輪轂那一列
+        final t = cls.tower!;
+        var sx = 0.0, sy = 0.0;
+        for (var i = 0; i < t.length; i++) {
+          sx += t.xs[i];
+          sy += t.ys[i];
+        }
+        final cx = sx / t.length, cy = sy / t.length;
+        towerXAtHub = cx + (hubY - cy) * (ax.dx / ax.dy);
+      }
     } else {
       notes.add('未找到塔架元件（畫面可能未含塔架，或塔架被亮天空吃掉）');
     }
@@ -313,6 +331,7 @@ class BladeStructureService {
       towerFound: cls.tower != null,
       towerAngleDeg: towerAngle,
       towerWidthPx: towerWidth,
+      towerXAtHub: towerXAtHub,
       blades: out,
       notes: notes,
     );

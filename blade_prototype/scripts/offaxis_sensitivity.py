@@ -6,11 +6,14 @@
 這支用 `synth.render_perspective`（針孔投影 + 預彎 + 轉子傾角 + 錐角）把那個假設拿掉，
 逐一量：閘門擋不擋、半徑離散多少、葉尖偏移被標成幾公分、方位角間距偏多少。
 
-四組掃描（每組回答一個問題）：
+五組掃描（每組回答一個問題）：
   A. 平面葉片、只有仰角        → 透視只出現在半徑，不出現在彎曲（直線投影仍是直線）
   B. 平面葉片、只有 yaw        → 同上，加上方位角間距偏離 120°
   C. 真實葉片（預彎 3 m、傾角 5°、錐角 2.5°）× 地面站位 × yaw → 假葉尖偏移的量級（cm）
-  D. 同一站位、轉子方位角不同   → 假訊號跟著**位置**走不跟著**葉片**走（多幀取中位能抵消）
+  D. 同一站位、轉子方位角不同   → 單張正視照分不分得出「跟位置」還是「跟葉片」
+  E. 站位規範：軸線上、水平距離 1.5–6× 輪轂高 → 閘門從哪裡開始放行、假訊號剩多少（定 App 的站位提示）
+C／D／E 每一列另外算**姿態估計 + 透視補償**（`blade_proto/pose.py`）：仰角由輪轂高 + 焦距反推、
+yaw 由塔軸偏移（overhang 預設 5 m，渲染用 6 m——先驗誤差是故意留著的）；補償後的互比另列一欄。
 
 用法：
     python scripts/offaxis_sensitivity.py [--out OFFAXIS_SENSITIVITY.md] [--json data/offaxis_sensitivity.json] [--quick]
@@ -28,6 +31,7 @@ from pathlib import Path
 import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from blade_proto import pose as P  # noqa: E402
 from blade_proto.geometry import compare_blades, profiles_from_structure  # noqa: E402
 from blade_proto.quality import assess_capture  # noqa: E402
 from blade_proto.segmentation import find_structure, segment_turbine  # noqa: E402
@@ -76,6 +80,29 @@ def measure(spec: SceneSpec, cam: CameraSpec, label: str, group: str) -> dict:
         cmp_ = compare_blades(profs, rotor_radius_m=ROTOR_RADIUS_M)
         row["cm_per_px"] = cmp_["cm_per_px"]
         row["any_flagged"] = bool(cmp_["any_flagged"])
+        # 姿態估計 + 補償：焦距換成 35 mm 等效（App 從 EXIF 讀）、輪轂高從資產來
+        long_side = max(spec.width, spec.height)
+        f35 = cam.distance_m * spec.px_per_m * 36.0 / long_side
+        est = P.estimate_pose(st, hub_height_m=HUB_HEIGHT_M, rotor_radius_m=ROTOR_RADIUS_M,
+                              image_long_side_px=long_side, focal_35mm=f35)
+        row["pose_est"] = {"elevation_deg": est.elevation_deg, "yaw_deg": est.yaw_deg, "distance_m": est.distance_m}
+        comp = P.compensate_comparison(profs, est, ROTOR_RADIUS_M) if est.usable else None
+        if comp is not None:
+            row["compensated"] = {
+                "prebend_fit_m": round(float(comp["prebend_fit_m"]), 2),
+                "deflection_compensated": bool(comp["deflection_compensated"]),
+                "radius_compensated": bool(comp["radius_compensated"]),
+                "blades_near_tower": comp["blades_near_tower"],
+            }
+            for c in comp["comparisons"]:
+                k = c["metric"].replace("_px", "")
+                idx = int(c["outlier_index"])
+                row["compensated"][k] = {
+                    "flagged": bool(c["flagged"]), "z": round(float(c["z"]), 2),
+                    "deviation_px": round(float(c["outlier_deviation"]), 2),
+                    "deviation_cm": round(float(c["outlier_deviation_cm"]), 1),
+                    "outlier_axis_deg": round(float(profs[idx].axis_angle_deg), 1),
+                }
         for c in cmp_["comparisons"]:
             if c["metric"] not in ("tip_deflection_px", "radius_px"):
                 continue
@@ -119,6 +146,11 @@ def configs(quick: bool) -> list[tuple[str, str, SceneSpec, CameraSpec]]:
     for az in ([90.0, 30.0] if quick else [90.0, 60.0, 30.0, 0.0]):
         cam = CameraSpec.ground(300.0, HUB_HEIGHT_M, yaw_deg=20.0, **REAL_BLADE)
         out.append(("D", f"葉片 A 方位角 {az:.0f}°", spec(az=az), cam))
+    # E. 站位規範：站在軸線上、水平距離 = k × 輪轂高
+    for k in ([2.0, 3.0, 4.0] if quick else [1.5, 2.0, 2.5, 3.0, 4.0, 5.0, 6.0]):
+        hor = k * HUB_HEIGHT_M
+        cam = CameraSpec.ground(hor, HUB_HEIGHT_M, yaw_deg=0.0, **REAL_BLADE)
+        out.append(("E", f"{k:g}× 輪轂高（水平 {hor:.0f} m、仰角 {cam.elevation_deg:.0f}°）", spec(), cam))
     return out
 
 
@@ -171,10 +203,39 @@ def conclusions(rows: list[dict]) -> list[str]:
         f"（{'、'.join(str(r['tip_deflection']['outlier_axis_deg']) + '°' for r in D if r.get('tip_deflection'))}）；另兩個方位角被閘門擋下。"
         "單張正視照沒有這個資訊，要驗「多幀取中位能抵消透視」得用轉一整圈的影片（動態層的 `tip_radius_mismatch` 那條路），本掃描沒做。",
         "6. **對 SPEC §13-11 的意義**：選項 (b)「用真實照片校準 `noise_floor_px`」**否決**——假訊號 z 14–40，雜訊底要放大十倍以上才能蓋住，"
-        "那等於關掉這個量；選項 (a) 的兩個指標鑑別力不夠（第 4 點）；可行的是：**站位規範**（水平距離 ≥ 4× 輪轂高，仰角 ≤ 14°，並站在軸線上）"
-        "寫進引導拍攝、**報告措辭**把正視照的葉尖偏移改寫成「含透視分量，未驗證站位，僅供近距離複檢參考」、"
-        "**相機姿態估計**（塔架收斂 → 仰角、輪轂偏離塔軸 → yaw）留給下一步。App 端本批未改判定。",
+        "那等於關掉這個量；選項 (a) 的兩個指標鑑別力不夠（第 4 點）；可行的三件（2026-09-16 決策：三個都做）：**站位規範**（第 7 點）、"
+        "**報告措辭**（正視照的葉尖偏移寫成「含透視分量」，補償過的寫補了多少）、**相機姿態估計 + 透視補償**（第 8 點）。",
     ]
+    E = grp("E")
+    if E:
+        passing = [r for r in E if r["gate_ok"]]
+        rejected = [r["label"].split("（")[0] for r in E if not r["gate_ok"]]
+        first_ok = passing[0]["label"].split("（")[0] if passing else "—"
+        raw_cm = {r["label"].split("（")[0]: tip_cm(r) for r in passing if r.get("tip_deflection")}
+        comp_cm = {r["label"].split("（")[0]: abs(r["compensated"]["tip_deflection"]["deviation_cm"])
+                   for r in passing if r.get("compensated") and r["compensated"].get("tip_deflection")}
+        out.append(
+            f"7. **站位規範（E 組，站在軸線上）**：{'、'.join(rejected) or '—'} 被閘門擋下，**{first_ok} 起放行**；"
+            f"放行站位的原始假葉尖偏移 {min(raw_cm.values()):.0f}–{max(raw_cm.values()):.0f} cm——**再遠也降不到門檻以下**"
+            f"（仰角 12° 仍有 100 cm 級），站位只能讓閘門放行、讓補償有東西可補；補償後 {min(comp_cm.values()):.0f}–{max(comp_cm.values()):.0f} cm。"
+            " App 的提示因此改成「水平 3–4× 輪轂高、站在軸線上、用 2x 把轉子填到畫面一半」（舊的 1.5–2× 是仰角 27–34°，一律被拒收）。")
+    c_comp = [r for r in C if r["gate_ok"] and r.get("compensated")]
+    if c_comp:
+        tip_ok = sum(1 for r in c_comp if not r["compensated"]["tip_deflection"]["flagged"])
+        tip_raw_flag = sum(1 for r in c_comp if r.get("tip_deflection", {}).get("flagged"))
+        pb = [r["compensated"]["prebend_fit_m"] for r in c_comp]
+        rad_done = [r for r in c_comp if r["compensated"]["radius_compensated"]]
+        rad_ok = sum(1 for r in rad_done if not r["compensated"]["radius"]["flagged"])
+        still = [f"{r['label']}（{r['compensated']['tip_deflection']['deviation_cm']:+.0f} cm）"
+                 for r in c_comp if r["compensated"]["tip_deflection"]["flagged"]]
+        el_err = [abs(r["pose_est"]["elevation_deg"] - r["camera"]["elevation_deg"]) for r in c_comp]
+        yaw_err = [r["pose_est"]["yaw_deg"] - r["camera"]["yaw_deg"] for r in c_comp]
+        out.append(
+            f"8. **姿態估計 + 補償（C 組，估計姿態、不用真值）**：仰角誤差 ≤ {max(el_err):.1f}°；yaw 偏大 {min(yaw_err):+.0f}…{max(yaw_err):+.0f}°"
+            "（overhang 先驗 5 m 對渲染 6 m）。葉尖偏移：原始標記 "
+            f"{tip_raw_flag}/{len(c_comp)} → 補償後未標記 {tip_ok}/{len(c_comp)}，預彎擬合 {min(pb):.1f}–{max(pb):.1f} m（渲染 3.0）；"
+            f"補償後仍標記：{'、'.join(still) if still else '無'}（yaw 估計誤差在大 yaw 處放大）。半徑只在 |yaw| ≤ {P.RADIUS_COMP_MAX_YAW_DEG:.0f}° 補："
+            f"{len(rad_done)} 個情境補了、{rad_ok} 個不再標記。注入 400 cm 缺陷的驗證在 `tests/test_pose.py`：留一法擬合讓缺陷留在殘差裡、指對那一片。")
     return out
 
 
@@ -193,21 +254,44 @@ def render_markdown(rows: list[dict], quick: bool) -> str:
         "B": ("B. 平面葉片、只有 yaw", "同上，另外方位角間距會偏離 120°"),
         "C": ("C. 真實葉片（預彎 3 m、傾角 5°、錐角 2.5°）× 地面站位 × yaw", "預彎在偏軸下被投影成 in-plane 彎曲——這才是真實照片上 226 cm 的來源"),
         "D": ("D. 同一站位（水平 300 m、yaw 20°）、轉子方位角不同", "轉子轉了、假訊號有沒有跟著換片？單張正視照上分不分得出「位置」與「葉片」"),
+        "E": ("E. 站位規範：站在軸線上、水平距離 = k × 輪轂高（真實葉片）", "閘門從哪裡開始放行、假訊號剩多少、補償後剩多少——App 的站位提示要寫哪個數字"),
     }
     for g, (title, why) in groups.items():
         sub = [r for r in rows if r["group"] == g]
         if not sub:
             continue
-        L += [f"## {title}", "", f"問題：{why}。", "",
-              "| 情境 | 閘門 | 半徑離散（量到／純投影） | 間距偏離 120°（量到／純投影） | 葉尖偏移互比 | 半徑互比 | 最短片在最上方 |",
-              "|---|---|---|---|---|---|---|"]
+        with_comp = g in ("C", "D", "E")
+        L += [f"## {title}", "", f"問題：{why}。", ""]
+        if with_comp:
+            L += ["| 情境 | 閘門 | 半徑離散（量到／純投影） | 間距偏離 120° | 葉尖偏移互比（原始） | 半徵互比（原始） | 估計姿態（仰角／yaw，真值） | **補償後**葉尖偏移 | **補償後**半徑 | 預彎擬合 |".replace("半徵", "半徑"),
+                  "|---|---|---|---|---|---|---|---|---|---|"]
+        else:
+            L += ["| 情境 | 閘門 | 半徑離散（量到／純投影） | 間距偏離 120°（量到／純投影） | 葉尖偏移互比 | 半徑互比 | 最短片在最上方 |",
+                  "|---|---|---|---|---|---|---|"]
         for r in sub:
             gate = "放行" if r["gate_ok"] else f"**拒收**（{r['n_blades']} 片）"
             spread = f"{r['tip_radius_spread']:.3f}" if r.get("tip_radius_spread") is not None else "—"
             sp = f"{r['spacing_dev_deg']:.1f}°" if r.get("spacing_dev_deg") is not None else "—"
-            L.append(f"| {r['label']} | {gate} | {spread} ／ {r['truth_apparent_spread']:.3f} | {sp} ／ {r['truth_spacing_dev_deg']:.1f}° | "
-                     f"{_fmt_dev(r.get('tip_deflection'))} | {_fmt_dev(r.get('radius'))} | "
-                     f"{'是' if r.get('shortest_is_topmost') else ('否' if 'shortest_is_topmost' in r else '—')} |")
+            if with_comp:
+                pe, cp = r.get("pose_est"), r.get("compensated")
+                cam = r["camera"]
+                pose_s = (f"{pe['elevation_deg']:.0f}°／{pe['yaw_deg']:.0f}°（{cam['elevation_deg']:.0f}°／{cam['yaw_deg']:.0f}°）"
+                          if pe and pe.get("elevation_deg") is not None and pe.get("yaw_deg") is not None else "—")
+                tip_c = _fmt_dev(cp.get("tip_deflection")) if cp else "—"
+                if cp and not cp["deflection_compensated"]:
+                    tip_c += "（未補償）"
+                rad_c = _fmt_dev(cp.get("radius")) if cp else "—"
+                if cp and not cp["radius_compensated"]:
+                    rad_c = f"未補償（yaw > {P.RADIUS_COMP_MAX_YAW_DEG:.0f}°）"
+                if cp and cp.get("blades_near_tower"):
+                    tip_c += f"；葉片 {''.join('ABC'[i] for i in cp['blades_near_tower'])} 近塔架"
+                pb = f"{cp['prebend_fit_m']:.1f} m" if cp else "—"
+                L.append(f"| {r['label']} | {gate} | {spread} ／ {r['truth_apparent_spread']:.3f} | {sp} | "
+                         f"{_fmt_dev(r.get('tip_deflection'))} | {_fmt_dev(r.get('radius'))} | {pose_s} | {tip_c} | {rad_c} | {pb} |")
+            else:
+                L.append(f"| {r['label']} | {gate} | {spread} ／ {r['truth_apparent_spread']:.3f} | {sp} ／ {r['truth_spacing_dev_deg']:.1f}° | "
+                         f"{_fmt_dev(r.get('tip_deflection'))} | {_fmt_dev(r.get('radius'))} | "
+                         f"{'是' if r.get('shortest_is_topmost') else ('否' if 'shortest_is_topmost' in r else '—')} |")
         L.append("")
     return "\n".join(L) + "\n"
 

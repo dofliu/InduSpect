@@ -136,12 +136,14 @@ class BladeAnalysisService {
   /// isolate 入口。像素運算不能擋 UI thread——幾何層一張圖約幾百毫秒。
   /// 帶著型錄轉子半徑一起過去：isolate 只能收一個參數，所以包成 record。
   static BladeGeometryOutcome _geometryIsolate(_GeometryJob job) =>
-      runGeometryPipeline(job.bytes, rotorRadiusM: job.rotorRadiusM);
+      runGeometryPipeline(job.bytes,
+          rotorRadiusM: job.rotorRadiusM, hubHeightM: job.hubHeightM);
 
   /// 預設的幾何層分析器（進 isolate）；測試注入的 [BladeGeometryAnalyzer] 取代它。
   static Future<BladeGeometryOutcome> _defaultGeometry(Uint8List bytes,
-          {double? rotorRadiusM}) =>
-      compute(_geometryIsolate, (bytes: bytes, rotorRadiusM: rotorRadiusM));
+          {double? rotorRadiusM, double? hubHeightM}) =>
+      compute(_geometryIsolate,
+          (bytes: bytes, rotorRadiusM: rotorRadiusM, hubHeightM: hubHeightM));
 
   /// isolate 入口。一段 30 秒 48 kHz 的音軌約 6 千萬次浮點運算（STFT 為主），
   /// 在手機上是幾百毫秒——不到幾何層那麼貴，但足以讓畫面掉幀。
@@ -155,7 +157,8 @@ class BladeAnalysisService {
   /// 不收整個 `WtAsset`，只收 [rotorRadiusM]（型錄轉子半徑，公尺）：表面層的判據是
   /// **同一張照片內前後緣互比**，不需要任何資產尺寸；只有幾何層（整機照）拿它把
   /// px 換成 cm——由三片量到的葉長中位數反推尺度，判定仍在 px 上做。沒有型錄
-  /// 直徑就沒有 cm 值，**不猜尺度**。
+  /// 直徑就沒有 cm 值，**不猜尺度**。[hubHeightM]（輪轂高度）加上照片 EXIF 的焦距讓
+  /// 幾何層估相機站位並補償透視（`OFFAXIS_SENSITIVITY.md`）；估不出來就不補，報告改口。
   ///
   /// [aiSource] 說 [analyzer] 是誰：雲端（預設）或裝置端 VLM（Tier 1b）。裝置端的解讀
   /// 一律標「離線初判」、**來源仍是 `geminiOfflinePending`**——它是初判不是終判，連線後
@@ -164,6 +167,7 @@ class BladeAnalysisService {
     required WtCaptureSession session,
     bool useAi = true,
     double? rotorRadiusM,
+    double? hubHeightM,
     AiSource aiSource = AiSource.cloud,
     BladeBytesLoader? loadBytes,
     BladeImageAnalyzer? analyzer,
@@ -311,7 +315,7 @@ class BladeAnalysisService {
         continue;
       }
       final r = await _analyzeGeometry(m, session.sessionId, read, notes,
-          geometry: geometry, rotorRadiusM: rotorRadiusM);
+          geometry: geometry, rotorRadiusM: rotorRadiusM, hubHeightM: hubHeightM);
       if (r == null) {
         skipped++;
       } else {
@@ -419,6 +423,7 @@ class BladeAnalysisService {
     List<String> notes, {
     BladeGeometryAnalyzer? geometry,
     double? rotorRadiusM,
+    double? hubHeightM,
   }) async {
     Uint8List bytes;
     try {
@@ -427,8 +432,8 @@ class BladeAnalysisService {
       notes.add('${_shortPath(m.path)}：讀不到檔案，未納入幾何分析。');
       return null;
     }
-    final result =
-        await (geometry ?? _defaultGeometry)(bytes, rotorRadiusM: rotorRadiusM);
+    final result = await (geometry ?? _defaultGeometry)(bytes,
+        rotorRadiusM: rotorRadiusM, hubHeightM: hubHeightM);
 
     if (!result.ok) {
       notes.add('${_shortPath(m.path)}（整機照）：${result.reasons.join('；')}');
@@ -449,6 +454,30 @@ class BladeAnalysisService {
     }
     for (final wmsg in result.warnings) {
       notes.add('${_shortPath(m.path)}（整機照）：$wmsg');
+    }
+
+    // 正視照的透視：補了就說補了多少，沒補就說這個數值不是缺陷量。
+    final isSide = result.metrics['view'] == 'side';
+    final compensated = result.metrics['perspective_compensated'] == true;
+    final poseJson = result.metrics['pose'];
+    final perspectiveClause = isSide
+        ? ''
+        : compensated
+            ? _compensationClause(result.metrics)
+            : '（正視照三片互比含透視分量：站位未驗證，此數值不是缺陷量，僅供近距離複檢參考）';
+    if (!isSide && result.comparisons.isNotEmpty) {
+      if (compensated) {
+        notes.add('${_shortPath(m.path)}（整機照）：已依估計站位補償透視'
+            '${_poseSummary(poseJson)}，預彎擬合 '
+            '${(result.metrics['prebend_fit_m'] as num?)?.toStringAsFixed(1) ?? '—'} m'
+            '${result.metrics['compensation_note'] != null ? '；${result.metrics['compensation_note']}' : ''}。');
+      } else {
+        final why = result.metrics['pose_note'];
+        notes.add('${_shortPath(m.path)}（整機照）：無法估相機站位'
+            '${why is String && why.isNotEmpty ? '（$why）' : ''}，三片互比**未補償透視**——'
+            '正視照的葉尖偏移含透視分量，不是缺陷量。要補償請在資產填輪轂高度與轉子直徑，'
+            '並用會寫 EXIF 焦距的相機 App 拍。');
+      }
     }
 
     final out = <WtDetection>[];
@@ -488,7 +517,7 @@ class BladeAnalysisService {
             '${c.outlierDeviation.abs().toStringAsFixed(1)} px'
             '${cm == null ? '' : '（約 ${cm.abs().toStringAsFixed(0)} cm）'}'
             '（另兩片彼此差 ${c.othersSpread.abs().toStringAsFixed(1)} px，'
-            'z = ${c.z.toStringAsFixed(1)}）',
+            'z = ${c.z.toStringAsFixed(1)}）$perspectiveClause',
       ));
     }
     if (out.isEmpty) {
@@ -503,10 +532,28 @@ class BladeAnalysisService {
             '不做三片互比；要與同一台的基線比對才有意義。');
       } else {
         notes.add('${_shortPath(m.path)}（整機照）：三片剪影互比未見離群'
-            '（${result.comparisons.length} 個量都在雜訊範圍內）。');
+            '（${result.comparisons.length} 個量都在雜訊範圍內'
+            '${compensated ? '，已補償透視' : ''}）。');
       }
     }
     return out;
+  }
+
+  static String _poseSummary(dynamic poseJson) {
+    if (poseJson is! Map) return '';
+    final el = poseJson['elevation_deg'], yaw = poseJson['yaw_deg'];
+    if (el is! num || yaw is! num) return '';
+    return '（仰角 ${el.toStringAsFixed(0)}°、偏軸 ${yaw.toStringAsFixed(0)}°，'
+        '由輪轂高度、型錄直徑與照片焦距估得；偏軸為粗估）';
+  }
+
+  /// 已補償的發現：寫補了多少，原始三片值也留在字面上。
+  static String _compensationClause(Map<String, dynamic> metrics) {
+    final raw = metrics['tip_deflection_raw_px'];
+    final rawText = raw is List
+        ? '；原始三片葉尖偏移 ${raw.map((v) => v is num ? v.toStringAsFixed(1) : '—').join('／')} px'
+        : '';
+    return '（已依估計站位補償透視${_poseSummary(metrics['pose'])}$rawText）';
   }
 
   /// 聲音層的偵測。
@@ -791,4 +838,4 @@ class BladeAnalysisService {
 }
 
 /// 幾何層 isolate 的參數：一張照片 + 型錄轉子半徑（可無）。
-typedef _GeometryJob = ({Uint8List bytes, double? rotorRadiusM});
+typedef _GeometryJob = ({Uint8List bytes, double? rotorRadiusM, double? hubHeightM});

@@ -31,9 +31,34 @@
    "n_blades": 3,
    "tip_radius_spread": 0.001,
    "spacing_dev_deg": 0.7192928552975104,
-   "seconds": 2.48,
+   "seconds": 2.73,
    "cm_per_px": 6.021261743787341,
    "any_flagged": false,
+   "pose_est": {
+    "elevation_deg": 19.173733982386654,
+    "yaw_deg": 0.11289464743121992,
+    "distance_m": 299.6038623439003
+   },
+   "compensated": {
+    "prebend_fit_m": -0.19,
+    "deflection_compensated": false,
+    "radius_compensated": true,
+    "blades_near_tower": [],
+    "tip_deflection": {
+     "flagged": false,
+     "z": 1.0,
+     "deviation_px": -1.5,
+     "deviation_cm": -9.0,
+     "outlier_axis_deg": 330.0
+    },
+    "radius": {
+     "flagged": true,
+     "z": 48.46,
+     "deviation_px": 145.39,
+     "deviation_cm": 875.4,
+     "outlier_axis_deg": 90.0
+    }
+   },
    "tip_deflection": {
     "flagged": false,
     "z": 1.0,
@@ -79,9 +104,34 @@
    "n_blades": 3,
    "tip_radius_spread": 0.06,
    "spacing_dev_deg": 0.5105614335857638,
-   "seconds": 2.32,
+   "seconds": 2.55,
    "cm_per_px": 5.9417461694122915,
    "any_flagged": true,
+   "pose_est": {
+    "elevation_deg": 19.1319621540911,
+    "yaw_deg": 0.15723255307745712,
+    "distance_m": 300.2334288376836
+   },
+   "compensated": {
+    "prebend_fit_m": -0.06,
+    "deflection_compensated": false,
+    "radius_compensated": true,
+    "blades_near_tower": [],
+    "tip_deflection": {
+     "flagged": false,
+     "z": 1.58,
+     "deviation_px": -2.37,
+     "deviation_cm": -14.1,
+     "outlier_axis_deg": 330.4
+    },
+    "radius": {
+     "flagged": true,
+     "z": 24.27,
+     "deviation_px": 72.81,
+     "deviation_cm": 432.6,
+     "outlier_axis_deg": 90.0
+    }
+   },
    "tip_deflection": {
     "flagged": false,
     "z": 1.58,
@@ -127,9 +177,34 @@
    "n_blades": 3,
    "tip_radius_spread": 0.117,
    "spacing_dev_deg": 2.641698583156341,
-   "seconds": 2.48,
+   "seconds": 2.51,
    "cm_per_px": 5.916182601455551,
    "any_flagged": true,
+   "pose_est": {
+    "elevation_deg": 18.533546856974176,
+    "yaw_deg": 0.05328132480527788,
+    "distance_m": 309.5703986685726
+   },
+   "compensated": {
+    "prebend_fit_m": -0.25,
+    "deflection_compensated": false,
+    "radius_compensated": true,
+    "blades_near_tower": [],
+    "tip_deflection": {
+     "flagged": false,
+     "z": 1.16,
+     "deviation_px": -1.75,
+     "deviation_cm": -10.3,
+     "outlier_axis_deg": 331.2
+    },
+    "radius": {
+     "flagged": false,
+     "z": 1.88,
+     "deviation_px": -5.65,
+     "deviation_cm": -33.4,
+     "outlier_axis_deg": 90.0
+    }
+   },
    "tip_deflection": {
     "flagged": false,
     "z": 1.16,
@@ -175,7 +250,7 @@
    "n_blades": 3,
    "tip_radius_spread": 0.172,
    "spacing_dev_deg": 4.0039608189451315,
-   "seconds": 2.34
+   "seconds": 2.56
   },
   {
    "group": "A",
@@ -196,7 +271,7 @@
    "n_blades": 3,
    "tip_radius_spread": 0.213,
    "spacing_dev_deg": 7.497129978144727,
-   "seconds": 2.35
+   "seconds": 2.57
   },
   {
    "group": "B",
@@ -217,9 +292,34 @@
    "n_blades": 3,
    "tip_radius_spread": 0.001,
    "spacing_dev_deg": 0.7192928552975104,
-   "seconds": 2.46,
+   "seconds": 2.55,
    "cm_per_px": 6.021261743787341,
    "any_flagged": false,
+   "pose_est": {
+    "elevation_deg": 19.173733982386654,
+    "yaw_deg": 0.11289464743121992,
+    "distance_m": 299.6038623439003
+   },
+   "compensated": {
+    "prebend_fit_m": -0.19,
+    "deflection_compensated": false,
+    "radius_compensated": true,
+    "blades_near_tower": [],
+    "tip_deflection": {
+     "flagged": false,
+     "z": 1.0,
+     "deviation_px": -1.5,
+     "deviation_cm": -9.0,
+     "outlier_axis_deg": 330.0
+    },
+    "radius": {
+     "flagged": true,
+     "z": 48.46,
+     "deviation_px": 145.39,
+     "deviation_cm": 875.4,
+     "outlier_axis_deg": 90.0
+    }
+   },
    "tip_deflection": {
     "flagged": false,
     "z": 1.0,
@@ -265,9 +365,34 @@
    "n_blades": 3,
    "tip_radius_spread": 0.059,
    "spacing_dev_deg": 0.8997958680556053,
-   "seconds": 2.31,
+   "seconds": 2.46,
    "cm_per_px": 6.018844796323108,
    "any_flagged": true,
+   "pose_est": {
+    "elevation_deg": 19.184868460640878,
+    "yaw_deg": 12.206355086763208,
+    "distance_m": 299.43652069967595
+   },
+   "compensated": {
+    "prebend_fit_m": 0.21,
+    "deflection_compensated": true,
+    "radius_compensated": true,
+    "blades_near_tower": [],
+    "tip_deflection": {
+     "flagged": false,
+     "z": 0.88,
+     "deviation_px": -1.32,
+     "deviation_cm": -8.0,
+     "outlier_axis_deg": 90.0
+    },
+    "radius": {
+     "flagged": false,
+     "z": 48.02,
+     "deviation_px": -144.05,
+     "deviation_cm": -867.0,
+     "outlier_axis_deg": 210.4
+    }
+   },
    "tip_deflection": {
     "flagged": false,
     "z": 0.94,
@@ -313,9 +438,34 @@
    "n_blades": 3,
    "tip_radius_spread": 0.113,
    "spacing_dev_deg": 3.768484446052298,
-   "seconds": 2.31,
+   "seconds": 2.43,
    "cm_per_px": 6.019392839753048,
    "any_flagged": true,
+   "pose_est": {
+    "elevation_deg": 19.18361863735678,
+    "yaw_deg": 24.393946507184477,
+    "distance_m": 299.45529459224673
+   },
+   "compensated": {
+    "prebend_fit_m": 0.27,
+    "deflection_compensated": true,
+    "radius_compensated": false,
+    "blades_near_tower": [],
+    "tip_deflection": {
+     "flagged": false,
+     "z": 1.11,
+     "deviation_px": -1.67,
+     "deviation_cm": -10.0,
+     "outlier_axis_deg": 90.0
+    },
+    "radius": {
+     "flagged": true,
+     "z": 35.1,
+     "deviation_px": -105.31,
+     "deviation_cm": -633.9,
+     "outlier_axis_deg": 211.5
+    }
+   },
    "tip_deflection": {
     "flagged": false,
     "z": 2.0,
@@ -361,7 +511,7 @@
    "n_blades": 3,
    "tip_radius_spread": 0.172,
    "spacing_dev_deg": 8.26999131864821,
-   "seconds": 2.31
+   "seconds": 2.39
   },
   {
    "group": "C",
@@ -403,7 +553,7 @@
    "n_blades": 3,
    "tip_radius_spread": 0.265,
    "spacing_dev_deg": 15.167721060133147,
-   "seconds": 2.33
+   "seconds": 2.52
   },
   {
    "group": "C",
@@ -424,7 +574,7 @@
    "n_blades": 3,
    "tip_radius_spread": 0.259,
    "spacing_dev_deg": 14.6337230291345,
-   "seconds": 2.3
+   "seconds": 2.43
   },
   {
    "group": "C",
@@ -445,7 +595,7 @@
    "n_blades": 3,
    "tip_radius_spread": 0.229,
    "spacing_dev_deg": 18.25780334885917,
-   "seconds": 2.7
+   "seconds": 2.82
   },
   {
    "group": "C",
@@ -466,9 +616,34 @@
    "n_blades": 3,
    "tip_radius_spread": 0.112,
    "spacing_dev_deg": 9.187343311923115,
-   "seconds": 2.4,
+   "seconds": 2.48,
    "cm_per_px": 5.918263368345321,
    "any_flagged": true,
+   "pose_est": {
+    "elevation_deg": 18.47552591946215,
+    "yaw_deg": 0.06506850338792658,
+    "distance_m": 310.5084896806979
+   },
+   "compensated": {
+    "prebend_fit_m": 2.82,
+    "deflection_compensated": true,
+    "radius_compensated": true,
+    "blades_near_tower": [],
+    "tip_deflection": {
+     "flagged": false,
+     "z": 0.79,
+     "deviation_px": -1.18,
+     "deviation_cm": -7.0,
+     "outlier_axis_deg": 205.8
+    },
+    "radius": {
+     "flagged": false,
+     "z": 0.57,
+     "deviation_px": 1.7,
+     "deviation_cm": 10.1,
+     "outlier_axis_deg": 90.0
+    }
+   },
    "tip_deflection": {
     "flagged": false,
     "z": 18.84,
@@ -514,9 +689,34 @@
    "n_blades": 3,
    "tip_radius_spread": 0.119,
    "spacing_dev_deg": 7.773286292208098,
-   "seconds": 2.35,
+   "seconds": 2.46,
    "cm_per_px": 6.091295354372415,
    "any_flagged": true,
+   "pose_est": {
+    "elevation_deg": 17.93335780140254,
+    "yaw_deg": 11.801071337250516,
+    "distance_m": 319.5732919833493
+   },
+   "compensated": {
+    "prebend_fit_m": 3.04,
+    "deflection_compensated": true,
+    "radius_compensated": true,
+    "blades_near_tower": [],
+    "tip_deflection": {
+     "flagged": false,
+     "z": 1.18,
+     "deviation_px": 1.78,
+     "deviation_cm": 10.8,
+     "outlier_axis_deg": 335.9
+    },
+    "radius": {
+     "flagged": false,
+     "z": 2.13,
+     "deviation_px": -6.38,
+     "deviation_cm": -38.8,
+     "outlier_axis_deg": 90.2
+    }
+   },
    "tip_deflection": {
     "flagged": true,
     "z": 23.45,
@@ -562,9 +762,34 @@
    "n_blades": 3,
    "tip_radius_spread": 0.107,
    "spacing_dev_deg": 7.232701283720758,
-   "seconds": 2.42,
+   "seconds": 2.47,
    "cm_per_px": 6.45953140182858,
    "any_flagged": true,
+   "pose_est": {
+    "elevation_deg": 16.88878031597165,
+    "yaw_deg": 25.239138616304075,
+    "distance_m": 338.7090493907585
+   },
+   "compensated": {
+    "prebend_fit_m": 3.48,
+    "deflection_compensated": true,
+    "radius_compensated": false,
+    "blades_near_tower": [],
+    "tip_deflection": {
+     "flagged": true,
+     "z": 4.08,
+     "deviation_px": -6.12,
+     "deviation_cm": -39.6,
+     "outlier_axis_deg": 90.4
+    },
+    "radius": {
+     "flagged": true,
+     "z": 28.69,
+     "deviation_px": 86.06,
+     "deviation_cm": 555.9,
+     "outlier_axis_deg": 210.8
+    }
+   },
    "tip_deflection": {
     "flagged": true,
     "z": 26.24,
@@ -610,9 +835,34 @@
    "n_blades": 3,
    "tip_radius_spread": 0.135,
    "spacing_dev_deg": 7.353303182286652,
-   "seconds": 2.4,
+   "seconds": 2.46,
    "cm_per_px": 6.662967132590632,
    "any_flagged": true,
+   "pose_est": {
+    "elevation_deg": 16.36633665033052,
+    "yaw_deg": 39.1514666301879,
+    "distance_m": 349.21135821061966
+   },
+   "compensated": {
+    "prebend_fit_m": 3.6,
+    "deflection_compensated": true,
+    "radius_compensated": false,
+    "blades_near_tower": [],
+    "tip_deflection": {
+     "flagged": true,
+     "z": 6.81,
+     "deviation_px": -10.22,
+     "deviation_cm": -68.1,
+     "outlier_axis_deg": 90.6
+    },
+    "radius": {
+     "flagged": false,
+     "z": 30.94,
+     "deviation_px": 92.83,
+     "deviation_cm": 618.5,
+     "outlier_axis_deg": 214.4
+    }
+   },
    "tip_deflection": {
     "flagged": true,
     "z": 29.93,
@@ -658,9 +908,34 @@
    "n_blades": 3,
    "tip_radius_spread": 0.043,
    "spacing_dev_deg": 5.535364339769103,
-   "seconds": 2.44,
+   "seconds": 2.53,
    "cm_per_px": 5.992302505234514,
    "any_flagged": true,
+   "pose_est": {
+    "elevation_deg": 11.653191951510175,
+    "yaw_deg": 0.06679204753938198,
+    "distance_m": 487.1594684761606
+   },
+   "compensated": {
+    "prebend_fit_m": 2.83,
+    "deflection_compensated": true,
+    "radius_compensated": true,
+    "blades_near_tower": [],
+    "tip_deflection": {
+     "flagged": false,
+     "z": 1.5,
+     "deviation_px": -2.24,
+     "deviation_cm": -13.4,
+     "outlier_axis_deg": 207.4
+    },
+    "radius": {
+     "flagged": false,
+     "z": 0.21,
+     "deviation_px": 0.64,
+     "deviation_cm": 3.8,
+     "outlier_axis_deg": 332.6
+    }
+   },
    "tip_deflection": {
     "flagged": false,
     "z": 13.87,
@@ -706,9 +981,34 @@
    "n_blades": 3,
    "tip_radius_spread": 0.05,
    "spacing_dev_deg": 4.828738983926883,
-   "seconds": 2.56,
+   "seconds": 2.45,
    "cm_per_px": 6.179876744270567,
    "any_flagged": true,
+   "pose_est": {
+    "elevation_deg": 11.293766877526995,
+    "yaw_deg": 12.294395295492361,
+    "distance_m": 502.45235691304026
+   },
+   "compensated": {
+    "prebend_fit_m": 2.86,
+    "deflection_compensated": true,
+    "radius_compensated": true,
+    "blades_near_tower": [],
+    "tip_deflection": {
+     "flagged": false,
+     "z": 1.45,
+     "deviation_px": -2.17,
+     "deviation_cm": -13.4,
+     "outlier_axis_deg": 208.6
+    },
+    "radius": {
+     "flagged": false,
+     "z": 2.53,
+     "deviation_px": 7.59,
+     "deviation_cm": 46.9,
+     "outlier_axis_deg": 333.1
+    }
+   },
    "tip_deflection": {
     "flagged": true,
     "z": 17.56,
@@ -757,6 +1057,31 @@
    "seconds": 2.38,
    "cm_per_px": 6.255160998586214,
    "any_flagged": true,
+   "pose_est": {
+    "elevation_deg": 11.15723173211273,
+    "yaw_deg": 24.111225135364077,
+    "distance_m": 508.52170215148277
+   },
+   "compensated": {
+    "prebend_fit_m": 3.32,
+    "deflection_compensated": true,
+    "radius_compensated": false,
+    "blades_near_tower": [],
+    "tip_deflection": {
+     "flagged": false,
+     "z": 2.9,
+     "deviation_px": -4.34,
+     "deviation_cm": -27.2,
+     "outlier_axis_deg": 90.3
+    },
+    "radius": {
+     "flagged": false,
+     "z": 20.28,
+     "deviation_px": -60.85,
+     "deviation_cm": -380.6,
+     "outlier_axis_deg": 332.9
+    }
+   },
    "tip_deflection": {
     "flagged": true,
     "z": 21.9,
@@ -802,9 +1127,34 @@
    "n_blades": 3,
    "tip_radius_spread": 0.131,
    "spacing_dev_deg": 3.510144008923376,
-   "seconds": 2.74,
+   "seconds": 2.82,
    "cm_per_px": 6.2709643528808074,
    "any_flagged": true,
+   "pose_est": {
+    "elevation_deg": 11.129252518770802,
+    "yaw_deg": 36.47237751331524,
+    "distance_m": 509.7839584303999
+   },
+   "compensated": {
+    "prebend_fit_m": 2.78,
+    "deflection_compensated": true,
+    "radius_compensated": false,
+    "blades_near_tower": [],
+    "tip_deflection": {
+     "flagged": true,
+     "z": 4.3,
+     "deviation_px": 6.46,
+     "deviation_cm": 40.5,
+     "outlier_axis_deg": 331.7
+    },
+    "radius": {
+     "flagged": true,
+     "z": 41.15,
+     "deviation_px": -123.45,
+     "deviation_cm": -774.2,
+     "outlier_axis_deg": 331.7
+    }
+   },
    "tip_deflection": {
     "flagged": false,
     "z": 24.21,
@@ -850,9 +1200,34 @@
    "n_blades": 3,
    "tip_radius_spread": 0.107,
    "spacing_dev_deg": 7.232701283720758,
-   "seconds": 2.37,
+   "seconds": 2.43,
    "cm_per_px": 6.45953140182858,
    "any_flagged": true,
+   "pose_est": {
+    "elevation_deg": 16.88878031597165,
+    "yaw_deg": 25.239138616304075,
+    "distance_m": 338.7090493907585
+   },
+   "compensated": {
+    "prebend_fit_m": 3.48,
+    "deflection_compensated": true,
+    "radius_compensated": false,
+    "blades_near_tower": [],
+    "tip_deflection": {
+     "flagged": true,
+     "z": 4.08,
+     "deviation_px": -6.12,
+     "deviation_cm": -39.6,
+     "outlier_axis_deg": 90.4
+    },
+    "radius": {
+     "flagged": true,
+     "z": 28.69,
+     "deviation_px": 86.06,
+     "deviation_cm": 555.9,
+     "outlier_axis_deg": 210.8
+    }
+   },
    "tip_deflection": {
     "flagged": true,
     "z": 26.24,
@@ -898,9 +1273,36 @@
    "n_blades": 3,
    "tip_radius_spread": 0.066,
    "spacing_dev_deg": 5.747706616958141,
-   "seconds": 2.37,
+   "seconds": 2.43,
    "cm_per_px": 6.346507271958572,
    "any_flagged": true,
+   "pose_est": {
+    "elevation_deg": 17.20243687597858,
+    "yaw_deg": 13.871345665080929,
+    "distance_m": 332.7149262806739
+   },
+   "compensated": {
+    "prebend_fit_m": 3.84,
+    "deflection_compensated": true,
+    "radius_compensated": true,
+    "blades_near_tower": [
+     2
+    ],
+    "tip_deflection": {
+     "flagged": true,
+     "z": 8.99,
+     "deviation_px": 13.49,
+     "deviation_cm": 85.6,
+     "outlier_axis_deg": 300.2
+    },
+    "radius": {
+     "flagged": true,
+     "z": 12.05,
+     "deviation_px": 36.15,
+     "deviation_cm": 229.4,
+     "outlier_axis_deg": 62.6
+    }
+   },
    "tip_deflection": {
     "flagged": true,
     "z": 26.13,
@@ -946,7 +1348,7 @@
    "n_blades": 3,
    "tip_radius_spread": 0.187,
    "spacing_dev_deg": 9.611189177620815,
-   "seconds": 2.37
+   "seconds": 2.46
   },
   {
    "group": "D",
@@ -967,7 +1369,362 @@
    "n_blades": 3,
    "tip_radius_spread": 0.178,
    "spacing_dev_deg": 13.699779791038907,
-   "seconds": 2.38
+   "seconds": 2.47
+  },
+  {
+   "group": "E",
+   "label": "1.5× 輪轂高（水平 150 m、仰角 34°）",
+   "camera": {
+    "distance_m": 180.27756377319946,
+    "yaw_deg": 0.0,
+    "elevation_deg": 33.690067525979785,
+    "rotor_tilt_deg": 5.0,
+    "cone_deg": 2.5,
+    "prebend_m": 3.0
+   },
+   "rotor_azimuth_deg": 90.0,
+   "truth_apparent_spread": 0.3337465999461992,
+   "truth_spacing_dev_deg": 18.082452627710182,
+   "gate_ok": false,
+   "gate_view": "front",
+   "n_blades": 3,
+   "tip_radius_spread": 0.33,
+   "spacing_dev_deg": 19.16328789906609,
+   "seconds": 2.48
+  },
+  {
+   "group": "E",
+   "label": "2× 輪轂高（水平 200 m、仰角 27°）",
+   "camera": {
+    "distance_m": 223.60679774997897,
+    "yaw_deg": 0.0,
+    "elevation_deg": 26.56505117707799,
+    "rotor_tilt_deg": 5.0,
+    "cone_deg": 2.5,
+    "prebend_m": 3.0
+   },
+   "rotor_azimuth_deg": 90.0,
+   "truth_apparent_spread": 0.22561727054587988,
+   "truth_spacing_dev_deg": 12.951458727151476,
+   "gate_ok": false,
+   "gate_view": "front",
+   "n_blades": 3,
+   "tip_radius_spread": 0.223,
+   "spacing_dev_deg": 13.853732086905495,
+   "seconds": 2.41
+  },
+  {
+   "group": "E",
+   "label": "2.5× 輪轂高（水平 250 m、仰角 22°）",
+   "camera": {
+    "distance_m": 269.2582403567252,
+    "yaw_deg": 0.0,
+    "elevation_deg": 21.80140948635181,
+    "rotor_tilt_deg": 5.0,
+    "cone_deg": 2.5,
+    "prebend_m": 3.0
+   },
+   "rotor_azimuth_deg": 90.0,
+   "truth_apparent_spread": 0.15808130165175538,
+   "truth_spacing_dev_deg": 9.975937857800602,
+   "gate_ok": false,
+   "gate_view": "front",
+   "n_blades": 3,
+   "tip_radius_spread": 0.155,
+   "spacing_dev_deg": 10.896538633118553,
+   "seconds": 2.45
+  },
+  {
+   "group": "E",
+   "label": "3× 輪轂高（水平 300 m、仰角 18°）",
+   "camera": {
+    "distance_m": 316.22776601683796,
+    "yaw_deg": 0.0,
+    "elevation_deg": 18.43494882292201,
+    "rotor_tilt_deg": 5.0,
+    "cone_deg": 2.5,
+    "prebend_m": 3.0
+   },
+   "rotor_azimuth_deg": 90.0,
+   "truth_apparent_spread": 0.11465082687014577,
+   "truth_spacing_dev_deg": 8.094356588426109,
+   "gate_ok": true,
+   "gate_view": "front",
+   "n_blades": 3,
+   "tip_radius_spread": 0.112,
+   "spacing_dev_deg": 9.187343311923115,
+   "seconds": 2.4,
+   "cm_per_px": 5.918263368345321,
+   "any_flagged": true,
+   "pose_est": {
+    "elevation_deg": 18.47552591946215,
+    "yaw_deg": 0.06506850338792658,
+    "distance_m": 310.5084896806979
+   },
+   "compensated": {
+    "prebend_fit_m": 2.82,
+    "deflection_compensated": true,
+    "radius_compensated": true,
+    "blades_near_tower": [],
+    "tip_deflection": {
+     "flagged": false,
+     "z": 0.79,
+     "deviation_px": -1.18,
+     "deviation_cm": -7.0,
+     "outlier_axis_deg": 205.8
+    },
+    "radius": {
+     "flagged": false,
+     "z": 0.57,
+     "deviation_px": 1.7,
+     "deviation_cm": 10.1,
+     "outlier_axis_deg": 90.0
+    }
+   },
+   "tip_deflection": {
+    "flagged": false,
+    "z": 18.84,
+    "deviation_px": -28.27,
+    "deviation_cm": -167.3,
+    "outlier_axis_deg": 205.8,
+    "values_px": [
+     -0.2,
+     -19.36,
+     18.02
+    ]
+   },
+   "radius": {
+    "flagged": true,
+    "z": 37.95,
+    "deviation_px": -113.85,
+    "deviation_cm": -673.8,
+    "outlier_axis_deg": 90.0,
+    "values_px": [
+     900.03,
+     1013.81,
+     1013.95
+    ]
+   },
+   "shortest_is_topmost": true
+  },
+  {
+   "group": "E",
+   "label": "4× 輪轂高（水平 400 m、仰角 14°）",
+   "camera": {
+    "distance_m": 412.31056256176606,
+    "yaw_deg": 0.0,
+    "elevation_deg": 14.036243467926479,
+    "rotor_tilt_deg": 5.0,
+    "cone_deg": 2.5,
+    "prebend_m": 3.0
+   },
+   "rotor_azimuth_deg": 90.0,
+   "truth_apparent_spread": 0.06545090768109744,
+   "truth_spacing_dev_deg": 5.911248799598752,
+   "gate_ok": true,
+   "gate_view": "front",
+   "n_blades": 3,
+   "tip_radius_spread": 0.064,
+   "spacing_dev_deg": 6.155149655050508,
+   "seconds": 2.43,
+   "cm_per_px": 5.9703471905609415,
+   "any_flagged": true,
+   "pose_est": {
+    "elevation_deg": 13.94606133711406,
+    "yaw_deg": -0.016451473256419484,
+    "distance_m": 408.284617542812
+   },
+   "compensated": {
+    "prebend_fit_m": 3.04,
+    "deflection_compensated": true,
+    "radius_compensated": true,
+    "blades_near_tower": [],
+    "tip_deflection": {
+     "flagged": false,
+     "z": 0.96,
+     "deviation_px": -1.44,
+     "deviation_cm": -8.6,
+     "outlier_axis_deg": 333.1
+    },
+    "radius": {
+     "flagged": false,
+     "z": 0.14,
+     "deviation_px": -0.42,
+     "deviation_cm": -2.5,
+     "outlier_axis_deg": 206.9
+    }
+   },
+   "tip_deflection": {
+    "flagged": false,
+    "z": 14.76,
+    "deviation_px": -22.15,
+    "deviation_cm": -132.2,
+    "outlier_axis_deg": 206.9,
+    "values_px": [
+     -0.08,
+     -15.28,
+     13.82
+    ]
+   },
+   "radius": {
+    "flagged": true,
+    "z": 21.16,
+    "deviation_px": -63.47,
+    "deviation_cm": -379.0,
+    "outlier_axis_deg": 90.0,
+    "values_px": [
+     941.71,
+     1004.97,
+     1005.39
+    ]
+   },
+   "shortest_is_topmost": true
+  },
+  {
+   "group": "E",
+   "label": "5× 輪轂高（水平 500 m、仰角 11°）",
+   "camera": {
+    "distance_m": 509.9019513592785,
+    "yaw_deg": 0.0,
+    "elevation_deg": 11.309932474020213,
+    "rotor_tilt_deg": 5.0,
+    "cone_deg": 2.5,
+    "prebend_m": 3.0
+   },
+   "rotor_azimuth_deg": 90.0,
+   "truth_apparent_spread": 0.040259464071890544,
+   "truth_spacing_dev_deg": 4.713981790617737,
+   "gate_ok": true,
+   "gate_view": "front",
+   "n_blades": 3,
+   "tip_radius_spread": 0.039,
+   "spacing_dev_deg": 5.065372804903632,
+   "seconds": 2.44,
+   "cm_per_px": 5.997587444552093,
+   "any_flagged": true,
+   "pose_est": {
+    "elevation_deg": 11.186011026771963,
+    "yaw_deg": 0.05048989074944724,
+    "distance_m": 507.229981778196
+   },
+   "compensated": {
+    "prebend_fit_m": 2.9,
+    "deflection_compensated": true,
+    "radius_compensated": true,
+    "blades_near_tower": [],
+    "tip_deflection": {
+     "flagged": false,
+     "z": 1.24,
+     "deviation_px": -1.86,
+     "deviation_cm": -11.2,
+     "outlier_axis_deg": 207.5
+    },
+    "radius": {
+     "flagged": false,
+     "z": 0.08,
+     "deviation_px": 0.23,
+     "deviation_cm": 1.4,
+     "outlier_axis_deg": 332.5
+    }
+   },
+   "tip_deflection": {
+    "flagged": false,
+    "z": 13.5,
+    "deviation_px": -20.25,
+    "deviation_cm": -121.4,
+    "outlier_axis_deg": 207.5,
+    "values_px": [
+     -0.0,
+     -14.14,
+     12.22
+    ]
+   },
+   "radius": {
+    "flagged": true,
+    "z": 12.72,
+    "deviation_px": -38.16,
+    "deviation_cm": -228.9,
+    "outlier_axis_deg": 90.0,
+    "values_px": [
+     962.3,
+     1000.4,
+     1000.53
+    ]
+   },
+   "shortest_is_topmost": true
+  },
+  {
+   "group": "E",
+   "label": "6× 輪轂高（水平 600 m、仰角 9°）",
+   "camera": {
+    "distance_m": 608.276253029822,
+    "yaw_deg": 0.0,
+    "elevation_deg": 9.462322208025617,
+    "rotor_tilt_deg": 5.0,
+    "cone_deg": 2.5,
+    "prebend_m": 3.0
+   },
+   "rotor_azimuth_deg": 90.0,
+   "truth_apparent_spread": 0.02583865959608143,
+   "truth_spacing_dev_deg": 3.9699887579927804,
+   "gate_ok": true,
+   "gate_view": "front",
+   "n_blades": 3,
+   "tip_radius_spread": 0.025,
+   "spacing_dev_deg": 4.160960513478557,
+   "seconds": 2.41,
+   "cm_per_px": 6.010064732421128,
+   "any_flagged": true,
+   "pose_est": {
+    "elevation_deg": 9.33936672243743,
+    "yaw_deg": 0.06401661411863561,
+    "distance_m": 606.3525386383677
+   },
+   "compensated": {
+    "prebend_fit_m": 2.87,
+    "deflection_compensated": true,
+    "radius_compensated": true,
+    "blades_near_tower": [],
+    "tip_deflection": {
+     "flagged": false,
+     "z": 0.69,
+     "deviation_px": 1.03,
+     "deviation_cm": 6.2,
+     "outlier_axis_deg": 90.0
+    },
+    "radius": {
+     "flagged": false,
+     "z": 0.19,
+     "deviation_px": 0.56,
+     "deviation_cm": 3.4,
+     "outlier_axis_deg": 332.1
+    }
+   },
+   "tip_deflection": {
+    "flagged": false,
+    "z": 11.02,
+    "deviation_px": -16.52,
+    "deviation_cm": -99.3,
+    "outlier_axis_deg": 207.9,
+    "values_px": [
+     0.76,
+     -10.99,
+     10.3
+    ]
+   },
+   "radius": {
+    "flagged": true,
+    "z": 8.07,
+    "deviation_px": -24.22,
+    "deviation_cm": -145.6,
+    "outlier_axis_deg": 90.0,
+    "values_px": [
+     974.24,
+     998.33,
+     998.59
+    ]
+   },
+   "shortest_is_topmost": true
   }
  ]
 }

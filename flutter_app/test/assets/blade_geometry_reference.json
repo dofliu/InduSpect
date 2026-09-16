@@ -142,6 +142,7 @@
  "tower_found": true,
  "tower_angle_deg": -0.016,
  "tower_width_px": 11.0,
+ "tower_x_at_hub_px": 192.02,
  "n_blades": 3,
  "blades": [
   {
