@@ -351,6 +351,53 @@ flutter build apk --debug
 
 ## 變更紀錄
 
+### 2026-09-16（葉片線：站位規範、報告措辭、姿態估計 + 透視補償——SPEC §13-11 決策）
+
+偏軸掃描（`blade_prototype/OFFAXIS_SENSITIVITY.md`）量到正視照的三片互比會把葉片預彎的投影標成一到三公尺的假葉尖偏移，
+雜訊底救不回來。三件一起做：
+
+- **站位規範**：`WtAsset.standingDistanceHint` 由 1.5–2× 改成 **3–4× 輪轂高**（`standingDistanceMinFactor`／`MaxFactor`）——舊規則是仰角
+  27–34°，合成掃描顯示那種站位三片投影半徑離散 > 15%，閘門**一律拒收**；3× 起放行。資產表單提示、引導拍攝「正視全機」的說明同步：
+  站在轉子軸線上、水平 3–4× 輪轂高、用 2x 把轉子填到畫面一半。
+- **報告措辭**：`_analyzeGeometry` 的正視發現，沒補償的一律掛「（正視照三片互比含透視分量：站位未驗證，此數值不是缺陷量，僅供近距離
+  複檢參考）」，補償過的寫「（已依估計站位補償透視（仰角 X°、偏軸 Y°…）；原始三片葉尖偏移 a／b／c px）」；摘要備註說補了或為什麼沒補；
+  `BladeReportBuilder.basisOf` 對 `tip_deflection`／`blade_mismatch` 同步。側視不掛（另一條路）。
+- **姿態估計 + 透視補償**（`blade_pose_service.dart`，對照 `blade_proto/pose.py`）：
+  - `BladeStructure.towerXAtHub`（塔軸外推到輪轂那一列）新增，Python 同步，夾具參考值同步。
+  - 仰角 = (輪轂高 − 1.6 m) ÷ 直線距離，距離 = 35 mm 等效焦距 × 型錄轉子半徑 ÷ 量到的葉長；焦距讀照片 EXIF `FocalLengthIn35mmFilm`
+    （`exifFocal35mm`，`package:image` 解碼時就帶著）。yaw = (塔軸 − 輪轂) ÷ overhang 預設 5 m（**粗估**）。
+  - 補償：留一法擬合預彎 w（`fitPrebend`），葉尖偏移殘差互比；半徑除掉平面比例、減葉尖上風側偏移先驗 6 m，|yaw| > 15° 不補。
+  - `runGeometryPipeline(hubHeightM:, focal35mm:, horizontalDistanceM:)`；`BladeGeometryAnalyzer` typedef 多 `hubHeightM`；`analyzeSession(hubHeightM:)`
+    由畫面傳 `_asset?.hubHeightM`。`metricJson` 多 `perspective_compensated`／`pose`／`prebend_fit_m`／`tip_deflection_raw_px`／`compensation_note`
+    或 `pose_note`。
+  - 交叉驗證夾具 `test/assets/blade_offaxis_scene.png` + `blade_offaxis_reference.json`（`scripts/make_offaxis_fixture.py`）：原始標記 −242 cm
+    → 補償後 −20 cm 不標記、預彎擬合 3.2 m、yaw 估 25° 對真值 20°，Dart 與 Python 同一個結論。
+  - 三條不可退化：沒有姿態就不補（不用預設姿態假裝補過）；原始值一律留在輸出；拍攝閘門仍看原始半徑離散。
+
+### 2026-09-16（葉片線：幾何層 cm/px、接 AiBackend）
+
+**A4 幾何層的尺度**。`geometry.py::compare_blades` 早就會拿 `rotor_radius_m` 由三片葉長中位數反推 cm/px，
+Dart 移植時 `cmPerPx`／`rotorRadiusM` 兩個參數漏掉了，於是 `blade_report_builder.dart` 一直在渲染一個沒有產生端的
+`tip_deflection_cm`。這批補齊：
+
+- `BladeGeometryCompare.compareBlades(..., cmPerPx, rotorRadiusM)`／`sideViewSummary(...)`：尺度規則在 `resolveScale`
+  一處（直接給的優先；否則型錄半徑 ÷ 參考葉長；半徑或葉長不是正數就沒有尺度）。`MetricComparison.outlierDeviationCm`、
+  `BladeComparison.cmPerPx`、側視 `hanging_blade['tip_deflection_cm']`。**只是單位換算，判定一律在 px 上做。**
+- `runGeometryPipeline(bytes, rotorRadiusM:)`；`BladeGeometryAnalyzer` typedef 多一個 `{double? rotorRadiusM}`
+  （測試注入的假分析器要跟著改簽名）；isolate 入口收 record `(bytes, rotorRadiusM)`。
+- `BladeAnalysisService.analyzeSession(rotorRadiusM:)`：畫面傳 `_asset?.rotorDiameterM / 2`。發現的 `metricJson` 多
+  `cm_per_px`、`tip_deflection_cm`、`<metric>_deviation_cm`；描述文字帶「（約 N cm）」。沒填型錄直徑就一個 cm 都沒有，**不猜尺度**。
+- 報告 `valueOf` 多印「葉片長度差 N cm」與「尺度 N cm/px」（cm 是怎麼換的要看得到）。
+- 交叉驗證夾具帶 `rotor_radius_m`：正視合成場景反推 37.51 對真值 37.5 cm/px、側視 15.23 對 15.0（垂掛葉片投影長度含預彎）。
+  Dart 端與 Python 同一個數（正視 ±4%、側視 ±1%，跟著葉長的容忍）。
+
+**A6 葉片線接 `AiBackend`**。`blade_inspection_screen` 的分析改走與定檢線同一個 `AiRouter`：連得上且有金鑰 → 雲端；
+模型就位、裝置夠 → 端側 Gemma；都沒有 → 只留演算法、AI 掛佇列。`analyzeSession(analyzer:, aiSource:)` 三條規則：
+①端側判讀的描述冠「【離線初判】」、`metricJson['ai_source'] = 'local_llm'`；②**來源留在 `geminiOfflinePending`**——它是
+初判不是終判，補跑佇列連線後拿雲端結果覆核；③覆核的下限是**演算法**的等級（另存 `algorithm_severity`），不是端側抬上去的那個
+（`algorithmFloorOf` 在補跑前還原，prompt 帶給雲端的數值也是演算法的）。畫面上待補提示分兩句：「離線初判…連線後由雲端 AI 覆核」
+與原本的「AI 解讀待補」。**實機未跑**，與 Tier 1b 其餘部分一樣等手機。
+
 ### 2026-09-16（Tier 1b 端側 AI：桌面能做的那一半）
 
 `LAUNCH_PLAN.md` §5.3 的四層裡，Tier 0 判定與 Tier 1a OCR 早就做完，這一批補**Tier 1b 端側 VLM 的骨架**：

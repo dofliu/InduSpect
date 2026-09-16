@@ -38,7 +38,8 @@ sg = seg.segment_turbine(img, sky_mode='local', sky_model=model)
 st = seg.find_structure(sg.mask, horizon_y=sg.horizon_y)
 
 profiles = profiles_from_structure(st)
-cmp_ = compare_blades(profiles)
+# 帶型錄轉子半徑：Python 由三片葉長中位數反推 cm/px，Dart 端要得到同一個數（A4）
+cmp_ = compare_blades(profiles, rotor_radius_m=spec.rotor_radius_m)
 verdict = assess_capture(sg, st)
 
 lab = cv2.cvtColor(img, cv2.COLOR_BGR2Lab)
@@ -71,6 +72,8 @@ ref = {
     'tower_found': bool(st.tower_found),
     'tower_angle_deg': round(float(st.tower_angle_deg), 3),
     'tower_width_px': round(float(st.tower_width_px), 2),
+    # 塔軸外推到輪轂那一列的 x（姿態估計的 yaw 線索）；正視合成照它應該就在輪轂正下方
+    'tower_x_at_hub_px': None if st.tower_x_at_hub_px is None else round(float(st.tower_x_at_hub_px), 2),
     'n_blades': len(st.blades),
     'blades': sorted([
         {'tip_radius_px': round(float(b.tip_radius_px), 2),
@@ -89,6 +92,8 @@ ref = {
     'comparison': {
         'n_blades': cmp_['n_blades'],
         'any_flagged': bool(cmp_['any_flagged']),
+        'rotor_radius_m': spec.rotor_radius_m,
+        'cm_per_px': round(float(cmp_['cm_per_px']), 5),
         'metrics': {c['metric']: {'z': round(float(c['z']), 3),
                                   'others_spread': round(float(c['others_spread']), 4),
                                   'outlier_deviation': round(float(c['outlier_deviation']), 4),
@@ -107,6 +112,7 @@ ref = {
         'hub': [round(float(truth['hub'][0]), 2), round(float(truth['hub'][1]), 2)],
         'rotor_radius_px': round(float(truth['rotor_radius_px']), 2),
         'mask_area_frac': round(float((truth['mask'] > 0).mean()), 5),
+        'cm_per_px': spec.cm_per_px,
     },
 }
 # 一片有真實葉尖偏移的情境：只存數值不存第二張 PNG。
@@ -120,7 +126,7 @@ sg_d = seg.segment_turbine(img_d, sky_mode='local',
                            sky_model=seg.fit_local_sky(img_d, grid_step=GRID_STEP))
 st_d = seg.find_structure(sg_d.mask, horizon_y=sg_d.horizon_y)
 pr_d = profiles_from_structure(st_d)
-cmp_d = compare_blades(pr_d)
+cmp_d = compare_blades(pr_d, rotor_radius_m=spec_d.rotor_radius_m)
 ref['deflected'] = {
     '_note': '第二片注入 900 cm 葉尖偏移（24 px @ 37.5 cm/px）；不存 PNG，只存數值',
     'profiles': [
@@ -131,9 +137,12 @@ ref['deflected'] = {
          'mean_width_px': round(float(pr.mean_width_px), 4)}
         for pr in pr_d],
     'any_flagged': bool(cmp_d['any_flagged']),
+    'rotor_radius_m': spec_d.rotor_radius_m,
+    'cm_per_px': round(float(cmp_d['cm_per_px']), 5),
     'metrics': {c['metric']: {'z': round(float(c['z']), 3),
                               'outlier_index': int(c['outlier_index']),
                               'outlier_deviation': round(float(c['outlier_deviation']), 4),
+                              'outlier_deviation_cm': round(float(c['outlier_deviation_cm']), 3),
                               'others_spread': round(float(c['others_spread']), 4),
                               'flagged': bool(c['flagged'])}
                 for c in cmp_d['comparisons']},

@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:induspect_ai/models/wt_capture_session.dart';
 import 'package:induspect_ai/models/wt_detection.dart';
+import 'package:induspect_ai/services/ai/ai_backend.dart';
 import 'package:induspect_ai/services/blade_acoustic_service.dart';
 import 'package:induspect_ai/services/blade_analysis_service.dart';
 import 'package:induspect_ai/services/blade_dynamics_service.dart';
@@ -73,7 +74,7 @@ void main() {
     List<String> reasons = const [],
     List<MetricComparison> comparisons = const [],
   }) =>
-      (Uint8List b) async => BladeGeometryOutcome(
+      (Uint8List b, {double? rotorRadiusM, double? hubHeightM}) async => BladeGeometryOutcome(
             ok: ok,
             reasons: reasons,
             metrics: const {'n_blades': 3},
@@ -105,7 +106,8 @@ void main() {
   BladeProfile sideProfile(int index, double axisDeg) =>
       makeProfile(index, axisDeg, 300.0);
 
-  MetricComparison flagged(String metric, int index, double dev) =>
+  MetricComparison flagged(String metric, int index, double dev,
+          {double? devCm}) =>
       MetricComparison(
         metric: metric,
         values: const [0.0, 0.0, 20.0],
@@ -115,6 +117,7 @@ void main() {
         othersSpread: 0.2,
         z: 13.0,
         flagged: true,
+        outlierDeviationCm: devCm,
       );
 
   Future<BladeAnalysisOutcome> run(
@@ -125,10 +128,16 @@ void main() {
     BladeAcousticAnalyzer? acoustic,
     BladeFrameExtractor? frameExtractor,
     bool useAi = false,
+    double? rotorRadiusM,
+    double? hubHeightM,
+    AiSource aiSource = AiSource.cloud,
   }) =>
       BladeAnalysisService.analyzeSession(
         session: session(media),
         useAi: useAi,
+        rotorRadiusM: rotorRadiusM,
+        hubHeightM: hubHeightM,
+        aiSource: aiSource,
         loadBytes: (_) async => bytes,
         surface: surface ?? fakeSurface(1.0),
         analyzer: ai,
@@ -368,7 +377,7 @@ void main() {
           levels: const [0.0, 0.1, 0.2],
         ),
         frameExtractor: (_, __) async => bytes,
-        geometry: (_) async {
+        geometry: (_, {double? rotorRadiusM, double? hubHeightM}) async {
           final r = radii[call % radii.length];
           call++;
           return BladeGeometryOutcome(ok: true, profiles: [
@@ -394,7 +403,7 @@ void main() {
       var called = 0;
       await run(
         [WtMedia(path: 'front.jpg', view: WtMediaView.front)],
-        geometry: (b) async {
+        geometry: (b, {double? rotorRadiusM, double? hubHeightM}) async {
           called++;
           return const BladeGeometryOutcome(ok: true);
         },
@@ -586,6 +595,128 @@ void main() {
           reason: 'detectionId 要含量名，否則兩筆會互相覆蓋');
     });
 
+    test('★ 型錄轉子半徑傳到幾何層；有 cm 的互比結果寫進 metricJson 與描述（A4）', () async {
+      double? seen;
+      final out = await run(
+        [WtMedia(path: 'front.jpg', view: WtMediaView.front, qualityJson: const {'ok': true})],
+        rotorRadiusM: 60.0,
+        geometry: (b, {double? rotorRadiusM, double? hubHeightM}) async {
+          seen = rotorRadiusM;
+          return BladeGeometryOutcome(
+            ok: true,
+            metrics: const {'n_blades': 3, 'cm_per_px': 11.3},
+            cmPerPx: 11.3,
+            comparisons: [
+              flagged('tip_deflection_px', 2, 20.0, devCm: 226.0),
+              flagged('radius_px', 0, -24.3, devCm: -275.0),
+            ],
+          );
+        },
+      );
+      expect(seen, 60.0, reason: '整機照那條要把型錄半徑帶給幾何層');
+      final tip = out.detections.singleWhere((d) => d.defectClass == 'tip_deflection');
+      expect(tip.metricJson['tip_deflection_px'], 20.0);
+      expect(tip.metricJson['tip_deflection_cm'], 226.0);
+      expect(tip.metricJson['tip_deflection_px_deviation_cm'], 226.0);
+      expect(tip.metricJson['cm_per_px'], 11.3, reason: 'cm 是怎麼換的要留在紀錄裡');
+      expect(tip.aiDescription, contains('226 cm'));
+      final len = out.detections.singleWhere((d) => d.defectClass == 'blade_mismatch');
+      expect(len.metricJson['radius_px_deviation_cm'], -275.0);
+      expect(len.aiDescription, contains('275 cm'));
+    });
+
+    test('★ 已補償透視的發現：描述與摘要寫補了多少；輪轂高度傳到幾何層', () async {
+      double? seenHub;
+      final out = await run(
+        [WtMedia(path: 'front.jpg', view: WtMediaView.front, qualityJson: const {'ok': true})],
+        rotorRadiusM: 60.0,
+        hubHeightM: 100.0,
+        geometry: (b, {double? rotorRadiusM, double? hubHeightM}) async {
+          seenHub = hubHeightM;
+          return BladeGeometryOutcome(
+            ok: true,
+            metrics: const {
+              'n_blades': 3,
+              'view': 'front',
+              'perspective_compensated': true,
+              'pose': {'elevation_deg': 16.9, 'yaw_deg': 24.6, 'usable': true},
+              'prebend_fit_m': 3.2,
+              'tip_deflection_raw_px': [4.2, -5.9, 2.7],
+              'compensation_note': '|yaw| 25° 超過 15°：半徑未補償',
+            },
+            comparisons: [flagged('radius_px', 1, 21.5, devCm: 554.0)],
+          );
+        },
+      );
+      expect(seenHub, 100.0);
+      final d = out.detections.single;
+      expect(d.aiDescription, contains('已依估計站位補償透視'));
+      expect(d.aiDescription, contains('仰角 17°'));
+      expect(d.aiDescription, contains('偏軸 25°'));
+      expect(d.aiDescription, contains('原始三片葉尖偏移 4.2／-5.9／2.7 px'));
+      expect(d.aiDescription, isNot(contains('不是缺陷量')));
+      expect(out.notes.join(), contains('已依估計站位補償透視'));
+      expect(out.notes.join(), contains('預彎擬合 3.2 m'));
+      expect(out.notes.join(), contains('半徑未補償'));
+    });
+
+    test('★ 沒補償的正視發現：明說含透視分量、不是缺陷量，摘要說為什麼沒補', () async {
+      final out = await run(
+        [WtMedia(path: 'front.jpg', view: WtMediaView.front, qualityJson: const {'ok': true})],
+        geometry: (b, {double? rotorRadiusM, double? hubHeightM}) async =>
+            BladeGeometryOutcome(
+          ok: true,
+          metrics: const {
+            'n_blades': 3,
+            'view': 'front',
+            'perspective_compensated': false,
+            'pose_note': '沒有型錄轉子直徑與輪轂高度，無法估相機站位',
+          },
+          comparisons: [flagged('tip_deflection_px', 2, 20.0)],
+        ),
+      );
+      final d = out.detections.single;
+      expect(d.aiDescription, contains('含透視分量'));
+      expect(d.aiDescription, contains('不是缺陷量'));
+      expect(d.severity, 2, reason: '措辭改了，等級規則不變');
+      expect(out.notes.join(), contains('未補償透視'));
+      expect(out.notes.join(), contains('無法估相機站位（沒有型錄轉子直徑與輪轂高度'));
+    });
+
+    test('側視照的發現不掛透視那句（側視另一條路）', () async {
+      final out = await run(
+        [WtMedia(path: 'side.jpg', view: WtMediaView.side, qualityJson: const {'ok': true})],
+        geometry: (b, {double? rotorRadiusM, double? hubHeightM}) async =>
+            BladeGeometryOutcome(
+          ok: true,
+          metrics: const {'n_blades': 2, 'view': 'side', 'hanging_tip_deflection_px': 12.9},
+          comparisons: const [],
+        ),
+      );
+      expect(out.detections, isEmpty);
+      expect(out.notes.join(), isNot(contains('透視')));
+    });
+
+    test('沒有型錄半徑：幾何層收到 null，發現裡沒有任何 cm 欄位', () async {
+      Object? seen = 'unset';
+      final out = await run(
+        [WtMedia(path: 'front.jpg', view: WtMediaView.front, qualityJson: const {'ok': true})],
+        geometry: (b, {double? rotorRadiusM, double? hubHeightM}) async {
+          seen = rotorRadiusM;
+          return BladeGeometryOutcome(
+            ok: true,
+            metrics: const {'n_blades': 3},
+            comparisons: [flagged('tip_deflection_px', 2, 20.0)],
+          );
+        },
+      );
+      expect(seen, isNull);
+      final d = out.detections.single;
+      expect(d.metricJson.containsKey('tip_deflection_cm'), isFalse);
+      expect(d.metricJson.containsKey('cm_per_px'), isFalse);
+      expect(d.aiDescription, isNot(contains('cm')));
+    });
+
     test('側視照也走幾何層', () async {
       final out = await run(
         [WtMedia(path: 'side.jpg', view: WtMediaView.side, qualityJson: const {'ok': true})],
@@ -593,6 +724,98 @@ void main() {
       );
       expect(out.analyzedCount, 1);
       expect(out.detections.single.layer, WtLayer.geometry);
+    });
+  });
+
+  group('端側 AI（Tier 1b）判的葉片解讀（A6）', () {
+    BladeImageAnalyzer stub(Map<String, dynamic> reply) =>
+        ({required String prompt, required Uint8List imageBytes}) async => reply;
+
+    test('★ 端側判讀：標「離線初判」、來源仍待雲端、演算法等級另存起來', () async {
+      final out = await run(
+        [segment('a.jpg')],
+        surface: fakeSurface(1.7), // 前後緣比 1.7：演算法 severity 2（列入追蹤）
+        useAi: true,
+        aiSource: AiSource.localLlm,
+        ai: stub({
+          'defect_class': 'leading_edge_erosion',
+          'severity': 4,
+          'confidence': 0.6,
+          'description': '前緣可見剝落',
+        }),
+      );
+      final d = out.detections.single;
+      expect(d.source, WtDetectionSource.geminiOfflinePending,
+          reason: '端側只是初判：連線後補跑佇列要拿雲端結果覆核，所以它得留在佇列裡');
+      expect(d.aiDescription, startsWith('【離線初判】'));
+      expect(d.aiDescription, contains('前緣可見剝落'));
+      expect(d.severity, 4, reason: '端側跟雲端一樣受「只能往上加」約束，抬到 4 可以');
+      expect(d.metricJson['ai_source'], 'local_llm');
+      expect(d.metricJson['algorithm_severity'], 2,
+          reason: '覆核時的下限是演算法的 2，不是端側抬上去的 4');
+      expect(d.metricJson['le_over_te_rms_ratio'], isNotNull);
+      expect(out.notes.join(), contains('裝置端模型'));
+      expect(out.notes.join(), contains('雲端 AI 覆核'));
+    });
+
+    test('雲端判讀（預設）：形狀與以前一樣，多一個 ai_source = cloud', () async {
+      final out = await run(
+        [segment('a.jpg')],
+        surface: fakeSurface(1.7),
+        useAi: true,
+        ai: stub({'defect_class': 'leading_edge_erosion', 'severity': 3}),
+      );
+      final d = out.detections.single;
+      expect(d.source, WtDetectionSource.gemini);
+      expect(d.aiDescription, isNot(contains('離線初判')));
+      expect(d.metricJson['ai_source'], 'cloud');
+      expect(d.metricJson.containsKey('algorithm_severity'), isFalse);
+      expect(out.notes.join(), isNot(contains('裝置端模型')));
+    });
+
+    test('端側說「不是缺陷」也不能把演算法的等級拿掉；一樣標離線初判', () async {
+      final out = await run(
+        [segment('a.jpg')],
+        surface: fakeSurface(1.7),
+        useAi: true,
+        aiSource: AiSource.localLlm,
+        ai: stub({'defect_class': 'none', 'normal_structure_ruled_out': '像是 LEP 邊緣'}),
+      );
+      final d = out.detections.single;
+      expect(d.severity, 2);
+      expect(d.defectClass, 'leading_edge_erosion');
+      expect(d.aiDescription, startsWith('【離線初判】'));
+      expect(d.aiDescription, contains('仍列為待人工確認'));
+    });
+
+    test('algorithmFloorOf：把端側抬過的那筆還原成演算法那一筆；沒抬過的原樣回傳', () {
+      final local = WtDetection(
+        detectionId: 'd',
+        sessionId: 's',
+        layer: WtLayer.surface,
+        defectClass: 'leading_edge_erosion',
+        severity: 4,
+        confidence: 0.6,
+        metricJson: const {
+          'le_over_te_rms_ratio': 5.2,
+          'ai_source': 'local_llm',
+          'algorithm_severity': 2,
+          'normal_structure_ruled_out': 'x',
+        },
+        source: WtDetectionSource.geminiOfflinePending,
+        aiDescription: '【離線初判】前緣可見剝落',
+      );
+      final floor = BladeAnalysisService.algorithmFloorOf(local);
+      expect(floor.severity, 2);
+      expect(floor.confidence, isNull);
+      expect(floor.aiDescription, isNull);
+      expect(floor.metricJson['le_over_te_rms_ratio'], 5.2);
+      expect(floor.metricJson.containsKey('algorithm_severity'), isFalse);
+      expect(floor.metricJson.containsKey('ai_source'), isFalse);
+      expect(floor.source, WtDetectionSource.geminiOfflinePending);
+      final plain = WtDetection(
+          detectionId: 'p', sessionId: 's', layer: WtLayer.surface, severity: 3);
+      expect(identical(BladeAnalysisService.algorithmFloorOf(plain), plain), isTrue);
     });
   });
 

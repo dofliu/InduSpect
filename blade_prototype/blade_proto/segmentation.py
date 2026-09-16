@@ -98,6 +98,9 @@ class TurbineStructure:
     tower_width_px: float
     blades: list[BladeComponent] = field(default_factory=list)
     notes: list[str] = field(default_factory=list)
+    # 塔架軸外推到輪轂那一列的 x（px）。偏軸拍攝時輪轂中心會離開塔軸（機艙把轉子往上風側
+    # 推了 overhang 那麼遠），`pose.estimate_pose` 拿 hub_x 與它的差估 yaw。無塔架時 None。
+    tower_x_at_hub_px: float | None = None
 
 
 # ---------------------------------------------------------------- 天空模型
@@ -863,10 +866,14 @@ def find_structure(
     comps, given = _split_components(mask, hub, hub_r, min_area, tower_axis)
     tower, tower_dir, blades = _classify(comps, hub, hub_r, max_blades, given)
     tower_angle, tower_width = 0.0, 0.0
+    tower_x_at_hub: float | None = None
     if tower is not None:
         ax = tower_dir if tower_dir[1] > 0 else -tower_dir
         tower_angle = float(np.degrees(np.arctan2(ax[0], ax[1])))
         tower_width = _median_row_width(tower.xs, tower.ys)
+        if ax[1] > 1e-6:
+            cx, cy = float(tower.xs.mean()), float(tower.ys.mean())
+            tower_x_at_hub = cx + (float(hub[1]) - cy) * float(ax[0] / ax[1])
     else:
         notes.append("未找到塔架元件（畫面可能未含塔架，或塔架被亮天空吃掉）")
 
@@ -883,5 +890,5 @@ def find_structure(
     return TurbineStructure(
         hub=(float(hub[0]), float(hub[1])), hub_radius_px=float(hub_r), hub_refined=refined,
         tower_found=tower is not None, tower_angle_deg=tower_angle, tower_width_px=tower_width,
-        blades=out, notes=notes,
+        blades=out, notes=notes, tower_x_at_hub_px=tower_x_at_hub,
     )

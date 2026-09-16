@@ -6,11 +6,17 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
+import 'package:provider/provider.dart';
 import 'package:uuid/uuid.dart';
 
 import '../models/wt_asset.dart';
 import '../models/wt_capture_session.dart';
 import '../models/wt_detection.dart';
+import '../providers/settings_provider.dart';
+import '../services/ai/ai_backend.dart';
+import '../services/ai/ai_router.dart';
+import '../services/ai/flutter_gemma_runner.dart';
+import '../services/ai/local_model_manager.dart';
 import '../services/blade_acoustic_service.dart';
 import '../services/blade_analysis_service.dart';
 import '../services/blade_audio_decode.dart';
@@ -18,7 +24,6 @@ import '../services/blade_audio_recorder.dart';
 import '../services/blade_report_builder.dart';
 import '../services/blade_report_export.dart';
 import '../services/blade_video_frames.dart';
-import '../services/connectivity_service.dart';
 import '../services/database_service.dart';
 import '../services/location_service.dart';
 import 'blade_capture_guide_screen.dart';
@@ -487,6 +492,23 @@ class _BladeInspectionScreenState extends State<BladeInspectionScreen> {
 
   // ── 第三步：分析 ────────────────────────────────────────────
 
+  /// 這一次分析的 AI 後端。null = 沒有可用的 AI（離線且沒有端側模型），演算法照跑、
+  /// AI 解讀掛進補跑佇列。任何一步炸掉都當 null，不讓分析整個失敗。
+  Future<AiBackend?> _resolveAi() async {
+    if (!mounted) return null;
+    try {
+      final router = AiRouter(
+        settings: context.read<SettingsProvider>(),
+        localModels: context.read<LocalModelManager>(),
+        localRunnerFactory: FlutterGemmaRunner.runner,
+      );
+      return (await router.resolve()).backend;
+    } catch (e) {
+      debugPrint('葉片線 AI 後端解析失敗，走離線路徑：$e');
+      return null;
+    }
+  }
+
   Future<void> _analyze() async {
     final session = _session;
     if (session == null) return;
@@ -495,13 +517,19 @@ class _BladeInspectionScreenState extends State<BladeInspectionScreen> {
       _progress = '正在分析（照片與音軌）…';
     });
     try {
-      // 廠區常常有 AP 沒 uplink，所以先探可達性再決定要不要等 AI
-      // `checkConnection` 而不是 `isOnline`：後者只看網路介面，
-      // 廠區常常有 AP 沒 uplink——那種情況要走離線路徑，不要空等 AI 逾時
-      final online = await ConnectivityService().checkConnection();
+      // 與定檢線同一條選層規則（`AiRouter`）：連得上且有金鑰 → 雲端；否則模型就位、
+      // 裝置夠 → 端側 Gemma（結果標「離線初判」、連線後雲端覆核）；都沒有 → 只留演算法。
+      // 路由器自己會探可達性（廠區常有 AP 沒 uplink，要走離線路徑不要空等 AI 逾時）。
+      final backend = await _resolveAi();
       final outcome = await BladeAnalysisService.analyzeSession(
         session: session,
-        useAi: online,
+        useAi: backend != null,
+        analyzer: backend?.analyzeImageWithPrompt,
+        aiSource: backend?.source ?? AiSource.cloud,
+        // 型錄轉子直徑有填才有 cm 值；沒填就只有 px，不猜尺度。
+        // 輪轂高度 + 照片 EXIF 焦距 → 估站位、補償正視照的透視假訊號
+        rotorRadiusM: _asset?.rotorRadiusM,
+        hubHeightM: _asset?.hubHeightM,
         // 裝置端抽幀：目前只有 Android 有原生實作；其他平台回 null，
         // 服務層照原本的路寫「尚未接上」而不是炸掉
         frameExtractor: BladeVideoFrames.extractorOrNull,
@@ -753,7 +781,8 @@ class _BladeInspectionScreenState extends State<BladeInspectionScreen> {
               if (_weatherNote != null && _weatherNote!.isNotEmpty) '天氣：$_weatherNote',
               if (_inspector != null && _inspector!.isNotEmpty) '人員：$_inspector',
               if (_asset?.standingDistanceHint != null)
-                '全機照建議站在 ${_asset!.standingDistanceHint} 外（1.5–2 倍輪轂高度）',
+                '全機照請站在轉子軸線上、水平 ${_asset!.standingDistanceHint} 外（3–4 倍輪轂高度；'
+                '再近閘門會因三片透視半徑差拒收）',
             ].join('\n')),
             isThreeLine: true,
             trailing: IconButton(
@@ -1003,10 +1032,13 @@ class _BladeInspectionScreenState extends State<BladeInspectionScreen> {
                   style: const TextStyle(fontSize: 12, color: Colors.black54)),
             ],
             if (d.source == WtDetectionSource.geminiOfflinePending)
-              const Padding(
-                padding: EdgeInsets.only(top: 4),
-                child: Text('（AI 解讀待補：離線時只有演算法的數值）',
-                    style: TextStyle(fontSize: 11, color: Colors.orange)),
+              Padding(
+                padding: const EdgeInsets.only(top: 4),
+                child: Text(
+                    d.metricJson['ai_source'] == AiSource.localLlm.key
+                        ? '（離線初判：由裝置端 AI 產生，連線後由雲端 AI 覆核）'
+                        : '（AI 解讀待補：離線時只有演算法的數值）',
+                    style: const TextStyle(fontSize: 11, color: Colors.orange)),
               ),
             if (d.mediaPath != null) ...[
               const SizedBox(height: 8),
@@ -1170,7 +1202,7 @@ class _AssetDialogState extends State<_AssetDialog> {
                 keyboardType: TextInputType.number,
                 decoration: const InputDecoration(
                   labelText: '輪轂高度（m）',
-                  hintText: '全機照要站在 1.5–2 倍輪轂高度外，填了會提示距離',
+                  hintText: '全機照要站在 3–4 倍輪轂高度外，填了會提示距離並用來估相機仰角',
                 ),
               ),
             ],

@@ -1,0 +1,169 @@
+{
+ "_readme": "由 blade_prototype/scripts/make_offaxis_fixture.py 產生，勿手改。偏軸透視 + 姿態補償（SPEC §13-11）的 Dart 交叉驗證：同一張圖、同一個結論。",
+ "size": [
+  600,
+  800
+ ],
+ "cm_per_px_truth": 24.0,
+ "rotor_radius_m": 60.0,
+ "hub_height_m": 100.0,
+ "focal_35mm": 59.2927,
+ "camera_truth": {
+  "distance_m": 316.2278,
+  "yaw_deg": 20.0,
+  "elevation_deg": 18.4349,
+  "rotor_tilt_deg": 5.0,
+  "cone_deg": 2.5,
+  "prebend_m": 3.0
+ },
+ "nacelle_overhang_truth_m": 6.0,
+ "overhang_prior_m": 5.0,
+ "tip_offset_prior_m": 6.0,
+ "structure": {
+  "hub": [
+   300.5278,
+   336.5062
+  ],
+  "tower_found": true,
+  "tower_x_at_hub_px": 308.6475,
+  "n_blades": 3,
+  "axis_angles_deg": [
+   90.422,
+   210.8244,
+   336.9096
+  ],
+  "radii_px": [
+   226.5026,
+   251.164,
+   232.8032
+  ],
+  "tip_deflection_px": [
+   4.2295,
+   -5.9382,
+   2.6712
+  ]
+ },
+ "capture_verdict": {
+  "ok": true,
+  "view": "front",
+  "tip_radius_spread": 0.106
+ },
+ "raw": {
+  "cm_per_px": 25.7728,
+  "metrics": {
+   "tip_deflection_px": {
+    "flagged": true,
+    "z": 6.259,
+    "outlier_index": 1,
+    "outlier_deviation": -9.3885,
+    "outlier_deviation_cm": -241.9696
+   },
+   "radius_px": {
+    "flagged": true,
+    "z": 7.1704,
+    "outlier_index": 1,
+    "outlier_deviation": 21.5111,
+    "outlier_deviation_cm": 554.4011
+   },
+   "mean_width_px": {
+    "flagged": false,
+    "z": 0.8771,
+    "outlier_index": 2,
+    "outlier_deviation": 1.3157,
+    "outlier_deviation_cm": 33.9087
+   },
+   "residual_rms_px": {
+    "flagged": false,
+    "z": 0.1281,
+    "outlier_index": 0,
+    "outlier_deviation": 0.096,
+    "outlier_deviation_cm": 2.4754
+   }
+  }
+ },
+ "pose_estimate": {
+  "elevation_deg": 16.9109,
+  "yaw_deg": 24.6404,
+  "distance_m": 338.2786,
+  "rotor_tilt_deg": 5.0,
+  "elevation_method": "focal",
+  "yaw_method": "tower_offset",
+  "hub_offset_m": 2.0846,
+  "notes": [
+   "yaw 由塔軸偏移 +2.08 m ÷ overhang 5.0 m（預設值，粗估）"
+  ],
+  "usable": true
+ },
+ "compensated": {
+  "prebend_fit_m": 3.2182,
+  "prebend_fit_ok": true,
+  "deflection_compensated": true,
+  "tip_offset_prior_m": 6.0,
+  "radius_compensated": false,
+  "deflection_basis_px_per_m": [
+   1.4882,
+   -1.8838,
+   0.7306
+  ],
+  "radius_ratios": [
+   0.9228,
+   1.0167,
+   1.0
+  ],
+  "radius_along_px_per_m": [
+   1.7518,
+   1.2181,
+   -1.6161
+  ],
+  "tip_deflection_raw_px": [
+   4.2295,
+   -5.9382,
+   2.6712
+  ],
+  "tip_deflection_compensated_px": [
+   -0.5598,
+   0.1242,
+   0.3202
+  ],
+  "radius_raw_px": [
+   226.5026,
+   251.164,
+   232.8032
+  ],
+  "radius_compensated_px": [
+   234.0571,
+   239.8401,
+   242.4999
+  ],
+  "any_flagged": true,
+  "cm_per_px": 25.7728,
+  "blades_near_tower": [],
+  "note": "|yaw| 25° 超過 15°，半徑的平面比例對 yaw 誤差太敏感：半徑未補償"
+ },
+ "compensated_metrics": {
+  "tip_deflection_px": {
+   "flagged": false,
+   "z": 0.5213,
+   "outlier_index": 0,
+   "outlier_deviation": -0.782,
+   "outlier_deviation_cm": -20.1531,
+   "values": [
+    -0.5598,
+    0.1242,
+    0.3202
+   ]
+  },
+  "radius_px": {
+   "flagged": true,
+   "z": 7.1704,
+   "outlier_index": 1,
+   "outlier_deviation": 21.5111,
+   "outlier_deviation_cm": 554.4011,
+   "values": [
+    226.5026,
+    251.164,
+    232.8032
+   ]
+  }
+ }
+}

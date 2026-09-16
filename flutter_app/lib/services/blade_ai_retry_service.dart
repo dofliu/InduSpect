@@ -167,6 +167,9 @@ class BladeAiRetryService {
         continue;
       }
 
+      // 端側初判過的那筆要先還原成演算法那一筆：覆核的下限是演算法的等級，
+      // 不是端側模型抬上去的那個；prompt 帶給雲端的數值也是演算法的，不含端側的判讀
+      final algo = BladeAnalysisService.algorithmFloorOf(d);
       try {
         final ai = await BladeAiService.interpret(
           detectionId: d.detectionId,
@@ -176,11 +179,11 @@ class BladeAiRetryService {
           bladeLabel: d.blade,
           zone: d.zone,
           mediaPath: path,
-          algorithmMetrics: d.metricJson,
+          algorithmMetrics: algo.metricJson,
           zoom: media.zoom,
           analyzer: analyzer,
         );
-        await s.save(BladeAnalysisService.mergeAlgorithmAndAi(d, ai));
+        await s.save(BladeAnalysisService.mergeAlgorithmAndAi(algo, ai));
         completed++;
       } catch (e) {
         debugPrint('葉片 AI 補跑失敗（${d.detectionId}）：$e');

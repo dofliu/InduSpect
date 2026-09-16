@@ -93,6 +93,8 @@ class BladeReportBuilder {
     add('pit_count', '凹坑', digits: 0, unit: ' 處');
     add('tip_deflection_px', '葉尖偏移', digits: 1, unit: ' px');
     add('tip_deflection_cm', '葉尖偏移', digits: 0, unit: ' cm');
+    add('radius_px_deviation_cm', '葉片長度差', digits: 0, unit: ' cm');
+    add('mean_width_px_deviation_cm', '弦寬差', digits: 0, unit: ' cm');
     add('rpm', '轉速', digits: 1, unit: ' rpm');
     add('rpm_from_audio', '音軌轉速', digits: 1, unit: ' rpm');
     add('band_level_db_deviation', '寬頻位準高出', digits: 1, unit: ' dB');
@@ -101,6 +103,8 @@ class BladeReportBuilder {
     add('tonal_prominence_db', '哨音突出', digits: 1, unit: ' dB');
     add('tip_radius_deviation_px', '葉尖半徑差', digits: 1, unit: ' px');
     add('envelope_snr_db', '包絡訊噪比', digits: 1, unit: ' dB');
+    // cm 值是怎麼換的要看得到：型錄轉子半徑 ÷ 量到的葉長。沒有它就沒有任何 cm 值。
+    add('cm_per_px', '尺度', digits: 2, unit: ' cm/px');
     if (d.confidence != null) {
       bits.add('信賴度 ${(d.confidence! * 100).toStringAsFixed(0)}%');
     }
@@ -115,7 +119,11 @@ class BladeReportBuilder {
         return '同一張照片內前緣與後緣互比，rms 比 ≥ 2 且往內凹 p95 ≥ 3× 乾淨值';
       case 'tip_deflection':
       case 'blade_mismatch':
-        return '三片同批同型，同一轉子位置的剪影應一致；偏差 ≥ 3× 量測雜訊底';
+        // 正視照的透視：預彎在偏軸／仰拍下會被投影成假的葉尖偏移（OFFAXIS_SENSITIVITY.md）。
+        // 補過就寫補過；沒補就明說這不是缺陷量。
+        final compensated = d.metricJson['perspective_compensated'] == true;
+        return '三片同批同型，同一轉子位置的剪影應一致；偏差 ≥ 3× 量測雜訊底'
+            '${compensated ? '；已依估計站位（輪轂高度 + 照片焦距）補償透視' : '；正視照含透視分量，站位未驗證前僅供近距離複檢參考'}';
       case 'capture_quality':
         return '拍攝品質閘門：結構定位可信度不足，數值不可採信';
       case 'blade_noise':

@@ -42,13 +42,17 @@ def main() -> int:
     if not verdict.ok or verdict.metrics.get('view') != 'side':
         raise SystemExit(f'合成側視照沒有被判成側視放行：{verdict.to_dict()}')
     profs = profiles_from_structure(st)
-    summary = side_view_summary(profs, verdict.metrics['hanging_blade_index'])
+    # 帶型錄轉子半徑：由垂掛那片的投影長度反推 cm/px（A4），Dart 端要得到同一個數
+    summary = side_view_summary(profs, verdict.metrics['hanging_blade_index'],
+                                rotor_radius_m=spec.rotor_radius_m)
 
     ref = {
         '_readme': '由 blade_prototype/scripts/make_side_fixture.py 產生，勿手改。'
                    '側視閘門（§13-12）的 Dart 交叉驗證：同一張圖、同一個結論。',
         'size': [img.shape[1], img.shape[0]],
         'cm_per_px': spec.cm_per_px,
+        'rotor_radius_m': spec.rotor_radius_m,
+        'cm_per_px_estimated': round(float(summary['cm_per_px']), 5),
         'side_view_max_tilt_deg': SIDE_VIEW_MAX_TILT_DEG,
         'n_blades': len(st.blades),
         'tip_angles_deg': [round(float(b.tip_angle_deg), 2) for b in st.blades],

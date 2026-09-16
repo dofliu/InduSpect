@@ -130,12 +130,20 @@ class WtAsset {
     return copyWith(capturePoints: next);
   }
 
-  /// 規格 §10.2：全機照站在約 1.5–2 倍輪轂高度外拍。沒有輪轂高度就回 null，不猜。
+  /// 全機照的站位（規格 §10.2，2026-09-16 依 `OFFAXIS_SENSITIVITY.md` 改）：
+  /// **水平距離 3–4 倍輪轂高度**（仰角 14–18°）、站在轉子軸線上。
+  /// 舊規則 1.5–2 倍是仰角 27–34°，那種站位三片半徑離散 > 15%，拍攝閘門**一定拒收**；
+  /// 3 倍以外閘門放行，透視殘量再由姿態估計補償。沒有輪轂高度就回 null，不猜。
   String? get standingDistanceHint {
     final h = hubHeightM;
     if (h == null || h <= 0) return null;
-    return '${(h * 1.5).round()}–${(h * 2).round()} m';
+    return '${(h * standingDistanceMinFactor).round()}–${(h * standingDistanceMaxFactor).round()} m';
   }
+
+  /// 站位下限／建議上限（× 輪轂高度）。下限 3 = 仰角約 18°：合成掃描裡 1.8 倍（29°）全被
+  /// 閘門擋下、3 倍全放行；上限 4 = 仰角約 14°，再遠轉子在 12 MP 畫面上就不到一半了。
+  static const double standingDistanceMinFactor = 3.0;
+  static const double standingDistanceMaxFactor = 4.0;
 
   WtAsset copyWith({
     String? siteName,

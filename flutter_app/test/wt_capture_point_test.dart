@@ -111,10 +111,13 @@ void main() {
     });
   });
 
-  group('WtAsset.standingDistanceHint（規格 §10.2：1.5–2 倍輪轂高度）', () {
+  group('WtAsset.standingDistanceHint（規格 §10.2：3–4 倍輪轂高度，2026-09-16 依偏軸掃描改）', () {
     test('有輪轂高度才提示', () {
-      expect(WtAsset(assetId: 'a', hubHeightM: 100).standingDistanceHint, '150–200 m');
-      expect(WtAsset(assetId: 'a', hubHeightM: 85).standingDistanceHint, '128–170 m');
+      expect(WtAsset(assetId: 'a', hubHeightM: 100).standingDistanceHint, '300–400 m');
+      expect(WtAsset(assetId: 'a', hubHeightM: 85).standingDistanceHint, '255–340 m');
+      // 下限 3 倍 = 仰角約 18°：合成掃描裡 1.8 倍（29°）全被閘門擋、3 倍全放行
+      expect(WtAsset.standingDistanceMinFactor, 3.0);
+      expect(WtAsset.standingDistanceMaxFactor, 4.0);
     });
 
     test('沒有或不合理就 null，不猜', () {

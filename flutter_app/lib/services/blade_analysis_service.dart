@@ -7,6 +7,7 @@ import 'package:path/path.dart' as p;
 
 import '../models/wt_capture_session.dart';
 import '../models/wt_detection.dart';
+import 'ai/ai_backend.dart';
 import 'blade_acoustic_service.dart';
 import 'blade_ai_service.dart';
 import 'blade_dynamics_service.dart';
@@ -133,8 +134,16 @@ class BladeAnalysisService {
   static Future<Uint8List> _readFile(String path) => File(path).readAsBytes();
 
   /// isolate 入口。像素運算不能擋 UI thread——幾何層一張圖約幾百毫秒。
-  static BladeGeometryOutcome _geometryIsolate(Uint8List bytes) =>
-      runGeometryPipeline(bytes);
+  /// 帶著型錄轉子半徑一起過去：isolate 只能收一個參數，所以包成 record。
+  static BladeGeometryOutcome _geometryIsolate(_GeometryJob job) =>
+      runGeometryPipeline(job.bytes,
+          rotorRadiusM: job.rotorRadiusM, hubHeightM: job.hubHeightM);
+
+  /// 預設的幾何層分析器（進 isolate）；測試注入的 [BladeGeometryAnalyzer] 取代它。
+  static Future<BladeGeometryOutcome> _defaultGeometry(Uint8List bytes,
+          {double? rotorRadiusM, double? hubHeightM}) =>
+      compute(_geometryIsolate,
+          (bytes: bytes, rotorRadiusM: rotorRadiusM, hubHeightM: hubHeightM));
 
   /// isolate 入口。一段 30 秒 48 kHz 的音軌約 6 千萬次浮點運算（STFT 為主），
   /// 在手機上是幾百毫秒——不到幾何層那麼貴，但足以讓畫面掉幀。
@@ -145,12 +154,21 @@ class BladeAnalysisService {
   ///
   /// [useAi] 為 false（或 AI 呼叫失敗）時，演算法的結果照樣留下來，
   /// AI 解讀標記為待補——離線是常態，不是錯誤。
-  /// 不收 `WtAsset`：表面層的判據是**同一張照片內前後緣互比**，不需要任何
-  /// 資產尺寸；硬要把轉子直徑換算成 cm/px 會產出看起來精確的假數據。
-  /// 幾何層（要 px → m）之後再加這個參數。
+  /// 不收整個 `WtAsset`，只收 [rotorRadiusM]（型錄轉子半徑，公尺）：表面層的判據是
+  /// **同一張照片內前後緣互比**，不需要任何資產尺寸；只有幾何層（整機照）拿它把
+  /// px 換成 cm——由三片量到的葉長中位數反推尺度，判定仍在 px 上做。沒有型錄
+  /// 直徑就沒有 cm 值，**不猜尺度**。[hubHeightM]（輪轂高度）加上照片 EXIF 的焦距讓
+  /// 幾何層估相機站位並補償透視（`OFFAXIS_SENSITIVITY.md`）；估不出來就不補，報告改口。
+  ///
+  /// [aiSource] 說 [analyzer] 是誰：雲端（預設）或裝置端 VLM（Tier 1b）。裝置端的解讀
+  /// 一律標「離線初判」、**來源仍是 `geminiOfflinePending`**——它是初判不是終判，連線後
+  /// 補跑佇列會拿雲端結果覆核；覆核時演算法的等級才是下限，不是端側抬上去的那個。
   static Future<BladeAnalysisOutcome> analyzeSession({
     required WtCaptureSession session,
     bool useAi = true,
+    double? rotorRadiusM,
+    double? hubHeightM,
+    AiSource aiSource = AiSource.cloud,
     BladeBytesLoader? loadBytes,
     BladeImageAnalyzer? analyzer,
     BladeSurfaceAnalyzer? surface,
@@ -163,6 +181,7 @@ class BladeAnalysisService {
     final detections = <WtDetection>[];
     final notes = <String>[];
     var analyzed = 0, skipped = 0;
+    var localJudged = 0;
     final layersRun = <WtLayer>{};
 
     var notSegment = 0, notUsable = 0;
@@ -277,11 +296,16 @@ class BladeAnalysisService {
           zoom: m.zoom,
           analyzer: analyzer,
         );
-        detections.add(mergeAlgorithmAndAi(base, ai));
+        detections.add(mergeAlgorithmAndAi(base, ai, aiSource: aiSource));
+        if (aiSource == AiSource.localLlm) localJudged++;
       } catch (_) {
         // 離線／額度用盡／回應壞掉：演算法的結果不能因此消失
         detections.add(algoDetection(WtDetectionSource.geminiOfflinePending));
       }
+    }
+    if (localJudged > 0) {
+      notes.add('$localJudged 筆 AI 解讀由**裝置端模型**產生（離線初判），'
+          '連線後會由雲端 AI 覆核；覆核前請以演算法數值與人工確認為準。');
     }
 
     // 幾何層：整機照的三片剪影互比
@@ -290,8 +314,8 @@ class BladeAnalysisService {
         notUsable++;
         continue;
       }
-      final r = await _analyzeGeometry(
-          m, session.sessionId, read, notes, geometry: geometry);
+      final r = await _analyzeGeometry(m, session.sessionId, read, notes,
+          geometry: geometry, rotorRadiusM: rotorRadiusM, hubHeightM: hubHeightM);
       if (r == null) {
         skipped++;
       } else {
@@ -355,7 +379,8 @@ class BladeAnalysisService {
         videoPath: m.path,
         atSeconds: times,
         extract: frameExtractor,
-        geometry: geometry ?? ((b) => compute(_geometryIsolate, b)),
+        // 影片幀不傳型錄半徑：多幀互比只看 px 的一致性
+        geometry: geometry ?? _defaultGeometry,
       );
       notes.addAll(r.notes.map((n) => '${_shortPath(m.path)}（影片）：$n'));
       if (!r.ok) {
@@ -397,6 +422,8 @@ class BladeAnalysisService {
     BladeBytesLoader read,
     List<String> notes, {
     BladeGeometryAnalyzer? geometry,
+    double? rotorRadiusM,
+    double? hubHeightM,
   }) async {
     Uint8List bytes;
     try {
@@ -405,9 +432,8 @@ class BladeAnalysisService {
       notes.add('${_shortPath(m.path)}：讀不到檔案，未納入幾何分析。');
       return null;
     }
-    final result = geometry == null
-        ? await compute(_geometryIsolate, bytes)
-        : await geometry(bytes);
+    final result = await (geometry ?? _defaultGeometry)(bytes,
+        rotorRadiusM: rotorRadiusM, hubHeightM: hubHeightM);
 
     if (!result.ok) {
       notes.add('${_shortPath(m.path)}（整機照）：${result.reasons.join('；')}');
@@ -430,10 +456,35 @@ class BladeAnalysisService {
       notes.add('${_shortPath(m.path)}（整機照）：$wmsg');
     }
 
+    // 正視照的透視：補了就說補了多少，沒補就說這個數值不是缺陷量。
+    final isSide = result.metrics['view'] == 'side';
+    final compensated = result.metrics['perspective_compensated'] == true;
+    final poseJson = result.metrics['pose'];
+    final perspectiveClause = isSide
+        ? ''
+        : compensated
+            ? _compensationClause(result.metrics)
+            : '（正視照三片互比含透視分量：站位未驗證，此數值不是缺陷量，僅供近距離複檢參考）';
+    if (!isSide && result.comparisons.isNotEmpty) {
+      if (compensated) {
+        notes.add('${_shortPath(m.path)}（整機照）：已依估計站位補償透視'
+            '${_poseSummary(poseJson)}，預彎擬合 '
+            '${(result.metrics['prebend_fit_m'] as num?)?.toStringAsFixed(1) ?? '—'} m'
+            '${result.metrics['compensation_note'] != null ? '；${result.metrics['compensation_note']}' : ''}。');
+      } else {
+        final why = result.metrics['pose_note'];
+        notes.add('${_shortPath(m.path)}（整機照）：無法估相機站位'
+            '${why is String && why.isNotEmpty ? '（$why）' : ''}，三片互比**未補償透視**——'
+            '正視照的葉尖偏移含透視分量，不是缺陷量。要補償請在資產填輪轂高度與轉子直徑，'
+            '並用會寫 EXIF 焦距的相機 App 拍。');
+      }
+    }
+
     final out = <WtDetection>[];
     for (final c in result.comparisons) {
       if (!c.flagged) continue;
       final idx = c.outlierIndex;
+      final cm = c.outlierDeviationCm;
       out.add(WtDetection(
         detectionId: 'geo-$sessionId-${p.basename(m.path)}-${c.metric}',
         sessionId: sessionId,
@@ -454,13 +505,19 @@ class BladeAnalysisService {
           '${c.metric}_z': c.z,
           if (c.metric == 'tip_deflection_px')
             'tip_deflection_px': c.outlierDeviation,
+          // 有型錄轉子直徑時才有 cm 值（`result.metrics['cm_per_px']` 說明是怎麼換的）。
+          // 這是幾何層第一個跨次可比的量：px 隨站位改變，cm 不會。
+          if (cm != null) '${c.metric}_deviation_cm': cm,
+          if (cm != null && c.metric == 'tip_deflection_px')
+            'tip_deflection_cm': cm,
         },
         mediaPath: m.path,
         source: WtDetectionSource.algorithm,
         aiDescription: '三片互比：${_metricLabel(c.metric)}與另兩片差 '
             '${c.outlierDeviation.abs().toStringAsFixed(1)} px'
+            '${cm == null ? '' : '（約 ${cm.abs().toStringAsFixed(0)} cm）'}'
             '（另兩片彼此差 ${c.othersSpread.abs().toStringAsFixed(1)} px，'
-            'z = ${c.z.toStringAsFixed(1)}）',
+            'z = ${c.z.toStringAsFixed(1)}）$perspectiveClause',
       ));
     }
     if (out.isEmpty) {
@@ -468,15 +525,35 @@ class BladeAnalysisService {
         // 側視只量垂掛葉片的彎曲，不做三片互比；單幀值含預彎，所以只記數字不判定。
         // 現階段沒有跨次基線的資料模型，先寫進摘要備註，不產生發現、不進趨勢。
         final defl = result.metrics['hanging_tip_deflection_px'];
+        final deflCm = result.metrics['hanging_tip_deflection_cm'];
         notes.add('${_shortPath(m.path)}（整機照，側視）：只量垂掛葉片的 flapwise 彎曲'
-            '（葉尖偏移 ${defl is num ? defl.toStringAsFixed(1) : '—'} px，含預彎），'
+            '（葉尖偏移 ${defl is num ? defl.toStringAsFixed(1) : '—'} px'
+            '${deflCm is num ? '，約 ${deflCm.toStringAsFixed(0)} cm' : ''}，含預彎），'
             '不做三片互比；要與同一台的基線比對才有意義。');
       } else {
         notes.add('${_shortPath(m.path)}（整機照）：三片剪影互比未見離群'
-            '（${result.comparisons.length} 個量都在雜訊範圍內）。');
+            '（${result.comparisons.length} 個量都在雜訊範圍內'
+            '${compensated ? '，已補償透視' : ''}）。');
       }
     }
     return out;
+  }
+
+  static String _poseSummary(dynamic poseJson) {
+    if (poseJson is! Map) return '';
+    final el = poseJson['elevation_deg'], yaw = poseJson['yaw_deg'];
+    if (el is! num || yaw is! num) return '';
+    return '（仰角 ${el.toStringAsFixed(0)}°、偏軸 ${yaw.toStringAsFixed(0)}°，'
+        '由輪轂高度、型錄直徑與照片焦距估得；偏軸為粗估）';
+  }
+
+  /// 已補償的發現：寫補了多少，原始三片值也留在字面上。
+  static String _compensationClause(Map<String, dynamic> metrics) {
+    final raw = metrics['tip_deflection_raw_px'];
+    final rawText = raw is List
+        ? '；原始三片葉尖偏移 ${raw.map((v) => v is num ? v.toStringAsFixed(1) : '—').join('／')} px'
+        : '';
+    return '（已依估計站位補償透視${_poseSummary(metrics['pose'])}$rawText）';
   }
 
   /// 聲音層的偵測。
@@ -634,7 +711,14 @@ class BladeAnalysisService {
   /// 涵蓋的東西（LEP 整片翻起、雷擊燒痕），那時它可以把等級拉高。
   /// AI 認為是正常結構時**不刪掉這筆發現**，把它的理由寫進描述交給人工判斷——
   /// 篩檢工具寧可多留一筆待確認，不要少留一筆。
-  static WtDetection mergeAlgorithmAndAi(WtDetection algo, WtDetection ai) {
+  ///
+  /// [aiSource] 為 [AiSource.localLlm]（Tier 1b 裝置端）時：描述冠「【離線初判】」、
+  /// 來源留在 `geminiOfflinePending` 讓補跑佇列之後用雲端覆核，並把**演算法自己的等級**
+  /// 存進 `metricJson['algorithm_severity']`——覆核時的下限是它，不是端側抬上去的那個
+  /// （見 [algorithmFloorOf]）。
+  static WtDetection mergeAlgorithmAndAi(WtDetection algo, WtDetection ai,
+      {AiSource aiSource = AiSource.cloud}) {
+    final local = aiSource == AiSource.localLlm;
     final severity = algo.severity == null
         ? ai.severity
         : (ai.severity == null
@@ -643,11 +727,13 @@ class BladeAnalysisService {
     final aiClass = ai.defectClass;
     final ruledOut = ai.metricJson['normal_structure_ruled_out'];
     final saysNormal = aiClass == 'none' || aiClass == null;
-    final description = saysNormal
+    final merged = saysNormal
         ? 'AI 認為這可能不是缺陷${ruledOut == null ? '' : '（$ruledOut）'}，'
             '但演算法量到的數值已超過門檻，仍列為待人工確認。'
             '${ai.aiDescription ?? ''}'
         : (ai.aiDescription ?? algo.aiDescription);
+    final description =
+        local && merged != null ? '【離線初判】$merged' : merged;
     return WtDetection(
       detectionId: algo.detectionId,
       sessionId: algo.sessionId,
@@ -658,10 +744,52 @@ class BladeAnalysisService {
       defectClass: saysNormal ? algo.defectClass : aiClass,
       severity: severity,
       confidence: ai.confidence,
-      metricJson: {...algo.metricJson, ...ai.metricJson},
+      metricJson: {
+        ...algo.metricJson,
+        ...ai.metricJson,
+        'ai_source': aiSource.key,
+        if (local) 'algorithm_severity': algo.severity,
+      },
       mediaPath: algo.mediaPath,
-      source: WtDetectionSource.gemini,
+      // 端側只是初判：來源仍是「待雲端 AI」，補跑佇列會接手覆核
+      source: local
+          ? WtDetectionSource.geminiOfflinePending
+          : WtDetectionSource.gemini,
       aiDescription: description,
+    );
+  }
+
+  /// 把一筆帶著端側初判的偵測還原成「演算法那一筆」當覆核的下限。
+  ///
+  /// 端側模型可以把等級抬上去（它跟雲端一樣受「只能往上加」的規則約束），但那個抬上去
+  /// 的等級**不能**再當雲端覆核的下限——否則一個 2B 模型的誤判會變成永遠退不回去的地板。
+  /// 沒有 `algorithm_severity` 的偵測（雲端判的、或純演算法）原樣回傳。
+  static WtDetection algorithmFloorOf(WtDetection d) {
+    if (!d.metricJson.containsKey('algorithm_severity')) return d;
+    final floor = d.metricJson['algorithm_severity'];
+    final metrics = Map<String, dynamic>.from(d.metricJson)
+      ..remove('algorithm_severity')
+      ..remove('ai_source')
+      ..remove('normal_structure_ruled_out');
+    return WtDetection(
+      id: d.id,
+      detectionId: d.detectionId,
+      sessionId: d.sessionId,
+      layer: d.layer,
+      blade: d.blade,
+      zone: d.zone,
+      defectClass: d.defectClass,
+      severity: floor is int ? floor : null,
+      confidence: null,
+      metricJson: metrics,
+      // 不轉傳 bboxJson：`wt_detections.bbox_json` 目前沒有任何產生端（Mode B 實作後才有），
+      // 這裡轉傳會讓死角查核把它算成「有人寫」而掩蓋那個事實
+      mediaPath: d.mediaPath,
+      source: d.source,
+      humanStatus: d.humanStatus,
+      humanNote: d.humanNote,
+      aiDescription: null,
+      createdAt: d.createdAt,
     );
   }
 
@@ -708,3 +836,6 @@ class BladeAnalysisService {
 
   static String _shortPath(String path) => p.basename(path);
 }
+
+/// 幾何層 isolate 的參數：一張照片 + 型錄轉子半徑（可無）。
+typedef _GeometryJob = ({Uint8List bytes, double? rotorRadiusM, double? hubHeightM});
