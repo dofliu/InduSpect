@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../providers/settings_provider.dart';
 
 import '../screens/rag_management_screen.dart';
+import '../widgets/offline_ai_card.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -57,6 +58,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
             children: [
               _buildModelSelectionCard(context, settings),
             ],
+          ),
+
+          const Divider(),
+
+          // Tier 1b：離線 AI 初判（裝置端 Gemma 3n）
+          _buildSection(
+            context,
+            title: '離線 AI',
+            children: const [OfflineAiCard()],
           ),
 
           const Divider(),

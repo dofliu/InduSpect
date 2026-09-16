@@ -29,7 +29,7 @@ P0 八項中的七項已關閉，剩下的全部卡在**實體世界不是程式
 - **申報用 PDF 報告**（第 5-8 週項目）：裝置端純 Dart 離線產生
 - **拍照品質閘門 + 連線可達性探測**：現場惡劣環境因應
 - **後端 SDK 汰換**：`google-generativeai` → `google-genai`，統一走 `gemini_client.py`
-- **CI 全量收緊**：三軌全綠（Flutter 533 / 後端 197 / 葉片原型 207；GitHub Actions 自 2026-09-14 因用量預算暫停，改本機驗證），
+- **CI 全量收緊**：三軌全綠（Flutter 575 / 後端 197 / 葉片原型 207；GitHub Actions 自 2026-09-14 因用量預算暫停，改本機驗證），
   `flutter analyze` 改為硬性門檻，另加**死角查核**擋 PR
 - **葉片模組**：Phase 1–3 App 化完成，Mode B 規格與 B0 產出完成（見 [`ROADMAP.md`](ROADMAP.md)）
 
@@ -219,6 +219,10 @@ FastAPI 後端（未部署；Dockerfile/cloudbuild.yaml 備妥但有 5 項阻塞
 | [ML Kit GenAI APIs（Gemini Nano）](https://developer.android.com/ai/gemini-nano) | 僅 Android 旗艦（Pixel 8+、S24+，Prompt API 以 Pixel 10 最佳） | 0（系統管理） | 系統管理 | 圖片描述、摘要、Prompt API | 旗艦機零下載的加值體驗 |
 | ML Kit Text Recognition v2 | 全 Android/iOS | ~數十 MB | 極低 | OCR（含中文） | **所有機型**的數位錶/銘牌離線讀值 |
 | 自行微調專用讀錶模型（長期） | — | — | — | 指針錶專精 | 論文產出 + 差異化壁壘 |
+
+**進度（2026-09-16）**：Tier 0、Tier 1a 已上線；**Tier 1b 的桌面那一半做完**——`AiBackend` 抽象、`chooseAiTier` 純函式、
+`LocalModelManager`、設定頁卡片、`flutter_gemma` 1.8.3 + LiteRT-LM 引擎綁定（`flutter_app/DEVELOPMENT.md` 2026-09-16）。
+三個只有實機才能回答的問題還開著：端側初判與 Gemini 的一致率、一項檢測（20 張）要多久、JSON 遵循率。
 
 **落地建議**：Tier 0 + Tier 1a 是「必做」（全機型受益、工程風險低）；Tier 1b 以 PoC 分支驗證（E4B 在 8GB 機的延遲/發熱/電池實測），以「進階功能」形式提供下載開關，不綁進主 APK（避免安裝包暴增）。
 

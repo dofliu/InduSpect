@@ -7,6 +7,8 @@ class SettingsProvider with ChangeNotifier {
   static const String _apiKeyKey = 'gemini_api_key';
   static const String _selectedModelKey = 'selected_model';
   static const String _usageCountKey = 'usage_count';
+  static const String _offlineAiKey = 'offline_ai_enabled';
+  static const String _offlineAiWifiOnlyKey = 'offline_ai_wifi_only';
   static const int _freeTrialLimit = 5;
 
   // 已下架/過期的舊模型 ID → 自動遷移到現行預設（P0-6）
@@ -20,6 +22,9 @@ class SettingsProvider with ChangeNotifier {
   String _selectedModel = AppConstants.geminiFlashModel; // 預設模型（見 constants.dart）
   int _usageCount = 0;
   bool _isInitialized = false;
+  // Tier 1b 端側 AI 初判：預設關（要下載 3.7 GB，得由使用者自己開）。
+  bool _offlineAiEnabled = false;
+  bool _offlineAiWifiOnly = true;
 
   String? get customApiKey => _customApiKey;
   String get selectedModel => _selectedModel;
@@ -28,6 +33,8 @@ class SettingsProvider with ChangeNotifier {
   bool get isTrialExpired => !hasValidApiKey && _usageCount >= _freeTrialLimit;
   int get remainingTrials => hasValidApiKey ? -1 : (_freeTrialLimit - _usageCount).clamp(0, _freeTrialLimit);
   bool get isInitialized => _isInitialized;
+  bool get offlineAiEnabled => _offlineAiEnabled;
+  bool get offlineAiWifiOnly => _offlineAiWifiOnly;
 
   /// 建構子發出的那一次載入。`init()` 等的是**同一個** future。
   ///
@@ -57,6 +64,8 @@ class SettingsProvider with ChangeNotifier {
       await prefs.setString(_selectedModelKey, _selectedModel);
     }
     _usageCount = prefs.getInt(_usageCountKey) ?? 0;
+    _offlineAiEnabled = prefs.getBool(_offlineAiKey) ?? false;
+    _offlineAiWifiOnly = prefs.getBool(_offlineAiWifiOnlyKey) ?? true;
     applyToGeminiService();
     notifyListeners();
   }
@@ -87,6 +96,20 @@ class SettingsProvider with ChangeNotifier {
       await prefs.setString(_apiKeyKey, apiKey);
     }
     applyToGeminiService();
+    notifyListeners();
+  }
+
+  Future<void> setOfflineAiEnabled(bool enabled) async {
+    _offlineAiEnabled = enabled;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_offlineAiKey, enabled);
+    notifyListeners();
+  }
+
+  Future<void> setOfflineAiWifiOnly(bool wifiOnly) async {
+    _offlineAiWifiOnly = wifiOnly;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_offlineAiWifiOnlyKey, wifiOnly);
     notifyListeners();
   }
 

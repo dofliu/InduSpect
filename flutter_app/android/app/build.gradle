@@ -56,6 +56,10 @@ android {
         versionCode flutterVersionCode.toInteger()
         versionName flutterVersionName
         multiDexEnabled true
+        // Tier 1b 端側模型（flutter_gemma_litertlm 的 .litertlm FFI）只出 arm64-v8a。
+        // 不限 ABI 的話 Play 會把裝不了模型的 APK 派給 x86_64／armeabi-v7a 機型，
+        // 第一次載入原生就閃退。定檢主線本身沒有非 arm64 的需求。
+        ndk { abiFilters 'arm64-v8a' }
     }
 
     signingConfigs {

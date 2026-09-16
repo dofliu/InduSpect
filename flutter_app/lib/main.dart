@@ -14,6 +14,8 @@ import 'services/connectivity_service.dart';
 import 'services/photo_sync_service.dart';
 import 'services/blade_ai_retry_service.dart';
 import 'services/share_queue_service.dart';
+import 'services/ai/flutter_gemma_runner.dart';
+import 'services/ai/local_model_manager.dart';
 import 'utils/constants.dart';
 
 void main() async {
@@ -47,6 +49,14 @@ void main() async {
   // 連線恢復後把那一段補上（規格 §6）
   BladeAiRetryService().initialize();
 
+  // Tier 1b 端側 AI：註冊 LiteRT-LM 引擎。沒有原生（桌面測試、非 arm64）時失敗是正常的，
+  // 這時端側層永遠不會被選到（AiRouter 退回 OCR），不能讓它擋住 App 啟動。
+  try {
+    await FlutterGemmaRunner.initialize();
+  } catch (e) {
+    debugPrint('flutter_gemma 初始化失敗（端側 AI 不可用）: $e');
+  }
+
   runApp(const InduSpectApp());
 }
 
@@ -58,6 +68,8 @@ class InduSpectApp extends StatelessWidget {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => SettingsProvider()),
+        // 端側模型的裝了沒／正在裝。建構不碰原生；refresh() 由 dashboard 啟動時叫。
+        ChangeNotifierProvider(create: (_) => FlutterGemmaRunner.buildManager()),
         ChangeNotifierProvider(create: (_) => AppStateProvider()),
         ChangeNotifierProxyProvider<SettingsProvider, InspectionProvider>(
           create: (_) => InspectionProvider(),

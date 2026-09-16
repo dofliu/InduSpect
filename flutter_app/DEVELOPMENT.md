@@ -351,6 +351,47 @@ flutter build apk --debug
 
 ## 變更紀錄
 
+### 2026-09-16（Tier 1b 端側 AI：桌面能做的那一半）
+
+`LAUNCH_PLAN.md` §5.3 的四層裡，Tier 0 判定與 Tier 1a OCR 早就做完，這一批補**Tier 1b 端側 VLM 的骨架**：
+選層、抽象層、模型管理、設定頁、`flutter_gemma` 綁定。**實機沒跑過**——三個只有手機才能回答的問題
+（初判與 Gemini 的一致率、一項檢測要多久、JSON 遵循率）留給有裝置的那一趟。
+
+| 新東西 | 在哪 | 守它的測試 |
+|---|---|---|
+| `AiBackend` 介面（三個方法：照片判讀／總結／自訂 prompt）+ `AiSource` | `services/ai/ai_backend.dart` | — |
+| `GeminiCloudBackend`（包既有 singleton，行為不變） | `services/ai/gemini_cloud_backend.dart` | — |
+| `GemmaLocalBackend`：收一個 `LocalVlmRunner` 函式，**不產生讀值**、解不出 JSON 就丟 `LocalVlmUnusableException` | `services/ai/gemma_local_backend.dart` | `gemma_local_backend_test.dart` |
+| 端側 prompt（**只要四個欄位**）與寬容解析（`is_anomaly` 分不出來就當異常） | `services/ai/local_vlm_prompt.dart` | `local_vlm_prompt_test.dart` |
+| `chooseAiTier` 純函式 + 裝置門檻 + 下載條件 | `services/ai/ai_tier_policy.dart` | `ai_tier_policy_test.dart` |
+| `LocalModelManager`（裝了沒／正在裝／壞了；三個縫） | `services/ai/local_model_manager.dart` | `gemma_local_backend_test.dart` |
+| `AiRouter`：湊齊四個輸入 → 選層 → 回後端 | `services/ai/ai_router.dart` | `ai_router_test.dart` |
+| `FlutterGemmaRunner`：**全 App 唯一 import `flutter_gemma` 的檔案** | `services/ai/flutter_gemma_runner.dart` | 無（沒有原生可跑；靠實機） |
+| `DeviceInfoChannel` + `DeviceInfo.kt`：總記憶體／剩餘空間 | `services/device_info_channel.dart`、`android/.../DeviceInfo.kt` | — |
+| 設定頁「離線 AI」卡片 | `widgets/offline_ai_card.dart` | — |
+
+**四條不可退化**：
+
+1. **端側只是備援，不是取代。** 連得上且有金鑰一律雲端，端側就緒也不搶（`chooseAiTier` 第一條測試）。
+2. **端側不做讀值。** 模型看的是縮到 768 px 的圖，錶面數字剩幾個像素；讀值交給全解析度 OCR。
+   模型硬塞 `readings` 也不收（測試守著）。
+3. **結果要看得出是誰判的。** `aiResult['source'] = 'local_llm'`，`condition_assessment` 前面掛「【離線初判】」，
+   總結報告開頭一行說明——報告與 PDF 讀這兩個欄位就會印出來，不用改 PDF 服務。
+4. **查不到就不開。** 裝置記憶體查不到（非 Android）→ 不合格；這個平台沒有執行器 → 退回 OCR 不假裝；
+   `flutter_gemma` 初始化失敗 → 記 log 繼續啟動，端側永遠不會被選到。
+
+**硬事實**（2026-09-16 查）：E2B int4 `.litertlm` **3.66 GB**（HF gated，使用者要自己接受 Gemma 授權）；
+`flutter_gemma` 1.8.3 要 **Dart ≥3.12 / Flutter ≥3.44**——專案下限從 3.5/3.27 升上去（當初壓低是為了
+開發環境，本機 Flutter 已是 3.47）；連帶 `share_plus` 7→10（`mime` 版本衝突）。`.litertlm` FFI **只出 arm64-v8a**，
+`build.gradle` 加了 `abiFilters`——不加的話 Play 會把裝不了模型的 APK 派給 x86_64 機型。
+
+**刻意沒做**：①雲端覆核端側初判的自動佇列（`blade_ai_retry_service` 有現成模式，等實機有第一批初判再接）；
+②葉片線接端側（`BladeImageAnalyzer` 的形狀與 `AiBackend.analyzeImageWithPrompt` 一致，接法是一行，但先看定檢線實測）；
+③Gemini Nano（ML Kit GenAI）那條零下載的路。
+
+三軌：Flutter **575**（+42）／後端 197／葉片原型 207；死角查核通過。
+
+
 ### 2026-09-16（定檢主線三個接反的地方）
 
 三個缺口疊在同一個出口：**使用者拿到的回填定檢表與申報 PDF**。三個單獨看都是 bug，

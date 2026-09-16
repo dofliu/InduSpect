@@ -14,7 +14,11 @@ import '../providers/settings_provider.dart';
 import '../models/inspection_template.dart';
 import '../models/template_field.dart';
 import '../models/form_inspection_record.dart';
-import '../services/gemini_service.dart';
+import '../services/ai/ai_backend.dart';
+import '../services/ai/ai_router.dart';
+import '../services/ai/flutter_gemma_runner.dart';
+import '../services/ai/gemma_local_backend.dart';
+import '../services/ai/local_model_manager.dart';
 import '../services/local_template_creator.dart';
 import '../services/backend_api_service.dart';
 import '../services/file_save_service.dart';
@@ -316,7 +320,9 @@ class _FormInspectionScreenState extends State<FormInspectionScreen> {
 
   // 服務
   final ImagePicker _imagePicker = ImagePicker();
-  GeminiService? _geminiService;
+  // 這一次分析用的 AI 後端（雲端／端側），由 AiRouter 每次用之前重新決定。
+  AiBackend? _ai;
+  AiRouter? _router;
   final BackendApiService _backendApi = BackendApiService();
 
   bool _isLoading = false;
@@ -372,30 +378,31 @@ class _FormInspectionScreenState extends State<FormInspectionScreen> {
   }
 
   void _initGemini() {
-    _geminiService = _resolveGemini();
+    // 非同步：initState 不能等。真正的決定在每次用之前的 _resolveAi()。
+    _resolveAi().then((b) {
+      if (mounted) setState(() => _ai = b);
+    });
   }
 
-  /// 取得目前可用的 Gemini 服務；沒有金鑰就回 null（手動模式）。
+  /// 決定這一次分析走哪一層、回對應後端；手動模式回 null。
   ///
-  /// 金鑰來自**設定頁**（`SettingsProvider`），不是 `.env`。
-  /// 這裡曾經呼叫無參數的 `init()`，而那只讀得到被 gitignore 的 `.env`——
-  /// 打包進 APK 的是空檔，於是使用者填了金鑰，核心流程的 AI 仍然是關的。
+  /// 四層見 `LAUNCH_PLAN.md` §5.3：連得上 → 雲端 Gemini；離線且使用者開了端側 AI、
+  /// 模型就位、裝置夠 → 端側 Gemma 3n（結果標「離線初判」）；否則 OCR／手動。
+  /// 金鑰來自**設定頁**，不是 `.env`（PR #77）。
   ///
-  /// **每次要用之前都重新解析**：使用者可能在開啟檢測頁之後才去設定頁填金鑰，
-  /// 只在 initState 解析一次的話，那支金鑰要等下次開頁才會生效。
-  GeminiService? _resolveGemini() {
-    if (!mounted) return _geminiService;
+  /// **每次要用之前都重新解析**：使用者可能在開頁之後才填金鑰或下載模型。
+  Future<AiBackend?> _resolveAi() async {
+    if (!mounted) return _ai;
     try {
-      final settings = context.read<SettingsProvider>();
-      return GeminiService()
-        ..init(
-          apiKey: settings.customApiKey,
-          flashModel: settings.selectedModel,
-        );
-    } on MissingGeminiKeyException {
-      return null; // 還沒填金鑰是正常狀態，走手動模式
+      _router ??= AiRouter(
+        settings: context.read<SettingsProvider>(),
+        localModels: context.read<LocalModelManager>(),
+        localRunnerFactory: FlutterGemmaRunner.runner,
+      );
+      final decision = await _router!.resolve();
+      return decision.backend;
     } catch (e) {
-      debugPrint('Gemini 初始化失敗: $e (可使用手動模式)');
+      debugPrint('AI 後端解析失敗: $e (可使用手動模式)');
       return null;
     }
   }
@@ -808,13 +815,14 @@ class _FormInspectionScreenState extends State<FormInspectionScreen> {
     Uint8List imageBytes,
     String photoPath,
   ) async {
-    // 設定頁可能在開頁之後才填金鑰，所以用之前重新解析一次。
-    _geminiService = _resolveGemini();
-    if (_geminiService != null) {
-      // 先確認「真的」連得到網路：廠區常見連上 AP 卻沒有 uplink，
+    // 設定頁可能在開頁之後才填金鑰或下載模型，所以用之前重新決定一次。
+    _ai = await _resolveAi();
+    if (_ai != null) {
+      // 雲端後端要先確認「真的」連得到網路：廠區常見連上 AP 卻沒有 uplink，
       // 只看介面狀態會讓每張照片都空等 Gemini 逾時（60 秒 × N 張）。
-      // 探測不通就直接走裝置端 OCR 備援。
-      if (!await ConnectivityService().checkConnection()) {
+      // 探測不通就直接走裝置端 OCR 備援。端側後端本來就是離線用的，不探。
+      if (_ai!.source == AiSource.cloud &&
+          !await ConnectivityService().checkConnection()) {
         final ocrHandled = await _tryOcrFallback(item, photoPath);
         if (mounted) setState(() => item.isAnalyzing = false);
         if (!ocrHandled) {
@@ -825,7 +833,7 @@ class _FormInspectionScreenState extends State<FormInspectionScreen> {
       }
 
       try {
-        final analysisResult = await _geminiService!.analyzeInspectionPhoto(
+        final analysisResult = await _ai!.analyzeInspectionPhoto(
           itemId: item.fieldId,
           itemDescription: item.label,
           imageBytes: imageBytes,
@@ -837,13 +845,20 @@ class _FormInspectionScreenState extends State<FormInspectionScreen> {
         }
 
         // 將 AnalysisResult 轉為 Map 供顯示和映射使用
+        // 端側初判與雲端精判不能長得一樣：source 進 JSON、狀況描述前面掛標籤，
+        // 報告與 PDF 讀 condition_assessment 就會把它印出來。
+        final isLocal = _ai!.source == AiSource.localLlm;
+        final condition = analysisResult.conditionAssessment;
         final resultMap = <String, dynamic>{
           'equipment_type': analysisResult.equipmentType,
           'readings': analysisResult.readings,
-          'condition_assessment': analysisResult.conditionAssessment,
+          'condition_assessment': isLocal && condition != null && condition.isNotEmpty
+              ? '【離線初判】$condition'
+              : condition,
           'is_anomaly': analysisResult.isAnomaly,
           'anomaly_description': analysisResult.anomalyDescription,
           'estimated_size': analysisResult.aiEstimatedSize,
+          'source': _ai!.source.key,
         };
 
         // 欄位對應標準的單位：量測欄位靠它擋掉量綱不合的讀數。
@@ -863,7 +878,9 @@ class _FormInspectionScreenState extends State<FormInspectionScreen> {
         // 自動存檔
         _saveDraft();
       } catch (e) {
-        debugPrint('AI 分析失敗: $e');
+        // 端側模型回不出可用 JSON 也走到這裡（LocalVlmUnusableException）——
+        // 下一層備援是 OCR，跟雲端連不上時一樣。
+        debugPrint(e is LocalVlmUnusableException ? '端側 AI 不可用: $e' : 'AI 分析失敗: $e');
         // Tier 1a：AI 不可用（多為離線）→ 裝置端 OCR 讀值備援（數位錶/銘牌）
         final ocrHandled = await _tryOcrFallback(item, photoPath);
         setState(() {
@@ -1344,10 +1361,10 @@ class _FormInspectionScreenState extends State<FormInspectionScreen> {
 
   /// 產生 AI 總結報告
   Future<void> _generateSummaryReport() async {
-    _geminiService = _resolveGemini();
-    if (_geminiService == null) {
+    _ai = await _resolveAi();
+    if (_ai == null) {
       setState(() {
-        _summaryReport = '⚠️ 尚未設定 Gemini API 金鑰，無法產生摘要報告。請到設定頁填入。';
+        _summaryReport = '⚠️ 沒有可用的 AI（未設定 Gemini 金鑰，且離線 AI 未啟用或模型未就位），無法產生摘要報告。';
       });
       return;
     }
@@ -1375,7 +1392,10 @@ class _FormInspectionScreenState extends State<FormInspectionScreen> {
           .toList();
 
       final recordsJson = const JsonEncoder.withIndent('  ').convert(recordsData);
-      final report = await _geminiService!.generateSummaryReport(recordsJson);
+      var report = await _ai!.generateSummaryReport(recordsJson);
+      if (_ai!.source == AiSource.localLlm) {
+        report = '【離線初判】以下由裝置端 AI 產生，連線後請重新產生正式報告。\n\n$report';
+      }
 
       setState(() {
         _summaryReport = report;

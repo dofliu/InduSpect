@@ -21,7 +21,7 @@
 - **申報用 PDF 報告**：裝置端純 Dart 產生，離線可用，含照片與法規依據
 - **原格式回填**：後端可用時回填客戶原本 Excel/Word，不可用時降級 JSON 摘要
 - 歷史紀錄：GPS 定位、可編輯標題、搜尋、離線分享佇列
-- 工程面：三軌全綠（Flutter **533** / 後端 **197** / 葉片原型 **207**；2026-09-14 起 GitHub Actions 因用量預算暫停，改本機驗證）、`flutter analyze` 硬性門檻、**死角查核進 CI**（`flutter_app/scripts/audit_dead_ends.py`，排在 analyze 之前）、release 簽署、後端 API-Key 認證
+- 工程面：三軌全綠（Flutter **575** / 後端 **197** / 葉片原型 **207**；2026-09-14 起 GitHub Actions 因用量預算暫停，改本機驗證）、`flutter analyze` 硬性門檻、**死角查核進 CI**（`flutter_app/scripts/audit_dead_ends.py`，排在 analyze 之前）、release 簽署、後端 API-Key 認證
 
 **風力機葉片模組（獨立功能）**
 
@@ -122,12 +122,13 @@
 
 **需要一台 Android 手機**
 
-9. Issue #43 端到端 + 斷網 + `getFrameAtTime`——**所有「已完成」變成「可用」的唯一途徑**
+9. **Tier 1b 端側 AI 的三個實測**：初判與 Gemini 一致率、20 張照片耗時／溫度、JSON 遵循率（骨架已在 2026-09-16 接好，設定頁可匯入／下載模型）
+10. Issue #43 端到端 + 斷網 + `getFrameAtTime`——**所有「已完成」變成「可用」的唯一途徑**
 
 **學術產出（可平行）**
 
-10. dataset-audit 短文：洩漏 63.4%／0.204、一致率上限 94%、基線選錯的教訓——數字全在、腳本可重現
-11. IEA Task 46 兩軌分級表修正（先改 `closeup_taxonomy.json`，測試守著）
+11. dataset-audit 短文：洩漏 63.4%／0.204、一致率上限 94%、基線選錯的教訓——數字全在、腳本可重現
+12. IEA Task 46 兩軌分級表修正（先改 `closeup_taxonomy.json`，測試守著）
 
 ## 🚫 刻意不做
 

@@ -10,11 +10,11 @@ environment:
   # 3.2 → 3.5：`record`（App 內錄音，聲音層的輸入）最低要 Dart ^3.5.0 / Flutter 3.24。
   # 刻意選 record 6.x 而不是 7.x：後者要 Dart ^3.12 / Flutter 3.44，
   # 那個下限會把還沒升級的開發環境擋在外面，而 6.x 已經有需要的 AudioEncoder.wav。
-  sdk: '>=3.5.0 <4.0.0'
-  # 3.24 → 3.27：`Color.withValues`（取代已棄用的 withOpacity）是 3.27 才有的。
-  # 查法不是憑印象：framework 自己的 cupertino/colors.dart 在 3.27.0 用了 withValues、
-  # 3.24.0 沒有——framework 只會在 API 存在之後才改用它。
-  flutter: '>=3.27.0'
+  # 3.5 → 3.12 / 3.27 → 3.44（2026-09-16）：Tier 1b 端側 VLM 用的 `flutter_gemma` 1.x
+  # 最低要 Dart 3.12 / Flutter 3.44（1.0.0-rc.1 之後每一版都是）。當初壓低下限是為了
+  # 還沒升級的開發環境；本機驗證用的 Flutter 已是 3.47，這個理由不再成立。
+  sdk: '>=3.12.0 <4.0.0'
+  flutter: '>=3.44.0'
 
 dependencies:
   # 依字母排序（`sort_pub_dependencies` 是本專案自己打開的規則）。原本是依用途分組，
@@ -34,6 +34,8 @@ dependencies:
   flutter:
     sdk: flutter
   flutter_dotenv: ^5.1.0
+  flutter_gemma: ^1.8.3 # Tier 1b 端側 VLM 核心（不含引擎）；唯一 import 它的檔案是 services/ai/flutter_gemma_runner.dart
+  flutter_gemma_litertlm: ^1.6.4 # .litertlm 引擎（Gemma 3n E2B）；FFI 只出 arm64-v8a，build.gradle 已限 ABI
   flutter_svg: ^2.0.9
   geocoding: ^3.0.0
   geolocator: ^11.0.0 # GPS：歷史紀錄定位、導回上次拍攝點
@@ -50,7 +52,7 @@ dependencies:
   provider: ^6.1.0
   record: ^6.2.1 # 葉片音軌錄音。**一定要錄成未壓縮 PCM/WAV**：裝置上沒有純 Dart 的
   # AAC 解碼器，錄成 m4a 就離線分析不了。刻意用 6.x 不用 7.x（後者要 Dart ^3.12）
-  share_plus: ^7.2.1
+  share_plus: ^10.0.3 # 7.x 相依 mime ^1 與 flutter_gemma 的 mime ^2 衝突；10.x 仍有 Share.shareXFiles
   shared_preferences: ^2.2.0
   sqflite: ^2.3.0 # SQLite v5；migration 必須處理既有使用者升級路徑
   uuid: ^4.3.3 # sessionId / detectionId

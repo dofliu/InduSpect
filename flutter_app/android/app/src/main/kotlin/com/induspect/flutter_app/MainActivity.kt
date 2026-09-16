@@ -8,5 +8,7 @@ class MainActivity: FlutterActivity() {
         super.configureFlutterEngine(flutterEngine)
         // 葉片動態層的原生抽幀（MediaMetadataRetriever）。見 BladeVideoFrames.kt。
         BladeVideoFrames.register(flutterEngine.dartExecutor.binaryMessenger)
+        // Tier 1b 端側模型的裝置門檻（總記憶體／剩餘空間）。見 DeviceInfo.kt。
+        DeviceInfo.register(flutterEngine.dartExecutor.binaryMessenger, applicationContext)
     }
 }

@@ -43,6 +43,8 @@
 | `flutter_app/lib/services/ocr_reading_parser.dart` | Tier 1a 離線 OCR 讀值解析 |
 | `flutter_app/lib/services/image_quality_service.dart` | 拍照品質閘門（模糊/曝光/反光，純本機） |
 | `flutter_app/lib/services/pdf_report_service.dart` | 申報用 PDF 報告產生器（純 Dart 離線，內嵌 `assets/fonts/` 繁中字型） |
+| `flutter_app/lib/services/ai/ai_router.dart` | ★ Tier 1b：這一次分析走哪一層（`chooseAiTier` 純函式在 `ai_tier_policy.dart`）；雲端 `GeminiCloudBackend`／端側 `GemmaLocalBackend` 都實作 `AiBackend`。**端側只是備援不是取代、不做讀值、結果標「離線初判」、查不到就不開** |
+| `flutter_app/lib/services/ai/flutter_gemma_runner.dart` | 全 App **唯一** import `flutter_gemma` 的檔案；沒有單元測試（沒原生可跑），靠實機。上游換版只改這裡 |
 | `backend/app/services/gemini_client.py` | ★ 後端唯一 Gemini 入口（google-genai SDK，延遲建立 + 快取） |
 | `flutter_app/DEVELOPMENT.md` | 完整開發文件 |
 | `LAUNCH_PLAN.md` | 產品化評估與 90 天上線行動計畫 |
@@ -93,11 +95,11 @@
 ## 測試
 ```bash
 python3 scripts/audit_dead_ends.py   # 死角查核（service 零引用／DB 欄位只讀不寫）；--report 看全部
-flutter test          # 全部 533 tests（widget_test 已修復，不再排除）
+flutter test          # 全部 575 tests（widget_test 已修復，不再排除）
 cd backend && GEMINI_API_KEY=ci-fake-key pytest tests/ --asyncio-mode=auto   # 197 pytest
 cd blade_prototype && pip install -r requirements.txt && pytest              # 207 tests（葉片原型，合成影像/音軌夾具 + Mode B 分類表與標記檔守門 + 測試報告聚合器 + 側視閘門 + 複核工具 + 切分群組 + 評估協定 + 普查覆蓋 + 第一遍標記守門 + 離線基線）
 ```
-Flutter 533 tests / 後端 197 pytest / 葉片原型 207 pytest 全綠（2026-09-16 本機實測；**GitHub Actions 因用量預算已停用，CI 不再跑**，本機驗證見下方「本機 Flutter」條目）。DB 測試使用 `sqflite_common_ffi` in-memory。標準資料為單一來源：改 `backend/app/data/inspection_standards.py` 後必須跑 `python backend/scripts/export_standards.py` 重新匯出 JSON（有同步守門測試）。
+Flutter 575 tests / 後端 197 pytest / 葉片原型 207 pytest 全綠（2026-09-16 本機實測；**GitHub Actions 因用量預算已停用，CI 不再跑**，本機驗證見下方「本機 Flutter」條目）。DB 測試使用 `sqflite_common_ffi` in-memory。標準資料為單一來源：改 `backend/app/data/inspection_standards.py` 後必須跑 `python backend/scripts/export_standards.py` 重新匯出 JSON（有同步守門測試）。
 
 ## 已知問題追蹤
 - GitHub Issues #14-#19 已全數修復並關閉（2026-04-16）
@@ -155,7 +157,9 @@ Flutter 533 tests / 後端 197 pytest / 葉片原型 207 pytest 全綠（2026-09
   ①**核心流程的 Gemini 是死的**：`form_inspection_screen.dart` 呼叫無參數 `init()`，而那只讀得到被 gitignore 的 `.env`（`pubspec.yaml` 把它列為 asset，打包進 APK 的是空檔）→ throw → catch → `_geminiService = null` → AI 靜默關閉退回手動模式。**設定頁的金鑰欄位對隱藏的舊流程有效、對核心功能無效。** 修法：金鑰解析抽成頂層純函式 `resolveGeminiConfig()`、缺金鑰丟具名 `MissingGeminiKeyException`（葉片線的 `catch` 要靠型別分辨「沒金鑰」與「真的離線」）、`SettingsProvider.applyToGeminiService()` 成為使用者金鑰**唯一的出口**（載入／換金鑰／換模型三處都推），核心流程改成**每次用之前重新解析**（使用者可能開頁之後才去填金鑰）。`init()` 加上「已初始化且沒帶新設定就沿用現狀」——`GeminiService` 是 singleton，沒有這一關，一個無參數呼叫會把已經可用的服務丟掉。順手修掉 `SettingsProvider` 的 race（建構子與 `init()` 各發一次沒人 await 的 `_loadSettings()`，晚完成的那個會把使用者剛存的金鑰蓋回 null）與死碼 `getEffectiveApiKey`（零呼叫端）
   ②**讀數跨量別假陽性**：`_findBestReadingMatch` 的關鍵字比對寫成交叉乘積——只要**欄位名**命中某組關鍵字就回傳**當下那一筆**讀數，於是「軸承溫度」會被填進「A 相電流 12.4 A」，而且下游拿它去判成「≤70 °C 合格／ISO 10816」。修法：抽成頂層純函式 `findBestReadingMatch`，用 `StandardsEngine.convertValue` 回傳的 `ok` 當**量綱閘門**（不寫第二份硬編表），關鍵字改成**兩邊要命中同一組**。「只有一筆讀數」那條退路分兩種：**有標準**時要求它自己帶對得上的單位（那筆值會被送去判定，沒單位就可能出現「3.0 ≤ 70 °C 合格」），**沒有標準**時放行（不會被判定，丟掉它沒有好處）。判定路徑的 `_extractNumericReading` 用**同一份標準表**取期望單位，不會出現「用溫度標準判一個電流值」
   ③**`/map-fields` 契約斷裂**：App 核心流程送 `{field_label, value, ai_result}`，而 `InspectionResult` 一個都沒宣告——pydantic 預設 `extra='ignore'`，**整包檢測資料被靜默丟掉**（實測 `model_dump()` 全是 None），AI 憑欄位名臆造值，端點還回報 `success: true`。修法：宣告 App 真的送的三個欄位、`ai_map_fields` 兩種形狀都吃得下（讀值藏在 `ai_result['readings']` 裡）、**全空的輸入不准送進 AI**（送了就是請它編，改回 `success: false` 說明形狀不符）、`extra='forbid'` 讓下一次契約漂開當場紅
-  三軌：Flutter **533**（+27）／後端 **197**（+6）／葉片原型 207，死角查核通過
+  三軌：Flutter **575**（+27）／後端 **197**（+6）／葉片原型 207，死角查核通過
+
+- **Tier 1b 端側 AI 的桌面半邊**（2026-09-16）：`LAUNCH_PLAN.md` §5.3 四層裡最後一層的骨架——`AiBackend` 抽象（雲端／端側同形狀）、`chooseAiTier` 純函式選層、`LocalModelManager`（三個縫）、`AiRouter`、`DeviceInfo.kt` 記憶體門檻、設定頁「離線 AI」卡片（匯入 `.litertlm`／從網址下載／Wi-Fi 限制／授權連結）、`FlutterGemmaRunner` 綁定 `flutter_gemma` 1.8.3 + `flutter_gemma_litertlm`。四條不可退化：①連得上且有金鑰一律雲端，端側就緒也不搶；②端側**不做讀值**（768 px 的圖讀不準數字，`readings` 永遠空、模型硬塞也不收）；③`aiResult['source']='local_llm'` + 狀況描述掛「【離線初判】」+ 總結開頭一行——報告與 PDF 讀這兩個欄位就印得出來；④查不到記憶體／沒有執行器／初始化失敗 → 一律退回 OCR，不假裝。連帶：SDK 下限 3.5/3.27 → **3.12/3.44**（`flutter_gemma` 硬要求；壓低下限的理由已不成立）、`share_plus` 7 → 10（`mime` 衝突）、`build.gradle` 限 **arm64-v8a**（`.litertlm` FFI 只出這個 ABI）。E2B int4 模型 **3.66 GB**、HF gated，不綁進 APK。**實機沒跑過**：一致率、耗時、JSON 遵循率三個數字等手機。刻意沒做：雲端覆核佇列、葉片線接端側、Gemini Nano
 
 ## 既有 error（已修復）
 - ~~`measurement.dart`: `sqrt` 未 import `dart:math`~~ → 已修復
