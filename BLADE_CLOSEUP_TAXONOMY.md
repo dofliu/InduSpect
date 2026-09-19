@@ -252,6 +252,30 @@
 
 全部 92 次類別分歧只落在兩對上：surface_injure↔corrosion 52 次、hide_craze↔craze 40 次。這是兩個獨立的人給的證據，說明這兩條界線畫得不夠利。
 
+### 6.2 WTBs2025：wind turbine blade surface defect dataset（figshare 10.6084/m9.figshare.28876406，2025）
+
+- 授權：**CC0 1.0（可商用、可再散布）**
+- 規模：7,544 張、9 類、YOLO 框。Roboflow 匝出：**全部重採樣成 640×640（長寬比被改）**、含旋轉／剪切增強副本（標註檔裡同一個框重複兩次）、EXIF 抽樣 0/51、**沒有健康照**。`oil leakage` 520 張只來自 29 個原始編號。
+
+| 它的類別 | 對到本表 | 對 wtb 語料的類 | 注意 |
+|---|---|---|---|
+| `erosion` | `surface/leading_edge_erosion` | `corrosion`、`surface_injure` | 目視多為遠距展向照，葉片在畫面上只是一條（依 §1.2 屬 T），前緣細節看不到。wtb 的 `corrosion` 混了生物附著與鏽蝕，`surface_injure` 是塗層剝落——前緣侵蝕最接近這兩個 |
+| `coating detachment` | `surface/coating_peeling` | `surface_injure` | — |
+| `localized damage` | `surface/coating_peeling`、`structural/longitudinal_crack` | `surface_injure`、`craze` | 定義不明：目視含開放型缺損與表面剝落，wtb 的 `craze` 也是「名稱龜裂、實為開放型裂損」 |
+| `pinholes` | `surface/surface_pitting` | `surface_injure` | 640 px 上針孔本身看不到（§2：1 mm 在合規取像下只有 1.5 px），框住的是它周圍的區域 |
+| `protective film damage` | `surface/coating_peeling`、`normal_structures/lep_edge_step` | `surface_injure` | LEP 保護膜損傷：本表把完好的 LEP 邊緣列為正常結構，破損才是缺陷 |
+| `paint cracks` | `surface/gelcoat_crack_network` | `hide_craze`、`craze` | — |
+| `lightning strikes` | `environmental/lightning_damage` | `thunderstrike` | 增強副本最明顯的一類（剪切、旋轉、黑角） |
+| `oil leakage` | `healthy/contamination` | （無） | 依本表是汙染不是損傷；wtb 語料沒有對應類，探針不可能對 |
+| `surface stains` | `healthy/contamination` | （無） | 同上 |
+
+**這份語料缺什麼**：
+
+- **沒有健康照**：與 wtb 語料同一個缺口，§6 第 4 條在它上面一樣執行不了
+- **沒有尺度**：640×640 重採樣 + EXIF 剝除，cm/px 不可得，§9.4 適用
+- **有增強副本**：切分前要先把同一原始編號的副本併在同一側；檔名 `<n>_jpg.rf.<hash>` 的 `<n>` 是原始編號
+- **取像判定沒有標記**：探針給的 P／W／T 是預測不是真值，`wtb_equivalent` 是給跨語料粗對照用的（`CROSS_CORPUS_VALIDATION.md`），不是重標
+
 ---
 
 ## 7. 紀錄格式
