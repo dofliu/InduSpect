@@ -4,7 +4,7 @@
 
 ## 0. 一句話
 
-84 張帶 EXIF 焦距、分類在機型頁下的 Commons 整機照：閘門放行 **5**（正視 3、側視 2），姿態可用 **3/3**。正視放行照片的三片互比原始標記葉尖偏移 **1** 張，補償後剩 **1**（消掉 0、留下 1、新增 0）；半徑原始 1 → 補償後 1。預彎擬合落在合理範圍 1/3（中位 5.2 m）。輪轂高度 ±20% 會翻掉補償結論的有 0/3 張。
+86 張帶 EXIF 焦距、分類在機型頁下的 Commons 整機照：閘門放行 **5**（正視 3、側視 2），姿態可用 **3/3**。正視放行照片的三片互比原始標記葉尖偏移 **1** 張，補償後剩 **1**（消掉 0、留下 1、新增 0）；半徑原始 1 → 補償後 1。預彎擬合落在合理範圍 1/3（中位 5.2 m）。輪轂高度 ±20% 會翻掉補償結論的有 0/3 張。
 
 這些是營運中的風機被路人拍下，先驅上沒有一台葉尖偏了兩公尺——所以原始標記幾乎都是假警報，「補償後剩幾個」是補償的成績、「新增幾個」是代價。**這裡量不到缺陷召回率**，那要有已知缺陷的照片。
 
@@ -15,7 +15,7 @@
 | 照片來源 | Wikimedia Commons 機型分類頁（`fetch_commons_turbines.py search`），篩 CC／PD 授權 + EXIF `FocalLengthIn35mmFilm` + 寬 ≥ 1600 |
 | 分析尺度 | 長邊 1024 px（與 App 相同）；焦距換 px 用縮放後的長邊，所以縮圖不影響 |
 | 轉子半徑 | 機型型錄直徑 ÷ 2（manifest `specs`） |
-| 輪轂高度 | typical 81、description 3（`typical` = 機型常見值，不是那一台的） |
+| 輪轂高度 | typical 83、description 3（`typical` = 機型常見值，不是那一台的） |
 | 相機高度 | 1.6 m（假設手持站立；Commons 照片有些從高處或無人機拍，這時仰角會高估） |
 | 機艙 overhang | 5.0 m 預設（yaw 粗估） |
 | 雜訊底 | 1.5 px（與 `SENSITIVITY.md` 相同） |
@@ -27,7 +27,7 @@
 |---|---|
 | 放行（正視） | 3 |
 | 放行（側視） | 2 |
-| 拒收 | 77 |
+| 拒收 | 79 |
 | 結構定位丟例外 | 2 |
 | 放行但警告畫面裡有第二個轉子 | 3 |
 
@@ -36,8 +36,8 @@
 | 原因 | 次數 |
 |---|---|
 | 只定位到 N 片葉片（…） | 34 |
-| 三片葉尖半徑差 N%（…） | 31 |
-| 一片葉片都沒有定位到 | 30 |
+| 三片葉尖半徑差 N%（…） | 32 |
+| 一片葉片都沒有定位到 | 31 |
 | 結構定位失敗（…） | 2 |
 
 ## 3. 姿態估計
@@ -78,7 +78,7 @@
 | Enercon E-101 | 5 | 0 | 0 | 0 | 0 | 0 |
 | Enercon E-115 | 9 | 1 | 0 | 0 | 0 | 0 |
 | Enercon E-126 | 41 | 1 | 1 | 1 | 0 | 0 |
-| Enercon E-40 | 16 | 1 | 1 | 1 | 1 | 1 |
+| Enercon E-40 | 18 | 1 | 1 | 1 | 1 | 1 |
 | Enercon E-66 | 8 | 1 | 1 | 1 | 0 | 0 |
 | Enercon E-70 | 5 | 1 | 0 | 0 | 0 | 0 |
 
@@ -88,7 +88,7 @@
 
 | 來源 | 張數 | 放行 | 正視互比 | 姿態可用 | 葉尖偏移原始標記 | 補償後 |
 |---|---|---|---|---|---|---|
-| model | 51 | 5 | 3 | 3 | 1 | 1 |
+| model | 53 | 5 | 3 | 3 | 1 | 1 |
 | model-subcat | 32 | 0 | 0 | 0 | 0 | 0 |
 | view | 1 | 0 | 0 | 0 | 0 | 0 |
 
@@ -110,6 +110,7 @@
 | [c189094433](https://commons.wikimedia.org/?curid=189094433) File:2026-03-22 D500-2040 Achim-Lammerts Windpark-Hatzenbühl | Achim Lammerts (Syntaxys) | CC BY-SA 4.0 | NIKON D500 | 5568×3712 |
 | [c189094434](https://commons.wikimedia.org/?curid=189094434) File:2026-03-21 Z5-2163 Achim-Lammerts Windpark-Hatzenbühl.j | Achim Lammerts (Syntaxys) | CC BY-SA 4.0 | NIKON Z 5 | 5400×3600 |
 | [c19002876](https://commons.wikimedia.org/?curid=19002876) File:Wind turbine with observation deck bruck an der leitha. | KoeppiK | CC BY-SA 3.0 | NIKON D80 | 2592×3872 |
+| [c19156793](https://commons.wikimedia.org/?curid=19156793) File:Friedrichsgabekoog schafe haus windraeder 01.04.2012 15 | Dirk Ingo Franke | CC BY 3.0 | PENTAX K20D | 2050×1367 |
 | [c19326536](https://commons.wikimedia.org/?curid=19326536) File:Göslow Enercon E-101.JPG | Erell | CC BY-SA 3.0 | DMC-FZ150 | 3000×4000 |
 | [c19669637](https://commons.wikimedia.org/?curid=19669637) File:2012-05-28 Fotoflug Cuxhaven Wilhelmshaven DSCF9347.jpg | Martina Nolte | CC BY-SA 3.0 de | FinePix S5Pro   | 4256×2848 |
 | [c19674205](https://commons.wikimedia.org/?curid=19674205) File:2012-05-28 Fotoflug Cuxhaven Wilhelmshaven DSCF9604.jpg | Martina Nolte | CC BY-SA 3.0 de | FinePix S5Pro   | 4256×2848 |
@@ -181,4 +182,5 @@
 | [c6326636](https://commons.wikimedia.org/?curid=6326636) File:Enercon-P1130627.JPG | Gunnar Ries  Amphibol | CC BY-SA 3.0 | DMC-FZ50 | 3648×2736 |
 | [c6914141](https://commons.wikimedia.org/?curid=6914141) File:Enercon E-126 Aurich-Georgsfeld02.jpg | Prankster | Public domain | NIKON D40 | 3008×2000 |
 | [c87603470](https://commons.wikimedia.org/?curid=87603470) File:20200301 Windrad-Großbaustelle Flamschen, Coesfeld (095 | Günter Seggebäing | CC BY-SA 3.0 | ILCE-7M2 | 5924×3949 |
+| [c8836086](https://commons.wikimedia.org/?curid=8836086) File:Aerials Bavaria 16.06.2006 12-22-43.jpg | Hansueli Krapf | CC BY-SA 3.0 | E8800 | 2048×1536 |
 | [c89696937](https://commons.wikimedia.org/?curid=89696937) File:20170422 Eilum WindTurbine WindSensor DSC01195 PtrQs.jp | PtrQs | CC BY-SA 4.0 | DSLR-A900 | 6048×4032 |

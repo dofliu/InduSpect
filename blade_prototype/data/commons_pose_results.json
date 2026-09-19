@@ -4,16 +4,16 @@
  "max_side": 1024,
  "noise_floor_px": 1.5,
  "summary": {
-  "n": 84,
+  "n": 86,
   "failed": 2,
   "accepted": 5,
   "accepted_front": 3,
   "accepted_side": 2,
-  "rejected": 77,
+  "rejected": 79,
   "reject_reasons": {
    "只定位到 N 片葉片（…）": 34,
-   "三片葉尖半徑差 N%（…）": 31,
-   "一片葉片都沒有定位到": 30,
+   "三片葉尖半徑差 N%（…）": 32,
+   "一片葉片都沒有定位到": 31,
    "結構定位失敗（…）": 2
   },
   "second_rotor_warnings": 3,
@@ -79,7 +79,7 @@
    ]
   },
   "hub_height_source": {
-   "typical": 81,
+   "typical": 83,
    "description": 3
   },
   "per_model": {
@@ -108,7 +108,7 @@
     "comp_defl_flagged": 0
    },
    "Enercon E-40": {
-    "n": 16,
+    "n": 18,
     "accepted": 1,
     "front": 1,
     "pose_usable": 1,
@@ -134,7 +134,7 @@
   },
   "per_source": {
    "model": {
-    "n": 51,
+    "n": 53,
     "accepted": 5,
     "front": 3,
     "pose_usable": 3,
@@ -193,7 +193,7 @@
     "warnings": [],
     "metrics": {}
    },
-   "seconds": 0.41
+   "seconds": 0.42
   },
   {
    "id": "c38239735",
@@ -261,7 +261,7 @@
    ],
    "radius_spread": 0.215,
    "view": "front",
-   "seconds": 0.42
+   "seconds": 0.45
   },
   {
    "id": "c19326536",
@@ -324,7 +324,7 @@
    ],
    "radius_spread": 0.117,
    "view": "front",
-   "seconds": 0.39
+   "seconds": 0.4
   },
   {
    "id": "c20885155",
@@ -390,7 +390,7 @@
    ],
    "radius_spread": 0.367,
    "view": "front",
-   "seconds": 0.41
+   "seconds": 0.44
   },
   {
    "id": "c21367677",
@@ -459,7 +459,7 @@
    ],
    "radius_spread": 2.181,
    "view": "front",
-   "seconds": 0.43
+   "seconds": 0.44
   },
   {
    "id": "c49383831",
@@ -526,7 +526,7 @@
    ],
    "radius_spread": 0.346,
    "view": "front",
-   "seconds": 0.42
+   "seconds": 0.43
   },
   {
    "id": "c49383834",
@@ -593,7 +593,7 @@
    ],
    "radius_spread": 0.391,
    "view": "front",
-   "seconds": 1.11
+   "seconds": 1.15
   },
   {
    "id": "c49383836",
@@ -717,7 +717,7 @@
     "tip_deflection_cm": -113.67540003339593,
     "radius_px": 188.69174837561545
    },
-   "seconds": 0.45
+   "seconds": 0.49
   },
   {
    "id": "c49384464",
@@ -851,7 +851,7 @@
    ],
    "radius_spread": 0.748,
    "view": "front",
-   "seconds": 0.71
+   "seconds": 0.75
   },
   {
    "id": "c87603470",
@@ -920,7 +920,7 @@
    ],
    "radius_spread": 0.285,
    "view": "front",
-   "seconds": 0.48
+   "seconds": 0.49
   },
   {
    "id": "c189094434",
@@ -988,7 +988,7 @@
    ],
    "radius_spread": 0.283,
    "view": "front",
-   "seconds": 0.39
+   "seconds": 0.4
   },
   {
    "id": "c189094433",
@@ -1117,7 +1117,7 @@
    ],
    "radius_spread": 0.015,
    "view": "front",
-   "seconds": 0.35
+   "seconds": 0.37
   },
   {
    "id": "c26562677",
@@ -1444,7 +1444,7 @@
    "tip_radii_px": [],
    "tip_angles_deg": [],
    "view": "front",
-   "seconds": 0.22
+   "seconds": 0.23
   },
   {
    "id": "c26565565",
@@ -1511,7 +1511,7 @@
    ],
    "radius_spread": 0.604,
    "view": "front",
-   "seconds": 0.35
+   "seconds": 0.38
   },
   {
    "id": "c26565658",
@@ -1665,7 +1665,7 @@
    "tip_radii_px": [],
    "tip_angles_deg": [],
    "view": "front",
-   "seconds": 0.24
+   "seconds": 0.23
   },
   {
    "id": "c26565694",
@@ -1873,7 +1873,7 @@
    "tip_radii_px": [],
    "tip_angles_deg": [],
    "view": "front",
-   "seconds": 0.21
+   "seconds": 0.2
   },
   {
    "id": "c26978844",
@@ -2079,7 +2079,7 @@
    "tip_radii_px": [],
    "tip_angles_deg": [],
    "view": "front",
-   "seconds": 0.24
+   "seconds": 0.23
   },
   {
    "id": "c26727051",
@@ -2203,7 +2203,7 @@
    ],
    "radius_spread": 0.0,
    "view": "front",
-   "seconds": 0.43
+   "seconds": 0.42
   },
   {
    "id": "c113015211",
@@ -2269,7 +2269,7 @@
    ],
    "radius_spread": 0.421,
    "view": "front",
-   "seconds": 0.35
+   "seconds": 0.34
   },
   {
    "id": "c6326631",
@@ -2338,7 +2338,7 @@
    ],
    "radius_spread": 0.673,
    "view": "front",
-   "seconds": 0.35
+   "seconds": 0.36
   },
   {
    "id": "c6326636",
@@ -2441,7 +2441,7 @@
    "tip_radii_px": [],
    "tip_angles_deg": [],
    "view": "front",
-   "seconds": 0.25
+   "seconds": 0.26
   },
   {
    "id": "c26835458",
@@ -2502,7 +2502,7 @@
    ],
    "radius_spread": 0.0,
    "view": "front",
-   "seconds": 0.32
+   "seconds": 0.33
   },
   {
    "id": "c26835574",
@@ -2622,7 +2622,7 @@
    ],
    "radius_spread": 2.202,
    "view": "front",
-   "seconds": 0.34
+   "seconds": 0.35
   },
   {
    "id": "c26835656",
@@ -2674,7 +2674,7 @@
    "tip_radii_px": [],
    "tip_angles_deg": [],
    "view": "front",
-   "seconds": 0.24
+   "seconds": 0.25
   },
   {
    "id": "c26835707",
@@ -2726,7 +2726,7 @@
    "tip_radii_px": [],
    "tip_angles_deg": [],
    "view": "front",
-   "seconds": 0.2
+   "seconds": 0.21
   },
   {
    "id": "c26979080",
@@ -2794,7 +2794,7 @@
    ],
    "radius_spread": 0.339,
    "view": "front",
-   "seconds": 0.49
+   "seconds": 0.45
   },
   {
    "id": "c184853055",
@@ -3070,7 +3070,7 @@
      "same_flags": true
     }
    },
-   "seconds": 0.35
+   "seconds": 0.33
   },
   {
    "id": "c184853092",
@@ -3131,7 +3131,7 @@
    ],
    "radius_spread": 0.0,
    "view": "front",
-   "seconds": 0.41
+   "seconds": 0.42
   },
   {
    "id": "c26835764",
@@ -3197,7 +3197,7 @@
    ],
    "radius_spread": 0.793,
    "view": "front",
-   "seconds": 0.33
+   "seconds": 0.34
   },
   {
    "id": "c26747464",
@@ -3323,7 +3323,7 @@
    ],
    "radius_spread": 0.0,
    "view": "front",
-   "seconds": 0.43
+   "seconds": 0.44
   },
   {
    "id": "c26679267",
@@ -3391,7 +3391,7 @@
    ],
    "radius_spread": 0.759,
    "view": "front",
-   "seconds": 0.22
+   "seconds": 0.23
   },
   {
    "id": "c26679282",
@@ -3458,7 +3458,7 @@
    ],
    "radius_spread": 0.599,
    "view": "front",
-   "seconds": 0.27
+   "seconds": 0.29
   },
   {
    "id": "c26679295",
@@ -3525,7 +3525,7 @@
    ],
    "radius_spread": 0.509,
    "view": "front",
-   "seconds": 0.27
+   "seconds": 0.28
   },
   {
    "id": "c26679298",
@@ -3592,7 +3592,7 @@
    ],
    "radius_spread": 0.161,
    "view": "front",
-   "seconds": 0.25
+   "seconds": 0.26
   },
   {
    "id": "c36383488",
@@ -3815,7 +3815,7 @@
      "same_flags": true
     }
    },
-   "seconds": 0.42
+   "seconds": 0.43
   },
   {
    "id": "c19669637",
@@ -3878,7 +3878,7 @@
    ],
    "radius_spread": 0.0,
    "view": "front",
-   "seconds": 0.38
+   "seconds": 0.39
   },
   {
    "id": "c19674205",
@@ -4067,7 +4067,7 @@
    ],
    "radius_spread": 1.2,
    "view": "front",
-   "seconds": 0.82
+   "seconds": 0.84
   },
   {
    "id": "c41928516",
@@ -4153,7 +4153,7 @@
    "tip_radii_px": [],
    "tip_angles_deg": [],
    "view": "front",
-   "seconds": 0.22
+   "seconds": 0.23
   },
   {
    "id": "c42148858",
@@ -4284,7 +4284,7 @@
    ],
    "radius_spread": 0.0,
    "view": "front",
-   "seconds": 0.39
+   "seconds": 0.4
   },
   {
    "id": "c42148865",
@@ -4346,7 +4346,7 @@
    ],
    "radius_spread": 0.0,
    "view": "front",
-   "seconds": 0.37
+   "seconds": 0.38
   },
   {
    "id": "c57659697",
@@ -4518,7 +4518,7 @@
    "tip_radii_px": [],
    "tip_angles_deg": [],
    "view": "front",
-   "seconds": 0.27
+   "seconds": 0.29
   },
   {
    "id": "c89696937",
@@ -4571,6 +4571,58 @@
    "tip_angles_deg": [],
    "view": "front",
    "seconds": 0.22
+  },
+  {
+   "id": "c8836086",
+   "title": "File:Aerials Bavaria 16.06.2006 12-22-43.jpg",
+   "page_url": "https://commons.wikimedia.org/?curid=8836086",
+   "model": "Enercon E-40",
+   "license": "CC BY-SA 3.0",
+   "artist": "Hansueli Krapf",
+   "camera_model": "E8800",
+   "hub_height_source": "typical",
+   "orig_width": 2048,
+   "orig_height": 1536,
+   "date": "2006:06:16 12:22:43",
+   "source_kind": "model",
+   "origin": "Category:Enercon E-40",
+   "model_basis": null,
+   "size": [
+    1024,
+    768
+   ],
+   "focal_35mm": 64.0,
+   "hub_height_m": 65.0,
+   "rotor_radius_m": 22.0,
+   "failed": false,
+   "verdict": {
+    "ok": false,
+    "reasons": [
+     "一片葉片都沒有定位到：多半是轉子沒有完整入鏡（請退後到整個轉子連同塔架都進得了畫面），或風機根本沒被分割出來（雲層、逆光或前景物撐壞天空模型，請換雲量少的時段、讓葉片背景是乾淨天空）"
+    ],
+    "warnings": [
+     "沒有找到塔架：塔架傾斜與六點鐘方位判讀不可用（幾何互比仍可進行）",
+     "輪轂只有初估、未經葉片軸線精修：葉尖偏移量的精度會下降"
+    ],
+    "metrics": {
+     "mask_area_frac": 0.002,
+     "sky_mask_frac": 0.002,
+     "horizon_y": null,
+     "n_blades": 0,
+     "view": "front",
+     "tip_radii_px": []
+    }
+   },
+   "n_blades": 0,
+   "tower_found": false,
+   "hub": [
+    0.0,
+    0.0
+   ],
+   "tip_radii_px": [],
+   "tip_angles_deg": [],
+   "view": "front",
+   "seconds": 0.21
   },
   {
    "id": "c181564589",
@@ -4637,7 +4689,76 @@
    ],
    "radius_spread": 0.933,
    "view": "front",
-   "seconds": 0.42
+   "seconds": 0.43
+  },
+  {
+   "id": "c19156793",
+   "title": "File:Friedrichsgabekoog schafe haus windraeder 01.04.2012 15-11-09.jpg",
+   "page_url": "https://commons.wikimedia.org/?curid=19156793",
+   "model": "Enercon E-40",
+   "license": "CC BY 3.0",
+   "artist": "Dirk Ingo Franke",
+   "camera_model": "PENTAX K20D",
+   "hub_height_source": "typical",
+   "orig_width": 2050,
+   "orig_height": 1367,
+   "date": "2012:04:01 15:11:09",
+   "source_kind": "model",
+   "origin": "Category:Enercon E-40",
+   "model_basis": null,
+   "size": [
+    1024,
+    683
+   ],
+   "focal_35mm": 75.0,
+   "hub_height_m": 65.0,
+   "rotor_radius_m": 22.0,
+   "failed": false,
+   "verdict": {
+    "ok": false,
+    "reasons": [
+     "三片葉尖半徑差 51%（上限 15%）：同一台風機三片等長，差這麼多代表有一片其實是地物、電線或別台風機，請重拍並確保只有一台風機在框內"
+    ],
+    "warnings": [
+     "沒有找到塔架：塔架傾斜與六點鐘方位判讀不可用（幾何互比仍可進行）",
+     "結構定位提示：葉片軸線共線（側視），輪轂投影到主葉片軸線"
+    ],
+    "metrics": {
+     "mask_area_frac": 0.0307,
+     "sky_mask_frac": 0.0307,
+     "horizon_y": null,
+     "n_blades": 3,
+     "view": "front",
+     "tip_radii_px": [
+      107.6,
+      59.1,
+      94.7
+     ],
+     "tip_radius_spread": 0.512,
+     "second_rotor_radius_px": 0.0,
+     "second_rotor_arms": 0,
+     "second_rotor_ratio": 0.0
+    }
+   },
+   "n_blades": 3,
+   "tower_found": false,
+   "hub": [
+    572.7,
+    281.8
+   ],
+   "tip_radii_px": [
+    107.6,
+    59.1,
+    94.7
+   ],
+   "tip_angles_deg": [
+    3.6,
+    136.2,
+    181.3
+   ],
+   "radius_spread": 0.512,
+   "view": "front",
+   "seconds": 0.46
   },
   {
    "id": "c41901328",
@@ -4758,7 +4879,7 @@
    ],
    "radius_spread": 1.322,
    "view": "front",
-   "seconds": 0.35
+   "seconds": 0.4
   },
   {
    "id": "c36405368",
@@ -4819,7 +4940,7 @@
    ],
    "radius_spread": 0.0,
    "view": "front",
-   "seconds": 0.41
+   "seconds": 0.42
   },
   {
    "id": "c42148853",
@@ -4886,7 +5007,7 @@
    ],
    "radius_spread": 0.385,
    "view": "front",
-   "seconds": 0.22
+   "seconds": 0.24
   },
   {
    "id": "c42148854",
@@ -4952,7 +5073,7 @@
    ],
    "radius_spread": 0.16,
    "view": "front",
-   "seconds": 0.37
+   "seconds": 0.39
   },
   {
    "id": "c5682409",
@@ -5165,7 +5286,7 @@
      "same_flags": true
     }
    },
-   "seconds": 0.34
+   "seconds": 0.36
   },
   {
    "id": "c185379090",
@@ -5224,7 +5345,7 @@
    ],
    "radius_spread": 0.0,
    "view": "front",
-   "seconds": 0.62
+   "seconds": 0.63
   },
   {
    "id": "c19002876",
@@ -5289,7 +5410,7 @@
    ],
    "radius_spread": 0.113,
    "view": "front",
-   "seconds": 0.41
+   "seconds": 0.38
   },
   {
    "id": "c16043004",
@@ -5341,7 +5462,7 @@
    "tip_radii_px": [],
    "tip_angles_deg": [],
    "view": "front",
-   "seconds": 0.17
+   "seconds": 0.18
   },
   {
    "id": "c50571490",
@@ -5410,7 +5531,7 @@
    ],
    "radius_spread": 0.758,
    "view": "front",
-   "seconds": 0.64
+   "seconds": 0.67
   },
   {
    "id": "c50571491",
@@ -5481,7 +5602,7 @@
     "tip_deflection_cm": -218.68704897318864,
     "radius_px": 276.32122732644297
    },
-   "seconds": 0.59
+   "seconds": 0.63
   },
   {
    "id": "c38239738",
@@ -5543,7 +5664,7 @@
    ],
    "radius_spread": 0.0,
    "view": "front",
-   "seconds": 0.38
+   "seconds": 0.39
   },
   {
    "id": "c116792602",
@@ -5605,7 +5726,7 @@
    ],
    "radius_spread": 0.0,
    "view": "front",
-   "seconds": 0.26
+   "seconds": 0.27
   },
   {
    "id": "c12869944",
@@ -5657,7 +5778,7 @@
    "tip_radii_px": [],
    "tip_angles_deg": [],
    "view": "front",
-   "seconds": 0.19
+   "seconds": 0.2
   }
  ]
 }
