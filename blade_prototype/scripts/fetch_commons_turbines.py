@@ -271,32 +271,98 @@ def _accept(c: dict, min_side: int) -> tuple[bool, str]:
     return True, "ok"
 
 
-def cmd_search(a: argparse.Namespace) -> int:
-    cands: dict[int, dict] = {}
-    stats = {"pages": 0, "license": 0, "no_f35": 0, "small": 0, "no_spec": 0, "ok": 0}
-    for cat, model in CATEGORIES.items():
-        params = {"action": "query", "generator": "categorymembers", "gcmtitle": cat, "gcmtype": "file",
-                  "gcmlimit": str(a.per_category), "prop": "imageinfo",
-                  "iiprop": "url|size|mime|metadata|extmetadata", "iiurlwidth": str(a.thumb_width), "format": "json"}
-        try:
-            d = _paced_get(API + "?" + urllib.parse.urlencode(params), a.pace)
-        except Exception as e:  # noqa: BLE001
-            print(f"{cat}: 失敗 {e}", file=sys.stderr)
-            continue
-        pages = (d.get("query") or {}).get("pages") or {}
-        n_ok = 0
-        for pid, page in pages.items():
-            c = _candidate(page, model, cat)
-            if c is None:
+def subcategories(cat: str, depth: int, pace_s: float, fetch=None) -> list[str]:
+    """機型分類頁底下的子分類（例如「Enercon E-82 in Poland」、某個風場），廣度優先到 `depth` 層。
+    子分類裡的檔案**繼承根分類的機型**——這是拿到更多「機型已知」照片最便宜的路。"""
+    fetch = fetch or (lambda url: _paced_get(url, pace_s))
+    seen: list[str] = []
+    frontier = [cat]
+    for _ in range(depth):
+        nxt: list[str] = []
+        for c in frontier:
+            params = {"action": "query", "list": "categorymembers", "cmtitle": c, "cmtype": "subcat",
+                      "cmlimit": "100", "format": "json"}
+            try:
+                d = fetch(API + "?" + urllib.parse.urlencode(params))
+            except Exception as e:  # noqa: BLE001
+                print(f"{c}: 子分類列舉失敗 {e}", file=sys.stderr)
                 continue
-            stats["pages"] += 1
-            ok, why = _accept(c, a.min_side)
-            stats[why] += 1
-            c["selected"] = ok
-            c["reject_reason"] = None if ok else why
-            n_ok += ok
-            cands[int(pid)] = c
-        print(f"{cat}: {len(pages)} 檔，可用 {n_ok}", file=sys.stderr)
+            for m in (d.get("query") or {}).get("categorymembers") or []:
+                t = m.get("title")
+                if t and t not in seen and t != cat:
+                    seen.append(t)
+                    nxt.append(t)
+        frontier = nxt
+        if not frontier:
+            break
+    return seen
+
+
+def _iter_category_files(cat: str, a: argparse.Namespace, limit: int):
+    """分頁列一個分類頁裡的檔案（imageinfo 一次最多 50 頁），最多 `limit` 張。"""
+    cont: dict = {}
+    n = 0
+    while n < limit:
+        params = {"action": "query", "generator": "categorymembers", "gcmtitle": cat, "gcmtype": "file",
+                  "gcmlimit": str(min(50, limit - n)), "prop": "imageinfo",
+                  "iiprop": "url|size|mime|metadata|extmetadata", "iiurlwidth": str(a.thumb_width), "format": "json", **cont}
+        d = _paced_get(API + "?" + urllib.parse.urlencode(params), a.pace)
+        pages = (d.get("query") or {}).get("pages") or {}
+        for pid, page in pages.items():
+            n += 1
+            yield pid, page
+        cont = d.get("continue") or {}
+        if not cont or not pages:
+            break
+
+
+def cmd_search(a: argparse.Namespace) -> int:
+    existing: dict = {}
+    if a.merge_into and os.path.exists(a.merge_into):
+        existing = json.load(open(a.merge_into, encoding="utf-8"))
+    have = {c["pageid"] for c in existing.get("candidates", [])}
+    cands: dict[int, dict] = {}
+    stats = {"pages": 0, "license": 0, "no_f35": 0, "small": 0, "no_spec": 0, "ok": 0, "skipped_known": 0, "subcats": 0}
+    for cat, model in CATEGORIES.items():
+        cats = [cat]
+        if a.recursive_depth > 0:
+            subs = subcategories(cat, a.recursive_depth, a.pace)
+            stats["subcats"] += len(subs)
+            cats += subs
+        for c_title in cats:
+            n_pages = n_ok = 0
+            try:
+                for pid, page in _iter_category_files(c_title, a, a.per_category):
+                    if int(pid) in have or int(pid) in cands:
+                        stats["skipped_known"] += 1
+                        continue
+                    c = _candidate(page, model, c_title)
+                    if c is None:
+                        continue
+                    c["source_kind"] = "model" if c_title == cat else "model-subcat"
+                    stats["pages"] += 1
+                    n_pages += 1
+                    ok, why = _accept(c, a.min_side)
+                    stats[why] += 1
+                    c["selected"] = ok
+                    c["reject_reason"] = None if ok else why
+                    n_ok += ok
+                    cands[int(pid)] = c
+            except Exception as e:  # noqa: BLE001
+                print(f"{c_title}: 失敗 {e}", file=sys.stderr)
+                continue
+            print(f"{c_title}: {n_pages} 檔，可用 {n_ok}", file=sys.stderr)
+    if existing:
+        added = list(cands.values())
+        existing["candidates"] = sorted(existing["candidates"] + added,
+                                        key=lambda c: (not c.get("selected"), c.get("model") or "", c["title"]))
+        existing.setdefault("searches", []).append({"generated": time.strftime("%Y-%m-%d"), "kind": "model-recursive",
+                                                    "depth": a.recursive_depth, "stats": stats, "added": len(added)})
+        existing["specs"] = {k: {"rotor_diameter_m": v[0], "hub_height_typical_m": v[1], "note": v[2]} for k, v in MODEL_SPECS.items()}
+        with open(a.merge_into, "w", encoding="utf-8") as fh:
+            json.dump(existing, fh, ensure_ascii=False, indent=1)
+        print(json.dumps(stats, ensure_ascii=False), file=sys.stderr)
+        return 0
     out = {
         "_readme": "Wikimedia Commons 整機照候選（機型類別已知）。由 scripts/fetch_commons_turbines.py search 產生；"
                    "selected = CC 授權 + EXIF 有 35 mm 等效焦距 + 尺寸夠 + 機型型錄值存在。影像不進版控。",
@@ -461,7 +527,9 @@ def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = ap.add_subparsers(dest="cmd", required=True)
     s = sub.add_parser("search")
-    s.add_argument("--out", required=True)
+    s.add_argument("--out", default=None)
+    s.add_argument("--merge-into", default=None, help="併進既有 manifest（同 pageid 跳過）")
+    s.add_argument("--recursive-depth", type=int, default=0, help="機型分類頁往下幾層子分類（子分類的檔案繼承機型）")
     s.add_argument("--pace", type=float, default=DEFAULT_PACE_S)
     s.add_argument("--per-category", type=int, default=50)
     s.add_argument("--min-side", type=int, default=1600)

@@ -68,3 +68,22 @@ def test_hub_height_from_description() -> None:
     assert F._hub_from_description("Enercon E-82 E2 with a hub height of 138 m") == 138.0
     assert F._hub_from_description("Nabenhöhe 98,5 m") == 98.5
     assert F._hub_from_description("a 500 m long road") is None
+
+
+def test_subcategories_breadth_first_with_depth() -> None:
+    tree = {
+        "Category:Enercon E-82": ["Category:Enercon E-82 E2", "Category:Enercon E-82 in Poland"],
+        "Category:Enercon E-82 E2": ["Category:Windpark X"],
+        "Category:Enercon E-82 in Poland": [],
+        "Category:Windpark X": ["Category:Enercon E-82"],  # 環：不得回到根
+    }
+
+    def fake(url: str) -> dict:
+        import urllib.parse
+        q = urllib.parse.parse_qs(urllib.parse.urlparse(url).query)
+        return {"query": {"categorymembers": [{"title": x} for x in tree[q["cmtitle"][0]]]}}
+
+    assert F.subcategories("Category:Enercon E-82", 1, 0.0, fetch=fake) == \
+        ["Category:Enercon E-82 E2", "Category:Enercon E-82 in Poland"]
+    assert F.subcategories("Category:Enercon E-82", 3, 0.0, fetch=fake) == \
+        ["Category:Enercon E-82 E2", "Category:Enercon E-82 in Poland", "Category:Windpark X"]
