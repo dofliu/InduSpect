@@ -65,6 +65,25 @@ MODEL_SPECS: dict[str, tuple[float, float, str]] = {
     "Senvion MM92": (92.5, 100.0, "REpower/Senvion 型錄；68–100 m"),
     "Senvion MM82": (82.0, 80.0, "REpower/Senvion 型錄；59–100 m"),
     "REpower 5M": (126.0, 117.0, "REpower 型錄；100／117 m"),
+    # 取景類分類頁（search-view）常見、但沒有自己機型分類頁的機型
+    "Enercon E-30": (30.0, 50.0, "Enercon 型錄；50 m"),
+    "Enercon E-44": (44.0, 55.0, "Enercon 型錄；45／55 m"),
+    "Enercon E-48": (48.0, 60.0, "Enercon 型錄；50／56／65／76 m"),
+    "Enercon E-53": (52.9, 73.0, "Enercon 型錄；60／73 m"),
+    "Enercon E-92": (92.5, 98.0, "Enercon 型錄；78／84／98／104／138 m"),
+    "Enercon E-103": (103.0, 98.0, "Enercon 型錄；98／138 m"),
+    "Enercon E-138": (138.6, 131.0, "Enercon 型錄；81／111／131／160 m"),
+    "Enercon E-141": (141.0, 135.0, "Enercon 型錄；129／135／159 m"),
+    "Vestas V27": (27.0, 30.0, "Vestas 型錄；30／31.5 m"),
+    "Vestas V39": (39.0, 40.0, "Vestas 型錄；40／41 m"),
+    "Vestas V44": (44.0, 50.0, "Vestas 型錄；45／50 m"),
+    "Vestas V136": (136.0, 112.0, "Vestas 型錄；82／105／112／132／149 m"),
+    "Vestas V150": (150.0, 125.0, "Vestas 型錄；105／125／155／166 m"),
+    "Nordex N131": (131.0, 114.0, "Nordex 型錄；99／114／134／164 m"),
+    "Nordex N149": (149.1, 125.0, "Nordex 型錄；105／125／155／164 m"),
+    "Siemens SWT-2.3-101": (101.0, 99.5, "Siemens 型錄；80／99.5 m"),
+    "GE 2.75-120": (120.0, 110.0, "GE 型錄；85／110／139 m"),
+    "Senvion 3.2M114": (114.0, 123.0, "Senvion 型錄；93／123／143 m"),
 }
 # Commons 類別名 → 機型鍵。類別不存在時 API 回空，無妨。
 CATEGORIES: dict[str, str] = {
@@ -101,6 +120,45 @@ CATEGORIES: dict[str, str] = {
     "Category:REpower MM82": "Senvion MM82",
     "Category:REpower 5M": "REpower 5M",
 }
+# 由檔案自己的分類或描述推斷機型（search-view 用；機型分類頁那條路不需要）。
+# 型號字串在文字裡很有辨識度（E-82／V90／N117），但要求前面出現廠牌或型號前綴，避免 "E 82" 這種路名。
+_MODEL_PATTERNS: dict[str, re.Pattern] = {}
+
+
+def _model_regex(key: str) -> re.Pattern:
+    """`Enercon E-82` → 接受 "Enercon E-82"、"E-82 E2"、"Enercon E82"；`Vestas V90` → "V90"、"V-90"；
+    `Siemens SWT-2.3-93` → "SWT-2.3-93"；`GE 1.5` → "GE 1.5sle"／"GE 1.5"；`Senvion MM92` → "MM92"／"REpower MM92"。"""
+    if key in _MODEL_PATTERNS:
+        return _MODEL_PATTERNS[key]
+    brand, _, code = key.partition(" ")
+    if brand == "GE":
+        pat = rf"\bGE\s*{re.escape(code)}(?![0-9])"
+    elif re.fullmatch(r"[A-Z]{1,2}-?\d+(\.\d+)?", code):  # E-82 / V90 / N117 / MM92
+        letters, digits = re.match(r"([A-Z]{1,2})-?(\d+(?:\.\d+)?)", code).groups()
+        pat = rf"(?<![A-Za-z0-9]){letters}-?{re.escape(digits)}(?![0-9.])"
+    else:  # SWT-2.3-93 / 3.2M114 / 5M
+        pat = rf"(?<![A-Za-z0-9]){re.escape(code)}(?![0-9])"
+    _MODEL_PATTERNS[key] = re.compile(pat)
+    return _MODEL_PATTERNS[key]
+
+
+def infer_model(categories: list[str], description: str) -> tuple[str | None, str | None]:
+    """回 (機型鍵, 依據)。依據是 "category:<分類名>" 或 "description"；都對不上回 (None, None)。
+    分類優先：分類是人放的、比描述裡的型號字串可靠。同一段文字對到兩個機型就放棄（不猜）。"""
+    for cat in categories:
+        key = CATEGORIES.get(cat if cat.startswith("Category:") else f"Category:{cat}")
+        if key:
+            return key, f"category:{cat}"
+    # 分類名裡帶型號但沒有專屬分類頁（例如 "Category:Enercon E-53 in Germany"）
+    hits = {k for k in MODEL_SPECS for cat in categories if _model_regex(k).search(cat)}
+    if len(hits) == 1:
+        return hits.pop(), "category-name"
+    hits = {k for k in MODEL_SPECS if _model_regex(k).search(description or "")}
+    if len(hits) == 1:
+        return hits.pop(), "description"
+    return None, None
+
+
 HUB_RE = re.compile(r"(\d{2,3}(?:[.,]\d)?)\s*(?:m|meter|metre|Meter)\b[^.]{0,40}?(?:hub|Nabenh|nacelle|hub height)|"
                     r"(?:hub height|Nabenh(?:ö|oe|o)he|hub)[^0-9]{0,25}(\d{2,3}(?:[.,]\d)?)\s*(?:m|meter|metre)\b", re.I)
 
@@ -255,6 +313,80 @@ def cmd_search(a: argparse.Namespace) -> int:
     return 0
 
 
+def _page_categories(page: dict) -> list[str]:
+    return [c.get("title", "") for c in page.get("categories") or []]
+
+
+def cmd_search_view(a: argparse.Namespace) -> int:
+    """取景類分類頁（例如「從下方看的風機」）：機型不在分類頁上，改由每張檔案自己的分類與描述推斷。
+    其餘篩選與 search 相同。`--merge-into` 會把候選併進既有 manifest（同 pageid 不重複），
+    讓 download 與 real_pose_validation 只看一份檔。"""
+    cands: dict[int, dict] = {}
+    stats = {"pages": 0, "license": 0, "no_f35": 0, "small": 0, "no_spec": 0, "ok": 0, "model_from": {}}
+    for cat in a.category:
+        cont: dict = {}
+        n_pages = n_ok = 0
+        while True:
+            params = {"action": "query", "generator": "categorymembers", "gcmtitle": cat, "gcmtype": "file",
+                      "gcmlimit": str(min(a.per_category, 50)), "prop": "imageinfo|categories",
+                      "iiprop": "url|size|mime|metadata|extmetadata", "iiurlwidth": str(a.thumb_width),
+                      "clshow": "!hidden", "cllimit": "max", "format": "json", **cont}
+            try:
+                d = _paced_get(API + "?" + urllib.parse.urlencode(params), a.pace)
+            except Exception as e:  # noqa: BLE001
+                print(f"{cat}: 失敗 {e}", file=sys.stderr)
+                break
+            pages = (d.get("query") or {}).get("pages") or {}
+            for pid, page in pages.items():
+                ii = (page.get("imageinfo") or [{}])[0]
+                ext = ii.get("extmetadata") or {}
+                desc = _strip_html(ext.get("ImageDescription", {}).get("value", ""))
+                model, basis = infer_model(_page_categories(page), desc)
+                c = _candidate(page, model, cat)
+                if c is None:
+                    continue
+                c["model_basis"] = basis
+                c["source_kind"] = "view"
+                stats["pages"] += 1
+                n_pages += 1
+                ok, why = _accept(c, a.min_side)
+                stats[why] += 1
+                c["selected"] = ok
+                c["reject_reason"] = None if ok else why
+                if ok:
+                    k = (basis or "").split(":")[0]
+                    stats["model_from"][k] = stats["model_from"].get(k, 0) + 1
+                n_ok += ok
+                cands[int(pid)] = c
+            cont = d.get("continue") or {}
+            if not cont or n_pages >= a.per_category:
+                break
+        print(f"{cat}: {n_pages} 檔，可用 {n_ok}", file=sys.stderr)
+    if a.merge_into and os.path.exists(a.merge_into):
+        doc = json.load(open(a.merge_into, encoding="utf-8"))
+        have = {c["pageid"] for c in doc["candidates"]}
+        added = [c for pid, c in cands.items() if pid not in have]
+        doc["candidates"] = sorted(doc["candidates"] + added, key=lambda c: (not c.get("selected"), c.get("model") or "", c["title"]))
+        doc.setdefault("view_searches", []).append({"generated": time.strftime("%Y-%m-%d"), "categories": a.category,
+                                                    "stats": stats, "added": len(added)})
+        doc["specs"] = {k: {"rotor_diameter_m": v[0], "hub_height_typical_m": v[1], "note": v[2]} for k, v in MODEL_SPECS.items()}
+        out_path = a.merge_into
+    else:
+        doc = {
+            "_readme": "Wikimedia Commons 整機照候選（取景類分類頁；機型由檔案分類／描述推斷）。"
+                       "由 scripts/fetch_commons_turbines.py search-view 產生。影像不進版控。",
+            "generated": time.strftime("%Y-%m-%d"), "pace_s": a.pace, "stats": stats,
+            "specs": {k: {"rotor_diameter_m": v[0], "hub_height_typical_m": v[1], "note": v[2]} for k, v in MODEL_SPECS.items()},
+            "candidates": sorted(cands.values(), key=lambda c: (not c["selected"], c.get("model") or "", c["title"])),
+        }
+        out_path = a.out
+    os.makedirs(os.path.dirname(out_path) or ".", exist_ok=True)
+    with open(out_path, "w", encoding="utf-8") as fh:
+        json.dump(doc, fh, ensure_ascii=False, indent=1)
+    print(json.dumps(stats, ensure_ascii=False), file=sys.stderr)
+    return 0
+
+
 # Wikimedia 只對「常用縮圖寬度」預先渲染並快取；其他寬度每次現算，連續要幾張就 429
 # 並要求改用 https://www.mediawiki.org/wiki/Common_thumbnail_sizes 列出的尺寸。
 # 1920 是那張表上 ≥ 我們 1024 工作尺度、又不用抓原圖的最小選擇。
@@ -335,6 +467,15 @@ def main(argv: list[str] | None = None) -> int:
     s.add_argument("--min-side", type=int, default=1600)
     s.add_argument("--thumb-width", type=int, default=2400)
     s.set_defaults(fn=cmd_search)
+    v = sub.add_parser("search-view", help="取景類分類頁：機型由檔案分類／描述推斷")
+    v.add_argument("--category", action="append", required=True, help="Category:... 可重複")
+    v.add_argument("--out", default=None)
+    v.add_argument("--merge-into", default=None, help="併進既有 manifest（同 pageid 不重複）")
+    v.add_argument("--pace", type=float, default=DEFAULT_PACE_S)
+    v.add_argument("--per-category", type=int, default=200)
+    v.add_argument("--min-side", type=int, default=1600)
+    v.add_argument("--thumb-width", type=int, default=1920)
+    v.set_defaults(fn=cmd_search_view)
     d = sub.add_parser("download")
     d.add_argument("--manifest", required=True)
     d.add_argument("--dir", required=True)
