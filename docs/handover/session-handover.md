@@ -13,7 +13,7 @@
 
 | 條 | 做了什麼 | 結論 | 去哪裡看 |
 |---|---|---|---|
-| 1 | Commons 帶 EXIF 焦距 + 已知機型的真實整機照 → 姿態估計與補償第一次跑真實輸入 | 45 張放行 3 張正視、姿態可用 3；原始標記 1 → 補償後 1。**樣本太少不下結論**，姿態估計在真實 EXIF 上跑得通 | `blade_prototype/REAL_POSE_VALIDATION.md`、SPEC §13-15 |
+| 1 | Commons 帶 EXIF 焦距 + 已知機型的真實整機照 → 姿態估計與補償第一次跑真實輸入 | 84 張放行 3 張正視、姿態可用 3；原始標記 1 → 補償後 1。**正視放行仍只有個位數，補償在真實照片上的成績還撐不起結論** | `blade_prototype/REAL_POSE_VALIDATION.md`、SPEC §13-15 |
 | 2 | Mode B 探針不重訓丟到 WTBs2025（CC0）與 HF sees-innovation | **取像探針不能當閘門**（廂型車 59/62 判 P）；**缺陷探針跨語料 ≈ 亂猜**（lift ≈ 1，只有雷擊 7.7）；硬規則誤觸 3/7,544 | `blade_prototype/CROSS_CORPUS_VALIDATION.md`、`BLADE_CLOSEUP_SPEC.md` §13 |
 | 3 | HF 整機照當 Mode A 閘門壓力測試 | 無人機在輪轂高度拍的 104 張放行 1；六點鐘那片落在地平線以下被截短；非整機 307 張放行 0 | `CROSS_CORPUS_VALIDATION.md` §2、SPEC §13-14 |
 

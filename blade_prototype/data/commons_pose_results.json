@@ -4,16 +4,16 @@
  "max_side": 1024,
  "noise_floor_px": 1.5,
  "summary": {
-  "n": 45,
+  "n": 84,
   "failed": 2,
   "accepted": 5,
   "accepted_front": 3,
   "accepted_side": 2,
-  "rejected": 38,
+  "rejected": 77,
   "reject_reasons": {
-   "只定位到 N 片葉片（…）": 23,
-   "三片葉尖半徑差 N%（…）": 21,
-   "一片葉片都沒有定位到": 5,
+   "只定位到 N 片葉片（…）": 34,
+   "三片葉尖半徑差 N%（…）": 31,
+   "一片葉片都沒有定位到": 30,
    "結構定位失敗（…）": 2
   },
   "second_rotor_warnings": 3,
@@ -79,7 +79,7 @@
    ]
   },
   "hub_height_source": {
-   "typical": 42,
+   "typical": 81,
    "description": 3
   },
   "per_model": {
@@ -100,7 +100,7 @@
     "comp_defl_flagged": 0
    },
    "Enercon E-126": {
-    "n": 8,
+    "n": 41,
     "accepted": 1,
     "front": 1,
     "pose_usable": 1,
@@ -108,7 +108,7 @@
     "comp_defl_flagged": 0
    },
    "Enercon E-40": {
-    "n": 10,
+    "n": 16,
     "accepted": 1,
     "front": 1,
     "pose_usable": 1,
@@ -134,15 +134,31 @@
   },
   "per_source": {
    "model": {
-    "n": 45,
+    "n": 51,
     "accepted": 5,
     "front": 3,
     "pose_usable": 3,
     "raw_defl_flagged": 1,
     "comp_defl_flagged": 1
+   },
+   "model-subcat": {
+    "n": 32,
+    "accepted": 0,
+    "front": 0,
+    "pose_usable": 0,
+    "raw_defl_flagged": 0,
+    "comp_defl_flagged": 0
+   },
+   "view": {
+    "n": 1,
+    "accepted": 0,
+    "front": 0,
+    "pose_usable": 0,
+    "raw_defl_flagged": 0,
+    "comp_defl_flagged": 0
    }
   },
-  "seconds_median": 0.39
+  "seconds_median": 0.33
  },
  "images": [
   {
@@ -157,6 +173,9 @@
    "orig_width": 2126,
    "orig_height": 1469,
    "date": "2013:09:11 10:33:25",
+   "source_kind": "model",
+   "origin": "Category:Enercon E-101",
+   "model_basis": null,
    "size": [
     1024,
     708
@@ -174,10 +193,7 @@
     "warnings": [],
     "metrics": {}
    },
-   "seconds": 0.43,
-   "source_kind": "model",
-   "origin": null,
-   "model_basis": null
+   "seconds": 0.41
   },
   {
    "id": "c38239735",
@@ -191,6 +207,9 @@
    "orig_width": 3776,
    "orig_height": 2520,
    "date": "2013:04:03 12:50:42",
+   "source_kind": "model",
+   "origin": "Category:Enercon E-101",
+   "model_basis": null,
    "size": [
     1024,
     683
@@ -242,10 +261,7 @@
    ],
    "radius_spread": 0.215,
    "view": "front",
-   "seconds": 0.41,
-   "source_kind": "model",
-   "origin": null,
-   "model_basis": null
+   "seconds": 0.42
   },
   {
    "id": "c19326536",
@@ -259,6 +275,9 @@
    "orig_width": 3000,
    "orig_height": 4000,
    "date": "2012:05:03 14:02:26",
+   "source_kind": "model",
+   "origin": "Category:Enercon E-101",
+   "model_basis": null,
    "size": [
     768,
     1024
@@ -305,10 +324,7 @@
    ],
    "radius_spread": 0.117,
    "view": "front",
-   "seconds": 0.39,
-   "source_kind": "model",
-   "origin": null,
-   "model_basis": null
+   "seconds": 0.39
   },
   {
    "id": "c20885155",
@@ -322,6 +338,9 @@
    "orig_width": 2448,
    "orig_height": 3264,
    "date": "2012:08:09 18:03:32",
+   "source_kind": "model",
+   "origin": "Category:Enercon E-101",
+   "model_basis": null,
    "size": [
     768,
     1024
@@ -371,10 +390,7 @@
    ],
    "radius_spread": 0.367,
    "view": "front",
-   "seconds": 0.41,
-   "source_kind": "model",
-   "origin": null,
-   "model_basis": null
+   "seconds": 0.41
   },
   {
    "id": "c21367677",
@@ -388,6 +404,9 @@
    "orig_width": 2448,
    "orig_height": 3264,
    "date": "2012:09:15 11:37:14",
+   "source_kind": "model",
+   "origin": "Category:Enercon E-101",
+   "model_basis": null,
    "size": [
     768,
     1024
@@ -440,10 +459,7 @@
    ],
    "radius_spread": 2.181,
    "view": "front",
-   "seconds": 0.43,
-   "source_kind": "model",
-   "origin": null,
-   "model_basis": null
+   "seconds": 0.43
   },
   {
    "id": "c49383831",
@@ -457,6 +473,9 @@
    "orig_width": 4896,
    "orig_height": 3672,
    "date": "2016:06:04 11:34:37",
+   "source_kind": "model",
+   "origin": "Category:Enercon E-115",
+   "model_basis": null,
    "size": [
     1024,
     768
@@ -507,10 +526,7 @@
    ],
    "radius_spread": 0.346,
    "view": "front",
-   "seconds": 0.43,
-   "source_kind": "model",
-   "origin": null,
-   "model_basis": null
+   "seconds": 0.42
   },
   {
    "id": "c49383834",
@@ -524,6 +540,9 @@
    "orig_width": 4896,
    "orig_height": 3672,
    "date": "2016:06:04 11:38:29",
+   "source_kind": "model",
+   "origin": "Category:Enercon E-115",
+   "model_basis": null,
    "size": [
     1024,
     768
@@ -574,10 +593,7 @@
    ],
    "radius_spread": 0.391,
    "view": "front",
-   "seconds": 1.16,
-   "source_kind": "model",
-   "origin": null,
-   "model_basis": null
+   "seconds": 1.11
   },
   {
    "id": "c49383836",
@@ -591,6 +607,9 @@
    "orig_width": 4896,
    "orig_height": 3672,
    "date": "2016:06:04 11:39:12",
+   "source_kind": "model",
+   "origin": "Category:Enercon E-115",
+   "model_basis": null,
    "size": [
     1024,
     768
@@ -626,10 +645,7 @@
    "tip_radii_px": [],
    "tip_angles_deg": [],
    "view": "front",
-   "seconds": 0.28,
-   "source_kind": "model",
-   "origin": null,
-   "model_basis": null
+   "seconds": 0.27
   },
   {
    "id": "c49384455",
@@ -643,6 +659,9 @@
    "orig_width": 4896,
    "orig_height": 3672,
    "date": "2016:06:04 11:49:31",
+   "source_kind": "model",
+   "origin": "Category:Enercon E-115",
+   "model_basis": null,
    "size": [
     1024,
     768
@@ -698,10 +717,7 @@
     "tip_deflection_cm": -113.67540003339593,
     "radius_px": 188.69174837561545
    },
-   "seconds": 0.48,
-   "source_kind": "model",
-   "origin": null,
-   "model_basis": null
+   "seconds": 0.45
   },
   {
    "id": "c49384464",
@@ -715,6 +731,9 @@
    "orig_width": 4896,
    "orig_height": 3672,
    "date": "2016:06:04 13:14:50",
+   "source_kind": "model",
+   "origin": "Category:Enercon E-115",
+   "model_basis": null,
    "size": [
     1024,
     768
@@ -766,10 +785,7 @@
    ],
    "radius_spread": 3.617,
    "view": "front",
-   "seconds": 0.28,
-   "source_kind": "model",
-   "origin": null,
-   "model_basis": null
+   "seconds": 0.27
   },
   {
    "id": "c49395978",
@@ -783,6 +799,9 @@
    "orig_width": 4896,
    "orig_height": 3672,
    "date": "2016:06:04 13:35:53",
+   "source_kind": "model",
+   "origin": "Category:Enercon E-115",
+   "model_basis": null,
    "size": [
     1024,
     768
@@ -832,10 +851,7 @@
    ],
    "radius_spread": 0.748,
    "view": "front",
-   "seconds": 0.76,
-   "source_kind": "model",
-   "origin": null,
-   "model_basis": null
+   "seconds": 0.71
   },
   {
    "id": "c87603470",
@@ -849,6 +865,9 @@
    "orig_width": 5924,
    "orig_height": 3949,
    "date": "2020:03:01 16:51:33",
+   "source_kind": "model",
+   "origin": "Category:Enercon E-115",
+   "model_basis": null,
    "size": [
     1024,
     683
@@ -901,10 +920,7 @@
    ],
    "radius_spread": 0.285,
    "view": "front",
-   "seconds": 0.49,
-   "source_kind": "model",
-   "origin": null,
-   "model_basis": null
+   "seconds": 0.48
   },
   {
    "id": "c189094434",
@@ -918,6 +934,9 @@
    "orig_width": 5400,
    "orig_height": 3600,
    "date": "2026:03:21 10:41:26",
+   "source_kind": "model",
+   "origin": "Category:Enercon E-115",
+   "model_basis": null,
    "size": [
     1024,
     683
@@ -969,10 +988,7 @@
    ],
    "radius_spread": 0.283,
    "view": "front",
-   "seconds": 0.39,
-   "source_kind": "model",
-   "origin": null,
-   "model_basis": null
+   "seconds": 0.39
   },
   {
    "id": "c189094433",
@@ -986,6 +1002,9 @@
    "orig_width": 5568,
    "orig_height": 3712,
    "date": "2026:03:22 10:20:48",
+   "source_kind": "model",
+   "origin": "Category:Enercon E-115",
+   "model_basis": null,
    "size": [
     1024,
     683
@@ -1035,10 +1054,7 @@
    ],
    "radius_spread": 0.507,
    "view": "front",
-   "seconds": 0.5,
-   "source_kind": "model",
-   "origin": null,
-   "model_basis": null
+   "seconds": 0.5
   },
   {
    "id": "c36405367",
@@ -1052,6 +1068,9 @@
    "orig_width": 2848,
    "orig_height": 4288,
    "date": "2011:04:25 23:32:48",
+   "source_kind": "model",
+   "origin": "Category:Enercon E-126",
+   "model_basis": null,
    "size": [
     680,
     1024
@@ -1098,10 +1117,1030 @@
    ],
    "radius_spread": 0.015,
    "view": "front",
-   "seconds": 0.39,
-   "source_kind": "model",
-   "origin": null,
-   "model_basis": null
+   "seconds": 0.35
+  },
+  {
+   "id": "c26562677",
+   "title": "File:2013-06-08 Projekt Heißlufftballon DSCF7612.jpg",
+   "page_url": "https://commons.wikimedia.org/?curid=26562677",
+   "model": "Enercon E-126",
+   "license": "CC BY-SA 3.0 de",
+   "artist": "Martina Nolte",
+   "camera_model": "FinePix S5Pro  ",
+   "hub_height_source": "typical",
+   "orig_width": 2500,
+   "orig_height": 1673,
+   "date": "2013:06:08 06:04:57",
+   "source_kind": "model-subcat",
+   "origin": "Category:Enercon E-126 in Hamburg-Altenwerder",
+   "model_basis": null,
+   "size": [
+    1024,
+    685
+   ],
+   "focal_35mm": 105.0,
+   "hub_height_m": 135.0,
+   "rotor_radius_m": 63.5,
+   "failed": false,
+   "verdict": {
+    "ok": false,
+    "reasons": [
+     "一片葉片都沒有定位到：多半是轉子沒有完整入鏡（請退後到整個轉子連同塔架都進得了畫面），或風機根本沒被分割出來（雲層、逆光或前景物撐壞天空模型，請換雲量少的時段、讓葉片背景是乾淨天空）"
+    ],
+    "warnings": [
+     "沒有找到塔架：塔架傾斜與六點鐘方位判讀不可用（幾何互比仍可進行）",
+     "輪轂只有初估、未經葉片軸線精修：葉尖偏移量的精度會下降"
+    ],
+    "metrics": {
+     "mask_area_frac": 0.0151,
+     "sky_mask_frac": 0.0151,
+     "horizon_y": null,
+     "n_blades": 0,
+     "view": "front",
+     "tip_radii_px": []
+    }
+   },
+   "n_blades": 0,
+   "tower_found": false,
+   "hub": [
+    0.0,
+    0.0
+   ],
+   "tip_radii_px": [],
+   "tip_angles_deg": [],
+   "view": "front",
+   "seconds": 0.23
+  },
+  {
+   "id": "c26562683",
+   "title": "File:2013-06-08 Projekt Heißlufftballon DSCF7613.jpg",
+   "page_url": "https://commons.wikimedia.org/?curid=26562683",
+   "model": "Enercon E-126",
+   "license": "CC BY-SA 3.0 de",
+   "artist": "Martina Nolte",
+   "camera_model": "FinePix S5Pro  ",
+   "hub_height_source": "typical",
+   "orig_width": 2500,
+   "orig_height": 1673,
+   "date": "2013:06:08 06:05:03",
+   "source_kind": "model-subcat",
+   "origin": "Category:Enercon E-126 in Hamburg-Altenwerder",
+   "model_basis": null,
+   "size": [
+    1024,
+    685
+   ],
+   "focal_35mm": 105.0,
+   "hub_height_m": 135.0,
+   "rotor_radius_m": 63.5,
+   "failed": false,
+   "verdict": {
+    "ok": false,
+    "reasons": [
+     "一片葉片都沒有定位到：多半是轉子沒有完整入鏡（請退後到整個轉子連同塔架都進得了畫面），或風機根本沒被分割出來（雲層、逆光或前景物撐壞天空模型，請換雲量少的時段、讓葉片背景是乾淨天空）"
+    ],
+    "warnings": [
+     "沒有找到塔架：塔架傾斜與六點鐘方位判讀不可用（幾何互比仍可進行）",
+     "輪轂只有初估、未經葉片軸線精修：葉尖偏移量的精度會下降"
+    ],
+    "metrics": {
+     "mask_area_frac": 0.0074,
+     "sky_mask_frac": 0.0074,
+     "horizon_y": null,
+     "n_blades": 0,
+     "view": "front",
+     "tip_radii_px": []
+    }
+   },
+   "n_blades": 0,
+   "tower_found": false,
+   "hub": [
+    0.0,
+    0.0
+   ],
+   "tip_radii_px": [],
+   "tip_angles_deg": [],
+   "view": "front",
+   "seconds": 0.22
+  },
+  {
+   "id": "c26562709",
+   "title": "File:2013-06-08 Projekt Heißlufftballon DSCF7617.jpg",
+   "page_url": "https://commons.wikimedia.org/?curid=26562709",
+   "model": "Enercon E-126",
+   "license": "CC BY-SA 3.0 de",
+   "artist": "Martina Nolte",
+   "camera_model": "FinePix S5Pro  ",
+   "hub_height_source": "typical",
+   "orig_width": 2500,
+   "orig_height": 1673,
+   "date": "2013:06:08 06:06:56",
+   "source_kind": "model-subcat",
+   "origin": "Category:Enercon E-126 in Hamburg-Altenwerder",
+   "model_basis": null,
+   "size": [
+    1024,
+    685
+   ],
+   "focal_35mm": 105.0,
+   "hub_height_m": 135.0,
+   "rotor_radius_m": 63.5,
+   "failed": false,
+   "verdict": {
+    "ok": false,
+    "reasons": [
+     "只定位到 2 片葉片（應為 3）：可能有葉片正好貼在塔架上（六點鐘方位）或沒入雲層，請等轉子轉到三片都離開塔架再拍",
+     "三片葉尖半徑差 118%（上限 15%）：同一台風機三片等長，差這麼多代表有一片其實是地物、電線或別台風機，請重拍並確保只有一台風機在框內"
+    ],
+    "warnings": [
+     "沒有找到塔架：塔架傾斜與六點鐘方位判讀不可用（幾何互比仍可進行）",
+     "輪轂只有初估、未經葉片軸線精修：葉尖偏移量的精度會下降"
+    ],
+    "metrics": {
+     "mask_area_frac": 0.0074,
+     "sky_mask_frac": 0.0074,
+     "horizon_y": null,
+     "n_blades": 2,
+     "view": "front",
+     "tip_radii_px": [
+      105.8,
+      27.2
+     ],
+     "tip_radius_spread": 1.182,
+     "second_rotor_radius_px": 0.0,
+     "second_rotor_arms": 0,
+     "second_rotor_ratio": 0.0
+    }
+   },
+   "n_blades": 2,
+   "tower_found": false,
+   "hub": [
+    550.0,
+    444.0
+   ],
+   "tip_radii_px": [
+    105.8,
+    27.2
+   ],
+   "tip_angles_deg": [
+    195.4,
+    234.0
+   ],
+   "radius_spread": 1.182,
+   "view": "front",
+   "seconds": 0.28
+  },
+  {
+   "id": "c26565245",
+   "title": "File:2013-06-08 Projekt Heißluftballon DSCF0819.jpg",
+   "page_url": "https://commons.wikimedia.org/?curid=26565245",
+   "model": "Enercon E-126",
+   "license": "CC BY-SA 3.0 de",
+   "artist": "Martina Nolte",
+   "camera_model": "FinePix S3Pro  ",
+   "hub_height_source": "typical",
+   "orig_width": 2500,
+   "orig_height": 1673,
+   "date": "2013:06:08 07:00:30",
+   "source_kind": "model-subcat",
+   "origin": "Category:Enercon E-126 in Hamburg-Altenwerder",
+   "model_basis": null,
+   "size": [
+    1024,
+    685
+   ],
+   "focal_35mm": 57.0,
+   "hub_height_m": 135.0,
+   "rotor_radius_m": 63.5,
+   "failed": false,
+   "verdict": {
+    "ok": false,
+    "reasons": [
+     "一片葉片都沒有定位到：多半是轉子沒有完整入鏡（請退後到整個轉子連同塔架都進得了畫面），或風機根本沒被分割出來（雲層、逆光或前景物撐壞天空模型，請換雲量少的時段、讓葉片背景是乾淨天空）"
+    ],
+    "warnings": [
+     "沒有找到塔架：塔架傾斜與六點鐘方位判讀不可用（幾何互比仍可進行）",
+     "輪轂只有初估、未經葉片軸線精修：葉尖偏移量的精度會下降"
+    ],
+    "metrics": {
+     "mask_area_frac": 0.0059,
+     "sky_mask_frac": 0.0059,
+     "horizon_y": null,
+     "n_blades": 0,
+     "view": "front",
+     "tip_radii_px": []
+    }
+   },
+   "n_blades": 0,
+   "tower_found": false,
+   "hub": [
+    440.0,
+    203.0
+   ],
+   "tip_radii_px": [],
+   "tip_angles_deg": [],
+   "view": "front",
+   "seconds": 0.22
+  },
+  {
+   "id": "c26565336",
+   "title": "File:2013-06-08 Projekt Heißluftballon DSCF0825.jpg",
+   "page_url": "https://commons.wikimedia.org/?curid=26565336",
+   "model": "Enercon E-126",
+   "license": "CC BY-SA 3.0 de",
+   "artist": "Martina Nolte",
+   "camera_model": "FinePix S3Pro  ",
+   "hub_height_source": "typical",
+   "orig_width": 2500,
+   "orig_height": 1673,
+   "date": "2013:06:08 07:04:43",
+   "source_kind": "model-subcat",
+   "origin": "Category:Enercon E-126 in Hamburg-Altenwerder",
+   "model_basis": null,
+   "size": [
+    1024,
+    685
+   ],
+   "focal_35mm": 36.0,
+   "hub_height_m": 135.0,
+   "rotor_radius_m": 63.5,
+   "failed": false,
+   "verdict": {
+    "ok": false,
+    "reasons": [
+     "一片葉片都沒有定位到：多半是轉子沒有完整入鏡（請退後到整個轉子連同塔架都進得了畫面），或風機根本沒被分割出來（雲層、逆光或前景物撐壞天空模型，請換雲量少的時段、讓葉片背景是乾淨天空）"
+    ],
+    "warnings": [
+     "沒有找到塔架：塔架傾斜與六點鐘方位判讀不可用（幾何互比仍可進行）",
+     "輪轂只有初估、未經葉片軸線精修：葉尖偏移量的精度會下降"
+    ],
+    "metrics": {
+     "mask_area_frac": 0.0173,
+     "sky_mask_frac": 0.0173,
+     "horizon_y": null,
+     "n_blades": 0,
+     "view": "front",
+     "tip_radii_px": []
+    }
+   },
+   "n_blades": 0,
+   "tower_found": false,
+   "hub": [
+    512.0,
+    523.0
+   ],
+   "tip_radii_px": [],
+   "tip_angles_deg": [],
+   "view": "front",
+   "seconds": 0.24
+  },
+  {
+   "id": "c26565345",
+   "title": "File:2013-06-08 Projekt Heißluftballon DSCF0826.jpg",
+   "page_url": "https://commons.wikimedia.org/?curid=26565345",
+   "model": "Enercon E-126",
+   "license": "CC BY-SA 3.0 de",
+   "artist": "Martina Nolte",
+   "camera_model": "FinePix S3Pro  ",
+   "hub_height_source": "typical",
+   "orig_width": 2500,
+   "orig_height": 1673,
+   "date": "2013:06:08 07:04:48",
+   "source_kind": "model-subcat",
+   "origin": "Category:Enercon E-126 in Hamburg-Altenwerder",
+   "model_basis": null,
+   "size": [
+    1024,
+    685
+   ],
+   "focal_35mm": 105.0,
+   "hub_height_m": 135.0,
+   "rotor_radius_m": 63.5,
+   "failed": false,
+   "verdict": {
+    "ok": false,
+    "reasons": [
+     "一片葉片都沒有定位到：多半是轉子沒有完整入鏡（請退後到整個轉子連同塔架都進得了畫面），或風機根本沒被分割出來（雲層、逆光或前景物撐壞天空模型，請換雲量少的時段、讓葉片背景是乾淨天空）"
+    ],
+    "warnings": [
+     "沒有找到塔架：塔架傾斜與六點鐘方位判讀不可用（幾何互比仍可進行）",
+     "輪轂只有初估、未經葉片軸線精修：葉尖偏移量的精度會下降"
+    ],
+    "metrics": {
+     "mask_area_frac": 0.0252,
+     "sky_mask_frac": 0.0252,
+     "horizon_y": null,
+     "n_blades": 0,
+     "view": "front",
+     "tip_radii_px": []
+    }
+   },
+   "n_blades": 0,
+   "tower_found": false,
+   "hub": [
+    0.0,
+    0.0
+   ],
+   "tip_radii_px": [],
+   "tip_angles_deg": [],
+   "view": "front",
+   "seconds": 0.22
+  },
+  {
+   "id": "c26565565",
+   "title": "File:2013-06-08 Projekt Heißluftballon DSCF0843.jpg",
+   "page_url": "https://commons.wikimedia.org/?curid=26565565",
+   "model": "Enercon E-126",
+   "license": "CC BY-SA 3.0 de",
+   "artist": "Martina Nolte",
+   "camera_model": "FinePix S3Pro  ",
+   "hub_height_source": "typical",
+   "orig_width": 2500,
+   "orig_height": 1673,
+   "date": "2013:06:08 07:09:59",
+   "source_kind": "model-subcat",
+   "origin": "Category:Enercon E-126 in Hamburg-Altenwerder",
+   "model_basis": null,
+   "size": [
+    1024,
+    685
+   ],
+   "focal_35mm": 36.0,
+   "hub_height_m": 135.0,
+   "rotor_radius_m": 63.5,
+   "failed": false,
+   "verdict": {
+    "ok": false,
+    "reasons": [
+     "只定位到 2 片葉片（應為 3）：可能有葉片正好貼在塔架上（六點鐘方位）或沒入雲層，請等轉子轉到三片都離開塔架再拍",
+     "三片葉尖半徑差 60%（上限 15%）：同一台風機三片等長，差這麼多代表有一片其實是地物、電線或別台風機，請重拍並確保只有一台風機在框內"
+    ],
+    "warnings": [
+     "沒有找到塔架：塔架傾斜與六點鐘方位判讀不可用（幾何互比仍可進行）",
+     "結構定位提示：葉片軸線共線（側視），輪轂投影到主葉片軸線"
+    ],
+    "metrics": {
+     "mask_area_frac": 0.021,
+     "sky_mask_frac": 0.021,
+     "horizon_y": null,
+     "n_blades": 2,
+     "view": "front",
+     "tip_radii_px": [
+      235.3,
+      438.8
+     ],
+     "tip_radius_spread": 0.604,
+     "second_rotor_radius_px": 0.0,
+     "second_rotor_arms": 0,
+     "second_rotor_ratio": 0.0
+    }
+   },
+   "n_blades": 2,
+   "tower_found": false,
+   "hub": [
+    432.8,
+    431.7
+   ],
+   "tip_radii_px": [
+    235.3,
+    438.8
+   ],
+   "tip_angles_deg": [
+    5.5,
+    189.5
+   ],
+   "radius_spread": 0.604,
+   "view": "front",
+   "seconds": 0.35
+  },
+  {
+   "id": "c26565658",
+   "title": "File:2013-06-08 Projekt Heißluftballon DSCF0847.jpg",
+   "page_url": "https://commons.wikimedia.org/?curid=26565658",
+   "model": "Enercon E-126",
+   "license": "CC BY-SA 3.0 de",
+   "artist": "Martina Nolte",
+   "camera_model": "FinePix S3Pro  ",
+   "hub_height_source": "typical",
+   "orig_width": 2500,
+   "orig_height": 1673,
+   "date": "2013:06:08 07:10:48",
+   "source_kind": "model-subcat",
+   "origin": "Category:Enercon E-126 in Hamburg-Altenwerder",
+   "model_basis": null,
+   "size": [
+    1024,
+    685
+   ],
+   "focal_35mm": 68.0,
+   "hub_height_m": 135.0,
+   "rotor_radius_m": 63.5,
+   "failed": false,
+   "verdict": {
+    "ok": false,
+    "reasons": [
+     "一片葉片都沒有定位到：多半是轉子沒有完整入鏡（請退後到整個轉子連同塔架都進得了畫面），或風機根本沒被分割出來（雲層、逆光或前景物撐壞天空模型，請換雲量少的時段、讓葉片背景是乾淨天空）"
+    ],
+    "warnings": [
+     "輪轂只有初估、未經葉片軸線精修：葉尖偏移量的精度會下降"
+    ],
+    "metrics": {
+     "mask_area_frac": 0.0183,
+     "sky_mask_frac": 0.0183,
+     "horizon_y": null,
+     "n_blades": 0,
+     "view": "front",
+     "tip_radii_px": []
+    }
+   },
+   "n_blades": 0,
+   "tower_found": true,
+   "hub": [
+    99.0,
+    272.0
+   ],
+   "tip_radii_px": [],
+   "tip_angles_deg": [],
+   "view": "front",
+   "seconds": 0.27
+  },
+  {
+   "id": "c26565683",
+   "title": "File:2013-06-08 Projekt Heißluftballon DSCF0848.jpg",
+   "page_url": "https://commons.wikimedia.org/?curid=26565683",
+   "model": "Enercon E-126",
+   "license": "CC BY-SA 3.0 de",
+   "artist": "Martina Nolte",
+   "camera_model": "FinePix S3Pro  ",
+   "hub_height_source": "typical",
+   "orig_width": 2500,
+   "orig_height": 1673,
+   "date": "2013:06:08 07:10:52",
+   "source_kind": "model-subcat",
+   "origin": "Category:Enercon E-126 in Hamburg-Altenwerder",
+   "model_basis": null,
+   "size": [
+    1024,
+    685
+   ],
+   "focal_35mm": 99.0,
+   "hub_height_m": 135.0,
+   "rotor_radius_m": 63.5,
+   "failed": false,
+   "verdict": {
+    "ok": false,
+    "reasons": [
+     "一片葉片都沒有定位到：多半是轉子沒有完整入鏡（請退後到整個轉子連同塔架都進得了畫面），或風機根本沒被分割出來（雲層、逆光或前景物撐壞天空模型，請換雲量少的時段、讓葉片背景是乾淨天空）"
+    ],
+    "warnings": [
+     "輪轂只有初估、未經葉片軸線精修：葉尖偏移量的精度會下降"
+    ],
+    "metrics": {
+     "mask_area_frac": 0.0139,
+     "sky_mask_frac": 0.0139,
+     "horizon_y": null,
+     "n_blades": 0,
+     "view": "front",
+     "tip_radii_px": []
+    }
+   },
+   "n_blades": 0,
+   "tower_found": true,
+   "hub": [
+    95.0,
+    324.0
+   ],
+   "tip_radii_px": [],
+   "tip_angles_deg": [],
+   "view": "front",
+   "seconds": 0.24
+  },
+  {
+   "id": "c26565687",
+   "title": "File:2013-06-08 Projekt Heißluftballon DSCF0849.jpg",
+   "page_url": "https://commons.wikimedia.org/?curid=26565687",
+   "model": "Enercon E-126",
+   "license": "CC BY-SA 3.0 de",
+   "artist": "Martina Nolte",
+   "camera_model": "FinePix S3Pro  ",
+   "hub_height_source": "typical",
+   "orig_width": 2500,
+   "orig_height": 1673,
+   "date": "2013:06:08 07:12:47",
+   "source_kind": "model-subcat",
+   "origin": "Category:Enercon E-126 in Hamburg-Altenwerder",
+   "model_basis": null,
+   "size": [
+    1024,
+    685
+   ],
+   "focal_35mm": 36.0,
+   "hub_height_m": 135.0,
+   "rotor_radius_m": 63.5,
+   "failed": false,
+   "verdict": {
+    "ok": false,
+    "reasons": [
+     "一片葉片都沒有定位到：多半是轉子沒有完整入鏡（請退後到整個轉子連同塔架都進得了畫面），或風機根本沒被分割出來（雲層、逆光或前景物撐壞天空模型，請換雲量少的時段、讓葉片背景是乾淨天空）"
+    ],
+    "warnings": [
+     "沒有找到塔架：塔架傾斜與六點鐘方位判讀不可用（幾何互比仍可進行）",
+     "輪轂只有初估、未經葉片軸線精修：葉尖偏移量的精度會下降"
+    ],
+    "metrics": {
+     "mask_area_frac": 0.0265,
+     "sky_mask_frac": 0.0265,
+     "horizon_y": null,
+     "n_blades": 0,
+     "view": "front",
+     "tip_radii_px": []
+    }
+   },
+   "n_blades": 0,
+   "tower_found": false,
+   "hub": [
+    0.0,
+    0.0
+   ],
+   "tip_radii_px": [],
+   "tip_angles_deg": [],
+   "view": "front",
+   "seconds": 0.24
+  },
+  {
+   "id": "c26565694",
+   "title": "File:2013-06-08 Projekt Heißluftballon DSCF0850.jpg",
+   "page_url": "https://commons.wikimedia.org/?curid=26565694",
+   "model": "Enercon E-126",
+   "license": "CC BY-SA 3.0 de",
+   "artist": "Martina Nolte",
+   "camera_model": "FinePix S3Pro  ",
+   "hub_height_source": "typical",
+   "orig_width": 2500,
+   "orig_height": 1673,
+   "date": "2013:06:08 07:12:59",
+   "source_kind": "model-subcat",
+   "origin": "Category:Enercon E-126 in Hamburg-Altenwerder",
+   "model_basis": null,
+   "size": [
+    1024,
+    685
+   ],
+   "focal_35mm": 48.0,
+   "hub_height_m": 135.0,
+   "rotor_radius_m": 63.5,
+   "failed": false,
+   "verdict": {
+    "ok": false,
+    "reasons": [
+     "一片葉片都沒有定位到：多半是轉子沒有完整入鏡（請退後到整個轉子連同塔架都進得了畫面），或風機根本沒被分割出來（雲層、逆光或前景物撐壞天空模型，請換雲量少的時段、讓葉片背景是乾淨天空）"
+    ],
+    "warnings": [
+     "沒有找到塔架：塔架傾斜與六點鐘方位判讀不可用（幾何互比仍可進行）",
+     "輪轂只有初估、未經葉片軸線精修：葉尖偏移量的精度會下降"
+    ],
+    "metrics": {
+     "mask_area_frac": 0.0243,
+     "sky_mask_frac": 0.0243,
+     "horizon_y": null,
+     "n_blades": 0,
+     "view": "front",
+     "tip_radii_px": []
+    }
+   },
+   "n_blades": 0,
+   "tower_found": false,
+   "hub": [
+    0.0,
+    0.0
+   ],
+   "tip_radii_px": [],
+   "tip_angles_deg": [],
+   "view": "front",
+   "seconds": 0.26
+  },
+  {
+   "id": "c26565702",
+   "title": "File:2013-06-08 Projekt Heißluftballon DSCF0851.jpg",
+   "page_url": "https://commons.wikimedia.org/?curid=26565702",
+   "model": "Enercon E-126",
+   "license": "CC BY-SA 3.0 de",
+   "artist": "Martina Nolte",
+   "camera_model": "FinePix S3Pro  ",
+   "hub_height_source": "typical",
+   "orig_width": 2500,
+   "orig_height": 1673,
+   "date": "2013:06:08 07:14:36",
+   "source_kind": "model-subcat",
+   "origin": "Category:Enercon E-126 in Hamburg-Altenwerder",
+   "model_basis": null,
+   "size": [
+    1024,
+    685
+   ],
+   "focal_35mm": 93.0,
+   "hub_height_m": 135.0,
+   "rotor_radius_m": 63.5,
+   "failed": false,
+   "verdict": {
+    "ok": false,
+    "reasons": [
+     "一片葉片都沒有定位到：多半是轉子沒有完整入鏡（請退後到整個轉子連同塔架都進得了畫面），或風機根本沒被分割出來（雲層、逆光或前景物撐壞天空模型，請換雲量少的時段、讓葉片背景是乾淨天空）"
+    ],
+    "warnings": [
+     "沒有找到塔架：塔架傾斜與六點鐘方位判讀不可用（幾何互比仍可進行）",
+     "輪轂只有初估、未經葉片軸線精修：葉尖偏移量的精度會下降"
+    ],
+    "metrics": {
+     "mask_area_frac": 0.0076,
+     "sky_mask_frac": 0.0076,
+     "horizon_y": null,
+     "n_blades": 0,
+     "view": "front",
+     "tip_radii_px": []
+    }
+   },
+   "n_blades": 0,
+   "tower_found": false,
+   "hub": [
+    0.0,
+    0.0
+   ],
+   "tip_radii_px": [],
+   "tip_angles_deg": [],
+   "view": "front",
+   "seconds": 0.21
+  },
+  {
+   "id": "c26567504",
+   "title": "File:2013-06-08 Projekt Heißluftballon DSCF0863.jpg",
+   "page_url": "https://commons.wikimedia.org/?curid=26567504",
+   "model": "Enercon E-126",
+   "license": "CC BY-SA 3.0 de",
+   "artist": "Martina Nolte",
+   "camera_model": "FinePix S3Pro  ",
+   "hub_height_source": "typical",
+   "orig_width": 2500,
+   "orig_height": 1673,
+   "date": "2013:06:08 07:19:26",
+   "source_kind": "model-subcat",
+   "origin": "Category:Enercon E-126 in Hamburg-Altenwerder",
+   "model_basis": null,
+   "size": [
+    1024,
+    685
+   ],
+   "focal_35mm": 36.0,
+   "hub_height_m": 135.0,
+   "rotor_radius_m": 63.5,
+   "failed": false,
+   "verdict": {
+    "ok": false,
+    "reasons": [
+     "一片葉片都沒有定位到：多半是轉子沒有完整入鏡（請退後到整個轉子連同塔架都進得了畫面），或風機根本沒被分割出來（雲層、逆光或前景物撐壞天空模型，請換雲量少的時段、讓葉片背景是乾淨天空）"
+    ],
+    "warnings": [
+     "沒有找到塔架：塔架傾斜與六點鐘方位判讀不可用（幾何互比仍可進行）",
+     "輪轂只有初估、未經葉片軸線精修：葉尖偏移量的精度會下降"
+    ],
+    "metrics": {
+     "mask_area_frac": 0.0044,
+     "sky_mask_frac": 0.0044,
+     "horizon_y": null,
+     "n_blades": 0,
+     "view": "front",
+     "tip_radii_px": []
+    }
+   },
+   "n_blades": 0,
+   "tower_found": false,
+   "hub": [
+    0.0,
+    0.0
+   ],
+   "tip_radii_px": [],
+   "tip_angles_deg": [],
+   "view": "front",
+   "seconds": 0.21
+  },
+  {
+   "id": "c26567508",
+   "title": "File:2013-06-08 Projekt Heißluftballon DSCF0864.jpg",
+   "page_url": "https://commons.wikimedia.org/?curid=26567508",
+   "model": "Enercon E-126",
+   "license": "CC BY-SA 3.0 de",
+   "artist": "Martina Nolte",
+   "camera_model": "FinePix S3Pro  ",
+   "hub_height_source": "typical",
+   "orig_width": 2500,
+   "orig_height": 1673,
+   "date": "2013:06:08 07:19:36",
+   "source_kind": "model-subcat",
+   "origin": "Category:Enercon E-126 in Hamburg-Altenwerder",
+   "model_basis": null,
+   "size": [
+    1024,
+    685
+   ],
+   "focal_35mm": 36.0,
+   "hub_height_m": 135.0,
+   "rotor_radius_m": 63.5,
+   "failed": false,
+   "verdict": {
+    "ok": false,
+    "reasons": [
+     "一片葉片都沒有定位到：多半是轉子沒有完整入鏡（請退後到整個轉子連同塔架都進得了畫面），或風機根本沒被分割出來（雲層、逆光或前景物撐壞天空模型，請換雲量少的時段、讓葉片背景是乾淨天空）"
+    ],
+    "warnings": [
+     "沒有找到塔架：塔架傾斜與六點鐘方位判讀不可用（幾何互比仍可進行）",
+     "結構定位提示：葉片軸線共線（側視），輪轂投影到主葉片軸線"
+    ],
+    "metrics": {
+     "mask_area_frac": 0.0023,
+     "sky_mask_frac": 0.0023,
+     "horizon_y": null,
+     "n_blades": 0,
+     "view": "front",
+     "tip_radii_px": []
+    }
+   },
+   "n_blades": 0,
+   "tower_found": false,
+   "hub": [
+    253.3,
+    676.8
+   ],
+   "tip_radii_px": [],
+   "tip_angles_deg": [],
+   "view": "front",
+   "seconds": 0.21
+  },
+  {
+   "id": "c26978844",
+   "title": "File:Altenwerder Hauptdeich (Hamburg-Altenwerder).1.phb.ajb.jpg",
+   "page_url": "https://commons.wikimedia.org/?curid=26978844",
+   "model": "Enercon E-126",
+   "license": "CC BY-SA 3.0 de",
+   "artist": "Ajepbah",
+   "camera_model": "NIKON D5000",
+   "hub_height_source": "typical",
+   "orig_width": 2848,
+   "orig_height": 4288,
+   "date": "2013:06:08 07:09:12",
+   "source_kind": "model-subcat",
+   "origin": "Category:Enercon E-126 in Hamburg-Altenwerder",
+   "model_basis": null,
+   "size": [
+    680,
+    1024
+   ],
+   "focal_35mm": 117.0,
+   "hub_height_m": 135.0,
+   "rotor_radius_m": 63.5,
+   "failed": false,
+   "verdict": {
+    "ok": false,
+    "reasons": [
+     "一片葉片都沒有定位到：多半是轉子沒有完整入鏡（請退後到整個轉子連同塔架都進得了畫面），或風機根本沒被分割出來（雲層、逆光或前景物撐壞天空模型，請換雲量少的時段、讓葉片背景是乾淨天空）"
+    ],
+    "warnings": [
+     "沒有找到塔架：塔架傾斜與六點鐘方位判讀不可用（幾何互比仍可進行）",
+     "輪轂只有初估、未經葉片軸線精修：葉尖偏移量的精度會下降"
+    ],
+    "metrics": {
+     "mask_area_frac": 0.0264,
+     "sky_mask_frac": 0.0264,
+     "horizon_y": null,
+     "n_blades": 0,
+     "view": "front",
+     "tip_radii_px": []
+    }
+   },
+   "n_blades": 0,
+   "tower_found": false,
+   "hub": [
+    0.0,
+    0.0
+   ],
+   "tip_radii_px": [],
+   "tip_angles_deg": [],
+   "view": "front",
+   "seconds": 0.24
+  },
+  {
+   "id": "c26978900",
+   "title": "File:Altenwerder Hauptdeich (Hamburg-Altenwerder).2.phb.ajb.jpg",
+   "page_url": "https://commons.wikimedia.org/?curid=26978900",
+   "model": "Enercon E-126",
+   "license": "CC BY-SA 3.0 de",
+   "artist": "Ajepbah",
+   "camera_model": "NIKON D5000",
+   "hub_height_source": "typical",
+   "orig_width": 2804,
+   "orig_height": 4222,
+   "date": "2013:06:08 07:09:51",
+   "source_kind": "model-subcat",
+   "origin": "Category:Enercon E-126 in Hamburg-Altenwerder",
+   "model_basis": null,
+   "size": [
+    680,
+    1024
+   ],
+   "focal_35mm": 138.0,
+   "hub_height_m": 135.0,
+   "rotor_radius_m": 63.5,
+   "failed": false,
+   "verdict": {
+    "ok": false,
+    "reasons": [
+     "一片葉片都沒有定位到：多半是轉子沒有完整入鏡（請退後到整個轉子連同塔架都進得了畫面），或風機根本沒被分割出來（雲層、逆光或前景物撐壞天空模型，請換雲量少的時段、讓葉片背景是乾淨天空）"
+    ],
+    "warnings": [
+     "輪轂只有初估、未經葉片軸線精修：葉尖偏移量的精度會下降"
+    ],
+    "metrics": {
+     "mask_area_frac": 0.0274,
+     "sky_mask_frac": 0.0274,
+     "horizon_y": null,
+     "n_blades": 0,
+     "view": "front",
+     "tip_radii_px": []
+    }
+   },
+   "n_blades": 0,
+   "tower_found": true,
+   "hub": [
+    23.0,
+    468.0
+   ],
+   "tip_radii_px": [],
+   "tip_angles_deg": [],
+   "view": "front",
+   "seconds": 0.25
+  },
+  {
+   "id": "c26894897",
+   "title": "File:Containerterminal Altenwerder (Hamburg-Altenwerder).3.phb.ajb.jpg",
+   "page_url": "https://commons.wikimedia.org/?curid=26894897",
+   "model": "Enercon E-126",
+   "license": "CC BY-SA 3.0 de",
+   "artist": "Ajepbah",
+   "camera_model": "NIKON D5000",
+   "hub_height_source": "typical",
+   "orig_width": 2848,
+   "orig_height": 4288,
+   "date": "2013:06:08 07:09:09",
+   "source_kind": "model-subcat",
+   "origin": "Category:Enercon E-126 in Hamburg-Altenwerder",
+   "model_basis": null,
+   "size": [
+    680,
+    1024
+   ],
+   "focal_35mm": 117.0,
+   "hub_height_m": 135.0,
+   "rotor_radius_m": 63.5,
+   "failed": false,
+   "verdict": {
+    "ok": false,
+    "reasons": [
+     "一片葉片都沒有定位到：多半是轉子沒有完整入鏡（請退後到整個轉子連同塔架都進得了畫面），或風機根本沒被分割出來（雲層、逆光或前景物撐壞天空模型，請換雲量少的時段、讓葉片背景是乾淨天空）"
+    ],
+    "warnings": [
+     "沒有找到塔架：塔架傾斜與六點鐘方位判讀不可用（幾何互比仍可進行）",
+     "輪轂只有初估、未經葉片軸線精修：葉尖偏移量的精度會下降"
+    ],
+    "metrics": {
+     "mask_area_frac": 0.0258,
+     "sky_mask_frac": 0.0258,
+     "horizon_y": null,
+     "n_blades": 0,
+     "view": "front",
+     "tip_radii_px": []
+    }
+   },
+   "n_blades": 0,
+   "tower_found": false,
+   "hub": [
+    0.0,
+    0.0
+   ],
+   "tip_radii_px": [],
+   "tip_angles_deg": [],
+   "view": "front",
+   "seconds": 0.24
+  },
+  {
+   "id": "c26894840",
+   "title": "File:Containerterminal Altenwerder (Hamburg-Altenwerder).4.phb.ajb.jpg",
+   "page_url": "https://commons.wikimedia.org/?curid=26894840",
+   "model": "Enercon E-126",
+   "license": "CC BY-SA 3.0 de",
+   "artist": "Ajepbah",
+   "camera_model": "NIKON D5000",
+   "hub_height_source": "typical",
+   "orig_width": 2848,
+   "orig_height": 4288,
+   "date": "2013:06:08 07:07:46",
+   "source_kind": "model-subcat",
+   "origin": "Category:Enercon E-126 in Hamburg-Altenwerder",
+   "model_basis": null,
+   "size": [
+    680,
+    1024
+   ],
+   "focal_35mm": 120.0,
+   "hub_height_m": 135.0,
+   "rotor_radius_m": 63.5,
+   "failed": false,
+   "verdict": {
+    "ok": false,
+    "reasons": [
+     "一片葉片都沒有定位到：多半是轉子沒有完整入鏡（請退後到整個轉子連同塔架都進得了畫面），或風機根本沒被分割出來（雲層、逆光或前景物撐壞天空模型，請換雲量少的時段、讓葉片背景是乾淨天空）"
+    ],
+    "warnings": [
+     "輪轂只有初估、未經葉片軸線精修：葉尖偏移量的精度會下降"
+    ],
+    "metrics": {
+     "mask_area_frac": 0.0234,
+     "sky_mask_frac": 0.0234,
+     "horizon_y": null,
+     "n_blades": 0,
+     "view": "front",
+     "tip_radii_px": []
+    }
+   },
+   "n_blades": 0,
+   "tower_found": true,
+   "hub": [
+    264.0,
+    427.0
+   ],
+   "tip_radii_px": [],
+   "tip_angles_deg": [],
+   "view": "front",
+   "seconds": 0.24
+  },
+  {
+   "id": "c26727051",
+   "title": "File:Ellerholzhöft (Hamburg-Steinwerder).1.phb.ajb.jpg",
+   "page_url": "https://commons.wikimedia.org/?curid=26727051",
+   "model": "Enercon E-126",
+   "license": "CC BY-SA 3.0 de",
+   "artist": "Ajepbah",
+   "camera_model": "NIKON D5000",
+   "hub_height_source": "typical",
+   "orig_width": 4244,
+   "orig_height": 2818,
+   "date": "2013:06:08 06:51:13",
+   "source_kind": "model-subcat",
+   "origin": "Category:Enercon E-126 in Hamburg-Altenwerder",
+   "model_basis": null,
+   "size": [
+    1024,
+    680
+   ],
+   "focal_35mm": 82.0,
+   "hub_height_m": 135.0,
+   "rotor_radius_m": 63.5,
+   "failed": false,
+   "verdict": {
+    "ok": false,
+    "reasons": [
+     "只定位到 1 片葉片（應為 3）：可能有葉片正好貼在塔架上（六點鐘方位）或沒入雲層，請等轉子轉到三片都離開塔架再拍"
+    ],
+    "warnings": [
+     "沒有找到塔架：塔架傾斜與六點鐘方位判讀不可用（幾何互比仍可進行）"
+    ],
+    "metrics": {
+     "mask_area_frac": 0.0071,
+     "sky_mask_frac": 0.0071,
+     "horizon_y": null,
+     "n_blades": 1,
+     "view": "front",
+     "tip_radii_px": [
+      55.4
+     ],
+     "second_rotor_radius_px": 0.0,
+     "second_rotor_arms": 0,
+     "second_rotor_ratio": 0.0
+    }
+   },
+   "n_blades": 1,
+   "tower_found": false,
+   "hub": [
+    741.2,
+    106.2
+   ],
+   "tip_radii_px": [
+    55.4
+   ],
+   "tip_angles_deg": [
+    351.9
+   ],
+   "radius_spread": 0.0,
+   "view": "front",
+   "seconds": 0.39
   },
   {
    "id": "c6914141",
@@ -1115,6 +2154,9 @@
    "orig_width": 3008,
    "orig_height": 2000,
    "date": "2009:05:22 13:26:14",
+   "source_kind": "model",
+   "origin": "Category:Enercon E-126",
+   "model_basis": null,
    "size": [
     1024,
     681
@@ -1161,10 +2203,598 @@
    ],
    "radius_spread": 0.0,
    "view": "front",
-   "seconds": 0.42,
+   "seconds": 0.43
+  },
+  {
+   "id": "c113015211",
+   "title": "File:Enercon E-126.jpg",
+   "page_url": "https://commons.wikimedia.org/?curid=113015211",
+   "model": "Enercon E-126",
+   "license": "CC BY-SA 4.0",
+   "artist": "Leo Bro",
+   "camera_model": "COOLPIX L25",
+   "hub_height_source": "typical",
+   "orig_width": 3648,
+   "orig_height": 2736,
+   "date": "0000:00:00 00:00:00",
    "source_kind": "model",
-   "origin": null,
-   "model_basis": null
+   "origin": "Category:Enercon E-126",
+   "model_basis": null,
+   "size": [
+    1024,
+    768
+   ],
+   "focal_35mm": 113.0,
+   "hub_height_m": 135.0,
+   "rotor_radius_m": 63.5,
+   "failed": false,
+   "verdict": {
+    "ok": false,
+    "reasons": [
+     "三片葉尖半徑差 42%（上限 15%）：同一台風機三片等長，差這麼多代表有一片其實是地物、電線或別台風機，請重拍並確保只有一台風機在框內"
+    ],
+    "warnings": [],
+    "metrics": {
+     "mask_area_frac": 0.0366,
+     "sky_mask_frac": 0.0366,
+     "horizon_y": null,
+     "n_blades": 3,
+     "view": "front",
+     "tip_radii_px": [
+      238.4,
+      383.0,
+      399.8
+     ],
+     "tip_radius_spread": 0.421,
+     "second_rotor_radius_px": 0.0,
+     "second_rotor_arms": 0,
+     "second_rotor_ratio": 0.0
+    }
+   },
+   "n_blades": 3,
+   "tower_found": true,
+   "hub": [
+    548.3,
+    353.0
+   ],
+   "tip_radii_px": [
+    238.4,
+    383.0,
+    399.8
+   ],
+   "tip_angles_deg": [
+    38.1,
+    145.7,
+    278.9
+   ],
+   "radius_spread": 0.421,
+   "view": "front",
+   "seconds": 0.35
+  },
+  {
+   "id": "c6326631",
+   "title": "File:Enercon-P1130626.JPG",
+   "page_url": "https://commons.wikimedia.org/?curid=6326631",
+   "model": "Enercon E-126",
+   "license": "CC BY-SA 3.0",
+   "artist": "Gunnar Ries  Amphibol",
+   "camera_model": "DMC-FZ50",
+   "hub_height_source": "typical",
+   "orig_width": 3648,
+   "orig_height": 2736,
+   "date": "2009:03:21 17:49:18",
+   "source_kind": "model-subcat",
+   "origin": "Category:Enercon E-126 in Hamburg-Altenwerder",
+   "model_basis": null,
+   "size": [
+    1024,
+    768
+   ],
+   "focal_35mm": 35.0,
+   "hub_height_m": 135.0,
+   "rotor_radius_m": 63.5,
+   "failed": false,
+   "verdict": {
+    "ok": false,
+    "reasons": [
+     "三片葉尖半徑差 67%（上限 15%）：同一台風機三片等長，差這麼多代表有一片其實是地物、電線或別台風機，請重拍並確保只有一台風機在框內"
+    ],
+    "warnings": [
+     "輪轂只有初估、未經葉片軸線精修：葉尖偏移量的精度會下降",
+     "結構定位提示：葉片軸線共線（側視），輪轂投影到主葉片軸線"
+    ],
+    "metrics": {
+     "mask_area_frac": 0.0585,
+     "sky_mask_frac": 0.0585,
+     "horizon_y": null,
+     "n_blades": 3,
+     "view": "front",
+     "tip_radii_px": [
+      224.9,
+      412.1,
+      278.2
+     ],
+     "tip_radius_spread": 0.673,
+     "second_rotor_radius_px": 0.0,
+     "second_rotor_arms": 0,
+     "second_rotor_ratio": 0.0
+    }
+   },
+   "n_blades": 3,
+   "tower_found": true,
+   "hub": [
+    482.0,
+    256.0
+   ],
+   "tip_radii_px": [
+    224.9,
+    412.1,
+    278.2
+   ],
+   "tip_angles_deg": [
+    97.4,
+    288.0,
+    296.0
+   ],
+   "radius_spread": 0.673,
+   "view": "front",
+   "seconds": 0.35
+  },
+  {
+   "id": "c6326636",
+   "title": "File:Enercon-P1130627.JPG",
+   "page_url": "https://commons.wikimedia.org/?curid=6326636",
+   "model": "Enercon E-126",
+   "license": "CC BY-SA 3.0",
+   "artist": "Gunnar Ries  Amphibol",
+   "camera_model": "DMC-FZ50",
+   "hub_height_source": "typical",
+   "orig_width": 3648,
+   "orig_height": 2736,
+   "date": "2009:03:21 17:49:45",
+   "source_kind": "model-subcat",
+   "origin": "Category:Enercon E-126 in Hamburg-Altenwerder",
+   "model_basis": null,
+   "size": [
+    1024,
+    768
+   ],
+   "focal_35mm": 179.0,
+   "hub_height_m": 135.0,
+   "rotor_radius_m": 63.5,
+   "failed": false,
+   "verdict": {
+    "ok": false,
+    "reasons": [
+     "一片葉片都沒有定位到：多半是轉子沒有完整入鏡（請退後到整個轉子連同塔架都進得了畫面），或風機根本沒被分割出來（雲層、逆光或前景物撐壞天空模型，請換雲量少的時段、讓葉片背景是乾淨天空）"
+    ],
+    "warnings": [
+     "沒有找到塔架：塔架傾斜與六點鐘方位判讀不可用（幾何互比仍可進行）",
+     "結構定位提示：葉片軸線共線（側視），輪轂投影到主葉片軸線"
+    ],
+    "metrics": {
+     "mask_area_frac": 0.045,
+     "sky_mask_frac": 0.045,
+     "horizon_y": null,
+     "n_blades": 0,
+     "view": "front",
+     "tip_radii_px": []
+    }
+   },
+   "n_blades": 0,
+   "tower_found": false,
+   "hub": [
+    656.2,
+    323.7
+   ],
+   "tip_radii_px": [],
+   "tip_angles_deg": [],
+   "view": "front",
+   "seconds": 0.27
+  },
+  {
+   "id": "c26895300",
+   "title": "File:Hamburg-Altenwerder.phb.ajb.jpg",
+   "page_url": "https://commons.wikimedia.org/?curid=26895300",
+   "model": "Enercon E-126",
+   "license": "CC BY-SA 3.0 de",
+   "artist": "Ajepbah",
+   "camera_model": "NIKON D5000",
+   "hub_height_source": "typical",
+   "orig_width": 4254,
+   "orig_height": 2826,
+   "date": "2013:06:08 07:12:34",
+   "source_kind": "model-subcat",
+   "origin": "Category:Enercon E-126 in Hamburg-Altenwerder",
+   "model_basis": null,
+   "size": [
+    1024,
+    680
+   ],
+   "focal_35mm": 82.0,
+   "hub_height_m": 135.0,
+   "rotor_radius_m": 63.5,
+   "failed": false,
+   "verdict": {
+    "ok": false,
+    "reasons": [
+     "一片葉片都沒有定位到：多半是轉子沒有完整入鏡（請退後到整個轉子連同塔架都進得了畫面），或風機根本沒被分割出來（雲層、逆光或前景物撐壞天空模型，請換雲量少的時段、讓葉片背景是乾淨天空）"
+    ],
+    "warnings": [
+     "輪轂只有初估、未經葉片軸線精修：葉尖偏移量的精度會下降"
+    ],
+    "metrics": {
+     "mask_area_frac": 0.0243,
+     "sky_mask_frac": 0.0243,
+     "horizon_y": null,
+     "n_blades": 0,
+     "view": "front",
+     "tip_radii_px": []
+    }
+   },
+   "n_blades": 0,
+   "tower_found": true,
+   "hub": [
+    164.4,
+    472.0
+   ],
+   "tip_radii_px": [],
+   "tip_angles_deg": [],
+   "view": "front",
+   "seconds": 0.25
+  },
+  {
+   "id": "c26835458",
+   "title": "File:Hansaport (Hamburg-Waltershof).1.phb.ajb.jpg",
+   "page_url": "https://commons.wikimedia.org/?curid=26835458",
+   "model": "Enercon E-126",
+   "license": "CC BY-SA 3.0 de",
+   "artist": "Ajepbah",
+   "camera_model": "NIKON D5000",
+   "hub_height_source": "typical",
+   "orig_width": 4137,
+   "orig_height": 2748,
+   "date": "2013:06:08 06:59:32",
+   "source_kind": "model-subcat",
+   "origin": "Category:Enercon E-126 in Hamburg-Altenwerder",
+   "model_basis": null,
+   "size": [
+    1024,
+    680
+   ],
+   "focal_35mm": 147.0,
+   "hub_height_m": 135.0,
+   "rotor_radius_m": 63.5,
+   "failed": false,
+   "verdict": {
+    "ok": false,
+    "reasons": [
+     "只定位到 1 片葉片（應為 3）：可能有葉片正好貼在塔架上（六點鐘方位）或沒入雲層，請等轉子轉到三片都離開塔架再拍"
+    ],
+    "warnings": [
+     "畫面裡還有另一個轉子，半徑約為主風機的 71%：請確認量到的是要量的那一台；風場的風機外觀相同，量錯對象不會有任何徵兆"
+    ],
+    "metrics": {
+     "mask_area_frac": 0.0105,
+     "sky_mask_frac": 0.0105,
+     "horizon_y": null,
+     "n_blades": 1,
+     "view": "front",
+     "tip_radii_px": [
+      82.6
+     ],
+     "second_rotor_radius_px": 58.5,
+     "second_rotor_arms": 1,
+     "second_rotor_ratio": 0.708
+    }
+   },
+   "n_blades": 1,
+   "tower_found": true,
+   "hub": [
+    84.1,
+    2.6
+   ],
+   "tip_radii_px": [
+    82.6
+   ],
+   "tip_angles_deg": [
+    297.3
+   ],
+   "radius_spread": 0.0,
+   "view": "front",
+   "seconds": 0.32
+  },
+  {
+   "id": "c26835574",
+   "title": "File:Hansaport (Hamburg-Waltershof).4.phb.ajb.jpg",
+   "page_url": "https://commons.wikimedia.org/?curid=26835574",
+   "model": "Enercon E-126",
+   "license": "CC BY-SA 3.0 de",
+   "artist": "Ajepbah",
+   "camera_model": "NIKON D5000",
+   "hub_height_source": "typical",
+   "orig_width": 4288,
+   "orig_height": 2848,
+   "date": "2013:06:08 07:03:16",
+   "source_kind": "model-subcat",
+   "origin": "Category:Enercon E-126 in Hamburg-Altenwerder",
+   "model_basis": null,
+   "size": [
+    1024,
+    680
+   ],
+   "focal_35mm": 108.0,
+   "hub_height_m": 135.0,
+   "rotor_radius_m": 63.5,
+   "failed": false,
+   "verdict": {
+    "ok": false,
+    "reasons": [
+     "一片葉片都沒有定位到：多半是轉子沒有完整入鏡（請退後到整個轉子連同塔架都進得了畫面），或風機根本沒被分割出來（雲層、逆光或前景物撐壞天空模型，請換雲量少的時段、讓葉片背景是乾淨天空）"
+    ],
+    "warnings": [
+     "沒有找到塔架：塔架傾斜與六點鐘方位判讀不可用（幾何互比仍可進行）",
+     "輪轂只有初估、未經葉片軸線精修：葉尖偏移量的精度會下降"
+    ],
+    "metrics": {
+     "mask_area_frac": 0.0207,
+     "sky_mask_frac": 0.0207,
+     "horizon_y": null,
+     "n_blades": 0,
+     "view": "front",
+     "tip_radii_px": []
+    }
+   },
+   "n_blades": 0,
+   "tower_found": false,
+   "hub": [
+    0.0,
+    0.0
+   ],
+   "tip_radii_px": [],
+   "tip_angles_deg": [],
+   "view": "front",
+   "seconds": 0.25
+  },
+  {
+   "id": "c26876567",
+   "title": "File:Hansaport (Hamburg-Waltershof).5.phb.ajb.jpg",
+   "page_url": "https://commons.wikimedia.org/?curid=26876567",
+   "model": "Enercon E-126",
+   "license": "CC BY-SA 3.0 de",
+   "artist": "Ajepbah",
+   "camera_model": "NIKON D5000",
+   "hub_height_source": "typical",
+   "orig_width": 4254,
+   "orig_height": 2825,
+   "date": "2013:06:08 06:56:29",
+   "source_kind": "model-subcat",
+   "origin": "Category:Enercon E-126 in Hamburg-Altenwerder",
+   "model_basis": null,
+   "size": [
+    1024,
+    680
+   ],
+   "focal_35mm": 129.0,
+   "hub_height_m": 135.0,
+   "rotor_radius_m": 63.5,
+   "failed": false,
+   "verdict": {
+    "ok": false,
+    "reasons": [
+     "三片葉尖半徑差 220%（上限 15%）：同一台風機三片等長，差這麼多代表有一片其實是地物、電線或別台風機，請重拍並確保只有一台風機在框內"
+    ],
+    "warnings": [
+     "沒有找到塔架：塔架傾斜與六點鐘方位判讀不可用（幾何互比仍可進行）"
+    ],
+    "metrics": {
+     "mask_area_frac": 0.0101,
+     "sky_mask_frac": 0.0101,
+     "horizon_y": null,
+     "n_blades": 3,
+     "view": "front",
+     "tip_radii_px": [
+      129.8,
+      32.9,
+      44.0
+     ],
+     "tip_radius_spread": 2.205,
+     "second_rotor_radius_px": 0.0,
+     "second_rotor_arms": 0,
+     "second_rotor_ratio": 0.0
+    }
+   },
+   "n_blades": 3,
+   "tower_found": false,
+   "hub": [
+    426.2,
+    267.6
+   ],
+   "tip_radii_px": [
+    129.8,
+    32.9,
+    44.0
+   ],
+   "tip_angles_deg": [
+    86.1,
+    198.5,
+    246.9
+   ],
+   "radius_spread": 2.202,
+   "view": "front",
+   "seconds": 0.34
+  },
+  {
+   "id": "c26835656",
+   "title": "File:Hansaport (Hamburg-Waltershof).Gleisanbindung.2.phb.ajb.jpg",
+   "page_url": "https://commons.wikimedia.org/?curid=26835656",
+   "model": "Enercon E-126",
+   "license": "CC BY-SA 3.0 de",
+   "artist": "Ajepbah",
+   "camera_model": "NIKON D5000",
+   "hub_height_source": "typical",
+   "orig_width": 4288,
+   "orig_height": 2848,
+   "date": "2013:06:08 07:12:25",
+   "source_kind": "model-subcat",
+   "origin": "Category:Enercon E-126 in Hamburg-Altenwerder",
+   "model_basis": null,
+   "size": [
+    1024,
+    680
+   ],
+   "focal_35mm": 102.0,
+   "hub_height_m": 135.0,
+   "rotor_radius_m": 63.5,
+   "failed": false,
+   "verdict": {
+    "ok": false,
+    "reasons": [
+     "一片葉片都沒有定位到：多半是轉子沒有完整入鏡（請退後到整個轉子連同塔架都進得了畫面），或風機根本沒被分割出來（雲層、逆光或前景物撐壞天空模型，請換雲量少的時段、讓葉片背景是乾淨天空）"
+    ],
+    "warnings": [
+     "沒有找到塔架：塔架傾斜與六點鐘方位判讀不可用（幾何互比仍可進行）",
+     "輪轂只有初估、未經葉片軸線精修：葉尖偏移量的精度會下降"
+    ],
+    "metrics": {
+     "mask_area_frac": 0.0171,
+     "sky_mask_frac": 0.0171,
+     "horizon_y": null,
+     "n_blades": 0,
+     "view": "front",
+     "tip_radii_px": []
+    }
+   },
+   "n_blades": 0,
+   "tower_found": false,
+   "hub": [
+    0.0,
+    0.0
+   ],
+   "tip_radii_px": [],
+   "tip_angles_deg": [],
+   "view": "front",
+   "seconds": 0.24
+  },
+  {
+   "id": "c26835707",
+   "title": "File:Hansaport (Hamburg-Waltershof).Gleisanbindung.phb.ajb.jpg",
+   "page_url": "https://commons.wikimedia.org/?curid=26835707",
+   "model": "Enercon E-126",
+   "license": "CC BY-SA 3.0 de",
+   "artist": "Ajepbah",
+   "camera_model": "NIKON D5000",
+   "hub_height_source": "typical",
+   "orig_width": 4254,
+   "orig_height": 2826,
+   "date": "2013:06:08 07:08:07",
+   "source_kind": "model-subcat",
+   "origin": "Category:Enercon E-126 in Hamburg-Altenwerder",
+   "model_basis": null,
+   "size": [
+    1024,
+    680
+   ],
+   "focal_35mm": 210.0,
+   "hub_height_m": 135.0,
+   "rotor_radius_m": 63.5,
+   "failed": false,
+   "verdict": {
+    "ok": false,
+    "reasons": [
+     "一片葉片都沒有定位到：多半是轉子沒有完整入鏡（請退後到整個轉子連同塔架都進得了畫面），或風機根本沒被分割出來（雲層、逆光或前景物撐壞天空模型，請換雲量少的時段、讓葉片背景是乾淨天空）"
+    ],
+    "warnings": [
+     "沒有找到塔架：塔架傾斜與六點鐘方位判讀不可用（幾何互比仍可進行）",
+     "輪轂只有初估、未經葉片軸線精修：葉尖偏移量的精度會下降"
+    ],
+    "metrics": {
+     "mask_area_frac": 0.0058,
+     "sky_mask_frac": 0.0058,
+     "horizon_y": null,
+     "n_blades": 0,
+     "view": "front",
+     "tip_radii_px": []
+    }
+   },
+   "n_blades": 0,
+   "tower_found": false,
+   "hub": [
+    0.0,
+    0.0
+   ],
+   "tip_radii_px": [],
+   "tip_angles_deg": [],
+   "view": "front",
+   "seconds": 0.2
+  },
+  {
+   "id": "c26979080",
+   "title": "File:Hochstraße Elbmarsch (Hamburg-Altenwerder).1.phb.ajb.jpg",
+   "page_url": "https://commons.wikimedia.org/?curid=26979080",
+   "model": "Enercon E-126",
+   "license": "CC BY-SA 3.0 de",
+   "artist": "Ajepbah",
+   "camera_model": "NIKON D5000",
+   "hub_height_source": "typical",
+   "orig_width": 4254,
+   "orig_height": 2826,
+   "date": "2013:06:08 07:32:15",
+   "source_kind": "model-subcat",
+   "origin": "Category:Enercon E-126 in Hamburg-Altenwerder",
+   "model_basis": null,
+   "size": [
+    1024,
+    680
+   ],
+   "focal_35mm": 225.0,
+   "hub_height_m": 135.0,
+   "rotor_radius_m": 63.5,
+   "failed": false,
+   "verdict": {
+    "ok": false,
+    "reasons": [
+     "只定位到 2 片葉片（應為 3）：可能有葉片正好貼在塔架上（六點鐘方位）或沒入雲層，請等轉子轉到三片都離開塔架再拍",
+     "三片葉尖半徑差 34%（上限 15%）：同一台風機三片等長，差這麼多代表有一片其實是地物、電線或別台風機，請重拍並確保只有一台風機在框內"
+    ],
+    "warnings": [
+     "畫面裡還有另一個轉子，半徑約為主風機的 158%：請確認量到的是要量的那一台；風場的風機外觀相同，量錯對象不會有任何徵兆",
+     "沒有找到塔架：塔架傾斜與六點鐘方位判讀不可用（幾何互比仍可進行）",
+     "結構定位提示：葉片軸線共線（側視），輪轂投影到主葉片軸線"
+    ],
+    "metrics": {
+     "mask_area_frac": 0.0098,
+     "sky_mask_frac": 0.0098,
+     "horizon_y": null,
+     "n_blades": 2,
+     "view": "front",
+     "tip_radii_px": [
+      124.8,
+      88.6
+     ],
+     "tip_radius_spread": 0.339,
+     "second_rotor_radius_px": 169.0,
+     "second_rotor_arms": 1,
+     "second_rotor_ratio": 1.584
+    }
+   },
+   "n_blades": 2,
+   "tower_found": false,
+   "hub": [
+    658.4,
+    68.1
+   ],
+   "tip_radii_px": [
+    124.8,
+    88.6
+   ],
+   "tip_angles_deg": [
+    171.7,
+    358.8
+   ],
+   "radius_spread": 0.339,
+   "view": "front",
+   "seconds": 0.49
   },
   {
    "id": "c184853055",
@@ -1178,6 +2808,9 @@
    "orig_width": 7952,
    "orig_height": 5304,
    "date": "2025:09:07 10:23:32",
+   "source_kind": "model",
+   "origin": "Category:Enercon E-126",
+   "model_basis": null,
    "size": [
     1024,
     683
@@ -1227,10 +2860,7 @@
    ],
    "radius_spread": 0.402,
    "view": "front",
-   "seconds": 0.27,
-   "source_kind": "model",
-   "origin": null,
-   "model_basis": null
+   "seconds": 0.28
   },
   {
    "id": "c184853067",
@@ -1244,6 +2874,9 @@
    "orig_width": 7952,
    "orig_height": 5304,
    "date": "2025:09:07 10:23:44",
+   "source_kind": "model",
+   "origin": "Category:Enercon E-126",
+   "model_basis": null,
    "size": [
     1024,
     683
@@ -1437,10 +3070,7 @@
      "same_flags": true
     }
    },
-   "seconds": 0.33,
-   "source_kind": "model",
-   "origin": null,
-   "model_basis": null
+   "seconds": 0.35
   },
   {
    "id": "c184853092",
@@ -1454,6 +3084,9 @@
    "orig_width": 7952,
    "orig_height": 5304,
    "date": "2025:09:07 10:28:42",
+   "source_kind": "model",
+   "origin": "Category:Enercon E-126",
+   "model_basis": null,
    "size": [
     1024,
     683
@@ -1498,10 +3131,199 @@
    ],
    "radius_spread": 0.0,
    "view": "front",
-   "seconds": 0.42,
-   "source_kind": "model",
-   "origin": null,
-   "model_basis": null
+   "seconds": 0.41
+  },
+  {
+   "id": "c26835764",
+   "title": "File:Köhlbrand-Freileitungskreuzung (Hamburg).phb.ajb.jpg",
+   "page_url": "https://commons.wikimedia.org/?curid=26835764",
+   "model": "Enercon E-126",
+   "license": "CC BY-SA 3.0 de",
+   "artist": "Ajepbah",
+   "camera_model": "NIKON D5000",
+   "hub_height_source": "typical",
+   "orig_width": 4254,
+   "orig_height": 2825,
+   "date": "2013:06:08 06:59:52",
+   "source_kind": "model-subcat",
+   "origin": "Category:Enercon E-126 in Hamburg-Altenwerder",
+   "model_basis": null,
+   "size": [
+    1024,
+    680
+   ],
+   "focal_35mm": 117.0,
+   "hub_height_m": 135.0,
+   "rotor_radius_m": 63.5,
+   "failed": false,
+   "verdict": {
+    "ok": false,
+    "reasons": [
+     "只定位到 2 片葉片（應為 3）：可能有葉片正好貼在塔架上（六點鐘方位）或沒入雲層，請等轉子轉到三片都離開塔架再拍",
+     "三片葉尖半徑差 79%（上限 15%）：同一台風機三片等長，差這麼多代表有一片其實是地物、電線或別台風機，請重拍並確保只有一台風機在框內"
+    ],
+    "warnings": [
+     "結構定位提示：葉片軸線共線（側視），輪轂投影到主葉片軸線"
+    ],
+    "metrics": {
+     "mask_area_frac": 0.0107,
+     "sky_mask_frac": 0.0107,
+     "horizon_y": null,
+     "n_blades": 2,
+     "view": "front",
+     "tip_radii_px": [
+      134.4,
+      58.1
+     ],
+     "tip_radius_spread": 0.792,
+     "second_rotor_radius_px": 0.0,
+     "second_rotor_arms": 0,
+     "second_rotor_ratio": 0.0
+    }
+   },
+   "n_blades": 2,
+   "tower_found": true,
+   "hub": [
+    912.3,
+    187.1
+   ],
+   "tip_radii_px": [
+    134.4,
+    58.1
+   ],
+   "tip_angles_deg": [
+    178.7,
+    224.7
+   ],
+   "radius_spread": 0.793,
+   "view": "front",
+   "seconds": 0.33
+  },
+  {
+   "id": "c26747464",
+   "title": "File:Köhlbrandbrücke (Hamburg).1.phb.ajb.jpg",
+   "page_url": "https://commons.wikimedia.org/?curid=26747464",
+   "model": "Enercon E-126",
+   "license": "CC BY-SA 3.0 de",
+   "artist": "Ajepbah",
+   "camera_model": "NIKON D5000",
+   "hub_height_source": "typical",
+   "orig_width": 4168,
+   "orig_height": 2768,
+   "date": "2013:06:08 06:53:04",
+   "source_kind": "model-subcat",
+   "origin": "Category:Enercon E-126 in Hamburg-Altenwerder",
+   "model_basis": null,
+   "size": [
+    1024,
+    680
+   ],
+   "focal_35mm": 153.0,
+   "hub_height_m": 135.0,
+   "rotor_radius_m": 63.5,
+   "failed": false,
+   "verdict": {
+    "ok": false,
+    "reasons": [
+     "只定位到 1 片葉片（應為 3）：可能有葉片正好貼在塔架上（六點鐘方位）或沒入雲層，請等轉子轉到三片都離開塔架再拍"
+    ],
+    "warnings": [
+     "畫面裡還有另一個轉子，半徑約為主風機的 77%：請確認量到的是要量的那一台；風場的風機外觀相同，量錯對象不會有任何徵兆",
+     "輪轂只有初估、未經葉片軸線精修：葉尖偏移量的精度會下降",
+     "結構定位提示：葉片軸線共線（側視），輪轂投影到主葉片軸線"
+    ],
+    "metrics": {
+     "mask_area_frac": 0.0181,
+     "sky_mask_frac": 0.0181,
+     "horizon_y": null,
+     "n_blades": 1,
+     "view": "front",
+     "tip_radii_px": [
+      73.8
+     ],
+     "second_rotor_radius_px": 56.9,
+     "second_rotor_arms": 2,
+     "second_rotor_ratio": 0.771
+    }
+   },
+   "n_blades": 1,
+   "tower_found": true,
+   "hub": [
+    588.0,
+    417.0
+   ],
+   "tip_radii_px": [
+    73.8
+   ],
+   "tip_angles_deg": [
+    294.8
+   ],
+   "radius_spread": 0.0,
+   "view": "front",
+   "seconds": 0.33
+  },
+  {
+   "id": "c26747500",
+   "title": "File:Köhlbrandbrücke (Hamburg).2.phb.ajb.jpg",
+   "page_url": "https://commons.wikimedia.org/?curid=26747500",
+   "model": "Enercon E-126",
+   "license": "CC BY-SA 3.0 de",
+   "artist": "Ajepbah",
+   "camera_model": "NIKON D5000",
+   "hub_height_source": "typical",
+   "orig_width": 4127,
+   "orig_height": 2741,
+   "date": "2013:06:08 06:53:50",
+   "source_kind": "model-subcat",
+   "origin": "Category:Enercon E-126 in Hamburg-Altenwerder",
+   "model_basis": null,
+   "size": [
+    1024,
+    680
+   ],
+   "focal_35mm": 210.0,
+   "hub_height_m": 135.0,
+   "rotor_radius_m": 63.5,
+   "failed": false,
+   "verdict": {
+    "ok": false,
+    "reasons": [
+     "只定位到 1 片葉片（應為 3）：可能有葉片正好貼在塔架上（六點鐘方位）或沒入雲層，請等轉子轉到三片都離開塔架再拍"
+    ],
+    "warnings": [
+     "畫面裡還有另一個轉子，半徑約為主風機的 115%：請確認量到的是要量的那一台；風場的風機外觀相同，量錯對象不會有任何徵兆",
+     "輪轂只有初估、未經葉片軸線精修：葉尖偏移量的精度會下降",
+     "結構定位提示：葉片軸線共線（側視），輪轂投影到主葉片軸線"
+    ],
+    "metrics": {
+     "mask_area_frac": 0.0289,
+     "sky_mask_frac": 0.0289,
+     "horizon_y": null,
+     "n_blades": 1,
+     "view": "front",
+     "tip_radii_px": [
+      70.0
+     ],
+     "second_rotor_radius_px": 80.7,
+     "second_rotor_arms": 2,
+     "second_rotor_ratio": 1.152
+    }
+   },
+   "n_blades": 1,
+   "tower_found": true,
+   "hub": [
+    872.0,
+    401.0
+   ],
+   "tip_radii_px": [
+    70.0
+   ],
+   "tip_angles_deg": [
+    126.9
+   ],
+   "radius_spread": 0.0,
+   "view": "front",
+   "seconds": 0.43
   },
   {
    "id": "c26679267",
@@ -1515,6 +3337,9 @@
    "orig_width": 2600,
    "orig_height": 1727,
    "date": "2013:06:08 11:11:12",
+   "source_kind": "model",
+   "origin": "Category:Enercon E-126",
+   "model_basis": null,
    "size": [
     1024,
     680
@@ -1566,10 +3391,74 @@
    ],
    "radius_spread": 0.759,
    "view": "front",
-   "seconds": 0.25,
+   "seconds": 0.22
+  },
+  {
+   "id": "c26679282",
+   "title": "File:Lausitz Luftsport- & Techniktage 2013 by-RaBoe 038.jpg",
+   "page_url": "https://commons.wikimedia.org/?curid=26679282",
+   "model": "Enercon E-126",
+   "license": "CC BY-SA 3.0 de",
+   "artist": "©  Ra Boe / Wikipedia",
+   "camera_model": "NIKON D90",
+   "hub_height_source": "typical",
+   "orig_width": 2600,
+   "orig_height": 1727,
+   "date": "2013:06:08 11:11:16",
    "source_kind": "model",
-   "origin": null,
-   "model_basis": null
+   "origin": "Category:Enercon E-126",
+   "model_basis": null,
+   "size": [
+    1024,
+    680
+   ],
+   "focal_35mm": 57.0,
+   "hub_height_m": 135.0,
+   "rotor_radius_m": 63.5,
+   "failed": false,
+   "verdict": {
+    "ok": false,
+    "reasons": [
+     "只定位到 2 片葉片（應為 3）：可能有葉片正好貼在塔架上（六點鐘方位）或沒入雲層，請等轉子轉到三片都離開塔架再拍",
+     "三片葉尖半徑差 60%（上限 15%）：同一台風機三片等長，差這麼多代表有一片其實是地物、電線或別台風機，請重拍並確保只有一台風機在框內"
+    ],
+    "warnings": [
+     "沒有找到塔架：塔架傾斜與六點鐘方位判讀不可用（幾何互比仍可進行）",
+     "結構定位提示：葉片軸線共線（側視），輪轂投影到主葉片軸線"
+    ],
+    "metrics": {
+     "mask_area_frac": 0.0053,
+     "sky_mask_frac": 0.0053,
+     "horizon_y": null,
+     "n_blades": 2,
+     "view": "front",
+     "tip_radii_px": [
+      97.1,
+      180.1
+     ],
+     "tip_radius_spread": 0.599,
+     "second_rotor_radius_px": 0.0,
+     "second_rotor_arms": 0,
+     "second_rotor_ratio": 0.0
+    }
+   },
+   "n_blades": 2,
+   "tower_found": false,
+   "hub": [
+    926.0,
+    237.0
+   ],
+   "tip_radii_px": [
+    97.1,
+    180.1
+   ],
+   "tip_angles_deg": [
+    3.5,
+    178.1
+   ],
+   "radius_spread": 0.599,
+   "view": "front",
+   "seconds": 0.27
   },
   {
    "id": "c26679295",
@@ -1583,6 +3472,9 @@
    "orig_width": 2600,
    "orig_height": 1727,
    "date": "2013:06:08 11:11:17",
+   "source_kind": "model",
+   "origin": "Category:Enercon E-126",
+   "model_basis": null,
    "size": [
     1024,
     680
@@ -1633,10 +3525,7 @@
    ],
    "radius_spread": 0.509,
    "view": "front",
-   "seconds": 0.28,
-   "source_kind": "model",
-   "origin": null,
-   "model_basis": null
+   "seconds": 0.27
   },
   {
    "id": "c26679298",
@@ -1650,6 +3539,9 @@
    "orig_width": 2600,
    "orig_height": 1727,
    "date": "2013:06:08 11:11:17",
+   "source_kind": "model",
+   "origin": "Category:Enercon E-126",
+   "model_basis": null,
    "size": [
     1024,
     680
@@ -1700,10 +3592,7 @@
    ],
    "radius_spread": 0.161,
    "view": "front",
-   "seconds": 0.26,
-   "source_kind": "model",
-   "origin": null,
-   "model_basis": null
+   "seconds": 0.25
   },
   {
    "id": "c36383488",
@@ -1717,6 +3606,9 @@
    "orig_width": 2848,
    "orig_height": 4288,
    "date": "2011:04:25 22:58:15",
+   "source_kind": "model",
+   "origin": "Category:Enercon E-40",
+   "model_basis": null,
    "size": [
     680,
     1024
@@ -1923,10 +3815,7 @@
      "same_flags": true
     }
    },
-   "seconds": 0.43,
-   "source_kind": "model",
-   "origin": null,
-   "model_basis": null
+   "seconds": 0.42
   },
   {
    "id": "c19669637",
@@ -1940,6 +3829,9 @@
    "orig_width": 4256,
    "orig_height": 2848,
    "date": "2012:05:28 10:56:39",
+   "source_kind": "model",
+   "origin": "Category:Enercon E-40",
+   "model_basis": null,
    "size": [
     1024,
     685
@@ -1986,10 +3878,7 @@
    ],
    "radius_spread": 0.0,
    "view": "front",
-   "seconds": 0.4,
-   "source_kind": "model",
-   "origin": null,
-   "model_basis": null
+   "seconds": 0.38
   },
   {
    "id": "c19674205",
@@ -2003,6 +3892,9 @@
    "orig_width": 4256,
    "orig_height": 2848,
    "date": "2012:05:28 11:45:33",
+   "source_kind": "model",
+   "origin": "Category:Enercon E-40",
+   "model_basis": null,
    "size": [
     1024,
     685
@@ -2055,10 +3947,7 @@
    ],
    "radius_spread": 2.751,
    "view": "front",
-   "seconds": 0.3,
-   "source_kind": "model",
-   "origin": null,
-   "model_basis": null
+   "seconds": 0.29
   },
   {
    "id": "c19674208",
@@ -2072,6 +3961,9 @@
    "orig_width": 4256,
    "orig_height": 2848,
    "date": "2012:05:28 11:45:35",
+   "source_kind": "model",
+   "origin": "Category:Enercon E-40",
+   "model_basis": null,
    "size": [
     1024,
     685
@@ -2107,10 +3999,7 @@
    "tip_radii_px": [],
    "tip_angles_deg": [],
    "view": "front",
-   "seconds": 0.28,
-   "source_kind": "model",
-   "origin": null,
-   "model_basis": null
+   "seconds": 0.27
   },
   {
    "id": "c19674213",
@@ -2124,6 +4013,9 @@
    "orig_width": 4256,
    "orig_height": 2848,
    "date": "2012:05:28 11:45:50",
+   "source_kind": "model",
+   "origin": "Category:Enercon E-40",
+   "model_basis": null,
    "size": [
     1024,
     685
@@ -2175,10 +4067,7 @@
    ],
    "radius_spread": 1.2,
    "view": "front",
-   "seconds": 0.84,
-   "source_kind": "model",
-   "origin": null,
-   "model_basis": null
+   "seconds": 0.82
   },
   {
    "id": "c41928516",
@@ -2192,6 +4081,9 @@
    "orig_width": 4896,
    "orig_height": 3672,
    "date": "2015:07:26 10:20:28",
+   "source_kind": "model",
+   "origin": "Category:Enercon E-40",
+   "model_basis": null,
    "size": [
     1024,
     768
@@ -2209,10 +4101,7 @@
     "warnings": [],
     "metrics": {}
    },
-   "seconds": 0.17,
-   "source_kind": "model",
-   "origin": null,
-   "model_basis": null
+   "seconds": 0.17
   },
   {
    "id": "c42148836",
@@ -2226,6 +4115,9 @@
    "orig_width": 4896,
    "orig_height": 3672,
    "date": "2015:08:06 10:01:31",
+   "source_kind": "model",
+   "origin": "Category:Enercon E-40",
+   "model_basis": null,
    "size": [
     1024,
     768
@@ -2261,10 +4153,7 @@
    "tip_radii_px": [],
    "tip_angles_deg": [],
    "view": "front",
-   "seconds": 0.24,
-   "source_kind": "model",
-   "origin": null,
-   "model_basis": null
+   "seconds": 0.22
   },
   {
    "id": "c42148858",
@@ -2278,6 +4167,9 @@
    "orig_width": 4896,
    "orig_height": 3672,
    "date": "2015:08:06 10:02:00",
+   "source_kind": "model",
+   "origin": "Category:Enercon E-40",
+   "model_basis": null,
    "size": [
     1024,
     768
@@ -2330,10 +4222,7 @@
    ],
    "radius_spread": 2.294,
    "view": "front",
-   "seconds": 0.42,
-   "source_kind": "model",
-   "origin": null,
-   "model_basis": null
+   "seconds": 0.42
   },
   {
    "id": "c42148833",
@@ -2347,6 +4236,9 @@
    "orig_width": 4896,
    "orig_height": 3672,
    "date": "2015:08:06 10:05:59",
+   "source_kind": "model",
+   "origin": "Category:Enercon E-40",
+   "model_basis": null,
    "size": [
     1024,
     768
@@ -2392,10 +4284,7 @@
    ],
    "radius_spread": 0.0,
    "view": "front",
-   "seconds": 0.4,
-   "source_kind": "model",
-   "origin": null,
-   "model_basis": null
+   "seconds": 0.39
   },
   {
    "id": "c42148865",
@@ -2409,6 +4298,9 @@
    "orig_width": 4896,
    "orig_height": 3672,
    "date": "2015:08:06 10:11:14",
+   "source_kind": "model",
+   "origin": "Category:Enercon E-40",
+   "model_basis": null,
    "size": [
     1024,
     768
@@ -2454,10 +4346,349 @@
    ],
    "radius_spread": 0.0,
    "view": "front",
-   "seconds": 0.38,
+   "seconds": 0.37
+  },
+  {
+   "id": "c57659697",
+   "title": "File:20160521 xl P1040190-Windkraftanlagen-WKA-bei-Freudenberg.jpg",
+   "page_url": "https://commons.wikimedia.org/?curid=57659697",
+   "model": "Enercon E-40",
+   "license": "CC BY-SA 4.0",
+   "artist": "Molgreen",
+   "camera_model": "DMC-TZ61",
+   "hub_height_source": "typical",
+   "orig_width": 4896,
+   "orig_height": 3672,
+   "date": "2016:05:21 08:59:08",
    "source_kind": "model",
-   "origin": null,
-   "model_basis": null
+   "origin": "Category:Enercon E-40",
+   "model_basis": null,
+   "size": [
+    1024,
+    768
+   ],
+   "focal_35mm": 26.0,
+   "hub_height_m": 65.0,
+   "rotor_radius_m": 22.0,
+   "failed": false,
+   "verdict": {
+    "ok": false,
+    "reasons": [
+     "一片葉片都沒有定位到：多半是轉子沒有完整入鏡（請退後到整個轉子連同塔架都進得了畫面），或風機根本沒被分割出來（雲層、逆光或前景物撐壞天空模型，請換雲量少的時段、讓葉片背景是乾淨天空）"
+    ],
+    "warnings": [
+     "沒有找到塔架：塔架傾斜與六點鐘方位判讀不可用（幾何互比仍可進行）",
+     "輪轂只有初估、未經葉片軸線精修：葉尖偏移量的精度會下降"
+    ],
+    "metrics": {
+     "mask_area_frac": 0.0187,
+     "sky_mask_frac": 0.0187,
+     "horizon_y": null,
+     "n_blades": 0,
+     "view": "front",
+     "tip_radii_px": []
+    }
+   },
+   "n_blades": 0,
+   "tower_found": false,
+   "hub": [
+    949.0,
+    467.0
+   ],
+   "tip_radii_px": [],
+   "tip_angles_deg": [],
+   "view": "front",
+   "seconds": 0.26
+  },
+  {
+   "id": "c49863098",
+   "title": "File:20160604 xl P1040436-Feldheim-Treuenbrietzen-Sitz des Förderverein des Neue Energien Forum Feldheim e.V. (nef-feldheim.info).jpg",
+   "page_url": "https://commons.wikimedia.org/?curid=49863098",
+   "model": "Enercon E-40",
+   "license": "CC BY-SA 4.0",
+   "artist": "Molgreen",
+   "camera_model": "DMC-TZ61",
+   "hub_height_source": "typical",
+   "orig_width": 4896,
+   "orig_height": 3672,
+   "date": "2016:06:04 12:50:18",
+   "source_kind": "model",
+   "origin": "Category:Enercon E-40",
+   "model_basis": null,
+   "size": [
+    1024,
+    768
+   ],
+   "focal_35mm": 24.0,
+   "hub_height_m": 65.0,
+   "rotor_radius_m": 22.0,
+   "failed": false,
+   "verdict": {
+    "ok": false,
+    "reasons": [
+     "只定位到 2 片葉片（應為 3）：可能有葉片正好貼在塔架上（六點鐘方位）或沒入雲層，請等轉子轉到三片都離開塔架再拍",
+     "三片葉尖半徑差 17%（上限 15%）：同一台風機三片等長，差這麼多代表有一片其實是地物、電線或別台風機，請重拍並確保只有一台風機在框內"
+    ],
+    "warnings": [
+     "畫面裡還有另一個轉子，半徑約為主風機的 126%：請確認量到的是要量的那一台；風場的風機外觀相同，量錯對象不會有任何徵兆",
+     "沒有找到塔架：塔架傾斜與六點鐘方位判讀不可用（幾何互比仍可進行）",
+     "結構定位提示：葉片軸線共線（側視），輪轂投影到主葉片軸線"
+    ],
+    "metrics": {
+     "mask_area_frac": 0.0213,
+     "sky_mask_frac": 0.0213,
+     "horizon_y": null,
+     "n_blades": 2,
+     "view": "front",
+     "tip_radii_px": [
+      87.2,
+      103.1
+     ],
+     "tip_radius_spread": 0.167,
+     "second_rotor_radius_px": 119.5,
+     "second_rotor_arms": 2,
+     "second_rotor_ratio": 1.256
+    }
+   },
+   "n_blades": 2,
+   "tower_found": false,
+   "hub": [
+    937.0,
+    492.7
+   ],
+   "tip_radii_px": [
+    87.2,
+    103.1
+   ],
+   "tip_angles_deg": [
+    9.7,
+    182.4
+   ],
+   "radius_spread": 0.167,
+   "view": "front",
+   "seconds": 0.5
+  },
+  {
+   "id": "c49863100",
+   "title": "File:20160604 xl P1040477-Feldheim-Treuenbrietzen-Sitz des Förderverein des Neue Energien Forum Feldheim e.V. (nef-feldheim.info).jpg",
+   "page_url": "https://commons.wikimedia.org/?curid=49863100",
+   "model": "Enercon E-40",
+   "license": "CC BY-SA 4.0",
+   "artist": "Molgreen",
+   "camera_model": "DMC-TZ61",
+   "hub_height_source": "typical",
+   "orig_width": 4896,
+   "orig_height": 3672,
+   "date": "2016:06:04 14:01:31",
+   "source_kind": "model",
+   "origin": "Category:Enercon E-40",
+   "model_basis": null,
+   "size": [
+    1024,
+    768
+   ],
+   "focal_35mm": 24.0,
+   "hub_height_m": 65.0,
+   "rotor_radius_m": 22.0,
+   "failed": false,
+   "verdict": {
+    "ok": false,
+    "reasons": [
+     "一片葉片都沒有定位到：多半是轉子沒有完整入鏡（請退後到整個轉子連同塔架都進得了畫面），或風機根本沒被分割出來（雲層、逆光或前景物撐壞天空模型，請換雲量少的時段、讓葉片背景是乾淨天空）"
+    ],
+    "warnings": [
+     "沒有找到塔架：塔架傾斜與六點鐘方位判讀不可用（幾何互比仍可進行）",
+     "輪轂只有初估、未經葉片軸線精修：葉尖偏移量的精度會下降"
+    ],
+    "metrics": {
+     "mask_area_frac": 0.0314,
+     "sky_mask_frac": 0.0314,
+     "horizon_y": null,
+     "n_blades": 0,
+     "view": "front",
+     "tip_radii_px": []
+    }
+   },
+   "n_blades": 0,
+   "tower_found": false,
+   "hub": [
+    0.0,
+    0.0
+   ],
+   "tip_radii_px": [],
+   "tip_angles_deg": [],
+   "view": "front",
+   "seconds": 0.27
+  },
+  {
+   "id": "c89696937",
+   "title": "File:20170422 Eilum WindTurbine WindSensor DSC01195 PtrQs.jpg",
+   "page_url": "https://commons.wikimedia.org/?curid=89696937",
+   "model": "Enercon E-40",
+   "license": "CC BY-SA 4.0",
+   "artist": "PtrQs",
+   "camera_model": "DSLR-A900",
+   "hub_height_source": "typical",
+   "orig_width": 6048,
+   "orig_height": 4032,
+   "date": "2017:04:22 19:11:32",
+   "source_kind": "model",
+   "origin": "Category:Enercon E-40",
+   "model_basis": null,
+   "size": [
+    1024,
+    683
+   ],
+   "focal_35mm": 135.0,
+   "hub_height_m": 65.0,
+   "rotor_radius_m": 22.0,
+   "failed": false,
+   "verdict": {
+    "ok": false,
+    "reasons": [
+     "一片葉片都沒有定位到：多半是轉子沒有完整入鏡（請退後到整個轉子連同塔架都進得了畫面），或風機根本沒被分割出來（雲層、逆光或前景物撐壞天空模型，請換雲量少的時段、讓葉片背景是乾淨天空）"
+    ],
+    "warnings": [
+     "沒有找到塔架：塔架傾斜與六點鐘方位判讀不可用（幾何互比仍可進行）",
+     "輪轂只有初估、未經葉片軸線精修：葉尖偏移量的精度會下降"
+    ],
+    "metrics": {
+     "mask_area_frac": 0.0452,
+     "sky_mask_frac": 0.0452,
+     "horizon_y": null,
+     "n_blades": 0,
+     "view": "front",
+     "tip_radii_px": []
+    }
+   },
+   "n_blades": 0,
+   "tower_found": false,
+   "hub": [
+    432.0,
+    140.0
+   ],
+   "tip_radii_px": [],
+   "tip_angles_deg": [],
+   "view": "front",
+   "seconds": 0.22
+  },
+  {
+   "id": "c181564589",
+   "title": "File:E40 on a wet winter day, Wetteren, 2026.jpg",
+   "page_url": "https://commons.wikimedia.org/?curid=181564589",
+   "model": "Enercon E-40",
+   "license": "CC0",
+   "artist": "DimiTalen",
+   "camera_model": "NIKON Z50_2",
+   "hub_height_source": "typical",
+   "orig_width": 5501,
+   "orig_height": 3668,
+   "date": "2026:01:09 13:04:48",
+   "source_kind": "view",
+   "origin": "Category:Wind turbines in Belgium",
+   "model_basis": "description",
+   "size": [
+    1024,
+    683
+   ],
+   "focal_35mm": 67.0,
+   "hub_height_m": 65.0,
+   "rotor_radius_m": 22.0,
+   "failed": false,
+   "verdict": {
+    "ok": false,
+    "reasons": [
+     "只定位到 2 片葉片（應為 3）：可能有葉片正好貼在塔架上（六點鐘方位）或沒入雲層，請等轉子轉到三片都離開塔架再拍",
+     "三片葉尖半徑差 93%（上限 15%）：同一台風機三片等長，差這麼多代表有一片其實是地物、電線或別台風機，請重拍並確保只有一台風機在框內"
+    ],
+    "warnings": [
+     "畫面裡還有另一個轉子，半徑約為主風機的 92%：請確認量到的是要量的那一台；風場的風機外觀相同，量錯對象不會有任何徵兆",
+     "沒有找到塔架：塔架傾斜與六點鐘方位判讀不可用（幾何互比仍可進行）"
+    ],
+    "metrics": {
+     "mask_area_frac": 0.0314,
+     "sky_mask_frac": 0.0314,
+     "horizon_y": null,
+     "n_blades": 2,
+     "view": "front",
+     "tip_radii_px": [
+      400.6,
+      145.7
+     ],
+     "tip_radius_spread": 0.933,
+     "second_rotor_radius_px": 250.4,
+     "second_rotor_arms": 1,
+     "second_rotor_ratio": 0.917
+    }
+   },
+   "n_blades": 2,
+   "tower_found": false,
+   "hub": [
+    725.7,
+    230.5
+   ],
+   "tip_radii_px": [
+    400.6,
+    145.7
+   ],
+   "tip_angles_deg": [
+    195.7,
+    330.1
+   ],
+   "radius_spread": 0.933,
+   "view": "front",
+   "seconds": 0.42
+  },
+  {
+   "id": "c41901328",
+   "title": "File:Luftbild Müllverbrennungsanlage Wuppertal.jpg",
+   "page_url": "https://commons.wikimedia.org/?curid=41901328",
+   "model": "Enercon E-40",
+   "license": "CC BY-SA 4.0",
+   "artist": "Krd",
+   "camera_model": "NIKON D7100",
+   "hub_height_source": "typical",
+   "orig_width": 2906,
+   "orig_height": 1938,
+   "date": "2015:07:24 16:54:43",
+   "source_kind": "model-subcat",
+   "origin": "Category:Windkraftanlage an der Müllverbrennungsanlage Wuppertal",
+   "model_basis": null,
+   "size": [
+    1024,
+    683
+   ],
+   "focal_35mm": 157.0,
+   "hub_height_m": 65.0,
+   "rotor_radius_m": 22.0,
+   "failed": false,
+   "verdict": {
+    "ok": false,
+    "reasons": [
+     "一片葉片都沒有定位到：多半是轉子沒有完整入鏡（請退後到整個轉子連同塔架都進得了畫面），或風機根本沒被分割出來（雲層、逆光或前景物撐壞天空模型，請換雲量少的時段、讓葉片背景是乾淨天空）"
+    ],
+    "warnings": [
+     "輪轂只有初估、未經葉片軸線精修：葉尖偏移量的精度會下降"
+    ],
+    "metrics": {
+     "mask_area_frac": 0.0036,
+     "sky_mask_frac": 0.0036,
+     "horizon_y": null,
+     "n_blades": 0,
+     "view": "front",
+     "tip_radii_px": []
+    }
+   },
+   "n_blades": 0,
+   "tower_found": true,
+   "hub": [
+    487.0,
+    202.0
+   ],
+   "tip_radii_px": [],
+   "tip_angles_deg": [],
+   "view": "front",
+   "seconds": 0.2
   },
   {
    "id": "c36383498",
@@ -2471,6 +4702,9 @@
    "orig_width": 2736,
    "orig_height": 3648,
    "date": "2013:08:02 18:49:25",
+   "source_kind": "model",
+   "origin": "Category:Enercon E-66",
+   "model_basis": null,
    "size": [
     768,
     1024
@@ -2524,10 +4758,7 @@
    ],
    "radius_spread": 1.322,
    "view": "front",
-   "seconds": 0.37,
-   "source_kind": "model",
-   "origin": null,
-   "model_basis": null
+   "seconds": 0.35
   },
   {
    "id": "c36405368",
@@ -2541,6 +4772,9 @@
    "orig_width": 2736,
    "orig_height": 3648,
    "date": "2013:08:02 18:50:59",
+   "source_kind": "model",
+   "origin": "Category:Enercon E-66",
+   "model_basis": null,
    "size": [
     768,
     1024
@@ -2585,10 +4819,7 @@
    ],
    "radius_spread": 0.0,
    "view": "front",
-   "seconds": 0.45,
-   "source_kind": "model",
-   "origin": null,
-   "model_basis": null
+   "seconds": 0.41
   },
   {
    "id": "c42148853",
@@ -2602,6 +4833,9 @@
    "orig_width": 3672,
    "orig_height": 4896,
    "date": "2015:08:06 11:30:49",
+   "source_kind": "model",
+   "origin": "Category:Enercon E-66",
+   "model_basis": null,
    "size": [
     768,
     1024
@@ -2652,10 +4886,7 @@
    ],
    "radius_spread": 0.385,
    "view": "front",
-   "seconds": 0.23,
-   "source_kind": "model",
-   "origin": null,
-   "model_basis": null
+   "seconds": 0.22
   },
   {
    "id": "c42148854",
@@ -2669,6 +4900,9 @@
    "orig_width": 4896,
    "orig_height": 3672,
    "date": "2015:08:06 11:36:59",
+   "source_kind": "model",
+   "origin": "Category:Enercon E-66",
+   "model_basis": null,
    "size": [
     1024,
     768
@@ -2718,10 +4952,7 @@
    ],
    "radius_spread": 0.16,
    "view": "front",
-   "seconds": 0.4,
-   "source_kind": "model",
-   "origin": null,
-   "model_basis": null
+   "seconds": 0.37
   },
   {
    "id": "c5682409",
@@ -2735,6 +4966,9 @@
    "orig_width": 3072,
    "orig_height": 2304,
    "date": "2009:01:09 14:22:05",
+   "source_kind": "model",
+   "origin": "Category:Enercon E-66",
+   "model_basis": null,
    "size": [
     1024,
     768
@@ -2931,10 +5165,7 @@
      "same_flags": true
     }
    },
-   "seconds": 0.36,
-   "source_kind": "model",
-   "origin": null,
-   "model_basis": null
+   "seconds": 0.34
   },
   {
    "id": "c185379090",
@@ -2948,6 +5179,9 @@
    "orig_width": 4896,
    "orig_height": 3672,
    "date": "2026:03:02 17:13:27",
+   "source_kind": "model",
+   "origin": "Category:Enercon E-66",
+   "model_basis": null,
    "size": [
     1024,
     768
@@ -2990,10 +5224,7 @@
    ],
    "radius_spread": 0.0,
    "view": "front",
-   "seconds": 0.62,
-   "source_kind": "model",
-   "origin": null,
-   "model_basis": null
+   "seconds": 0.62
   },
   {
    "id": "c19002876",
@@ -3007,6 +5238,9 @@
    "orig_width": 2592,
    "orig_height": 3872,
    "date": "2012:03:18 14:07:08",
+   "source_kind": "model",
+   "origin": "Category:Enercon E-66",
+   "model_basis": null,
    "size": [
     685,
     1024
@@ -3055,10 +5289,7 @@
    ],
    "radius_spread": 0.113,
    "view": "front",
-   "seconds": 0.38,
-   "source_kind": "model",
-   "origin": null,
-   "model_basis": null
+   "seconds": 0.41
   },
   {
    "id": "c16043004",
@@ -3072,6 +5303,9 @@
    "orig_width": 1872,
    "orig_height": 3328,
    "date": "2009:09:04 12:57:32",
+   "source_kind": "model",
+   "origin": "Category:Enercon E-66",
+   "model_basis": null,
    "size": [
     576,
     1024
@@ -3107,10 +5341,7 @@
    "tip_radii_px": [],
    "tip_angles_deg": [],
    "view": "front",
-   "seconds": 0.17,
-   "source_kind": "model",
-   "origin": null,
-   "model_basis": null
+   "seconds": 0.17
   },
   {
    "id": "c50571490",
@@ -3124,6 +5355,9 @@
    "orig_width": 3672,
    "orig_height": 4896,
    "date": "2016:06:04 13:28:25",
+   "source_kind": "model",
+   "origin": "Category:Enercon E-70",
+   "model_basis": null,
    "size": [
     768,
     1024
@@ -3176,10 +5410,7 @@
    ],
    "radius_spread": 0.758,
    "view": "front",
-   "seconds": 0.67,
-   "source_kind": "model",
-   "origin": null,
-   "model_basis": null
+   "seconds": 0.64
   },
   {
    "id": "c50571491",
@@ -3193,6 +5424,9 @@
    "orig_width": 3672,
    "orig_height": 4896,
    "date": "2016:06:04 13:33:43",
+   "source_kind": "model",
+   "origin": "Category:Enercon E-70",
+   "model_basis": null,
    "size": [
     768,
     1024
@@ -3247,10 +5481,7 @@
     "tip_deflection_cm": -218.68704897318864,
     "radius_px": 276.32122732644297
    },
-   "seconds": 0.65,
-   "source_kind": "model",
-   "origin": null,
-   "model_basis": null
+   "seconds": 0.59
   },
   {
    "id": "c38239738",
@@ -3264,6 +5495,9 @@
    "orig_width": 4320,
    "orig_height": 3240,
    "date": "2010:07:09 13:03:53",
+   "source_kind": "model",
+   "origin": "Category:Enercon E-70",
+   "model_basis": null,
    "size": [
     1024,
     768
@@ -3309,10 +5543,7 @@
    ],
    "radius_spread": 0.0,
    "view": "front",
-   "seconds": 0.39,
-   "source_kind": "model",
-   "origin": null,
-   "model_basis": null
+   "seconds": 0.38
   },
   {
    "id": "c116792602",
@@ -3326,6 +5557,9 @@
    "orig_width": 4896,
    "orig_height": 3264,
    "date": "2022:04:08 14:31:51",
+   "source_kind": "model",
+   "origin": "Category:Enercon E-70",
+   "model_basis": null,
    "size": [
     1024,
     683
@@ -3371,10 +5605,7 @@
    ],
    "radius_spread": 0.0,
    "view": "front",
-   "seconds": 0.27,
-   "source_kind": "model",
-   "origin": null,
-   "model_basis": null
+   "seconds": 0.26
   },
   {
    "id": "c12869944",
@@ -3388,6 +5619,9 @@
    "orig_width": 3008,
    "orig_height": 2000,
    "date": "2010:01:23 19:35:03",
+   "source_kind": "model",
+   "origin": "Category:Enercon E-70",
+   "model_basis": null,
    "size": [
     1024,
     681
@@ -3423,10 +5657,7 @@
    "tip_radii_px": [],
    "tip_angles_deg": [],
    "view": "front",
-   "seconds": 0.2,
-   "source_kind": "model",
-   "origin": null,
-   "model_basis": null
+   "seconds": 0.19
   }
  ]
 }
