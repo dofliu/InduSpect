@@ -165,8 +165,28 @@ HUB_RE = re.compile(r"(\d{2,3}(?:[.,]\d)?)\s*(?:m|meter|metre|Meter)\b[^.]{0,40}
 _last_request = 0.0
 
 
-def _paced_get(url: str, pace_s: float, retries: int = 3) -> dict:
-    """固定間隔的 GET；429 就等 60 s 再試。"""
+BACKOFF_429_S = 90.0      # 沒有 Retry-After 時的等待；實測 60 s 之後常常還是 429
+BACKOFF_429_MAX_S = 300.0
+
+
+def retry_after_seconds(header: str | None, default: float = BACKOFF_429_S, cap: float = BACKOFF_429_MAX_S) -> float:
+    """Retry-After 可能是秒數或 HTTP 日期；讀不出來就用預設，超過上限就夾。"""
+    if header:
+        try:
+            return min(max(float(header), 1.0), cap)
+        except ValueError:
+            try:
+                from email.utils import parsedate_to_datetime
+                delta = (parsedate_to_datetime(header) - __import__("datetime").datetime.now(
+                    __import__("datetime").timezone.utc)).total_seconds()
+                return min(max(delta, 1.0), cap)
+            except Exception:  # noqa: BLE001
+                return default
+    return default
+
+
+def _paced_get(url: str, pace_s: float, retries: int = 4) -> dict:
+    """固定間隔的 GET；429 依 Retry-After（沒有就 90 s）等了再試。"""
     global _last_request
     for attempt in range(retries + 1):
         wait = pace_s - (time.time() - _last_request)
@@ -179,8 +199,10 @@ def _paced_get(url: str, pace_s: float, retries: int = 3) -> dict:
                 return json.load(r)
         except urllib.error.HTTPError as e:
             if e.code == 429 and attempt < retries:
-                print(f"  429，等 60 s（第 {attempt + 1} 次）", file=sys.stderr)
-                time.sleep(60)
+                back = retry_after_seconds(e.headers.get("Retry-After"))
+                print(f"  429，等 {back:.0f} s（第 {attempt + 1} 次）", file=sys.stderr)
+                time.sleep(back)
+                _last_request = time.time()
                 continue
             raise
 
@@ -323,7 +345,10 @@ def cmd_search(a: argparse.Namespace) -> int:
     have = {c["pageid"] for c in existing.get("candidates", [])}
     cands: dict[int, dict] = {}
     stats = {"pages": 0, "license": 0, "no_f35": 0, "small": 0, "no_spec": 0, "ok": 0, "skipped_known": 0, "subcats": 0}
+    only = {x.strip() for x in (a.only or "").split(",") if x.strip()}
     for cat, model in CATEGORIES.items():
+        if only and model not in only:
+            continue
         cats = [cat]
         if a.recursive_depth > 0:
             subs = subcategories(cat, a.recursive_depth, a.pace)
@@ -509,8 +534,10 @@ def cmd_download(a: argparse.Namespace) -> int:
                 break
             except urllib.error.HTTPError as e:
                 if e.code == 429 and attempt < 2:
-                    print("  429，等 60 s", file=sys.stderr)
-                    time.sleep(60)
+                    back = retry_after_seconds(e.headers.get("Retry-After"))
+                    print(f"  429，等 {back:.0f} s", file=sys.stderr)
+                    time.sleep(back)
+                    _last_request = time.time()
                     continue
                 print(f"  x {fname} {e}", file=sys.stderr)
                 break
@@ -530,6 +557,7 @@ def main(argv: list[str] | None = None) -> int:
     s.add_argument("--out", default=None)
     s.add_argument("--merge-into", default=None, help="併進既有 manifest（同 pageid 跳過）")
     s.add_argument("--recursive-depth", type=int, default=0, help="機型分類頁往下幾層子分類（子分類的檔案繼承機型）")
+    s.add_argument("--only", default=None, help="只跑這些機型（逗號分隔的 MODEL_SPECS 鍵）；被 429 慢到跑不完時用")
     s.add_argument("--pace", type=float, default=DEFAULT_PACE_S)
     s.add_argument("--per-category", type=int, default=50)
     s.add_argument("--min-side", type=int, default=1600)

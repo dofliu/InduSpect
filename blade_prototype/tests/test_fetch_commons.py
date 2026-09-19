@@ -87,3 +87,11 @@ def test_subcategories_breadth_first_with_depth() -> None:
         ["Category:Enercon E-82 E2", "Category:Enercon E-82 in Poland"]
     assert F.subcategories("Category:Enercon E-82", 3, 0.0, fetch=fake) == \
         ["Category:Enercon E-82 E2", "Category:Enercon E-82 in Poland", "Category:Windpark X"]
+
+
+def test_retry_after_seconds_parses_and_caps() -> None:
+    assert F.retry_after_seconds(None) == F.BACKOFF_429_S
+    assert F.retry_after_seconds("45") == 45.0
+    assert F.retry_after_seconds("600") == F.BACKOFF_429_MAX_S
+    assert F.retry_after_seconds("garbage") == F.BACKOFF_429_S
+    assert F.retry_after_seconds("Wed, 21 Oct 2015 07:28:00 GMT") == 1.0  # 過去的日期 → 最少等 1 s
