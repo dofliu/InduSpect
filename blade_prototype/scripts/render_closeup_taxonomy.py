@@ -187,19 +187,26 @@ def render(d: dict) -> str:
         add("")
         add(dm["note"])
         add("")
+        n_ds = 0
         for key, ds in dm.items():
             if key == "note":
                 continue
-            add(f"### 6.1 {ds['source']}")
+            n_ds += 1
+            add(f"### 6.{n_ds} {ds['source']}")
             add("")
             add(f"- 授權：**{ds['licence']}**")
             add(f"- 規模：{ds['size']}")
             add("")
-            add("| 它的類別 | 對到本表 | 注意 |")
-            add("|---|---|---|")
+            # `wtb_equivalent`：第二份語料起才有——跨語料粗對照時「它的類別」對到 wtb 語料的哪幾類
+            has_eq = any("wtb_equivalent" in c for c in ds["classes"])
+            add("| 它的類別 | 對到本表 |" + (" 對 wtb 語料的類 |" if has_eq else "") + " 注意 |")
+            add("|---|---|" + ("---|" if has_eq else "") + "---|")
             for c in ds["classes"]:
                 ours = "、".join(f"`{x}`" for x in c["ours"])
-                add(f"| `{c['their']}` | {ours} | {_cell(c['caveat'])} |")
+                eq = ""
+                if has_eq:
+                    eq = " " + ("、".join(f"`{x}`" for x in c.get("wtb_equivalent", [])) or "（無）") + " |"
+                add(f"| `{c['their']}` | {ours} |{eq} {_cell(c['caveat'])} |")
             add("")
             add("**這份語料缺什麼**：")
             add("")
@@ -224,7 +231,9 @@ def render(d: dict) -> str:
                 add("")
                 add(sv["finding"])
                 add("")
-            ia = ds["inter_annotator"]
+            ia = ds.get("inter_annotator")
+            if not ia:
+                continue
             add(f"**標註者間一致度**：{ia['note']}")
             add("")
             add("| 量 | 值 |")

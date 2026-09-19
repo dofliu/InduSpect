@@ -43,10 +43,20 @@ def _preprocess(bgr: np.ndarray) -> np.ndarray:
 
 
 def extract(dataset: Path, ids: list[str], batch: int = 32) -> tuple[dict[str, np.ndarray], dict]:
+    """wtb 語料的慣例：`<dataset>/JPEGImages/<id>.jpg`。其他語料走 `extract_paths`。"""
+    return extract_paths({i: dataset / "JPEGImages" / f"{i}.jpg" for i in ids}, batch=batch)
+
+
+def extract_paths(paths: dict[str, Path], batch: int = 32,
+                  threads: int | None = None) -> tuple[dict[str, np.ndarray], dict]:
+    """任意 `{id: 路徑}` → 同一組凍結特徵。跨語料驗證（`closeup_cross_corpus.py`）與 wtb 本體
+    走**同一個函式**，否則兩邊的前處理一漂開，比較就不成立。"""
     import cv2
     import torch
     import torchvision
 
+    if threads:
+        torch.set_num_threads(int(threads))
     weights = torchvision.models.ResNet18_Weights.IMAGENET1K_V1
     model = torchvision.models.resnet18(weights=weights)
     model.fc = torch.nn.Identity()
@@ -75,8 +85,8 @@ def extract(dataset: Path, ids: list[str], batch: int = 32) -> tuple[dict[str, n
         keys.clear()
 
     missing = []
-    for i in ids:
-        img = cv2.imread(str(dataset / "JPEGImages" / f"{i}.jpg"))
+    for i, path in paths.items():
+        img = cv2.imread(str(path))
         if img is None:
             missing.append(i)
             continue
@@ -100,8 +110,8 @@ def extract(dataset: Path, ids: list[str], batch: int = 32) -> tuple[dict[str, n
     return feats, meta
 
 
-def save(feats: dict[str, np.ndarray], meta: dict, out: Path) -> None:
-    ids = sorted(feats, key=int)
+def save(feats: dict[str, np.ndarray], meta: dict, out: Path, sort_key=int) -> None:
+    ids = sorted(feats, key=sort_key)
     X = np.stack([feats[i] for i in ids]).astype(np.float16)  # 1065×512 → 約 1 MB，進版控
     np.savez_compressed(out, ids=np.array(ids), X=X, meta=json.dumps(meta, ensure_ascii=False))
 

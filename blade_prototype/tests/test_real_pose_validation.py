@@ -1,0 +1,168 @@
+"""`scripts/real_pose_validation.py` 的守門：真實照片上的姿態估計與補償驗證。
+
+守三件事：①逐張分析函式在偏軸合成夾具上要重現 `blade_offaxis_reference.json` 的姿態與補償結論
+（同一條路徑、同一組數字，否則報告量的不是 App 端那條）；②聚合器的「消掉／留下／新增」算法不能反；
+③進版控的結果檔要能自我對帳（summary = summarise(images)），且報告裡的關鍵數字來自它。
+"""
+
+from __future__ import annotations
+
+import json
+import sys
+from pathlib import Path
+
+import pytest
+
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "scripts"))
+
+import real_pose_validation as R  # noqa: E402
+
+FIXTURE_PNG = ROOT.parent / "flutter_app" / "test" / "assets" / "blade_offaxis_scene.png"
+FIXTURE_REF = ROOT.parent / "flutter_app" / "test" / "assets" / "blade_offaxis_reference.json"
+RESULTS = ROOT / "data" / "commons_pose_results.json"
+
+
+@pytest.fixture(scope="module")
+def fixture_record() -> tuple[dict, dict]:
+    import cv2
+
+    ref = json.loads(FIXTURE_REF.read_text(encoding="utf-8"))
+    img = cv2.imread(str(FIXTURE_PNG))
+    rec = R.analyse_image(img, focal_35mm=ref["focal_35mm"], hub_height_m=ref["hub_height_m"],
+                          rotor_radius_m=ref["rotor_radius_m"])
+    rec.pop("_internals")
+    return rec, ref
+
+
+# ---------------------------------------------------------------- ① 與夾具同一條路徑
+
+
+def test_fixture_pose_reproduced(fixture_record) -> None:
+    rec, ref = fixture_record
+    assert rec["verdict"]["ok"] and rec["view"] == "front"
+    p = rec["pose"]
+    for k in ("elevation_deg", "yaw_deg", "distance_m"):
+        assert p[k] == pytest.approx(ref["pose_estimate"][k], abs=1e-3), k
+    assert p["usable"] is True
+
+
+def test_fixture_compensation_reproduced(fixture_record) -> None:
+    rec, ref = fixture_record
+    c = rec["comp"]
+    assert c["prebend_fit_m"] == pytest.approx(ref["compensated"]["prebend_fit_m"], abs=0.01)
+    assert c["deflection_compensated"] is True
+    assert c["radius_compensated"] is False  # |yaw| 25° > 15°
+    # 原始標記葉尖偏移，補償後只剩半徑（半徑沒補、原本就標）
+    assert R.DEFL in rec["raw"]["flagged"]
+    assert R.DEFL not in c["flagged"]
+    assert c["flagged"] == ["radius_px"]
+
+
+def test_fixture_hub_sensitivity_recorded(fixture_record) -> None:
+    rec, _ = fixture_record
+    hs = rec["hub_sensitivity"]
+    assert set(hs) == {f"{f:.1f}" for f in R.HUB_SENSITIVITY}
+    el = rec["pose"]["elevation_deg"]
+    assert hs["0.8"]["elevation_deg"] < el < hs["1.2"]["elevation_deg"]  # 輪轂越高、仰角越大
+    assert all(v["same_flags"] is not None for v in hs.values())
+
+
+def test_no_focal_means_no_compensation_but_raw_kept() -> None:
+    import cv2
+
+    ref = json.loads(FIXTURE_REF.read_text(encoding="utf-8"))
+    img = cv2.imread(str(FIXTURE_PNG))
+    rec = R.analyse_image(img, focal_35mm=None, hub_height_m=ref["hub_height_m"], rotor_radius_m=ref["rotor_radius_m"])
+    assert rec["raw"]["flagged"]  # 原始互比照做
+    assert rec["pose"]["usable"] is False
+    assert rec["comp"] is None  # 沒姿態就不補，不猜
+
+
+# ---------------------------------------------------------------- ② 聚合
+
+
+def _row(rid: str, raw_flags: list[str], comp_flags: list[str] | None, *, el: float = 10.0, model: str = "M",
+         same_flags: bool = True) -> dict:
+    row = {
+        "id": rid, "model": model, "failed": False, "seconds": 1.0, "hub_height_source": "typical",
+        "verdict": {"ok": True, "reasons": [], "warnings": []}, "view": "front",
+        "raw": {"cm_per_px": 20.0, "flagged": raw_flags,
+                "comparisons": [{"metric": R.DEFL, "flagged": R.DEFL in raw_flags, "outlier_deviation_cm": 200.0},
+                                {"metric": R.RAD, "flagged": R.RAD in raw_flags, "outlier_deviation_cm": 50.0}]},
+        "pose": {"usable": comp_flags is not None, "elevation_deg": el, "yaw_deg": 5.0, "distance_m": 300.0, "notes": []},
+        "comp": None,
+    }
+    if comp_flags is not None:
+        row["comp"] = {"prebend_fit_m": 3.0, "prebend_fit_ok": True, "radius_compensated": True, "flagged": comp_flags,
+                       "blades_near_tower": [], "comparisons": [
+                           {"metric": R.DEFL, "flagged": R.DEFL in comp_flags, "outlier_deviation_cm": 30.0},
+                           {"metric": R.RAD, "flagged": R.RAD in comp_flags, "outlier_deviation_cm": 40.0}]}
+        row["hub_sensitivity"] = {"0.8": {"elevation_deg": el - 2, "same_flags": same_flags},
+                                  "1.2": {"elevation_deg": el + 2, "same_flags": True}}
+    return row
+
+
+def test_transitions_cleared_kept_new() -> None:
+    rows = [
+        _row("a", [R.DEFL], []),               # 消掉
+        _row("b", [R.DEFL], [R.DEFL]),         # 留下
+        _row("c", [], [R.DEFL]),               # 新增
+        _row("d", [R.RAD], [R.RAD], same_flags=False),
+        _row("e", [R.DEFL], None),             # 姿態不可用：不算進補償統計
+    ]
+    s = R.summarise(rows)
+    assert s["accepted_front"] == 5 and s["pose_usable"] == 4 and s["compensated"] == 4
+    assert s["tip_deflection"] == {"raw_flagged": 2, "comp_flagged": 2, "cleared": 1, "kept": 1, "new": 1}
+    assert s["radius"]["raw_flagged"] == 1 and s["radius"]["kept"] == 1
+    assert s["hub_sensitivity"] == {"n": 4, "flags_changed": 1, "elevation_delta_deg_median": 2.0,
+                                    "factors": list(R.HUB_SENSITIVITY)}
+    assert s["raw_defl_cm_median"] == 200.0 and s["comp_defl_cm_median"] == 30.0
+
+
+def test_rejected_and_failed_are_bucketed() -> None:
+    rows = [
+        {"id": "r", "model": "M", "failed": False, "seconds": 1.0,
+         "verdict": {"ok": False, "reasons": ["三片葉尖半徑差 39%（上限 15%）：請等轉子轉開"], "warnings": []}, "view": None},
+        {"id": "f", "model": "M", "failed": True, "seconds": 1.0,
+         "verdict": {"ok": False, "reasons": ["結構定位失敗（ValueError: 遮罩為空）：多半是天空模型被撐壞"], "warnings": []}},
+    ]
+    s = R.summarise(rows)
+    assert s["rejected"] == 1 and s["failed"] == 1 and s["accepted"] == 0
+    assert set(s["reject_reasons"]) == {"三片葉尖半徑差 N%（…）", "結構定位失敗（…）"}
+    assert s["per_model"]["M"]["n"] == 2 and s["per_model"]["M"]["accepted"] == 0
+
+
+def test_render_uses_summary_numbers() -> None:
+    rows = [_row("a", [R.DEFL], []), _row("b", [R.DEFL], [R.DEFL])]
+    for r in rows:
+        r.update(title="t", page_url="", license="CC BY 4.0", artist="x", camera_model=None, orig_width=4000,
+                 orig_height=3000, hub_height_m=100.0, focal_35mm=50.0, rotor_radius_m=41.0)
+    md = R.render_markdown({"version": "t", "summary": R.summarise(rows), "images": rows})
+    assert "原始標記葉尖偏移 **2** 張，補償後剩 **1**（消掉 1、留下 1、新增 0）" in md
+    assert "| 葉尖偏移 | 2 | 1 | 1 | 1 | 0 |" in md
+
+
+# ---------------------------------------------------------------- ③ 進版控的結果檔
+
+
+@pytest.mark.skipif(not RESULTS.exists(), reason="還沒跑過 Commons 真實照片")
+def test_results_file_self_consistent() -> None:
+    doc = json.loads(RESULTS.read_text(encoding="utf-8"))
+    assert doc["summary"] == R.summarise(doc["images"])
+    assert doc["max_side"] == R.MAX_SIDE and doc["noise_floor_px"] == R.NOISE_FLOOR_PX
+    ids = [r["id"] for r in doc["images"]]
+    assert len(ids) == len(set(ids))
+    for r in doc["images"]:
+        assert r["license"] and r["page_url"]  # 來源與授權逐張留著，照片本體不在版控裡
+        if r.get("comp"):
+            assert r["pose"]["usable"] is True  # 沒姿態就不補
+            assert r["raw"] is not None        # 原始值一律留
+
+
+@pytest.mark.skipif(not RESULTS.exists(), reason="還沒跑過 Commons 真實照片")
+def test_report_in_sync_with_results() -> None:
+    doc = json.loads(RESULTS.read_text(encoding="utf-8"))
+    doc["summary"] = R.summarise(doc["images"])
+    md = (ROOT / "REAL_POSE_VALIDATION.md").read_text(encoding="utf-8")
+    assert md == R.render_markdown(doc), "REAL_POSE_VALIDATION.md 與結果檔不同步：重跑 real_pose_validation.py report"
