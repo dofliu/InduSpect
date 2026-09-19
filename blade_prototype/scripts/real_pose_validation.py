@@ -285,14 +285,16 @@ def summarise(rows: list[dict]) -> dict:
             if e0 is not None and v.get("elevation_deg") is not None:
                 el_delta.append(abs(v["elevation_deg"] - e0))
     per_model: dict[str, dict] = {}
+    per_source: dict[str, dict] = {}
     for r in rows:
-        m = per_model.setdefault(r.get("model", "?"), Counter())
-        m["n"] += 1
-        m["accepted"] += (not r.get("failed")) and r["verdict"]["ok"]
-        m["front"] += bool(r.get("raw"))
-        m["pose_usable"] += bool(r.get("pose", {}).get("usable"))
-        m["raw_defl_flagged"] += bool(r.get("raw")) and DEFL in r["raw"]["flagged"]
-        m["comp_defl_flagged"] += bool(r.get("comp")) and DEFL in r["comp"]["flagged"]
+        for key, table in ((r.get("model", "?"), per_model), (r.get("source_kind") or "model", per_source)):
+            m = table.setdefault(key, Counter())
+            m["n"] += 1
+            m["accepted"] += (not r.get("failed")) and r["verdict"]["ok"]
+            m["front"] += bool(r.get("raw"))
+            m["pose_usable"] += bool(r.get("pose", {}).get("usable"))
+            m["raw_defl_flagged"] += bool(r.get("raw")) and DEFL in r["raw"]["flagged"]
+            m["comp_defl_flagged"] += bool(r.get("comp")) and DEFL in r["comp"]["flagged"]
     return {
         "n": n, "failed": len(failed), "accepted": len(ok), "accepted_front": len(front),
         "accepted_side": len(side), "rejected": len(rejected),
@@ -324,6 +326,7 @@ def summarise(rows: list[dict]) -> dict:
                             "elevation_delta_deg_median": _median(el_delta), "factors": list(HUB_SENSITIVITY)},
         "hub_height_source": dict(Counter(r.get("hub_height_source", "?") for r in rows)),
         "per_model": {k: dict(v) for k, v in sorted(per_model.items())},
+        "per_source": {k: dict(v) for k, v in sorted(per_source.items())},
         "seconds_median": _median([r["seconds"] for r in rows if r.get("seconds") is not None]),
     }
 
@@ -424,7 +427,7 @@ def render_markdown(doc: dict) -> str:
     for r in sorted(front, key=lambda r: (r.get("model", ""), r["id"])):
         p, c = r.get("pose") or {}, r.get("comp")
         body.append([
-            f"[{r['id']}]({r.get('page_url', '')})", r.get("model"), _fmt(r.get("focal_35mm"), 0),
+            f"[{r['id']}]({r.get('page_url', '')})", r.get("model"), (r.get("source_kind") or "model")[:12], _fmt(r.get("focal_35mm"), 0),
             f"{r['hub_height_m']}{'*' if r.get('hub_height_source') == 'typical' else ''}",
             _fmt(p.get("elevation_deg")), _fmt(p.get("yaw_deg")), _fmt(p.get("distance_m"), 0),
             _flag_cell(r["raw"]["comparisons"], DEFL),
@@ -435,13 +438,20 @@ def render_markdown(doc: dict) -> str:
             "—" if c is None else ("、".join("ABC"[i] for i in c["blades_near_tower"]) or "—"),
             "—" if not r.get("hub_sensitivity") else ("穩" if all(v.get("same_flags") for v in r["hub_sensitivity"].values()) else "翻"),
         ])
-    L.append(_table(["照片", "機型", "f35", "輪轂高 m", "仰角°", "yaw°", "距離 m", "葉尖偏移 原始", "補償後", "預彎 m",
+    L.append(_table(["照片", "機型", "來源", "f35", "輪轂高 m", "仰角°", "yaw°", "距離 m", "葉尖偏移 原始", "補償後", "預彎 m",
                      "半徑 原始", "補償後", "近塔", "±20%"], body))
     L.append("\n`*` 輪轂高度是機型典型值。⚑ = 三片互比標記（z ≥ 3 且另兩片一致）。「翻」= 輪轂高度 ±20% 時補償後的標記集合會變。\n")
     L.append("## 5. 每機型\n")
     L.append(_table(["機型", "張數", "放行", "正視互比", "姿態可用", "葉尖偏移原始標記", "補償後"],
                     [[k, v["n"], v["accepted"], v["front"], v["pose_usable"], v["raw_defl_flagged"], v["comp_defl_flagged"]]
                      for k, v in s["per_model"].items()]))
+    L.append("")
+    L.append("### 5.1 每種來源\n")
+    L.append("`model` = 機型分類頁本身；`model-subcat` = 機型分類頁往下的子分類（檔案繼承機型）；"
+             "`view` = 地區／取景分類頁，機型由檔案自己的分類或描述推斷（`search-view`）。\n")
+    L.append(_table(["來源", "張數", "放行", "正視互比", "姿態可用", "葉尖偏移原始標記", "補償後"],
+                    [[k, v["n"], v["accepted"], v["front"], v["pose_usable"], v["raw_defl_flagged"], v["comp_defl_flagged"]]
+                     for k, v in s.get("per_source", {}).items()]))
     L.append("")
     L.append("## 6. 來源與授權\n")
     L.append("照片不進版控。逐張：\n")
@@ -489,7 +499,10 @@ def cmd_run(a: argparse.Namespace) -> int:
         rec = {"id": rid, "title": c["title"], "page_url": c.get("page_url"), "model": c.get("model"),
                "license": c.get("license"), "artist": c.get("artist"), "camera_model": c.get("camera_model"),
                "hub_height_source": c.get("hub_height_source"), "orig_width": c.get("width"),
-               "orig_height": c.get("height"), "date": c.get("date"), **rec}
+               "orig_height": c.get("height"), "date": c.get("date"),
+               # 第二批起：這張是從哪種分類頁來的（model＝機型分類頁本身、model-subcat＝其子分類、view＝地區／取景分類頁）
+               "source_kind": c.get("source_kind") or "model", "origin": c.get("origin"),
+               "model_basis": c.get("model_basis"), **rec}
         out_rows.append(rec)
         if a.overlays:
             ov = draw_overlay(rec, internals)
