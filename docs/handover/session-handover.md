@@ -25,7 +25,8 @@
 3. **Commons 真實照片再抓一批**：現在放行的正視照只有個位數，補償的結論還撐不起來。**分類頁盤點已做完（2026-09-19 晚）**：
    Commons 沒有任何「從下方看／正面／仰拍」的取景類分類；能拿到機型已知照片的是機型分類頁的子分類（`search --recursive-depth 2`）
    與地區分類頁的 `search-view`。manifest 已有 **313 張入選、86 張抓到、229 張待抓**——卡在 Wikimedia 對本 IP 的滾動懲罰
-   （Retry-After 300 s，常用寬度 1920／1280、步調 15–20 s、退避 35 分鐘都沒用）。續抓：換一個網路或 ≤ 1 req/min：
+   （常用寬度 1920／1280、步調 15–20 s、退避 35 分鐘都沒用）。**懲罰不會自己退**：停手 9 小時後單發試探仍 429，
+   Retry-After 還從 300 s 升到 600 s——**別再從這個 IP 重試**。續抓要換一個網路（或聯絡 noc@wikimedia.org 談批次取用），≤ 1 req/min：
    `python scripts/fetch_commons_turbines.py download --manifest data/commons_turbines_manifest.json --dir <scratch> --thumb-width 1280 --pace 60`，
    抓完 `real_pose_validation.py run` + `report`，再跑一次文件重填。子分類裡最大的一組（E-126 Hamburg-Altenwerder，38 張）是**空拍系列**，
    閘門會全部拒收——別指望它。
@@ -35,7 +36,8 @@
 
 - 外部語料的影像與特徵都在 scratchpad（重開 session 就沒了）：WTBs2025 要從 figshare 28876406 重抓（479 MB zip），
   HF 那份用 `datasets` parquet（294 MB）。凍結特徵抽取用 `closeup_features_cnn.extract_paths`（唯一 import torch 的檔案）。
-- Wikimedia 的 429 是**滾動懲罰**：被擋過之後即使換常用寬度也會連續 429 一陣子，等 60 s 再試才會過。
+- Wikimedia 的 429 是**滾動懲罰且會累加**：被擋過之後即使換成常用縮圖寬度也一路 429，Retry-After 從 300 s 升到 600 s，
+  停手 9 小時後單發試探仍被擋。**不是等一等就好**——同一個 IP 在懲罰期內無論怎麼放慢都拿不到圖，要換網路。
 
 ---
 
