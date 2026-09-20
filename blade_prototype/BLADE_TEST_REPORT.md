@@ -57,7 +57,7 @@
 
 ### 2.1 葉片原型（Python）— 249 passed
 
-報告初版量到 131；同日修掉 §8 的第 2、3 項（側視閘門、拒收訊息）各加了測試成為 144，再加上 Mode B 人工複核工具的 13 條（`tests/test_closeup_review_tool.py`）、切分群組的 10 條（`tests/test_closeup_blade_groups.py`）與評估協定的 15 條（`tests/test_closeup_eval.py`）後為 182；普查補滿再加 2 條後為 184，第一遍標記的守門 16 條（`tests/test_closeup_firstpass.py`）與離線基線的 7 條（`tests/test_closeup_baseline.py`）後為 207；2026-09-16 IEA 兩軌核對（分類表 +2）、線性探針 6 條（`tests/test_closeup_probe.py`）、§1.2 取像閘門 13 條（`tests/test_closeup_intake_gate.py`）後為 228；同日偏軸透視夾具 6 條（`tests/test_offaxis.py`）後為 234；姿態估計 + 透視補償 15 條（`tests/test_pose.py`）後為 249；2026-09-19 Commons 真實照片姿態驗證 9 條（`tests/test_real_pose_validation.py`）與 Mode B 跨語料 14 條（`tests/test_closeup_cross_corpus.py`）後為 **272**。
+報告初版量到 131；同日修掉 §8 的第 2、3 項（側視閘門、拒收訊息）各加了測試成為 144，再加上 Mode B 人工複核工具的 13 條（`tests/test_closeup_review_tool.py`）、切分群組的 10 條（`tests/test_closeup_blade_groups.py`）與評估協定的 15 條（`tests/test_closeup_eval.py`）後為 182；普查補滿再加 2 條後為 184，第一遍標記的守門 16 條（`tests/test_closeup_firstpass.py`）與離線基線的 7 條（`tests/test_closeup_baseline.py`）後為 207；2026-09-16 IEA 兩軌核對（分類表 +2）、線性探針 6 條（`tests/test_closeup_probe.py`）、§1.2 取像閘門 13 條（`tests/test_closeup_intake_gate.py`）後為 228；同日偏軸透視夾具 6 條（`tests/test_offaxis.py`）後為 234；姿態估計 + 透視補償 15 條（`tests/test_pose.py`）後為 249；2026-09-19 Commons 真實照片姿態驗證 9 條（`tests/test_real_pose_validation.py`）與 Mode B 跨語料 14 條（`tests/test_closeup_cross_corpus.py`）後為 272；同日 Commons 抓取器 10 條（`tests/test_fetch_commons.py`：常用縮圖寬度、機型推斷、Retry-After、子分類遞迴）後為 **282**。
 
 | 檔案 | 條數 | 守什麼 |
 |---|---|---|
@@ -331,7 +331,7 @@ README「已知限制」寫的「偏軸會引入透視差，塔架轉正只能�
 | 4 | **取像探針（Mode B §1.2 第②層）跨語料不能當閘門**：廂型車 59/62、機艙 28/38、輪轂 90/134 被判成近身葉片照；唯一成立的是 W 101/104 | §11.2 | `BLADE_CLOSEUP_SPEC.md` §13 第 1 項 → 規格用語已改「不得單獨拒收或放行」 |
 | 5 | **缺陷探針跨語料 ≈ 亂猜**（lift 0.74–1.21，只有雷擊 7.7；域分類器 0.956）；同一探針在 wtb 上 0.632 | §11.2 | `BLADE_CLOSEUP_SPEC.md` §8.3、§13 第 4 項 |
 | 6 | 無人機在輪轂高度拍的整機照被閘門拒收 103/104，六點鐘那片落在地平線以下被截短；Blade 近身照 37/1,444 走側視規則放行 | §11.3 | `BLADE_INSPECTION_SPEC.md` §13-14／§13-13 |
-| 7 | Commons 真實照片：45 張放行 5、正視 3、姿態可用 3；原始標記 1 → 補償後 1；樣本太少不下結論 | §11.1 | `BLADE_INSPECTION_SPEC.md` §13-15 |
+| 7 | Commons 真實照片：86 張放行 5、正視 3、姿態可用 3；原始標記 1 → 補償後 1 | §11.1 | `BLADE_INSPECTION_SPEC.md` §13-15 |
 
 第 3 項是測試設計的錯（`SceneSpec.for_scale()` 才會拒絕塞不下的場景，直接給 `--cm-per-px` 不會），但它暴露的是閘門訊息的問題，所以留下來。
 
@@ -377,7 +377,7 @@ Python／Dart 同步、各加 2 條測試（釘住 n = 0 的訊息裡**不得**�
 
 `fetch_commons_turbines.py` 掃 32 個機型分類頁，只收 CC／PD 授權 + EXIF 35 mm 等效焦距 + 寬 ≥ 1600 的照片
 （431 頁 → 158 張可用），這是第一批**同時有焦距與型錄尺寸**的真實照片，姿態估計（SPEC §13-11）第一次有真實輸入。
-這次跑了 **45 張**：45 張裡閘門放行 5（正視 3、側視 2），姿態可用 3/3；原始三片互比標記葉尖偏移 1 張 → 補償後 1（消掉 0、留下 1、新增 0），半徑 1 → 1；預彎擬合落在 0–8 m 的 1/3，仰角中位 4.81°；輪轂高度 ±20% 翻掉補償結論 0/3 張。樣本太少、不下結論；唯一被原始互比標記的那張（E-40）預彎擬合為負、補償正確地拒絕動它，並點名一片落在六點鐘 ±35° 內（近塔合併假彎曲）。逐張表在報告 §4.1，來源與授權在 §6。
+兩批合計 **86 張**（model 53、model-subcat 32、view 1）：86 張裡閘門放行 5（正視 3、側視 2），姿態可用 3/3；原始三片互比標記葉尖偏移 1 張 → 補償後 1（消掉 0、留下 1、新增 0），半徑 1 → 1；預彎擬合落在 0–8 m 的 1/3，仰角中位 4.81°；輪轂高度 ±20% 翻掉補償結論 0/3 張。**正視放行仍只有個位數，補償在真實照片上的成績還撐不起結論**。逐張表在報告 §4.1，來源與授權在 §6；第二批的來源是機型分類頁的子分類與地區分類頁（`search-view`），Commons 沒有取景類分類頁。
 
 工程上的兩件事：Wikimedia 對**非常用縮圖寬度與原圖**都會 429（要用 `Common_thumbnail_sizes` 那張表的寬度、步調 ≥ 10 s）；
 機型分類頁的照片大半不在設計範圍內（風場遠景、空拍、機艙特寫、廂型車、吊車），所以閘門放行率與 75 張 Flickr 語料一樣只有約一成。
