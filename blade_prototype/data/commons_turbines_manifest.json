@@ -48176,5 +48176,5 @@
    "added": 770
   }
  ],
- "download_note": "2026-09-19：Wikimedia 對本 IP 的縮圖請求施加 Retry-After 300 s 的滾動懲罰（常用寬度 1920／1280、步調 15–20 s 都一樣），313 張入選只抓到 86 張；其餘留在 manifest，換網路或 ≤ 1 req/min 再抓：fetch_commons_turbines.py download --thumb-width 1280 --pace 60"
+ "download_note": "2026-09-19：Wikimedia 對本 IP 的縮圖請求施加滾動懲罰，313 張入選只抓到 86 張。**懲罰不會自己退**：2026-09-20 08:13 UTC（停手 9 小時後）單發試探仍是 429，而且 Retry-After 從 300 s 升到 **600 s**。常用寬度 1920／1280、步調 15–20 s、退避 35 分鐘都試過，都一樣。結論：**這個 IP 不要再試了**，換一個網路再抓（或聯絡 noc@wikimedia.org 談批次取用）：fetch_commons_turbines.py download --manifest data/commons_turbines_manifest.json --dir <scratch> --thumb-width 1280 --pace 60"
 }
