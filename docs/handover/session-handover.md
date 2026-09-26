@@ -24,10 +24,17 @@
 2. **Mode A 硬規則加「Mode A 定位到的轉子占畫面多少」**：3 張誤觸裡有 1 張是前景葉尖後面有一台完整風機。待決策（CLOSEUP_SPEC §13 第 2 項）。
 3. **Commons 真實照片再抓一批**：現在放行的正視照只有個位數，補償的結論還撐不起來。**分類頁盤點已做完（2026-09-19 晚）**：
    Commons 沒有任何「從下方看／正面／仰拍」的取景類分類；能拿到機型已知照片的是機型分類頁的子分類（`search --recursive-depth 2`）
-   與地區分類頁的 `search-view`。manifest 已有 **313 張入選、86 張抓到、229 張待抓**——卡在 Wikimedia 對本 IP 的滾動懲罰
-   （常用寬度 1920／1280、步調 15–20 s、退避 35 分鐘都沒用）。**懲罰不會自己退**：停手 9 小時後單發試探仍 429，
-   Retry-After 還從 300 s 升到 600 s——**別再從這個 IP 重試**。續抓要換一個網路（或聯絡 noc@wikimedia.org 談批次取用），≤ 1 req/min：
-   `python scripts/fetch_commons_turbines.py download --manifest data/commons_turbines_manifest.json --dir <scratch> --thumb-width 1280 --pace 60`，
+   與地區分類頁的 `search-view`。manifest 有 **313 張入選**——原本抓到的 86 張**已隨 scratchpad 清空消失**，
+   所以要重建完整語料得重抓 **313 張**（不是 227）。版控裡的 `data/commons_pose_results.json` 仍保有那 86 張的逐張結果，
+   報告由結果檔渲染、不需要影像，所以**已發表的數字沒有損失**。
+   續抓一律用 **`scripts/commons_portable_fetch.py`**（純標準函式庫、零相依、可續傳、可在任何機器上跑）：
+   - **在被擋的機器上**只能跑鏡像：`--mirror-only`（`ftpmirror.your.org`，非 Wikimedia IP、不受封鎖、無 429；
+     但媒體檔凍結在 **2013-03**，313 張裡約 **66 張**拿得到，而且是**原圖**不是縮圖，EXIF 更完整）。
+   - **在沒被擋的網路上**跑完整的：`python3 scripts/commons_portable_fetch.py --manifest data/commons_turbines_manifest.json --dir <dir> --pace 15`
+     （鏡像先試、404 才回退 Wikimedia，等於把對 Wikimedia 的請求量砍掉約兩成）。
+   三道**不可退化**的保護（各有回歸測試）：①`--pace` 地板 7.2 s（500 次/小時換算），低於就拒跑；
+   ②全域 429 預算 5 次且**跨趟有效**——上一趟因限流中止過就直接 `rc=2` 拒跑，只有 `--new-network` 解得開
+   （這正是把懲罰從 300 墊到 600 的那個「反覆重跑」形狀）；③被擋時 429 實證會寫進 `fetch_log.json`，那是寄給 bot-traffic@ 的材料。
    抓完 `real_pose_validation.py run` + `report`，再跑一次文件重填。子分類裡最大的一組（E-126 Hamburg-Altenwerder，38 張）是**空拍系列**，
    閘門會全部拒收——別指望它。
 4. **WTBs2025 要當外部測試集**：先按原始編號去重（`oil leakage` 520 張只有 29 個原始編號），再逐張重標成本表子類。
@@ -36,8 +43,20 @@
 
 - 外部語料的影像與特徵都在 scratchpad（重開 session 就沒了）：WTBs2025 要從 figshare 28876406 重抓（479 MB zip），
   HF 那份用 `datasets` parquet（294 MB）。凍結特徵抽取用 `closeup_features_cnn.extract_paths`（唯一 import torch 的檔案）。
-- Wikimedia 的 429 是**滾動懲罰且會累加**：被擋過之後即使換成常用縮圖寬度也一路 429，Retry-After 從 300 s 升到 600 s，
-  停手 9 小時後單發試探仍被擋。**不是等一等就好**——同一個 IP 在懲罰期內無論怎麼放慢都拿不到圖，要換網路。
+- **Wikimedia 的封鎖按服務分開，而且 upload 那個不會自己退**（2026-09-26 實測）：
+  `upload.wikimedia.org` 靜默 **6 天**後單發試探仍是 429、Retry-After 仍是 600（09-19 被擋時是 300，09-20 升到 600），
+  **沒有任何衰減**；同一時間 `commons.wikimedia.org/w/api.php` 只回 Retry-After **32 s**（每分鐘滾動窗，等一下就能用）。
+  所以「Commons 從本環境會 429」要分開講：**API 可用、圖片 CDN 不可用**。
+  不要再從這個 IP 試探——每試一次都可能墊高懲罰。**換 UA／換 IP／代理池是 API Usage Guidelines 明文禁止的規避行為**，不要做。
+- **病根有一半在我們自己**：`fetch_commons_turbines.py` 舊的 `BACKOFF_429_MAX_S = 300` 會把伺服器說的 `Retry-After: 600`
+  夾成 300、**提早一半重試**，正是 Robot policy 說會被延長封鎖的行為，極可能就是懲罰從 300 被墊到 600 的原因。
+  2026-09-26 已修為 3600（伺服器明確給的秒數一律全額等，有測試守）。
+- 要談量級請寄 **bot-traffic@wikimedia.org**——Wikimedia APIs/Rate limits 與其 FAQ 都指名這個窗口
+  （原文：「Bot operators who are unsure how to get the access they need can contact the Wikimedia Foundation at bot-traffic@wikimedia.org」）。
+  **舊文件寫的 `noc@wikimedia.org` 是錯的**，那是泛用維運信箱，查無任何文件把它列為此用途的窗口。
+- 官方**沒有**任何能拿到 Commons 圖片本體的批次途徑（已逐條查證）：Enterprise 只給 metadata／HTML，媒體欄位是指回 upload 的 URL 且 Commons 不在支援清單；
+  Commons 媒體檔**從 2013 年起就沒有 dump**（T298394 開票五年仍在 backlog，卡在近 500 TB）；官方 mirror 清單七家裡**只有 `ftpmirror.your.org` 帶 raw images**，
+  而它凍結在 2013-03。313 張這個量級在 Wikimedia 眼中是「正常使用」不是批次取用，那些管道本來就不是為這個規模設計的。
 
 ---
 

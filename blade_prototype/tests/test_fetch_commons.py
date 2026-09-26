@@ -89,9 +89,25 @@ def test_subcategories_breadth_first_with_depth() -> None:
         ["Category:Enercon E-82 E2", "Category:Enercon E-82 in Poland", "Category:Windpark X"]
 
 
-def test_retry_after_seconds_parses_and_caps() -> None:
+def test_retry_after_seconds_never_shortens_what_the_server_asked() -> None:
+    """守的是「**伺服器明確給的秒數一定全額等，不得夾小**」。
+
+    原本 cap = 300 會把實測的 `Retry-After: 600` 夾成 300、提早一半時間重試——Robot policy
+    白紙黑字要求遵守 Retry-After 指定的延遲，而 2026-09-19 → 09-20 懲罰從 300 s 升到 600 s
+    很可能正是這樣被疊上去的。cap 只該用在讀不出來／荒謬的值上。
+    """
     assert F.retry_after_seconds(None) == F.BACKOFF_429_S
     assert F.retry_after_seconds("45") == 45.0
-    assert F.retry_after_seconds("600") == F.BACKOFF_429_MAX_S
+    assert F.retry_after_seconds("600") == 600.0        # 伺服器明講的數字不准被夾（實測就是 600）
+    assert F.retry_after_seconds("1800") == 1800.0      # 再長也照等
+    assert F.BACKOFF_429_MAX_S >= 600.0, "cap 不得低於實測過的 Retry-After，否則等於提早敲門"
+    assert F.retry_after_seconds("999999") == F.BACKOFF_429_MAX_S   # cap 只擋荒謬值
     assert F.retry_after_seconds("garbage") == F.BACKOFF_429_S
     assert F.retry_after_seconds("Wed, 21 Oct 2015 07:28:00 GMT") == 1.0  # 過去的日期 → 最少等 1 s
+
+
+def test_both_fetchers_agree_on_the_backoff_rule() -> None:
+    """兩支腳本是同一個客戶端身分，退避規則漂開的話，有禮貌的那一支會被沒禮貌的那一支拖累。"""
+    import commons_portable_fetch as Portable
+    for header in ("600", "32", "1800", None, "garbage"):
+        assert F.retry_after_seconds(header) == Portable.retry_after_seconds(header), header
