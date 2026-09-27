@@ -166,11 +166,14 @@ _last_request = 0.0
 
 
 BACKOFF_429_S = 90.0      # 沒有 Retry-After 時的等待；實測 60 s 之後常常還是 429
-BACKOFF_429_MAX_S = 300.0
+# 上限**只**用來擋解析不出來／荒謬的值。原本是 300，會把伺服器明講的 Retry-After: 600 夾成 300、
+# 提早一半時間重試——Robot policy 白紙黑字要求遵守 Retry-After 指定的延遲，而 2026-09-19→09-20
+# 懲罰從 300 s 升到 600 s 很可能正是這樣被疊上去的。伺服器給了數字就全額等。
+BACKOFF_429_MAX_S = 3600.0
 
 
 def retry_after_seconds(header: str | None, default: float = BACKOFF_429_S, cap: float = BACKOFF_429_MAX_S) -> float:
-    """Retry-After 可能是秒數或 HTTP 日期；讀不出來就用預設，超過上限就夾。"""
+    """Retry-After 可能是秒數或 HTTP 日期；讀不出來就用預設。伺服器給的數字全額遵守，cap 只擋荒謬值。"""
     if header:
         try:
             return min(max(float(header), 1.0), cap)
