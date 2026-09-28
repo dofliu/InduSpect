@@ -355,13 +355,16 @@ def _flag_cell(rows: list[dict], metric: str) -> str:
     return "—"
 
 
-def render_markdown(doc: dict) -> str:
+def render_markdown(doc: dict, source: str = "data/commons_pose_results.json") -> str:
+    # source 是這份報告的結果檔路徑。預設值讓既有那份 86 張的報告逐字不變（同步測試守著）；
+    # 第二批（鏡像原圖）走 data/commons_pose_results_mirror.json，標頭要指對自己的來源，
+    # 否則報告會宣稱自己來自另一個檔案。
     s = doc["summary"]
     rows = doc["images"]
     front = [r for r in rows if r.get("raw")]
     L: list[str] = []
     L.append("# 真實整機照上的姿態估計與透視補償（Commons）\n")
-    L.append(f"> 版本 `{doc['version']}`。由 `scripts/real_pose_validation.py report` 從 `data/commons_pose_results.json` "
+    L.append(f"> 版本 `{doc['version']}`。由 `scripts/real_pose_validation.py report` 從 `{source}` "
              "產生，**數字不手抄**；照片本體不進版控（CC BY／BY-SA，來源列在 §6），重跑用 "
              "`fetch_commons_turbines.py download` 抓同一份 manifest。\n")
     L.append("## 0. 一句話\n")
@@ -525,7 +528,11 @@ def cmd_run(a: argparse.Namespace) -> int:
 def cmd_report(a: argparse.Namespace) -> int:
     doc = json.load(open(a.results, encoding="utf-8"))
     doc["summary"] = summarise(doc["images"])  # 報告一律由逐張結果重算，不信檔裡存的
-    Path(a.out).write_text(render_markdown(doc), encoding="utf-8")
+    try:  # 標頭指向這份報告真正的來源檔（repo 相對路徑）
+        source = Path(a.results).resolve().relative_to(ROOT).as_posix()
+    except ValueError:  # 結果檔不在 repo 底下（臨時跑），退回檔名
+        source = Path(a.results).name
+    Path(a.out).write_text(render_markdown(doc, source), encoding="utf-8")
     print(f"寫入 {a.out}")
     return 0
 

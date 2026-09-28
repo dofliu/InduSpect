@@ -1,0 +1,4656 @@
+{
+ "version": "commons-pose-2026-09-19",
+ "manifest": "commons_turbines_manifest.json",
+ "max_side": 1024,
+ "noise_floor_px": 1.5,
+ "summary": {
+  "n": 66,
+  "failed": 0,
+  "accepted": 5,
+  "accepted_front": 3,
+  "accepted_side": 2,
+  "rejected": 61,
+  "reject_reasons": {
+   "只定位到 N 片葉片（…）": 32,
+   "三片葉尖半徑差 N%（…）": 25,
+   "一片葉片都沒有定位到": 17,
+   "畫面上幾乎分不出風機（…）": 2
+  },
+  "second_rotor_warnings": 2,
+  "pose_usable": 2,
+  "pose_unusable_notes": {
+   "沒有塔架軸，無法估 yaw": 1
+  },
+  "elevation_deg": {
+   "median": 9.22,
+   "range": [
+    4.81,
+    13.63
+   ]
+  },
+  "yaw_deg": {
+   "median_abs": 34.73,
+   "range": [
+    5.9,
+    63.57
+   ]
+  },
+  "distance_m": {
+   "median": 857.42,
+   "range": [
+    565.96,
+    1148.88
+   ]
+  },
+  "compensated": 2,
+  "prebend_fit_m": {
+   "ok": 0,
+   "median_ok": null,
+   "range_all": [
+    9.02,
+    17.55
+   ]
+  },
+  "radius_compensated": 1,
+  "near_tower": 1,
+  "tip_deflection": {
+   "raw_flagged": 1,
+   "comp_flagged": 1,
+   "cleared": 0,
+   "kept": 1,
+   "new": 0
+  },
+  "radius": {
+   "raw_flagged": 0,
+   "comp_flagged": 0,
+   "cleared": 0,
+   "kept": 0,
+   "new": 0
+  },
+  "raw_defl_cm_median": 122.3,
+  "comp_defl_cm_median": 375.55,
+  "raw_any_flagged": 1,
+  "comp_any_flagged": 1,
+  "hub_sensitivity": {
+   "n": 2,
+   "flags_changed": 0,
+   "elevation_delta_deg_median": 1.89,
+   "factors": [
+    0.8,
+    1.2
+   ]
+  },
+  "hub_height_source": {
+   "typical": 66
+  },
+  "per_model": {
+   "Enercon E-101": {
+    "n": 3,
+    "accepted": 0,
+    "front": 0,
+    "pose_usable": 0,
+    "raw_defl_flagged": 0,
+    "comp_defl_flagged": 0
+   },
+   "Enercon E-126": {
+    "n": 8,
+    "accepted": 1,
+    "front": 1,
+    "pose_usable": 1,
+    "raw_defl_flagged": 1,
+    "comp_defl_flagged": 1
+   },
+   "Enercon E-40": {
+    "n": 16,
+    "accepted": 1,
+    "front": 1,
+    "pose_usable": 0,
+    "raw_defl_flagged": 0,
+    "comp_defl_flagged": 0
+   },
+   "Enercon E-66": {
+    "n": 3,
+    "accepted": 1,
+    "front": 1,
+    "pose_usable": 1,
+    "raw_defl_flagged": 0,
+    "comp_defl_flagged": 0
+   },
+   "Enercon E-70": {
+    "n": 4,
+    "accepted": 0,
+    "front": 0,
+    "pose_usable": 0,
+    "raw_defl_flagged": 0,
+    "comp_defl_flagged": 0
+   },
+   "Enercon E-82": {
+    "n": 25,
+    "accepted": 0,
+    "front": 0,
+    "pose_usable": 0,
+    "raw_defl_flagged": 0,
+    "comp_defl_flagged": 0
+   },
+   "Nordex N117": {
+    "n": 1,
+    "accepted": 1,
+    "front": 0,
+    "pose_usable": 0,
+    "raw_defl_flagged": 0,
+    "comp_defl_flagged": 0
+   },
+   "Nordex N90": {
+    "n": 4,
+    "accepted": 1,
+    "front": 0,
+    "pose_usable": 0,
+    "raw_defl_flagged": 0,
+    "comp_defl_flagged": 0
+   },
+   "Vestas V90": {
+    "n": 2,
+    "accepted": 0,
+    "front": 0,
+    "pose_usable": 0,
+    "raw_defl_flagged": 0,
+    "comp_defl_flagged": 0
+   }
+  },
+  "per_source": {
+   "model": {
+    "n": 45,
+    "accepted": 3,
+    "front": 2,
+    "pose_usable": 1,
+    "raw_defl_flagged": 0,
+    "comp_defl_flagged": 0
+   },
+   "model-subcat": {
+    "n": 21,
+    "accepted": 2,
+    "front": 1,
+    "pose_usable": 1,
+    "raw_defl_flagged": 1,
+    "comp_defl_flagged": 1
+   }
+  },
+  "seconds_median": 0.28
+ },
+ "images": [
+  {
+   "id": "c19326536",
+   "title": "File:Göslow Enercon E-101.JPG",
+   "page_url": "https://commons.wikimedia.org/?curid=19326536",
+   "model": "Enercon E-101",
+   "license": "CC BY-SA 3.0",
+   "artist": "Erell",
+   "camera_model": "DMC-FZ150",
+   "hub_height_source": "typical",
+   "orig_width": 3000,
+   "orig_height": 4000,
+   "date": "2012:05:03 14:02:26",
+   "source_kind": "model",
+   "origin": "Category:Enercon E-101",
+   "model_basis": null,
+   "size": [
+    768,
+    1024
+   ],
+   "focal_35mm": 278.0,
+   "hub_height_m": 124.0,
+   "rotor_radius_m": 50.5,
+   "failed": false,
+   "verdict": {
+    "ok": false,
+    "reasons": [
+     "只定位到 2 片葉片（應為 3）：可能有葉片正好貼在塔架上（六點鐘方位）或沒入雲層，請等轉子轉到三片都離開塔架再拍"
+    ],
+    "warnings": [],
+    "metrics": {
+     "mask_area_frac": 0.0715,
+     "sky_mask_frac": 0.0715,
+     "horizon_y": null,
+     "n_blades": 2,
+     "view": "front",
+     "tip_radii_px": [
+      267.9,
+      238.3
+     ],
+     "tip_radius_spread": 0.117,
+     "second_rotor_radius_px": 0.0,
+     "second_rotor_arms": 0,
+     "second_rotor_ratio": 0.0
+    }
+   },
+   "n_blades": 2,
+   "tower_found": true,
+   "hub": [
+    354.0,
+    364.8
+   ],
+   "tip_radii_px": [
+    267.9,
+    238.3
+   ],
+   "tip_angles_deg": [
+    45.7,
+    149.8
+   ],
+   "radius_spread": 0.117,
+   "view": "front",
+   "seconds": 0.58
+  },
+  {
+   "id": "c20885155",
+   "title": "File:Pala eolica Mele 01.jpg",
+   "page_url": "https://commons.wikimedia.org/?curid=20885155",
+   "model": "Enercon E-101",
+   "license": "CC BY-SA 3.0",
+   "artist": "Alessio Sbarbaro  User_talk:Yoggysot",
+   "camera_model": "PENTACON Dpix 1100Z",
+   "hub_height_source": "typical",
+   "orig_width": 2448,
+   "orig_height": 3264,
+   "date": "2012:08:09 18:03:32",
+   "source_kind": "model",
+   "origin": "Category:Enercon E-101",
+   "model_basis": null,
+   "size": [
+    768,
+    1024
+   ],
+   "focal_35mm": 60.0,
+   "hub_height_m": 124.0,
+   "rotor_radius_m": 50.5,
+   "failed": false,
+   "verdict": {
+    "ok": false,
+    "reasons": [
+     "只定位到 2 片葉片（應為 3）：可能有葉片正好貼在塔架上（六點鐘方位）或沒入雲層，請等轉子轉到三片都離開塔架再拍",
+     "三片葉尖半徑差 37%（上限 15%）：同一台風機三片等長，差這麼多代表有一片其實是地物、電線或別台風機，請重拍並確保只有一台風機在框內"
+    ],
+    "warnings": [
+     "畫面裡還有另一個轉子，半徑約為主風機的 118%：請確認量到的是要量的那一台；風場的風機外觀相同，量錯對象不會有任何徵兆"
+    ],
+    "metrics": {
+     "mask_area_frac": 0.0061,
+     "sky_mask_frac": 0.0061,
+     "horizon_y": null,
+     "n_blades": 2,
+     "view": "front",
+     "tip_radii_px": [
+      68.0,
+      46.9
+     ],
+     "tip_radius_spread": 0.368,
+     "second_rotor_radius_px": 68.1,
+     "second_rotor_arms": 1,
+     "second_rotor_ratio": 1.184
+    }
+   },
+   "n_blades": 2,
+   "tower_found": true,
+   "hub": [
+    370.5,
+    442.2
+   ],
+   "tip_radii_px": [
+    68.0,
+    46.9
+   ],
+   "tip_angles_deg": [
+    274.6,
+    317.3
+   ],
+   "radius_spread": 0.367,
+   "view": "front",
+   "seconds": 0.39
+  },
+  {
+   "id": "c21367677",
+   "title": "File:Pala eolica Mele 12.jpg",
+   "page_url": "https://commons.wikimedia.org/?curid=21367677",
+   "model": "Enercon E-101",
+   "license": "CC BY-SA 3.0",
+   "artist": "Alessio Sbarbaro  User_talk:Yoggysot",
+   "camera_model": "PENTACON Dpix 1100Z",
+   "hub_height_source": "typical",
+   "orig_width": 2448,
+   "orig_height": 3264,
+   "date": "2012:09:15 11:37:14",
+   "source_kind": "model",
+   "origin": "Category:Enercon E-101",
+   "model_basis": null,
+   "size": [
+    768,
+    1024
+   ],
+   "focal_35mm": 39.0,
+   "hub_height_m": 124.0,
+   "rotor_radius_m": 50.5,
+   "failed": false,
+   "verdict": {
+    "ok": false,
+    "reasons": [
+     "三片葉尖半徑差 218%（上限 15%）：同一台風機三片等長，差這麼多代表有一片其實是地物、電線或別台風機，請重拍並確保只有一台風機在框內"
+    ],
+    "warnings": [
+     "畫面裡還有另一個轉子，半徑約為主風機的 271%：請確認量到的是要量的那一台；風場的風機外觀相同，量錯對象不會有任何徵兆",
+     "沒有找到塔架：塔架傾斜與六點鐘方位判讀不可用（幾何互比仍可進行）"
+    ],
+    "metrics": {
+     "mask_area_frac": 0.0778,
+     "sky_mask_frac": 0.0778,
+     "horizon_y": null,
+     "n_blades": 3,
+     "view": "front",
+     "tip_radii_px": [
+      106.0,
+      165.5,
+      467.0
+     ],
+     "tip_radius_spread": 2.182,
+     "second_rotor_radius_px": 448.4,
+     "second_rotor_arms": 2,
+     "second_rotor_ratio": 2.71
+    }
+   },
+   "n_blades": 3,
+   "tower_found": false,
+   "hub": [
+    437.5,
+    609.8
+   ],
+   "tip_radii_px": [
+    106.0,
+    165.5,
+    467.0
+   ],
+   "tip_angles_deg": [
+    86.5,
+    190.9,
+    297.8
+   ],
+   "radius_spread": 2.181,
+   "view": "front",
+   "seconds": 0.39
+  },
+  {
+   "id": "c6914141",
+   "title": "File:Enercon E-126 Aurich-Georgsfeld02.jpg",
+   "page_url": "https://commons.wikimedia.org/?curid=6914141",
+   "model": "Enercon E-126",
+   "license": "Public domain",
+   "artist": "Prankster",
+   "camera_model": "NIKON D40",
+   "hub_height_source": "typical",
+   "orig_width": 3008,
+   "orig_height": 2000,
+   "date": "2009:05:22 13:26:14",
+   "source_kind": "model",
+   "origin": "Category:Enercon E-126",
+   "model_basis": null,
+   "size": [
+    1024,
+    681
+   ],
+   "focal_35mm": 30.0,
+   "hub_height_m": 135.0,
+   "rotor_radius_m": 63.5,
+   "failed": false,
+   "verdict": {
+    "ok": false,
+    "reasons": [
+     "只定位到 1 片葉片（應為 3）：可能有葉片正好貼在塔架上（六點鐘方位）或沒入雲層，請等轉子轉到三片都離開塔架再拍"
+    ],
+    "warnings": [
+     "畫面裡還有另一個轉子，半徑約為主風機的 50%：請確認量到的是要量的那一台；風場的風機外觀相同，量錯對象不會有任何徵兆",
+     "沒有找到塔架：塔架傾斜與六點鐘方位判讀不可用（幾何互比仍可進行）",
+     "結構定位提示：葉片軸線共線（側視），輪轂投影到主葉片軸線"
+    ],
+    "metrics": {
+     "mask_area_frac": 0.0178,
+     "sky_mask_frac": 0.0178,
+     "horizon_y": null,
+     "n_blades": 1,
+     "view": "front",
+     "tip_radii_px": [
+      167.4
+     ],
+     "second_rotor_radius_px": 84.0,
+     "second_rotor_arms": 1,
+     "second_rotor_ratio": 0.502
+    }
+   },
+   "n_blades": 1,
+   "tower_found": false,
+   "hub": [
+    782.9,
+    352.4
+   ],
+   "tip_radii_px": [
+    167.4
+   ],
+   "tip_angles_deg": [
+    210.7
+   ],
+   "radius_spread": 0.0,
+   "view": "front",
+   "seconds": 0.39
+  },
+  {
+   "id": "c6326631",
+   "title": "File:Enercon-P1130626.JPG",
+   "page_url": "https://commons.wikimedia.org/?curid=6326631",
+   "model": "Enercon E-126",
+   "license": "CC BY-SA 3.0",
+   "artist": "Gunnar Ries  Amphibol",
+   "camera_model": "DMC-FZ50",
+   "hub_height_source": "typical",
+   "orig_width": 3648,
+   "orig_height": 2736,
+   "date": "2009:03:21 17:49:18",
+   "source_kind": "model-subcat",
+   "origin": "Category:Enercon E-126 in Hamburg-Altenwerder",
+   "model_basis": null,
+   "size": [
+    1024,
+    768
+   ],
+   "focal_35mm": 35.0,
+   "hub_height_m": 135.0,
+   "rotor_radius_m": 63.5,
+   "failed": false,
+   "verdict": {
+    "ok": false,
+    "reasons": [
+     "只定位到 1 片葉片（應為 3）：可能有葉片正好貼在塔架上（六點鐘方位）或沒入雲層，請等轉子轉到三片都離開塔架再拍"
+    ],
+    "warnings": [
+     "結構定位提示：葉片軸線共線（側視），輪轂投影到主葉片軸線"
+    ],
+    "metrics": {
+     "mask_area_frac": 0.0566,
+     "sky_mask_frac": 0.0566,
+     "horizon_y": null,
+     "n_blades": 1,
+     "view": "front",
+     "tip_radii_px": [
+      435.6
+     ],
+     "second_rotor_radius_px": 0.0,
+     "second_rotor_arms": 0,
+     "second_rotor_ratio": 0.0
+    }
+   },
+   "n_blades": 1,
+   "tower_found": true,
+   "hub": [
+    450.6,
+    123.5
+   ],
+   "tip_radii_px": [
+    435.6
+   ],
+   "tip_angles_deg": [
+    269.1
+   ],
+   "radius_spread": 0.0,
+   "view": "front",
+   "seconds": 0.32
+  },
+  {
+   "id": "c6326636",
+   "title": "File:Enercon-P1130627.JPG",
+   "page_url": "https://commons.wikimedia.org/?curid=6326636",
+   "model": "Enercon E-126",
+   "license": "CC BY-SA 3.0",
+   "artist": "Gunnar Ries  Amphibol",
+   "camera_model": "DMC-FZ50",
+   "hub_height_source": "typical",
+   "orig_width": 3648,
+   "orig_height": 2736,
+   "date": "2009:03:21 17:49:45",
+   "source_kind": "model-subcat",
+   "origin": "Category:Enercon E-126 in Hamburg-Altenwerder",
+   "model_basis": null,
+   "size": [
+    1024,
+    768
+   ],
+   "focal_35mm": 179.0,
+   "hub_height_m": 135.0,
+   "rotor_radius_m": 63.5,
+   "failed": false,
+   "verdict": {
+    "ok": false,
+    "reasons": [
+     "一片葉片都沒有定位到：多半是轉子沒有完整入鏡（請退後到整個轉子連同塔架都進得了畫面），或風機根本沒被分割出來（雲層、逆光或前景物撐壞天空模型，請換雲量少的時段、讓葉片背景是乾淨天空）"
+    ],
+    "warnings": [
+     "沒有找到塔架：塔架傾斜與六點鐘方位判讀不可用（幾何互比仍可進行）",
+     "結構定位提示：葉片軸線共線（側視），輪轂投影到主葉片軸線"
+    ],
+    "metrics": {
+     "mask_area_frac": 0.0422,
+     "sky_mask_frac": 0.0422,
+     "horizon_y": null,
+     "n_blades": 0,
+     "view": "front",
+     "tip_radii_px": []
+    }
+   },
+   "n_blades": 0,
+   "tower_found": false,
+   "hub": [
+    656.8,
+    323.5
+   ],
+   "tip_radii_px": [],
+   "tip_angles_deg": [],
+   "view": "front",
+   "seconds": 0.24
+  },
+  {
+   "id": "c16365752",
+   "title": "File:Luftaufnahmen Nordseekueste 2011-09-04 by-RaBoe-103.jpg",
+   "page_url": "https://commons.wikimedia.org/?curid=16365752",
+   "model": "Enercon E-126",
+   "license": "CC BY-SA 3.0 de",
+   "artist": "©  Ra Boe / Wikipedia         Create the proper attribution for your usage by cl",
+   "camera_model": "NIKON D50",
+   "hub_height_source": "typical",
+   "orig_width": 3008,
+   "orig_height": 2000,
+   "date": "2011:09:04 13:05:03",
+   "source_kind": "model",
+   "origin": "Category:Enercon E-126",
+   "model_basis": null,
+   "size": [
+    1024,
+    681
+   ],
+   "focal_35mm": 127.0,
+   "hub_height_m": 135.0,
+   "rotor_radius_m": 63.5,
+   "failed": false,
+   "verdict": {
+    "ok": false,
+    "reasons": [
+     "只定位到 1 片葉片（應為 3）：可能有葉片正好貼在塔架上（六點鐘方位）或沒入雲層，請等轉子轉到三片都離開塔架再拍"
+    ],
+    "warnings": [
+     "沒有找到塔架：塔架傾斜與六點鐘方位判讀不可用（幾何互比仍可進行）",
+     "結構定位提示：葉片軸線共線（側視），輪轂投影到主葉片軸線"
+    ],
+    "metrics": {
+     "mask_area_frac": 0.0044,
+     "sky_mask_frac": 0.0044,
+     "horizon_y": null,
+     "n_blades": 1,
+     "view": "front",
+     "tip_radii_px": [
+      82.3
+     ],
+     "second_rotor_radius_px": 0.0,
+     "second_rotor_arms": 0,
+     "second_rotor_ratio": 0.0
+    }
+   },
+   "n_blades": 1,
+   "tower_found": false,
+   "hub": [
+    74.5,
+    259.7
+   ],
+   "tip_radii_px": [
+    82.3
+   ],
+   "tip_angles_deg": [
+    338.4
+   ],
+   "radius_spread": 0.0,
+   "view": "front",
+   "seconds": 0.26
+  },
+  {
+   "id": "c6566413",
+   "title": "File:WindTurbine Rotor Winglet unmounted 2.JPG",
+   "page_url": "https://commons.wikimedia.org/?curid=6566413",
+   "model": "Enercon E-126",
+   "license": "CC BY-SA 3.0",
+   "artist": "TraceyR",
+   "camera_model": "EX-Z1080   ",
+   "hub_height_source": "typical",
+   "orig_width": 3648,
+   "orig_height": 2432,
+   "date": "2009:04:18 17:46:40",
+   "source_kind": "model",
+   "origin": "Category:Enercon E-126",
+   "model_basis": null,
+   "size": [
+    1024,
+    683
+   ],
+   "focal_35mm": 57.0,
+   "hub_height_m": 135.0,
+   "rotor_radius_m": 63.5,
+   "failed": false,
+   "verdict": {
+    "ok": false,
+    "reasons": [
+     "一片葉片都沒有定位到：多半是轉子沒有完整入鏡（請退後到整個轉子連同塔架都進得了畫面），或風機根本沒被分割出來（雲層、逆光或前景物撐壞天空模型，請換雲量少的時段、讓葉片背景是乾淨天空）"
+    ],
+    "warnings": [
+     "沒有找到塔架：塔架傾斜與六點鐘方位判讀不可用（幾何互比仍可進行）",
+     "輪轂只有初估、未經葉片軸線精修：葉尖偏移量的精度會下降"
+    ],
+    "metrics": {
+     "mask_area_frac": 0.0608,
+     "sky_mask_frac": 0.0608,
+     "horizon_y": null,
+     "n_blades": 0,
+     "view": "front",
+     "tip_radii_px": []
+    }
+   },
+   "n_blades": 0,
+   "tower_found": false,
+   "hub": [
+    0.0,
+    0.0
+   ],
+   "tip_radii_px": [],
+   "tip_angles_deg": [],
+   "view": "front",
+   "seconds": 0.2
+  },
+  {
+   "id": "c6566190",
+   "title": "File:WindTurbine Rotor Winglet unmounted.JPG",
+   "page_url": "https://commons.wikimedia.org/?curid=6566190",
+   "model": "Enercon E-126",
+   "license": "CC BY-SA 3.0",
+   "artist": "TraceyR",
+   "camera_model": "EX-Z1080   ",
+   "hub_height_source": "typical",
+   "orig_width": 3648,
+   "orig_height": 2432,
+   "date": "2009:04:18 17:48:15",
+   "source_kind": "model",
+   "origin": "Category:Enercon E-126",
+   "model_basis": null,
+   "size": [
+    1024,
+    683
+   ],
+   "focal_35mm": 114.0,
+   "hub_height_m": 135.0,
+   "rotor_radius_m": 63.5,
+   "failed": false,
+   "verdict": {
+    "ok": false,
+    "reasons": [
+     "一片葉片都沒有定位到：多半是轉子沒有完整入鏡（請退後到整個轉子連同塔架都進得了畫面），或風機根本沒被分割出來（雲層、逆光或前景物撐壞天空模型，請換雲量少的時段、讓葉片背景是乾淨天空）"
+    ],
+    "warnings": [
+     "沒有找到塔架：塔架傾斜與六點鐘方位判讀不可用（幾何互比仍可進行）",
+     "結構定位提示：葉片軸線共線（側視），輪轂投影到主葉片軸線"
+    ],
+    "metrics": {
+     "mask_area_frac": 0.0099,
+     "sky_mask_frac": 0.0099,
+     "horizon_y": null,
+     "n_blades": 0,
+     "view": "front",
+     "tip_radii_px": []
+    }
+   },
+   "n_blades": 0,
+   "tower_found": false,
+   "hub": [
+    843.3,
+    294.4
+   ],
+   "tip_radii_px": [],
+   "tip_angles_deg": [],
+   "view": "front",
+   "seconds": 0.14
+  },
+  {
+   "id": "c6566536",
+   "title": "File:WindTurbine Rotor Winglets unmounted.jpg",
+   "page_url": "https://commons.wikimedia.org/?curid=6566536",
+   "model": "Enercon E-126",
+   "license": "CC BY-SA 3.0",
+   "artist": "TraceyR",
+   "camera_model": "EX-Z1080   ",
+   "hub_height_source": "typical",
+   "orig_width": 3648,
+   "orig_height": 2432,
+   "date": "2009:04:18 17:46:54",
+   "source_kind": "model",
+   "origin": "Category:Enercon E-126",
+   "model_basis": null,
+   "size": [
+    1024,
+    683
+   ],
+   "focal_35mm": 57.0,
+   "hub_height_m": 135.0,
+   "rotor_radius_m": 63.5,
+   "failed": false,
+   "verdict": {
+    "ok": false,
+    "reasons": [
+     "一片葉片都沒有定位到：多半是轉子沒有完整入鏡（請退後到整個轉子連同塔架都進得了畫面），或風機根本沒被分割出來（雲層、逆光或前景物撐壞天空模型，請換雲量少的時段、讓葉片背景是乾淨天空）"
+    ],
+    "warnings": [
+     "沒有找到塔架：塔架傾斜與六點鐘方位判讀不可用（幾何互比仍可進行）",
+     "輪轂只有初估、未經葉片軸線精修：葉尖偏移量的精度會下降"
+    ],
+    "metrics": {
+     "mask_area_frac": 0.0498,
+     "sky_mask_frac": 0.0498,
+     "horizon_y": null,
+     "n_blades": 0,
+     "view": "front",
+     "tip_radii_px": []
+    }
+   },
+   "n_blades": 0,
+   "tower_found": false,
+   "hub": [
+    0.0,
+    0.0
+   ],
+   "tip_radii_px": [],
+   "tip_angles_deg": [],
+   "view": "front",
+   "seconds": 0.22
+  },
+  {
+   "id": "c19465951",
+   "title": "File:Windraeder suedlich von Hamburg 09.05.2012 17-46-026.jpg",
+   "page_url": "https://commons.wikimedia.org/?curid=19465951",
+   "model": "Enercon E-126",
+   "license": "CC BY 3.0",
+   "artist": "Dirk Ingo Franke",
+   "camera_model": "PENTAX K20D",
+   "hub_height_source": "typical",
+   "orig_width": 4672,
+   "orig_height": 3104,
+   "date": "2012:05:09 17:46:25",
+   "source_kind": "model-subcat",
+   "origin": "Category:Enercon E-126 in Hamburg-Altenwerder",
+   "model_basis": null,
+   "size": [
+    1024,
+    680
+   ],
+   "focal_35mm": 82.0,
+   "hub_height_m": 135.0,
+   "rotor_radius_m": 63.5,
+   "failed": false,
+   "verdict": {
+    "ok": true,
+    "reasons": [],
+    "warnings": [],
+    "metrics": {
+     "mask_area_frac": 0.0339,
+     "sky_mask_frac": 0.0339,
+     "horizon_y": null,
+     "n_blades": 3,
+     "view": "front",
+     "tip_radii_px": [
+      261.7,
+      246.4,
+      273.6
+     ],
+     "tip_radius_spread": 0.104,
+     "second_rotor_radius_px": 0.0,
+     "second_rotor_arms": 0,
+     "second_rotor_ratio": 0.0
+    }
+   },
+   "n_blades": 3,
+   "tower_found": true,
+   "hub": [
+    595.5,
+    284.7
+   ],
+   "tip_radii_px": [
+    261.7,
+    246.4,
+    273.6
+   ],
+   "tip_angles_deg": [
+    108.8,
+    234.4,
+    358.5
+   ],
+   "radius_spread": 0.104,
+   "view": "front",
+   "raw": {
+    "cm_per_px": 24.434,
+    "comparisons": [
+     {
+      "metric": "tip_deflection_px",
+      "flagged": true,
+      "outlier_index": 1,
+      "outlier_deviation": 27.53,
+      "outlier_deviation_cm": 672.7,
+      "z": 18.35,
+      "values": [
+       25.24,
+       49.31,
+       18.31
+      ]
+     },
+     {
+      "metric": "radius_px",
+      "flagged": false,
+      "outlier_index": 1,
+      "outlier_deviation": -23.26,
+      "outlier_deviation_cm": -568.3,
+      "z": 7.75,
+      "values": [
+       259.89,
+       242.93,
+       272.5
+      ]
+     },
+     {
+      "metric": "mean_width_px",
+      "flagged": false,
+      "outlier_index": 1,
+      "outlier_deviation": 3.5,
+      "outlier_deviation_cm": 85.6,
+      "z": 2.34,
+      "values": [
+       13.91,
+       17.69,
+       14.47
+      ]
+     },
+     {
+      "metric": "residual_rms_px",
+      "flagged": false,
+      "outlier_index": 2,
+      "outlier_deviation": -0.89,
+      "outlier_deviation_cm": -21.9,
+      "z": 1.19,
+      "values": [
+       1.54,
+       2.13,
+       0.94
+      ]
+     }
+    ],
+    "flagged": [
+     "tip_deflection_px"
+    ]
+   },
+   "pose": {
+    "elevation_deg": 13.633146672315554,
+    "yaw_deg": 63.57045666341526,
+    "distance_m": 565.9631992234486,
+    "rotor_tilt_deg": 5.0,
+    "elevation_method": "focal",
+    "yaw_method": "tower_offset",
+    "hub_offset_m": 4.477411873042223,
+    "notes": [
+     "yaw 由塔軸偏移 +4.48 m ÷ overhang 5.0 m（預設值，粗估）"
+    ],
+    "usable": true
+   },
+   "comp": {
+    "prebend_fit_m": 9.02,
+    "prebend_fit_ok": false,
+    "deflection_compensated": false,
+    "radius_compensated": false,
+    "tip_deflection_raw_px": [
+     25.24,
+     49.31,
+     18.31
+    ],
+    "tip_deflection_compensated_px": [
+     -2.63,
+     78.35,
+     12.41
+    ],
+    "radius_raw_px": [
+     259.9,
+     242.9,
+     272.5
+    ],
+    "radius_compensated_px": [
+     249.1,
+     207.3,
+     469.9
+    ],
+    "blades_near_tower": [],
+    "comparisons": [
+     {
+      "metric": "tip_deflection_px",
+      "flagged": true,
+      "outlier_index": 1,
+      "outlier_deviation": 27.53,
+      "outlier_deviation_cm": 672.7,
+      "z": 18.35,
+      "values": [
+       25.24,
+       49.31,
+       18.31
+      ]
+     },
+     {
+      "metric": "radius_px",
+      "flagged": false,
+      "outlier_index": 1,
+      "outlier_deviation": -23.26,
+      "outlier_deviation_cm": -568.3,
+      "z": 7.75,
+      "values": [
+       259.89,
+       242.93,
+       272.5
+      ]
+     }
+    ],
+    "flagged": [
+     "tip_deflection_px"
+    ],
+    "cm_per_px": 24.434,
+    "note": "預彎擬合 9.0 m 超出 0.0–8.0 m：姿態可能不對或有真缺陷，葉尖偏移未補償；|yaw| 64° 超過 15°，半徑的平面比例對 yaw 誤差太敏感：半徑未補償"
+   },
+   "hub_sensitivity": {
+    "0.8": {
+     "hub_height_m": 108.0,
+     "elevation_deg": 10.83597796884537,
+     "prebend_fit_m": 8.84,
+     "flagged": [
+      "tip_deflection_px"
+     ],
+     "same_flags": true
+    },
+    "1.2": {
+     "hub_height_m": 162.0,
+     "elevation_deg": 16.46386908356398,
+     "prebend_fit_m": 9.18,
+     "flagged": [
+      "tip_deflection_px"
+     ],
+     "same_flags": true
+    }
+   },
+   "seconds": 0.29
+  },
+  {
+   "id": "c19669637",
+   "title": "File:2012-05-28 Fotoflug Cuxhaven Wilhelmshaven DSCF9347.jpg",
+   "page_url": "https://commons.wikimedia.org/?curid=19669637",
+   "model": "Enercon E-40",
+   "license": "CC BY-SA 3.0 de",
+   "artist": "Martina Nolte",
+   "camera_model": "FinePix S5Pro  ",
+   "hub_height_source": "typical",
+   "orig_width": 4256,
+   "orig_height": 2848,
+   "date": "2012:05:28 10:56:39",
+   "source_kind": "model",
+   "origin": "Category:Enercon E-40",
+   "model_basis": null,
+   "size": [
+    1024,
+    685
+   ],
+   "focal_35mm": 225.0,
+   "hub_height_m": 65.0,
+   "rotor_radius_m": 22.0,
+   "failed": false,
+   "verdict": {
+    "ok": false,
+    "reasons": [
+     "只定位到 1 片葉片（應為 3）：可能有葉片正好貼在塔架上（六點鐘方位）或沒入雲層，請等轉子轉到三片都離開塔架再拍"
+    ],
+    "warnings": [
+     "沒有找到塔架：塔架傾斜與六點鐘方位判讀不可用（幾何互比仍可進行）",
+     "結構定位提示：葉片軸線共線（側視），輪轂投影到主葉片軸線"
+    ],
+    "metrics": {
+     "mask_area_frac": 0.0516,
+     "sky_mask_frac": 0.0516,
+     "horizon_y": null,
+     "n_blades": 1,
+     "view": "front",
+     "tip_radii_px": [
+      258.6
+     ],
+     "second_rotor_radius_px": 0.0,
+     "second_rotor_arms": 0,
+     "second_rotor_ratio": 0.0
+    }
+   },
+   "n_blades": 1,
+   "tower_found": false,
+   "hub": [
+    519.9,
+    220.8
+   ],
+   "tip_radii_px": [
+    258.6
+   ],
+   "tip_angles_deg": [
+    54.2
+   ],
+   "radius_spread": 0.0,
+   "view": "front",
+   "seconds": 0.26
+  },
+  {
+   "id": "c19674205",
+   "title": "File:2012-05-28 Fotoflug Cuxhaven Wilhelmshaven DSCF9604.jpg",
+   "page_url": "https://commons.wikimedia.org/?curid=19674205",
+   "model": "Enercon E-40",
+   "license": "CC BY-SA 3.0 de",
+   "artist": "Martina Nolte",
+   "camera_model": "FinePix S5Pro  ",
+   "hub_height_source": "typical",
+   "orig_width": 4256,
+   "orig_height": 2848,
+   "date": "2012:05:28 11:45:33",
+   "source_kind": "model",
+   "origin": "Category:Enercon E-40",
+   "model_basis": null,
+   "size": [
+    1024,
+    685
+   ],
+   "focal_35mm": 300.0,
+   "hub_height_m": 65.0,
+   "rotor_radius_m": 22.0,
+   "failed": false,
+   "verdict": {
+    "ok": false,
+    "reasons": [
+     "三片葉尖半徑差 276%（上限 15%）：同一台風機三片等長，差這麼多代表有一片其實是地物、電線或別台風機，請重拍並確保只有一台風機在框內"
+    ],
+    "warnings": [
+     "畫面裡還有另一個轉子，半徑約為主風機的 605%：請確認量到的是要量的那一台；風場的風機外觀相同，量錯對象不會有任何徵兆",
+     "輪轂只有初估、未經葉片軸線精修：葉尖偏移量的精度會下降"
+    ],
+    "metrics": {
+     "mask_area_frac": 0.0282,
+     "sky_mask_frac": 0.0282,
+     "horizon_y": null,
+     "n_blades": 3,
+     "view": "front",
+     "tip_radii_px": [
+      91.3,
+      61.4,
+      312.9
+     ],
+     "tip_radius_spread": 2.756,
+     "second_rotor_radius_px": 552.4,
+     "second_rotor_arms": 1,
+     "second_rotor_ratio": 6.053
+    }
+   },
+   "n_blades": 3,
+   "tower_found": true,
+   "hub": [
+    720.0,
+    260.0
+   ],
+   "tip_radii_px": [
+    91.3,
+    61.4,
+    312.9
+   ],
+   "tip_angles_deg": [
+    55.3,
+    167.8,
+    345.6
+   ],
+   "radius_spread": 2.755,
+   "view": "front",
+   "seconds": 0.28
+  },
+  {
+   "id": "c19674208",
+   "title": "File:2012-05-28 Fotoflug Cuxhaven Wilhelmshaven DSCF9605.jpg",
+   "page_url": "https://commons.wikimedia.org/?curid=19674208",
+   "model": "Enercon E-40",
+   "license": "CC BY-SA 3.0 de",
+   "artist": "Martina Nolte",
+   "camera_model": "FinePix S5Pro  ",
+   "hub_height_source": "typical",
+   "orig_width": 4256,
+   "orig_height": 2848,
+   "date": "2012:05:28 11:45:35",
+   "source_kind": "model",
+   "origin": "Category:Enercon E-40",
+   "model_basis": null,
+   "size": [
+    1024,
+    685
+   ],
+   "focal_35mm": 174.0,
+   "hub_height_m": 65.0,
+   "rotor_radius_m": 22.0,
+   "failed": false,
+   "verdict": {
+    "ok": false,
+    "reasons": [
+     "一片葉片都沒有定位到：多半是轉子沒有完整入鏡（請退後到整個轉子連同塔架都進得了畫面），或風機根本沒被分割出來（雲層、逆光或前景物撐壞天空模型，請換雲量少的時段、讓葉片背景是乾淨天空）"
+    ],
+    "warnings": [
+     "沒有找到塔架：塔架傾斜與六點鐘方位判讀不可用（幾何互比仍可進行）",
+     "結構定位提示：葉片軸線共線（側視），輪轂投影到主葉片軸線"
+    ],
+    "metrics": {
+     "mask_area_frac": 0.0548,
+     "sky_mask_frac": 0.0548,
+     "horizon_y": null,
+     "n_blades": 0,
+     "view": "front",
+     "tip_radii_px": []
+    }
+   },
+   "n_blades": 0,
+   "tower_found": false,
+   "hub": [
+    914.3,
+    59.2
+   ],
+   "tip_radii_px": [],
+   "tip_angles_deg": [],
+   "view": "front",
+   "seconds": 0.31
+  },
+  {
+   "id": "c19674213",
+   "title": "File:2012-05-28 Fotoflug Cuxhaven Wilhelmshaven DSCF9606.jpg",
+   "page_url": "https://commons.wikimedia.org/?curid=19674213",
+   "model": "Enercon E-40",
+   "license": "CC BY-SA 3.0 de",
+   "artist": "Martina Nolte",
+   "camera_model": "FinePix S5Pro  ",
+   "hub_height_source": "typical",
+   "orig_width": 4256,
+   "orig_height": 2848,
+   "date": "2012:05:28 11:45:50",
+   "source_kind": "model",
+   "origin": "Category:Enercon E-40",
+   "model_basis": null,
+   "size": [
+    1024,
+    685
+   ],
+   "focal_35mm": 158.0,
+   "hub_height_m": 65.0,
+   "rotor_radius_m": 22.0,
+   "failed": false,
+   "verdict": {
+    "ok": false,
+    "reasons": [
+     "只定位到 2 片葉片（應為 3）：可能有葉片正好貼在塔架上（六點鐘方位）或沒入雲層，請等轉子轉到三片都離開塔架再拍",
+     "三片葉尖半徑差 120%（上限 15%）：同一台風機三片等長，差這麼多代表有一片其實是地物、電線或別台風機，請重拍並確保只有一台風機在框內"
+    ],
+    "warnings": [
+     "畫面裡還有另一個轉子，半徑約為主風機的 86%：請確認量到的是要量的那一台；風場的風機外觀相同，量錯對象不會有任何徵兆",
+     "沒有找到塔架：塔架傾斜與六點鐘方位判讀不可用（幾何互比仍可進行）",
+     "結構定位提示：葉片軸線共線（側視），輪轂投影到主葉片軸線"
+    ],
+    "metrics": {
+     "mask_area_frac": 0.0714,
+     "sky_mask_frac": 0.0714,
+     "horizon_y": null,
+     "n_blades": 2,
+     "view": "front",
+     "tip_radii_px": [
+      353.4,
+      88.0
+     ],
+     "tip_radius_spread": 1.202,
+     "second_rotor_radius_px": 190.9,
+     "second_rotor_arms": 2,
+     "second_rotor_ratio": 0.865
+    }
+   },
+   "n_blades": 2,
+   "tower_found": false,
+   "hub": [
+    678.0,
+    81.6
+   ],
+   "tip_radii_px": [
+    353.4,
+    88.0
+   ],
+   "tip_angles_deg": [
+    12.5,
+    178.9
+   ],
+   "radius_spread": 1.203,
+   "view": "front",
+   "seconds": 0.75
+  },
+  {
+   "id": "c8836086",
+   "title": "File:Aerials Bavaria 16.06.2006 12-22-43.jpg",
+   "page_url": "https://commons.wikimedia.org/?curid=8836086",
+   "model": "Enercon E-40",
+   "license": "CC BY-SA 3.0",
+   "artist": "Hansueli Krapf",
+   "camera_model": "E8800",
+   "hub_height_source": "typical",
+   "orig_width": 2048,
+   "orig_height": 1536,
+   "date": "2006:06:16 12:22:43",
+   "source_kind": "model",
+   "origin": "Category:Enercon E-40",
+   "model_basis": null,
+   "size": [
+    1024,
+    768
+   ],
+   "focal_35mm": 64.0,
+   "hub_height_m": 65.0,
+   "rotor_radius_m": 22.0,
+   "failed": false,
+   "verdict": {
+    "ok": false,
+    "reasons": [
+     "一片葉片都沒有定位到：多半是轉子沒有完整入鏡（請退後到整個轉子連同塔架都進得了畫面），或風機根本沒被分割出來（雲層、逆光或前景物撐壞天空模型，請換雲量少的時段、讓葉片背景是乾淨天空）"
+    ],
+    "warnings": [
+     "沒有找到塔架：塔架傾斜與六點鐘方位判讀不可用（幾何互比仍可進行）",
+     "輪轂只有初估、未經葉片軸線精修：葉尖偏移量的精度會下降"
+    ],
+    "metrics": {
+     "mask_area_frac": 0.002,
+     "sky_mask_frac": 0.002,
+     "horizon_y": null,
+     "n_blades": 0,
+     "view": "front",
+     "tip_radii_px": []
+    }
+   },
+   "n_blades": 0,
+   "tower_found": false,
+   "hub": [
+    0.0,
+    0.0
+   ],
+   "tip_radii_px": [],
+   "tip_angles_deg": [],
+   "view": "front",
+   "seconds": 0.14
+  },
+  {
+   "id": "c19156793",
+   "title": "File:Friedrichsgabekoog schafe haus windraeder 01.04.2012 15-11-09.jpg",
+   "page_url": "https://commons.wikimedia.org/?curid=19156793",
+   "model": "Enercon E-40",
+   "license": "CC BY 3.0",
+   "artist": "Dirk Ingo Franke",
+   "camera_model": "PENTAX K20D",
+   "hub_height_source": "typical",
+   "orig_width": 2050,
+   "orig_height": 1367,
+   "date": "2012:04:01 15:11:09",
+   "source_kind": "model",
+   "origin": "Category:Enercon E-40",
+   "model_basis": null,
+   "size": [
+    1024,
+    683
+   ],
+   "focal_35mm": 75.0,
+   "hub_height_m": 65.0,
+   "rotor_radius_m": 22.0,
+   "failed": false,
+   "verdict": {
+    "ok": false,
+    "reasons": [
+     "三片葉尖半徑差 51%（上限 15%）：同一台風機三片等長，差這麼多代表有一片其實是地物、電線或別台風機，請重拍並確保只有一台風機在框內"
+    ],
+    "warnings": [
+     "沒有找到塔架：塔架傾斜與六點鐘方位判讀不可用（幾何互比仍可進行）",
+     "結構定位提示：葉片軸線共線（側視），輪轂投影到主葉片軸線"
+    ],
+    "metrics": {
+     "mask_area_frac": 0.0307,
+     "sky_mask_frac": 0.0307,
+     "horizon_y": null,
+     "n_blades": 3,
+     "view": "front",
+     "tip_radii_px": [
+      107.6,
+      59.1,
+      94.7
+     ],
+     "tip_radius_spread": 0.512,
+     "second_rotor_radius_px": 0.0,
+     "second_rotor_arms": 0,
+     "second_rotor_ratio": 0.0
+    }
+   },
+   "n_blades": 3,
+   "tower_found": false,
+   "hub": [
+    572.7,
+    281.8
+   ],
+   "tip_radii_px": [
+    107.6,
+    59.1,
+    94.7
+   ],
+   "tip_angles_deg": [
+    3.6,
+    136.2,
+    181.3
+   ],
+   "radius_spread": 0.512,
+   "view": "front",
+   "seconds": 0.37
+  },
+  {
+   "id": "c19156797",
+   "title": "File:Friedrichsgabekoog schafe vor windrädern 01.04.2012 15-11-59.jpg",
+   "page_url": "https://commons.wikimedia.org/?curid=19156797",
+   "model": "Enercon E-40",
+   "license": "CC BY 3.0",
+   "artist": "Dirk Ingo Franke",
+   "camera_model": "PENTAX K20D",
+   "hub_height_source": "typical",
+   "orig_width": 2475,
+   "orig_height": 1650,
+   "date": "2012:04:01 15:11:59",
+   "source_kind": "model",
+   "origin": "Category:Enercon E-40",
+   "model_basis": null,
+   "size": [
+    1024,
+    683
+   ],
+   "focal_35mm": 75.0,
+   "hub_height_m": 65.0,
+   "rotor_radius_m": 22.0,
+   "failed": false,
+   "verdict": {
+    "ok": true,
+    "reasons": [],
+    "warnings": [
+     "畫面裡還有另一個轉子，半徑約為主風機的 88%：請確認量到的是要量的那一台；風場的風機外觀相同，量錯對象不會有任何徵兆",
+     "沒有找到塔架：塔架傾斜與六點鐘方位判讀不可用（幾何互比仍可進行）"
+    ],
+    "metrics": {
+     "mask_area_frac": 0.0272,
+     "sky_mask_frac": 0.0272,
+     "horizon_y": null,
+     "n_blades": 3,
+     "view": "front",
+     "tip_radii_px": [
+      91.1,
+      89.1,
+      86.5
+     ],
+     "tip_radius_spread": 0.051,
+     "second_rotor_radius_px": 78.5,
+     "second_rotor_arms": 3,
+     "second_rotor_ratio": 0.881
+    }
+   },
+   "n_blades": 3,
+   "tower_found": false,
+   "hub": [
+    871.2,
+    139.1
+   ],
+   "tip_radii_px": [
+    91.1,
+    89.1,
+    86.5
+   ],
+   "tip_angles_deg": [
+    98.3,
+    218.0,
+    339.1
+   ],
+   "radius_spread": 0.052,
+   "view": "front",
+   "raw": {
+    "cm_per_px": 24.73,
+    "comparisons": [
+     {
+      "metric": "tip_deflection_px",
+      "flagged": false,
+      "outlier_index": 1,
+      "outlier_deviation": 4.94,
+      "outlier_deviation_cm": 122.3,
+      "z": 3.3,
+      "values": [
+       3.55,
+       7.01,
+       0.59
+      ]
+     },
+     {
+      "metric": "radius_px",
+      "flagged": false,
+      "outlier_index": 2,
+      "outlier_deviation": -3.76,
+      "outlier_deviation_cm": -92.9,
+      "z": 1.25,
+      "values": [
+       90.91,
+       88.96,
+       86.18
+      ]
+     },
+     {
+      "metric": "mean_width_px",
+      "flagged": false,
+      "outlier_index": 2,
+      "outlier_deviation": 0.33,
+      "outlier_deviation_cm": 8.2,
+      "z": 0.22,
+      "values": [
+       5.13,
+       5.22,
+       5.5
+      ]
+     },
+     {
+      "metric": "residual_rms_px",
+      "flagged": false,
+      "outlier_index": 1,
+      "outlier_deviation": 0.25,
+      "outlier_deviation_cm": 6.3,
+      "z": 0.34,
+      "values": [
+       0.22,
+       0.46,
+       0.19
+      ]
+     }
+    ],
+    "flagged": []
+   },
+   "pose": {
+    "elevation_deg": 6.91560594047146,
+    "yaw_deg": null,
+    "distance_m": 526.5464247643966,
+    "rotor_tilt_deg": 5.0,
+    "elevation_method": "focal",
+    "yaw_method": null,
+    "hub_offset_m": null,
+    "notes": [
+     "沒有塔架軸，無法估 yaw"
+    ],
+    "usable": false
+   },
+   "comp": null,
+   "seconds": 0.4
+  },
+  {
+   "id": "c12853508",
+   "title": "File:Hau Nui Wind Farm stage 1 from Range Road.JPG",
+   "page_url": "https://commons.wikimedia.org/?curid=12853508",
+   "model": "Enercon E-40",
+   "license": "CC BY-SA 3.0",
+   "artist": "Lcmortensen",
+   "camera_model": "<KENOX S860  / Samsung S860>",
+   "hub_height_source": "typical",
+   "orig_width": 3264,
+   "orig_height": 2448,
+   "date": "2010:12:29 12:24:56",
+   "source_kind": "model",
+   "origin": "Category:Enercon E-40",
+   "model_basis": null,
+   "size": [
+    1024,
+    768
+   ],
+   "focal_35mm": 103.0,
+   "hub_height_m": 65.0,
+   "rotor_radius_m": 22.0,
+   "failed": false,
+   "verdict": {
+    "ok": false,
+    "reasons": [
+     "只定位到 2 片葉片（應為 3）：可能有葉片正好貼在塔架上（六點鐘方位）或沒入雲層，請等轉子轉到三片都離開塔架再拍",
+     "三片葉尖半徑差 57%（上限 15%）：同一台風機三片等長，差這麼多代表有一片其實是地物、電線或別台風機，請重拍並確保只有一台風機在框內"
+    ],
+    "warnings": [
+     "沒有找到塔架：塔架傾斜與六點鐘方位判讀不可用（幾何互比仍可進行）",
+     "結構定位提示：葉片軸線共線（側視），輪轂投影到主葉片軸線"
+    ],
+    "metrics": {
+     "mask_area_frac": 0.0031,
+     "sky_mask_frac": 0.0031,
+     "horizon_y": null,
+     "n_blades": 2,
+     "view": "front",
+     "tip_radii_px": [
+      56.2,
+      31.2
+     ],
+     "tip_radius_spread": 0.572,
+     "second_rotor_radius_px": 0.0,
+     "second_rotor_arms": 0,
+     "second_rotor_ratio": 0.0
+    }
+   },
+   "n_blades": 2,
+   "tower_found": false,
+   "hub": [
+    693.1,
+    232.4
+   ],
+   "tip_radii_px": [
+    56.2,
+    31.2
+   ],
+   "tip_angles_deg": [
+    5.5,
+    164.4
+   ],
+   "radius_spread": 0.572,
+   "view": "front",
+   "seconds": 0.26
+  },
+  {
+   "id": "c3962001",
+   "title": "File:Palmas 01.jpg",
+   "page_url": "https://commons.wikimedia.org/?curid=3962001",
+   "model": "Enercon E-40",
+   "license": "Public domain",
+   "artist": "Herr stahlhoefer",
+   "camera_model": "COOLPIX L4",
+   "hub_height_source": "typical",
+   "orig_width": 1704,
+   "orig_height": 2272,
+   "date": "0000:00:00 00:00:00",
+   "source_kind": "model",
+   "origin": "Category:Enercon E-40",
+   "model_basis": null,
+   "size": [
+    768,
+    1024
+   ],
+   "focal_35mm": 110.0,
+   "hub_height_m": 65.0,
+   "rotor_radius_m": 22.0,
+   "failed": false,
+   "verdict": {
+    "ok": false,
+    "reasons": [
+     "只定位到 1 片葉片（應為 3）：可能有葉片正好貼在塔架上（六點鐘方位）或沒入雲層，請等轉子轉到三片都離開塔架再拍"
+    ],
+    "warnings": [
+     "畫面裡還有另一個轉子，半徑約為主風機的 51%：請確認量到的是要量的那一台；風場的風機外觀相同，量錯對象不會有任何徵兆",
+     "輪轂只有初估、未經葉片軸線精修：葉尖偏移量的精度會下降",
+     "結構定位提示：葉片軸線共線（側視），輪轂投影到主葉片軸線"
+    ],
+    "metrics": {
+     "mask_area_frac": 0.0076,
+     "sky_mask_frac": 0.0076,
+     "horizon_y": null,
+     "n_blades": 1,
+     "view": "front",
+     "tip_radii_px": [
+      166.8
+     ],
+     "second_rotor_radius_px": 85.5,
+     "second_rotor_arms": 2,
+     "second_rotor_ratio": 0.513
+    }
+   },
+   "n_blades": 1,
+   "tower_found": true,
+   "hub": [
+    385.0,
+    350.0
+   ],
+   "tip_radii_px": [
+    166.8
+   ],
+   "tip_angles_deg": [
+    157.4
+   ],
+   "radius_spread": 0.0,
+   "view": "front",
+   "seconds": 0.32
+  },
+  {
+   "id": "c3962018",
+   "title": "File:Palmas 03.jpg",
+   "page_url": "https://commons.wikimedia.org/?curid=3962018",
+   "model": "Enercon E-40",
+   "license": "Public domain",
+   "artist": "Herr stahlhoefer",
+   "camera_model": "COOLPIX L4",
+   "hub_height_source": "typical",
+   "orig_width": 2272,
+   "orig_height": 1704,
+   "date": "0000:00:00 00:00:00",
+   "source_kind": "model",
+   "origin": "Category:Enercon E-40",
+   "model_basis": null,
+   "size": [
+    1024,
+    768
+   ],
+   "focal_35mm": 38.0,
+   "hub_height_m": 65.0,
+   "rotor_radius_m": 22.0,
+   "failed": false,
+   "verdict": {
+    "ok": false,
+    "reasons": [
+     "畫面上幾乎分不出風機（前景僅 0.06%）：白色葉片對上亮雲天空對比不足，請換角度讓葉片背景是純天空",
+     "一片葉片都沒有定位到：多半是轉子沒有完整入鏡（請退後到整個轉子連同塔架都進得了畫面），或風機根本沒被分割出來（雲層、逆光或前景物撐壞天空模型，請換雲量少的時段、讓葉片背景是乾淨天空）"
+    ],
+    "warnings": [
+     "沒有找到塔架：塔架傾斜與六點鐘方位判讀不可用（幾何互比仍可進行）",
+     "結構定位提示：葉片軸線共線（側視），輪轂投影到主葉片軸線"
+    ],
+    "metrics": {
+     "mask_area_frac": 0.0006,
+     "sky_mask_frac": 0.0006,
+     "horizon_y": null,
+     "n_blades": 0,
+     "view": "front",
+     "tip_radii_px": []
+    }
+   },
+   "n_blades": 0,
+   "tower_found": false,
+   "hub": [
+    640.1,
+    292.0
+   ],
+   "tip_radii_px": [],
+   "tip_angles_deg": [],
+   "view": "front",
+   "seconds": 0.19
+  },
+  {
+   "id": "c3962063",
+   "title": "File:Palmas 06.jpg",
+   "page_url": "https://commons.wikimedia.org/?curid=3962063",
+   "model": "Enercon E-40",
+   "license": "Public domain",
+   "artist": "Herr stahlhoefer",
+   "camera_model": "COOLPIX L4",
+   "hub_height_source": "typical",
+   "orig_width": 1704,
+   "orig_height": 2272,
+   "date": "0000:00:00 00:00:00",
+   "source_kind": "model",
+   "origin": "Category:Enercon E-40",
+   "model_basis": null,
+   "size": [
+    768,
+    1024
+   ],
+   "focal_35mm": 65.0,
+   "hub_height_m": 65.0,
+   "rotor_radius_m": 22.0,
+   "failed": false,
+   "verdict": {
+    "ok": false,
+    "reasons": [
+     "只定位到 1 片葉片（應為 3）：可能有葉片正好貼在塔架上（六點鐘方位）或沒入雲層，請等轉子轉到三片都離開塔架再拍"
+    ],
+    "warnings": [
+     "沒有找到塔架：塔架傾斜與六點鐘方位判讀不可用（幾何互比仍可進行）"
+    ],
+    "metrics": {
+     "mask_area_frac": 0.0133,
+     "sky_mask_frac": 0.0133,
+     "horizon_y": null,
+     "n_blades": 1,
+     "view": "front",
+     "tip_radii_px": [
+      189.5
+     ],
+     "second_rotor_radius_px": 0.0,
+     "second_rotor_arms": 0,
+     "second_rotor_ratio": 0.0
+    }
+   },
+   "n_blades": 1,
+   "tower_found": false,
+   "hub": [
+    352.3,
+    359.4
+   ],
+   "tip_radii_px": [
+    189.5
+   ],
+   "tip_angles_deg": [
+    88.0
+   ],
+   "radius_spread": 0.0,
+   "view": "front",
+   "seconds": 0.29
+  },
+  {
+   "id": "c21695568",
+   "title": "File:Umspannwerk Präbichl-2.jpg",
+   "page_url": "https://commons.wikimedia.org/?curid=21695568",
+   "model": "Enercon E-40",
+   "license": "CC BY-SA 3.0 at",
+   "artist": "Brezocnik Michael",
+   "camera_model": "NIKON D80",
+   "hub_height_source": "typical",
+   "orig_width": 2592,
+   "orig_height": 3872,
+   "date": "2012:09:21 15:55:04",
+   "source_kind": "model",
+   "origin": "Category:Enercon E-40",
+   "model_basis": null,
+   "size": [
+    685,
+    1024
+   ],
+   "focal_35mm": 57.0,
+   "hub_height_m": 65.0,
+   "rotor_radius_m": 22.0,
+   "failed": false,
+   "verdict": {
+    "ok": false,
+    "reasons": [
+     "三片葉尖半徑差 93%（上限 15%）：同一台風機三片等長，差這麼多代表有一片其實是地物、電線或別台風機，請重拍並確保只有一台風機在框內"
+    ],
+    "warnings": [
+     "沒有找到塔架：塔架傾斜與六點鐘方位判讀不可用（幾何互比仍可進行）"
+    ],
+    "metrics": {
+     "mask_area_frac": 0.0723,
+     "sky_mask_frac": 0.0723,
+     "horizon_y": null,
+     "n_blades": 3,
+     "view": "front",
+     "tip_radii_px": [
+      260.7,
+      563.2,
+      326.6
+     ],
+     "tip_radius_spread": 0.926,
+     "second_rotor_radius_px": 0.0,
+     "second_rotor_arms": 0,
+     "second_rotor_ratio": 0.0
+    }
+   },
+   "n_blades": 3,
+   "tower_found": false,
+   "hub": [
+    332.6,
+    254.9
+   ],
+   "tip_radii_px": [
+    260.7,
+    563.2,
+    326.6
+   ],
+   "tip_angles_deg": [
+    77.9,
+    308.6,
+    325.3
+   ],
+   "radius_spread": 0.926,
+   "view": "front",
+   "seconds": 0.29
+  },
+  {
+   "id": "c21695570",
+   "title": "File:Umspannwerk Präbichl-3.jpg",
+   "page_url": "https://commons.wikimedia.org/?curid=21695570",
+   "model": "Enercon E-40",
+   "license": "CC BY-SA 3.0 at",
+   "artist": "Brezocnik Michael",
+   "camera_model": "NIKON D80",
+   "hub_height_source": "typical",
+   "orig_width": 3872,
+   "orig_height": 2592,
+   "date": "2012:09:21 15:52:41",
+   "source_kind": "model",
+   "origin": "Category:Enercon E-40",
+   "model_basis": null,
+   "size": [
+    1024,
+    685
+   ],
+   "focal_35mm": 27.0,
+   "hub_height_m": 65.0,
+   "rotor_radius_m": 22.0,
+   "failed": false,
+   "verdict": {
+    "ok": false,
+    "reasons": [
+     "只定位到 1 片葉片（應為 3）：可能有葉片正好貼在塔架上（六點鐘方位）或沒入雲層，請等轉子轉到三片都離開塔架再拍"
+    ],
+    "warnings": [
+     "結構定位提示：葉片軸線共線（側視），輪轂投影到主葉片軸線"
+    ],
+    "metrics": {
+     "mask_area_frac": 0.0665,
+     "sky_mask_frac": 0.0665,
+     "horizon_y": null,
+     "n_blades": 1,
+     "view": "front",
+     "tip_radii_px": [
+      131.1
+     ],
+     "second_rotor_radius_px": 0.0,
+     "second_rotor_arms": 0,
+     "second_rotor_ratio": 0.0
+    }
+   },
+   "n_blades": 1,
+   "tower_found": true,
+   "hub": [
+    416.5,
+    505.9
+   ],
+   "tip_radii_px": [
+    131.1
+   ],
+   "tip_angles_deg": [
+    299.5
+   ],
+   "radius_spread": 0.0,
+   "view": "front",
+   "seconds": 0.24
+  },
+  {
+   "id": "c21695566",
+   "title": "File:Umspannwerk Präbichl-4.jpg",
+   "page_url": "https://commons.wikimedia.org/?curid=21695566",
+   "model": "Enercon E-40",
+   "license": "CC BY-SA 3.0 at",
+   "artist": "Brezocnik Michael",
+   "camera_model": "NIKON D80",
+   "hub_height_source": "typical",
+   "orig_width": 3801,
+   "orig_height": 2557,
+   "date": "2012:09:21 15:50:34",
+   "source_kind": "model",
+   "origin": "Category:Enercon E-40",
+   "model_basis": null,
+   "size": [
+    1024,
+    689
+   ],
+   "focal_35mm": 27.0,
+   "hub_height_m": 65.0,
+   "rotor_radius_m": 22.0,
+   "failed": false,
+   "verdict": {
+    "ok": false,
+    "reasons": [
+     "三片葉尖半徑差 45%（上限 15%）：同一台風機三片等長，差這麼多代表有一片其實是地物、電線或別台風機，請重拍並確保只有一台風機在框內"
+    ],
+    "warnings": [],
+    "metrics": {
+     "mask_area_frac": 0.0255,
+     "sky_mask_frac": 0.0255,
+     "horizon_y": null,
+     "n_blades": 3,
+     "view": "front",
+     "tip_radii_px": [
+      138.4,
+      181.8,
+      120.1
+     ],
+     "tip_radius_spread": 0.446,
+     "second_rotor_radius_px": 0.0,
+     "second_rotor_arms": 0,
+     "second_rotor_ratio": 0.0
+    }
+   },
+   "n_blades": 3,
+   "tower_found": true,
+   "hub": [
+    253.2,
+    192.8
+   ],
+   "tip_radii_px": [
+    138.4,
+    181.8,
+    120.1
+   ],
+   "tip_angles_deg": [
+    5.3,
+    133.1,
+    255.5
+   ],
+   "radius_spread": 0.446,
+   "view": "front",
+   "seconds": 0.26
+  },
+  {
+   "id": "c12316615",
+   "title": "File:Windkraftanlage Grüner Heiner.jpg",
+   "page_url": "https://commons.wikimedia.org/?curid=12316615",
+   "model": "Enercon E-40",
+   "license": "CC BY-SA 3.0",
+   "artist": "Harke",
+   "camera_model": "NIKON D60",
+   "hub_height_source": "typical",
+   "orig_width": 2431,
+   "orig_height": 3633,
+   "date": "2010:10:11 13:17:48",
+   "source_kind": "model",
+   "origin": "Category:Enercon E-40",
+   "model_basis": null,
+   "size": [
+    685,
+    1024
+   ],
+   "focal_35mm": 60.0,
+   "hub_height_m": 65.0,
+   "rotor_radius_m": 22.0,
+   "failed": false,
+   "verdict": {
+    "ok": false,
+    "reasons": [
+     "只定位到 2 片葉片（應為 3）：可能有葉片正好貼在塔架上（六點鐘方位）或沒入雲層，請等轉子轉到三片都離開塔架再拍",
+     "三片葉尖半徑差 81%（上限 15%）：同一台風機三片等長，差這麼多代表有一片其實是地物、電線或別台風機，請重拍並確保只有一台風機在框內"
+    ],
+    "warnings": [],
+    "metrics": {
+     "mask_area_frac": 0.0424,
+     "sky_mask_frac": 0.0424,
+     "horizon_y": null,
+     "n_blades": 2,
+     "view": "front",
+     "tip_radii_px": [
+      246.4,
+      104.6
+     ],
+     "tip_radius_spread": 0.808,
+     "second_rotor_radius_px": 55.7,
+     "second_rotor_arms": 1,
+     "second_rotor_ratio": 0.317
+    }
+   },
+   "n_blades": 2,
+   "tower_found": true,
+   "hub": [
+    324.2,
+    300.7
+   ],
+   "tip_radii_px": [
+    246.4,
+    104.6
+   ],
+   "tip_angles_deg": [
+    114.8,
+    339.1
+   ],
+   "radius_spread": 0.808,
+   "view": "front",
+   "seconds": 0.35
+  },
+  {
+   "id": "c6560678",
+   "title": "File:Wuppertal Wilhelmring 0004.jpg",
+   "page_url": "https://commons.wikimedia.org/?curid=6560678",
+   "model": "Enercon E-40",
+   "license": "CC BY-SA 3.0",
+   "artist": "Atamari",
+   "camera_model": "KODAK DX4330 DIGITAL CAMERA",
+   "hub_height_source": "typical",
+   "orig_width": 2160,
+   "orig_height": 1440,
+   "date": "2004:03:28 16:42:34",
+   "source_kind": "model-subcat",
+   "origin": "Category:Windkraftanlage an der Müllverbrennungsanlage Wuppertal",
+   "model_basis": null,
+   "size": [
+    1024,
+    683
+   ],
+   "focal_35mm": 114.0,
+   "hub_height_m": 65.0,
+   "rotor_radius_m": 22.0,
+   "failed": false,
+   "verdict": {
+    "ok": false,
+    "reasons": [
+     "一片葉片都沒有定位到：多半是轉子沒有完整入鏡（請退後到整個轉子連同塔架都進得了畫面），或風機根本沒被分割出來（雲層、逆光或前景物撐壞天空模型，請換雲量少的時段、讓葉片背景是乾淨天空）"
+    ],
+    "warnings": [
+     "沒有找到塔架：塔架傾斜與六點鐘方位判讀不可用（幾何互比仍可進行）",
+     "輪轂只有初估、未經葉片軸線精修：葉尖偏移量的精度會下降"
+    ],
+    "metrics": {
+     "mask_area_frac": 0.0153,
+     "sky_mask_frac": 0.0153,
+     "horizon_y": null,
+     "n_blades": 0,
+     "view": "front",
+     "tip_radii_px": []
+    }
+   },
+   "n_blades": 0,
+   "tower_found": false,
+   "hub": [
+    300.0,
+    260.0
+   ],
+   "tip_radii_px": [],
+   "tip_angles_deg": [],
+   "view": "front",
+   "seconds": 0.16
+  },
+  {
+   "id": "c5682409",
+   "title": "File:Hoheward-DSCI0492.jpg",
+   "page_url": "https://commons.wikimedia.org/?curid=5682409",
+   "model": "Enercon E-66",
+   "license": "CC BY 3.0",
+   "artist": "Rainer Halama",
+   "camera_model": "DigitalCAM",
+   "hub_height_source": "typical",
+   "orig_width": 3072,
+   "orig_height": 2304,
+   "date": "2009:01:09 14:22:05",
+   "source_kind": "model",
+   "origin": "Category:Enercon E-66",
+   "model_basis": null,
+   "size": [
+    1024,
+    768
+   ],
+   "focal_35mm": 89.0,
+   "hub_height_m": 98.0,
+   "rotor_radius_m": 35.0,
+   "failed": false,
+   "verdict": {
+    "ok": true,
+    "reasons": [],
+    "warnings": [
+     "畫面裡還有另一個轉子，半徑約為主風機的 105%：請確認量到的是要量的那一台；風場的風機外觀相同，量錯對象不會有任何徵兆"
+    ],
+    "metrics": {
+     "mask_area_frac": 0.0049,
+     "sky_mask_frac": 0.0049,
+     "horizon_y": null,
+     "n_blades": 3,
+     "view": "front",
+     "tip_radii_px": [
+      78.6,
+      77.1,
+      71.7
+     ],
+     "tip_radius_spread": 0.09,
+     "second_rotor_radius_px": 81.2,
+     "second_rotor_arms": 1,
+     "second_rotor_ratio": 1.053
+    }
+   },
+   "n_blades": 3,
+   "tower_found": true,
+   "hub": [
+    208.3,
+    189.5
+   ],
+   "tip_radii_px": [
+    78.6,
+    77.1,
+    71.7
+   ],
+   "tip_angles_deg": [
+    52.6,
+    171.4,
+    291.9
+   ],
+   "radius_spread": 0.089,
+   "view": "front",
+   "raw": {
+    "cm_per_px": 45.461,
+    "comparisons": [
+     {
+      "metric": "tip_deflection_px",
+      "flagged": false,
+      "outlier_index": 2,
+      "outlier_deviation": -1.72,
+      "outlier_deviation_cm": -78.4,
+      "z": 1.15,
+      "values": [
+       -4.08,
+       -4.52,
+       -6.02
+      ]
+     },
+     {
+      "metric": "radius_px",
+      "flagged": false,
+      "outlier_index": 2,
+      "outlier_deviation": -6.66,
+      "outlier_deviation_cm": -302.6,
+      "z": 2.22,
+      "values": [
+       78.43,
+       76.99,
+       71.05
+      ]
+     },
+     {
+      "metric": "mean_width_px",
+      "flagged": false,
+      "outlier_index": 0,
+      "outlier_deviation": 1.39,
+      "outlier_deviation_cm": 63.1,
+      "z": 0.93,
+      "values": [
+       6.52,
+       5.29,
+       4.97
+      ]
+     },
+     {
+      "metric": "residual_rms_px",
+      "flagged": false,
+      "outlier_index": 2,
+      "outlier_deviation": 0.06,
+      "outlier_deviation_cm": 2.6,
+      "z": 0.08,
+      "values": [
+       0.26,
+       0.26,
+       0.32
+      ]
+     }
+    ],
+    "flagged": []
+   },
+   "pose": {
+    "elevation_deg": 4.813221336149938,
+    "yaw_deg": 5.895655839809115,
+    "distance_m": 1148.880249287692,
+    "rotor_tilt_deg": 5.0,
+    "elevation_method": "focal",
+    "yaw_method": "tower_offset",
+    "hub_offset_m": 0.513585591125817,
+    "notes": [
+     "yaw 由塔軸偏移 +0.51 m ÷ overhang 5.0 m（預設值，粗估）"
+    ],
+    "usable": true
+   },
+   "comp": {
+    "prebend_fit_m": 17.55,
+    "prebend_fit_ok": false,
+    "deflection_compensated": false,
+    "radius_compensated": true,
+    "tip_deflection_raw_px": [
+     -4.08,
+     -4.52,
+     -6.02
+    ],
+    "tip_deflection_compensated_px": [
+     -11.36,
+     1.17,
+     -4.57
+    ],
+    "radius_raw_px": [
+     78.4,
+     77.0,
+     71.1
+    ],
+    "radius_compensated_px": [
+     76.5,
+     74.9,
+     73.3
+    ],
+    "blades_near_tower": [
+     2
+    ],
+    "comparisons": [
+     {
+      "metric": "tip_deflection_px",
+      "flagged": false,
+      "outlier_index": 2,
+      "outlier_deviation": -1.72,
+      "outlier_deviation_cm": -78.4,
+      "z": 1.15,
+      "values": [
+       -4.08,
+       -4.52,
+       -6.02
+      ]
+     },
+     {
+      "metric": "radius_px",
+      "flagged": false,
+      "outlier_index": 0,
+      "outlier_deviation": 2.46,
+      "outlier_deviation_cm": 111.9,
+      "z": 0.82,
+      "values": [
+       76.54,
+       74.86,
+       73.29
+      ]
+     }
+    ],
+    "flagged": [],
+    "cm_per_px": 45.461,
+    "note": "葉片 C 距六點鐘 ≤ 35°，可能與塔架合併而使中心線被拉歪；該片的葉尖偏移不可靠，請等轉子轉開再拍；預彎擬合 17.5 m 超出 0.0–8.0 m：姿態可能不對或有真缺陷，葉尖偏移未補償"
+   },
+   "hub_sensitivity": {
+    "0.8": {
+     "hub_height_m": 78.4,
+     "elevation_deg": 3.8329492533165315,
+     "prebend_fit_m": 20.39,
+     "flagged": [],
+     "same_flags": true
+    },
+    "1.2": {
+     "hub_height_m": 117.6,
+     "elevation_deg": 5.794907866510332,
+     "prebend_fit_m": 15.22,
+     "flagged": [],
+     "same_flags": true
+    }
+   },
+   "seconds": 0.28
+  },
+  {
+   "id": "c19002876",
+   "title": "File:Wind turbine with observation deck bruck an der leitha.jpg",
+   "page_url": "https://commons.wikimedia.org/?curid=19002876",
+   "model": "Enercon E-66",
+   "license": "CC BY-SA 3.0",
+   "artist": "KoeppiK",
+   "camera_model": "NIKON D80",
+   "hub_height_source": "typical",
+   "orig_width": 2592,
+   "orig_height": 3872,
+   "date": "2012:03:18 14:07:08",
+   "source_kind": "model",
+   "origin": "Category:Enercon E-66",
+   "model_basis": null,
+   "size": [
+    685,
+    1024
+   ],
+   "focal_35mm": 51.0,
+   "hub_height_m": 98.0,
+   "rotor_radius_m": 35.0,
+   "failed": false,
+   "verdict": {
+    "ok": false,
+    "reasons": [
+     "只定位到 2 片葉片（應為 3）：可能有葉片正好貼在塔架上（六點鐘方位）或沒入雲層，請等轉子轉到三片都離開塔架再拍"
+    ],
+    "warnings": [
+     "沒有找到塔架：塔架傾斜與六點鐘方位判讀不可用（幾何互比仍可進行）"
+    ],
+    "metrics": {
+     "mask_area_frac": 0.0717,
+     "sky_mask_frac": 0.0717,
+     "horizon_y": null,
+     "n_blades": 2,
+     "view": "front",
+     "tip_radii_px": [
+      230.9,
+      206.2
+     ],
+     "tip_radius_spread": 0.113,
+     "second_rotor_radius_px": 99.8,
+     "second_rotor_arms": 2,
+     "second_rotor_ratio": 0.457
+    }
+   },
+   "n_blades": 2,
+   "tower_found": false,
+   "hub": [
+    281.7,
+    406.8
+   ],
+   "tip_radii_px": [
+    230.9,
+    206.2
+   ],
+   "tip_angles_deg": [
+    13.7,
+    234.2
+   ],
+   "radius_spread": 0.113,
+   "view": "front",
+   "seconds": 0.31
+  },
+  {
+   "id": "c16043004",
+   "title": "File:Windpark Vetschau 1.jpg",
+   "page_url": "https://commons.wikimedia.org/?curid=16043004",
+   "model": "Enercon E-66",
+   "license": "CC BY 3.0",
+   "artist": "Peter Tritthart",
+   "camera_model": "DMC-TZ3",
+   "hub_height_source": "typical",
+   "orig_width": 1872,
+   "orig_height": 3328,
+   "date": "2009:09:04 12:57:32",
+   "source_kind": "model",
+   "origin": "Category:Enercon E-66",
+   "model_basis": null,
+   "size": [
+    576,
+    1024
+   ],
+   "focal_35mm": 28.0,
+   "hub_height_m": 98.0,
+   "rotor_radius_m": 35.0,
+   "failed": false,
+   "verdict": {
+    "ok": false,
+    "reasons": [
+     "一片葉片都沒有定位到：多半是轉子沒有完整入鏡（請退後到整個轉子連同塔架都進得了畫面），或風機根本沒被分割出來（雲層、逆光或前景物撐壞天空模型，請換雲量少的時段、讓葉片背景是乾淨天空）"
+    ],
+    "warnings": [
+     "沒有找到塔架：塔架傾斜與六點鐘方位判讀不可用（幾何互比仍可進行）",
+     "輪轂只有初估、未經葉片軸線精修：葉尖偏移量的精度會下降"
+    ],
+    "metrics": {
+     "mask_area_frac": 0.0357,
+     "sky_mask_frac": 0.0357,
+     "horizon_y": null,
+     "n_blades": 0,
+     "view": "front",
+     "tip_radii_px": []
+    }
+   },
+   "n_blades": 0,
+   "tower_found": false,
+   "hub": [
+    320.0,
+    663.0
+   ],
+   "tip_radii_px": [],
+   "tip_angles_deg": [],
+   "view": "front",
+   "seconds": 0.17
+  },
+  {
+   "id": "c12869944",
+   "title": "File:Mellerhoefe windkraft 09.jpg",
+   "page_url": "https://commons.wikimedia.org/?curid=12869944",
+   "model": "Enercon E-70",
+   "license": "CC BY-SA 4.0",
+   "artist": "Achim Raschka  (  talk  )",
+   "camera_model": "NIKON D40",
+   "hub_height_source": "typical",
+   "orig_width": 3008,
+   "orig_height": 2000,
+   "date": "2010:01:23 19:35:03",
+   "source_kind": "model",
+   "origin": "Category:Enercon E-70",
+   "model_basis": null,
+   "size": [
+    1024,
+    681
+   ],
+   "focal_35mm": 300.0,
+   "hub_height_m": 85.0,
+   "rotor_radius_m": 35.5,
+   "failed": false,
+   "verdict": {
+    "ok": false,
+    "reasons": [
+     "一片葉片都沒有定位到：多半是轉子沒有完整入鏡（請退後到整個轉子連同塔架都進得了畫面），或風機根本沒被分割出來（雲層、逆光或前景物撐壞天空模型，請換雲量少的時段、讓葉片背景是乾淨天空）"
+    ],
+    "warnings": [
+     "沒有找到塔架：塔架傾斜與六點鐘方位判讀不可用（幾何互比仍可進行）",
+     "輪轂只有初估、未經葉片軸線精修：葉尖偏移量的精度會下降"
+    ],
+    "metrics": {
+     "mask_area_frac": 0.0264,
+     "sky_mask_frac": 0.0264,
+     "horizon_y": null,
+     "n_blades": 0,
+     "view": "front",
+     "tip_radii_px": []
+    }
+   },
+   "n_blades": 0,
+   "tower_found": false,
+   "hub": [
+    435.0,
+    58.0
+   ],
+   "tip_radii_px": [],
+   "tip_angles_deg": [],
+   "view": "front",
+   "seconds": 0.17
+  },
+  {
+   "id": "c12869957",
+   "title": "File:Mellerhoefe windkraft 10.jpg",
+   "page_url": "https://commons.wikimedia.org/?curid=12869957",
+   "model": "Enercon E-70",
+   "license": "CC BY-SA 4.0",
+   "artist": "Achim Raschka  (  talk  )",
+   "camera_model": "NIKON D40",
+   "hub_height_source": "typical",
+   "orig_width": 3008,
+   "orig_height": 2000,
+   "date": "2010:01:23 19:36:00",
+   "source_kind": "model",
+   "origin": "Category:Enercon E-70",
+   "model_basis": null,
+   "size": [
+    1024,
+    681
+   ],
+   "focal_35mm": 225.0,
+   "hub_height_m": 85.0,
+   "rotor_radius_m": 35.5,
+   "failed": false,
+   "verdict": {
+    "ok": false,
+    "reasons": [
+     "一片葉片都沒有定位到：多半是轉子沒有完整入鏡（請退後到整個轉子連同塔架都進得了畫面），或風機根本沒被分割出來（雲層、逆光或前景物撐壞天空模型，請換雲量少的時段、讓葉片背景是乾淨天空）"
+    ],
+    "warnings": [
+     "沒有找到塔架：塔架傾斜與六點鐘方位判讀不可用（幾何互比仍可進行）"
+    ],
+    "metrics": {
+     "mask_area_frac": 0.0419,
+     "sky_mask_frac": 0.0419,
+     "horizon_y": null,
+     "n_blades": 0,
+     "view": "front",
+     "tip_radii_px": []
+    }
+   },
+   "n_blades": 0,
+   "tower_found": false,
+   "hub": [
+    627.5,
+    287.8
+   ],
+   "tip_radii_px": [],
+   "tip_angles_deg": [],
+   "view": "front",
+   "seconds": 0.23
+  },
+  {
+   "id": "c18211537",
+   "title": "File:Size comparison child and wind turbine tower parts (enercon e-70).jpg",
+   "page_url": "https://commons.wikimedia.org/?curid=18211537",
+   "model": "Enercon E-70",
+   "license": "CC BY-SA 3.0",
+   "artist": "Erik Streb",
+   "camera_model": "NIKON D80",
+   "hub_height_source": "typical",
+   "orig_width": 1936,
+   "orig_height": 1296,
+   "date": "2012:01:25 16:39:13",
+   "source_kind": "model",
+   "origin": "Category:Enercon E-70",
+   "model_basis": null,
+   "size": [
+    1024,
+    685
+   ],
+   "focal_35mm": 75.0,
+   "hub_height_m": 85.0,
+   "rotor_radius_m": 35.5,
+   "failed": false,
+   "verdict": {
+    "ok": false,
+    "reasons": [
+     "只定位到 2 片葉片（應為 3）：可能有葉片正好貼在塔架上（六點鐘方位）或沒入雲層，請等轉子轉到三片都離開塔架再拍",
+     "三片葉尖半徑差 112%（上限 15%）：同一台風機三片等長，差這麼多代表有一片其實是地物、電線或別台風機，請重拍並確保只有一台風機在框內"
+    ],
+    "warnings": [
+     "沒有找到塔架：塔架傾斜與六點鐘方位判讀不可用（幾何互比仍可進行）",
+     "結構定位提示：葉片軸線共線（側視），輪轂投影到主葉片軸線"
+    ],
+    "metrics": {
+     "mask_area_frac": 0.0069,
+     "sky_mask_frac": 0.0069,
+     "horizon_y": null,
+     "n_blades": 2,
+     "view": "front",
+     "tip_radii_px": [
+      139.7,
+      39.2
+     ],
+     "tip_radius_spread": 1.123,
+     "second_rotor_radius_px": 0.0,
+     "second_rotor_arms": 0,
+     "second_rotor_ratio": 0.0
+    }
+   },
+   "n_blades": 2,
+   "tower_found": false,
+   "hub": [
+    267.0,
+    286.9
+   ],
+   "tip_radii_px": [
+    139.7,
+    39.2
+   ],
+   "tip_angles_deg": [
+    49.9,
+    237.5
+   ],
+   "radius_spread": 1.124,
+   "view": "front",
+   "seconds": 0.25
+  },
+  {
+   "id": "c18210923",
+   "title": "File:Size comparison child in wind turbine rotor hub without blades (enercon e-70).jpg",
+   "page_url": "https://commons.wikimedia.org/?curid=18210923",
+   "model": "Enercon E-70",
+   "license": "CC BY-SA 3.0",
+   "artist": "Erik Streb",
+   "camera_model": "NIKON D80",
+   "hub_height_source": "typical",
+   "orig_width": 1936,
+   "orig_height": 1296,
+   "date": "2012:01:25 16:42:34",
+   "source_kind": "model",
+   "origin": "Category:Enercon E-70",
+   "model_basis": null,
+   "size": [
+    1024,
+    685
+   ],
+   "focal_35mm": 75.0,
+   "hub_height_m": 85.0,
+   "rotor_radius_m": 35.5,
+   "failed": false,
+   "verdict": {
+    "ok": false,
+    "reasons": [
+     "三片葉尖半徑差 123%（上限 15%）：同一台風機三片等長，差這麼多代表有一片其實是地物、電線或別台風機，請重拍並確保只有一台風機在框內"
+    ],
+    "warnings": [
+     "畫面裡還有另一個轉子，半徑約為主風機的 149%：請確認量到的是要量的那一台；風場的風機外觀相同，量錯對象不會有任何徵兆",
+     "沒有找到塔架：塔架傾斜與六點鐘方位判讀不可用（幾何互比仍可進行）",
+     "輪轂只有初估、未經葉片軸線精修：葉尖偏移量的精度會下降"
+    ],
+    "metrics": {
+     "mask_area_frac": 0.0575,
+     "sky_mask_frac": 0.0575,
+     "horizon_y": null,
+     "n_blades": 3,
+     "view": "front",
+     "tip_radii_px": [
+      74.4,
+      121.8,
+      223.9
+     ],
+     "tip_radius_spread": 1.227,
+     "second_rotor_radius_px": 181.0,
+     "second_rotor_arms": 3,
+     "second_rotor_ratio": 1.486
+    }
+   },
+   "n_blades": 3,
+   "tower_found": false,
+   "hub": [
+    568.0,
+    123.0
+   ],
+   "tip_radii_px": [
+    74.4,
+    121.8,
+    223.9
+   ],
+   "tip_angles_deg": [
+    41.2,
+    167.7,
+    354.9
+   ],
+   "radius_spread": 1.227,
+   "view": "front",
+   "seconds": 0.39
+  },
+  {
+   "id": "c19673740",
+   "title": "File:2012-05-28 Fotoflug Cuxhaven Wilhelmshaven DSCF9514.jpg",
+   "page_url": "https://commons.wikimedia.org/?curid=19673740",
+   "model": "Enercon E-82",
+   "license": "CC BY-SA 3.0 de",
+   "artist": "Martina Nolte",
+   "camera_model": "FinePix S5Pro  ",
+   "hub_height_source": "typical",
+   "orig_width": 2848,
+   "orig_height": 4256,
+   "date": "2012:05:28 11:31:00",
+   "source_kind": "model",
+   "origin": "Category:Enercon E-82",
+   "model_basis": null,
+   "size": [
+    685,
+    1024
+   ],
+   "focal_35mm": 300.0,
+   "hub_height_m": 98.0,
+   "rotor_radius_m": 41.0,
+   "failed": false,
+   "verdict": {
+    "ok": false,
+    "reasons": [
+     "三片葉尖半徑差 66%（上限 15%）：同一台風機三片等長，差這麼多代表有一片其實是地物、電線或別台風機，請重拍並確保只有一台風機在框內"
+    ],
+    "warnings": [
+     "畫面裡還有另一個轉子，半徑約為主風機的 120%：請確認量到的是要量的那一台；風場的風機外觀相同，量錯對象不會有任何徵兆",
+     "沒有找到塔架：塔架傾斜與六點鐘方位判讀不可用（幾何互比仍可進行）"
+    ],
+    "metrics": {
+     "mask_area_frac": 0.0492,
+     "sky_mask_frac": 0.0492,
+     "horizon_y": null,
+     "n_blades": 3,
+     "view": "front",
+     "tip_radii_px": [
+      334.8,
+      213.0,
+      194.1
+     ],
+     "tip_radius_spread": 0.66,
+     "second_rotor_radius_px": 256.3,
+     "second_rotor_arms": 2,
+     "second_rotor_ratio": 1.203
+    }
+   },
+   "n_blades": 3,
+   "tower_found": false,
+   "hub": [
+    647.7,
+    736.5
+   ],
+   "tip_radii_px": [
+    334.8,
+    213.0,
+    194.1
+   ],
+   "tip_angles_deg": [
+    98.0,
+    143.2,
+    184.0
+   ],
+   "radius_spread": 0.661,
+   "view": "front",
+   "seconds": 0.44
+  },
+  {
+   "id": "c19673765",
+   "title": "File:2012-05-28 Fotoflug Cuxhaven Wilhelmshaven DSCF9517.jpg",
+   "page_url": "https://commons.wikimedia.org/?curid=19673765",
+   "model": "Enercon E-82",
+   "license": "CC BY-SA 3.0 de",
+   "artist": "Martina Nolte",
+   "camera_model": "FinePix S5Pro  ",
+   "hub_height_source": "typical",
+   "orig_width": 2848,
+   "orig_height": 4256,
+   "date": "2012:05:28 11:31:16",
+   "source_kind": "model",
+   "origin": "Category:Enercon E-82",
+   "model_basis": null,
+   "size": [
+    685,
+    1024
+   ],
+   "focal_35mm": 300.0,
+   "hub_height_m": 98.0,
+   "rotor_radius_m": 41.0,
+   "failed": false,
+   "verdict": {
+    "ok": false,
+    "reasons": [
+     "三片葉尖半徑差 91%（上限 15%）：同一台風機三片等長，差這麼多代表有一片其實是地物、電線或別台風機，請重拍並確保只有一台風機在框內"
+    ],
+    "warnings": [
+     "畫面裡還有另一個轉子，半徑約為主風機的 66%：請確認量到的是要量的那一台；風場的風機外觀相同，量錯對象不會有任何徵兆"
+    ],
+    "metrics": {
+     "mask_area_frac": 0.0436,
+     "sky_mask_frac": 0.0436,
+     "horizon_y": null,
+     "n_blades": 3,
+     "view": "front",
+     "tip_radii_px": [
+      308.6,
+      146.9,
+      429.0
+     ],
+     "tip_radius_spread": 0.914,
+     "second_rotor_radius_px": 203.0,
+     "second_rotor_arms": 2,
+     "second_rotor_ratio": 0.658
+    }
+   },
+   "n_blades": 3,
+   "tower_found": true,
+   "hub": [
+    257.6,
+    613.4
+   ],
+   "tip_radii_px": [
+    308.6,
+    146.9,
+    429.0
+   ],
+   "tip_angles_deg": [
+    20.4,
+    81.6,
+    353.6
+   ],
+   "radius_spread": 0.914,
+   "view": "front",
+   "seconds": 0.43
+  },
+  {
+   "id": "c19673776",
+   "title": "File:2012-05-28 Fotoflug Cuxhaven Wilhelmshaven DSCF9518.jpg",
+   "page_url": "https://commons.wikimedia.org/?curid=19673776",
+   "model": "Enercon E-82",
+   "license": "CC BY-SA 3.0 de",
+   "artist": "Martina Nolte",
+   "camera_model": "FinePix S5Pro  ",
+   "hub_height_source": "typical",
+   "orig_width": 2848,
+   "orig_height": 4256,
+   "date": "2012:05:28 11:31:26",
+   "source_kind": "model",
+   "origin": "Category:Enercon E-82",
+   "model_basis": null,
+   "size": [
+    685,
+    1024
+   ],
+   "focal_35mm": 300.0,
+   "hub_height_m": 98.0,
+   "rotor_radius_m": 41.0,
+   "failed": false,
+   "verdict": {
+    "ok": false,
+    "reasons": [
+     "只定位到 2 片葉片（應為 3）：可能有葉片正好貼在塔架上（六點鐘方位）或沒入雲層，請等轉子轉到三片都離開塔架再拍",
+     "三片葉尖半徑差 51%（上限 15%）：同一台風機三片等長，差這麼多代表有一片其實是地物、電線或別台風機，請重拍並確保只有一台風機在框內"
+    ],
+    "warnings": [
+     "沒有找到塔架：塔架傾斜與六點鐘方位判讀不可用（幾何互比仍可進行）",
+     "結構定位提示：葉片軸線共線（側視），輪轂投影到主葉片軸線"
+    ],
+    "metrics": {
+     "mask_area_frac": 0.018,
+     "sky_mask_frac": 0.018,
+     "horizon_y": null,
+     "n_blades": 2,
+     "view": "front",
+     "tip_radii_px": [
+      101.1,
+      171.2
+     ],
+     "tip_radius_spread": 0.515,
+     "second_rotor_radius_px": 0.0,
+     "second_rotor_arms": 0,
+     "second_rotor_ratio": 0.0
+    }
+   },
+   "n_blades": 2,
+   "tower_found": false,
+   "hub": [
+    658.8,
+    462.9
+   ],
+   "tip_radii_px": [
+    101.1,
+    171.2
+   ],
+   "tip_angles_deg": [
+    149.1,
+    168.6
+   ],
+   "radius_spread": 0.515,
+   "view": "front",
+   "seconds": 0.28
+  },
+  {
+   "id": "c19673781",
+   "title": "File:2012-05-28 Fotoflug Cuxhaven Wilhelmshaven DSCF9519.jpg",
+   "page_url": "https://commons.wikimedia.org/?curid=19673781",
+   "model": "Enercon E-82",
+   "license": "CC BY-SA 3.0 de",
+   "artist": "Martina Nolte",
+   "camera_model": "FinePix S5Pro  ",
+   "hub_height_source": "typical",
+   "orig_width": 2848,
+   "orig_height": 4256,
+   "date": "2012:05:28 11:31:32",
+   "source_kind": "model",
+   "origin": "Category:Enercon E-82",
+   "model_basis": null,
+   "size": [
+    685,
+    1024
+   ],
+   "focal_35mm": 300.0,
+   "hub_height_m": 98.0,
+   "rotor_radius_m": 41.0,
+   "failed": false,
+   "verdict": {
+    "ok": false,
+    "reasons": [
+     "只定位到 2 片葉片（應為 3）：可能有葉片正好貼在塔架上（六點鐘方位）或沒入雲層，請等轉子轉到三片都離開塔架再拍"
+    ],
+    "warnings": [
+     "畫面裡還有另一個轉子，半徑約為主風機的 71%：請確認量到的是要量的那一台；風場的風機外觀相同，量錯對象不會有任何徵兆",
+     "沒有找到塔架：塔架傾斜與六點鐘方位判讀不可用（幾何互比仍可進行）",
+     "結構定位提示：葉片軸線共線（側視），輪轂投影到主葉片軸線"
+    ],
+    "metrics": {
+     "mask_area_frac": 0.0452,
+     "sky_mask_frac": 0.0452,
+     "horizon_y": null,
+     "n_blades": 2,
+     "view": "front",
+     "tip_radii_px": [
+      274.0,
+      280.9
+     ],
+     "tip_radius_spread": 0.025,
+     "second_rotor_radius_px": 195.8,
+     "second_rotor_arms": 2,
+     "second_rotor_ratio": 0.706
+    }
+   },
+   "n_blades": 2,
+   "tower_found": false,
+   "hub": [
+    597.4,
+    309.1
+   ],
+   "tip_radii_px": [
+    274.0,
+    280.9
+   ],
+   "tip_angles_deg": [
+    161.9,
+    174.1
+   ],
+   "radius_spread": 0.025,
+   "view": "front",
+   "seconds": 0.29
+  },
+  {
+   "id": "c19673819",
+   "title": "File:2012-05-28 Fotoflug Cuxhaven Wilhelmshaven DSCF9527.jpg",
+   "page_url": "https://commons.wikimedia.org/?curid=19673819",
+   "model": "Enercon E-82",
+   "license": "CC BY-SA 3.0 de",
+   "artist": "Martina Nolte",
+   "camera_model": "FinePix S5Pro  ",
+   "hub_height_source": "typical",
+   "orig_width": 2848,
+   "orig_height": 4256,
+   "date": "2012:05:28 11:32:29",
+   "source_kind": "model",
+   "origin": "Category:Enercon E-82",
+   "model_basis": null,
+   "size": [
+    685,
+    1024
+   ],
+   "focal_35mm": 285.0,
+   "hub_height_m": 98.0,
+   "rotor_radius_m": 41.0,
+   "failed": false,
+   "verdict": {
+    "ok": false,
+    "reasons": [
+     "只定位到 1 片葉片（應為 3）：可能有葉片正好貼在塔架上（六點鐘方位）或沒入雲層，請等轉子轉到三片都離開塔架再拍"
+    ],
+    "warnings": [
+     "畫面裡還有另一個轉子，半徑約為主風機的 77%：請確認量到的是要量的那一台；風場的風機外觀相同，量錯對象不會有任何徵兆",
+     "沒有找到塔架：塔架傾斜與六點鐘方位判讀不可用（幾何互比仍可進行）",
+     "結構定位提示：葉片軸線共線（側視），輪轂投影到主葉片軸線"
+    ],
+    "metrics": {
+     "mask_area_frac": 0.0401,
+     "sky_mask_frac": 0.0401,
+     "horizon_y": null,
+     "n_blades": 1,
+     "view": "front",
+     "tip_radii_px": [
+      286.3
+     ],
+     "second_rotor_radius_px": 220.5,
+     "second_rotor_arms": 2,
+     "second_rotor_ratio": 0.77
+    }
+   },
+   "n_blades": 1,
+   "tower_found": false,
+   "hub": [
+    266.0,
+    474.1
+   ],
+   "tip_radii_px": [
+    286.3
+   ],
+   "tip_angles_deg": [
+    158.3
+   ],
+   "radius_spread": 0.0,
+   "view": "front",
+   "seconds": 0.31
+  },
+  {
+   "id": "c19673825",
+   "title": "File:2012-05-28 Fotoflug Cuxhaven Wilhelmshaven DSCF9530.jpg",
+   "page_url": "https://commons.wikimedia.org/?curid=19673825",
+   "model": "Enercon E-82",
+   "license": "CC BY-SA 3.0 de",
+   "artist": "Martina Nolte",
+   "camera_model": "FinePix S5Pro  ",
+   "hub_height_source": "typical",
+   "orig_width": 2848,
+   "orig_height": 4256,
+   "date": "2012:05:28 11:32:43",
+   "source_kind": "model",
+   "origin": "Category:Enercon E-82",
+   "model_basis": null,
+   "size": [
+    685,
+    1024
+   ],
+   "focal_35mm": 203.0,
+   "hub_height_m": 98.0,
+   "rotor_radius_m": 41.0,
+   "failed": false,
+   "verdict": {
+    "ok": false,
+    "reasons": [
+     "只定位到 2 片葉片（應為 3）：可能有葉片正好貼在塔架上（六點鐘方位）或沒入雲層，請等轉子轉到三片都離開塔架再拍",
+     "三片葉尖半徑差 33%（上限 15%）：同一台風機三片等長，差這麼多代表有一片其實是地物、電線或別台風機，請重拍並確保只有一台風機在框內"
+    ],
+    "warnings": [
+     "畫面裡還有另一個轉子，半徑約為主風機的 100%：請確認量到的是要量的那一台；風場的風機外觀相同，量錯對象不會有任何徵兆",
+     "沒有找到塔架：塔架傾斜與六點鐘方位判讀不可用（幾何互比仍可進行）",
+     "結構定位提示：葉片軸線共線（側視），輪轂投影到主葉片軸線"
+    ],
+    "metrics": {
+     "mask_area_frac": 0.0415,
+     "sky_mask_frac": 0.0415,
+     "horizon_y": null,
+     "n_blades": 2,
+     "view": "front",
+     "tip_radii_px": [
+      173.5,
+      123.8
+     ],
+     "tip_radius_spread": 0.335,
+     "second_rotor_radius_px": 148.8,
+     "second_rotor_arms": 1,
+     "second_rotor_ratio": 1.001
+    }
+   },
+   "n_blades": 2,
+   "tower_found": false,
+   "hub": [
+    564.2,
+    479.8
+   ],
+   "tip_radii_px": [
+    173.5,
+    123.8
+   ],
+   "tip_angles_deg": [
+    168.8,
+    345.4
+   ],
+   "radius_spread": 0.334,
+   "view": "front",
+   "seconds": 0.4
+  },
+  {
+   "id": "c19673832",
+   "title": "File:2012-05-28 Fotoflug Cuxhaven Wilhelmshaven DSCF9531.jpg",
+   "page_url": "https://commons.wikimedia.org/?curid=19673832",
+   "model": "Enercon E-82",
+   "license": "CC BY-SA 3.0 de",
+   "artist": "Martina Nolte",
+   "camera_model": "FinePix S5Pro  ",
+   "hub_height_source": "typical",
+   "orig_width": 2848,
+   "orig_height": 4256,
+   "date": "2012:05:28 11:32:46",
+   "source_kind": "model",
+   "origin": "Category:Enercon E-82",
+   "model_basis": null,
+   "size": [
+    685,
+    1024
+   ],
+   "focal_35mm": 233.0,
+   "hub_height_m": 98.0,
+   "rotor_radius_m": 41.0,
+   "failed": false,
+   "verdict": {
+    "ok": false,
+    "reasons": [
+     "只定位到 2 片葉片（應為 3）：可能有葉片正好貼在塔架上（六點鐘方位）或沒入雲層，請等轉子轉到三片都離開塔架再拍",
+     "三片葉尖半徑差 28%（上限 15%）：同一台風機三片等長，差這麼多代表有一片其實是地物、電線或別台風機，請重拍並確保只有一台風機在框內"
+    ],
+    "warnings": [
+     "沒有找到塔架：塔架傾斜與六點鐘方位判讀不可用（幾何互比仍可進行）",
+     "結構定位提示：葉片軸線共線（側視），輪轂投影到主葉片軸線"
+    ],
+    "metrics": {
+     "mask_area_frac": 0.0502,
+     "sky_mask_frac": 0.0502,
+     "horizon_y": null,
+     "n_blades": 2,
+     "view": "front",
+     "tip_radii_px": [
+      113.1,
+      150.2
+     ],
+     "tip_radius_spread": 0.282,
+     "second_rotor_radius_px": 0.0,
+     "second_rotor_arms": 0,
+     "second_rotor_ratio": 0.0
+    }
+   },
+   "n_blades": 2,
+   "tower_found": false,
+   "hub": [
+    148.0,
+    445.6
+   ],
+   "tip_radii_px": [
+    113.1,
+    150.2
+   ],
+   "tip_angles_deg": [
+    3.3,
+    170.2
+   ],
+   "radius_spread": 0.282,
+   "view": "front",
+   "seconds": 0.33
+  },
+  {
+   "id": "c19673837",
+   "title": "File:2012-05-28 Fotoflug Cuxhaven Wilhelmshaven DSCF9532.jpg",
+   "page_url": "https://commons.wikimedia.org/?curid=19673837",
+   "model": "Enercon E-82",
+   "license": "CC BY-SA 3.0 de",
+   "artist": "Martina Nolte",
+   "camera_model": "FinePix S5Pro  ",
+   "hub_height_source": "typical",
+   "orig_width": 2848,
+   "orig_height": 4256,
+   "date": "2012:05:28 11:32:49",
+   "source_kind": "model",
+   "origin": "Category:Enercon E-82",
+   "model_basis": null,
+   "size": [
+    685,
+    1024
+   ],
+   "focal_35mm": 233.0,
+   "hub_height_m": 98.0,
+   "rotor_radius_m": 41.0,
+   "failed": false,
+   "verdict": {
+    "ok": false,
+    "reasons": [
+     "只定位到 2 片葉片（應為 3）：可能有葉片正好貼在塔架上（六點鐘方位）或沒入雲層，請等轉子轉到三片都離開塔架再拍"
+    ],
+    "warnings": [
+     "畫面裡還有另一個轉子，半徑約為主風機的 133%：請確認量到的是要量的那一台；風場的風機外觀相同，量錯對象不會有任何徵兆",
+     "沒有找到塔架：塔架傾斜與六點鐘方位判讀不可用（幾何互比仍可進行）",
+     "結構定位提示：葉片軸線共線（側視），輪轂投影到主葉片軸線"
+    ],
+    "metrics": {
+     "mask_area_frac": 0.0527,
+     "sky_mask_frac": 0.0527,
+     "horizon_y": null,
+     "n_blades": 2,
+     "view": "front",
+     "tip_radii_px": [
+      112.8,
+      98.1
+     ],
+     "tip_radius_spread": 0.14,
+     "second_rotor_radius_px": 140.0,
+     "second_rotor_arms": 1,
+     "second_rotor_ratio": 1.328
+    }
+   },
+   "n_blades": 2,
+   "tower_found": false,
+   "hub": [
+    96.2,
+    507.4
+   ],
+   "tip_radii_px": [
+    112.8,
+    98.1
+   ],
+   "tip_angles_deg": [
+    0.7,
+    168.6
+   ],
+   "radius_spread": 0.139,
+   "view": "front",
+   "seconds": 0.51
+  },
+  {
+   "id": "c19673844",
+   "title": "File:2012-05-28 Fotoflug Cuxhaven Wilhelmshaven DSCF9533.jpg",
+   "page_url": "https://commons.wikimedia.org/?curid=19673844",
+   "model": "Enercon E-82",
+   "license": "CC BY-SA 3.0 de",
+   "artist": "Martina Nolte",
+   "camera_model": "FinePix S5Pro  ",
+   "hub_height_source": "typical",
+   "orig_width": 2848,
+   "orig_height": 4256,
+   "date": "2012:05:28 11:33:04",
+   "source_kind": "model",
+   "origin": "Category:Enercon E-82",
+   "model_basis": null,
+   "size": [
+    685,
+    1024
+   ],
+   "focal_35mm": 233.0,
+   "hub_height_m": 98.0,
+   "rotor_radius_m": 41.0,
+   "failed": false,
+   "verdict": {
+    "ok": false,
+    "reasons": [
+     "只定位到 2 片葉片（應為 3）：可能有葉片正好貼在塔架上（六點鐘方位）或沒入雲層，請等轉子轉到三片都離開塔架再拍",
+     "三片葉尖半徑差 35%（上限 15%）：同一台風機三片等長，差這麼多代表有一片其實是地物、電線或別台風機，請重拍並確保只有一台風機在框內"
+    ],
+    "warnings": [
+     "畫面裡還有另一個轉子，半徑約為主風機的 154%：請確認量到的是要量的那一台；風場的風機外觀相同，量錯對象不會有任何徵兆",
+     "沒有找到塔架：塔架傾斜與六點鐘方位判讀不可用（幾何互比仍可進行）",
+     "結構定位提示：葉片軸線共線（側視），輪轂投影到主葉片軸線"
+    ],
+    "metrics": {
+     "mask_area_frac": 0.0534,
+     "sky_mask_frac": 0.0534,
+     "horizon_y": null,
+     "n_blades": 2,
+     "view": "front",
+     "tip_radii_px": [
+      118.1,
+      168.0
+     ],
+     "tip_radius_spread": 0.348,
+     "second_rotor_radius_px": 220.0,
+     "second_rotor_arms": 3,
+     "second_rotor_ratio": 1.538
+    }
+   },
+   "n_blades": 2,
+   "tower_found": false,
+   "hub": [
+    567.8,
+    503.0
+   ],
+   "tip_radii_px": [
+    118.1,
+    168.0
+   ],
+   "tip_angles_deg": [
+    10.2,
+    186.8
+   ],
+   "radius_spread": 0.349,
+   "view": "front",
+   "seconds": 0.54
+  },
+  {
+   "id": "c8384905",
+   "title": "File:DE 049 010 20091109004806 001 Enercon.jpg",
+   "page_url": "https://commons.wikimedia.org/?curid=8384905",
+   "model": "Enercon E-82",
+   "license": "CC BY-SA 3.0",
+   "artist": "E4L EnergyMap",
+   "camera_model": "DiMAGE X50",
+   "hub_height_source": "typical",
+   "orig_width": 1920,
+   "orig_height": 2560,
+   "date": "2009:09:24 15:23:52",
+   "source_kind": "model",
+   "origin": "Category:Enercon E-82",
+   "model_basis": null,
+   "size": [
+    768,
+    1024
+   ],
+   "focal_35mm": 58.0,
+   "hub_height_m": 98.0,
+   "rotor_radius_m": 41.0,
+   "failed": false,
+   "verdict": {
+    "ok": false,
+    "reasons": [
+     "只定位到 1 片葉片（應為 3）：可能有葉片正好貼在塔架上（六點鐘方位）或沒入雲層，請等轉子轉到三片都離開塔架再拍"
+    ],
+    "warnings": [
+     "畫面裡還有另一個轉子，半徑約為主風機的 97%：請確認量到的是要量的那一台；風場的風機外觀相同，量錯對象不會有任何徵兆",
+     "結構定位提示：葉片軸線共線（側視），輪轂投影到主葉片軸線"
+    ],
+    "metrics": {
+     "mask_area_frac": 0.0272,
+     "sky_mask_frac": 0.0272,
+     "horizon_y": null,
+     "n_blades": 1,
+     "view": "front",
+     "tip_radii_px": [
+      209.0
+     ],
+     "second_rotor_radius_px": 201.9,
+     "second_rotor_arms": 3,
+     "second_rotor_ratio": 0.966
+    }
+   },
+   "n_blades": 1,
+   "tower_found": true,
+   "hub": [
+    485.2,
+    529.0
+   ],
+   "tip_radii_px": [
+    209.0
+   ],
+   "tip_angles_deg": [
+    90.1
+   ],
+   "radius_spread": 0.0,
+   "view": "front",
+   "seconds": 0.42
+  },
+  {
+   "id": "c21685144",
+   "title": "File:WKA Ingersheim 2012-09.jpg",
+   "page_url": "https://commons.wikimedia.org/?curid=21685144",
+   "model": "Enercon E-82",
+   "license": "CC BY-SA 3.0",
+   "artist": "Mussklprozz",
+   "camera_model": "NIKON D90",
+   "hub_height_source": "typical",
+   "orig_width": 2650,
+   "orig_height": 4288,
+   "date": "2012:09:24 18:01:15",
+   "source_kind": "model-subcat",
+   "origin": "Category:WKA Ingersheim",
+   "model_basis": null,
+   "size": [
+    633,
+    1024
+   ],
+   "focal_35mm": 75.0,
+   "hub_height_m": 98.0,
+   "rotor_radius_m": 41.0,
+   "failed": false,
+   "verdict": {
+    "ok": false,
+    "reasons": [
+     "三片葉尖半徑差 19%（上限 15%）：同一台風機三片等長，差這麼多代表有一片其實是地物、電線或別台風機，請重拍並確保只有一台風機在框內"
+    ],
+    "warnings": [],
+    "metrics": {
+     "mask_area_frac": 0.0631,
+     "sky_mask_frac": 0.0631,
+     "horizon_y": null,
+     "n_blades": 3,
+     "view": "front",
+     "tip_radii_px": [
+      192.6,
+      171.1,
+      159.3
+     ],
+     "tip_radius_spread": 0.194,
+     "second_rotor_radius_px": 0.0,
+     "second_rotor_arms": 0,
+     "second_rotor_ratio": 0.0
+    }
+   },
+   "n_blades": 3,
+   "tower_found": true,
+   "hub": [
+    308.7,
+    233.8
+   ],
+   "tip_radii_px": [
+    192.6,
+    171.1,
+    159.3
+   ],
+   "tip_angles_deg": [
+    84.8,
+    207.6,
+    338.6
+   ],
+   "radius_spread": 0.195,
+   "view": "front",
+   "seconds": 0.34
+  },
+  {
+   "id": "c16853637",
+   "title": "File:WKAIngersheimFundament 2011-10-03.jpg",
+   "page_url": "https://commons.wikimedia.org/?curid=16853637",
+   "model": "Enercon E-82",
+   "license": "CC BY-SA 3.0",
+   "artist": "Mussklprozz",
+   "camera_model": "NIKON D90",
+   "hub_height_source": "typical",
+   "orig_width": 3958,
+   "orig_height": 2530,
+   "date": "2011:10:03 11:48:47",
+   "source_kind": "model-subcat",
+   "origin": "Category:WKA Ingersheim",
+   "model_basis": null,
+   "size": [
+    1024,
+    655
+   ],
+   "focal_35mm": 18.0,
+   "hub_height_m": 98.0,
+   "rotor_radius_m": 41.0,
+   "failed": false,
+   "verdict": {
+    "ok": false,
+    "reasons": [
+     "只定位到 2 片葉片（應為 3）：可能有葉片正好貼在塔架上（六點鐘方位）或沒入雲層，請等轉子轉到三片都離開塔架再拍",
+     "三片葉尖半徑差 106%（上限 15%）：同一台風機三片等長，差這麼多代表有一片其實是地物、電線或別台風機，請重拍並確保只有一台風機在框內"
+    ],
+    "warnings": [
+     "畫面裡還有另一個轉子，半徑約為主風機的 65%：請確認量到的是要量的那一台；風場的風機外觀相同，量錯對象不會有任何徵兆",
+     "沒有找到塔架：塔架傾斜與六點鐘方位判讀不可用（幾何互比仍可進行）",
+     "結構定位提示：葉片軸線共線（側視），輪轂投影到主葉片軸線"
+    ],
+    "metrics": {
+     "mask_area_frac": 0.0286,
+     "sky_mask_frac": 0.0286,
+     "horizon_y": null,
+     "n_blades": 2,
+     "view": "front",
+     "tip_radii_px": [
+      531.1,
+      163.0
+     ],
+     "tip_radius_spread": 1.061,
+     "second_rotor_radius_px": 224.8,
+     "second_rotor_arms": 1,
+     "second_rotor_ratio": 0.648
+    }
+   },
+   "n_blades": 2,
+   "tower_found": false,
+   "hub": [
+    397.0,
+    212.2
+   ],
+   "tip_radii_px": [
+    531.1,
+    163.0
+   ],
+   "tip_angles_deg": [
+    1.0,
+    179.2
+   ],
+   "radius_spread": 1.061,
+   "view": "front",
+   "seconds": 0.32
+  },
+  {
+   "id": "c18175573",
+   "title": "File:WKAIngersheimGrosserMontagekran 2012-01-26.jpg",
+   "page_url": "https://commons.wikimedia.org/?curid=18175573",
+   "model": "Enercon E-82",
+   "license": "CC BY-SA 3.0",
+   "artist": "Mussklprozz",
+   "camera_model": "NIKON D90",
+   "hub_height_source": "typical",
+   "orig_width": 2868,
+   "orig_height": 4310,
+   "date": "2012:01:26 14:15:14",
+   "source_kind": "model-subcat",
+   "origin": "Category:WKA Ingersheim",
+   "model_basis": null,
+   "size": [
+    681,
+    1024
+   ],
+   "focal_35mm": 18.0,
+   "hub_height_m": 98.0,
+   "rotor_radius_m": 41.0,
+   "failed": false,
+   "verdict": {
+    "ok": false,
+    "reasons": [
+     "三片葉尖半徑差 17%（上限 15%）：同一台風機三片等長，差這麼多代表有一片其實是地物、電線或別台風機，請重拍並確保只有一台風機在框內"
+    ],
+    "warnings": [
+     "畫面裡還有另一個轉子，半徑約為主風機的 76%：請確認量到的是要量的那一台；風場的風機外觀相同，量錯對象不會有任何徵兆",
+     "輪轂只有初估、未經葉片軸線精修：葉尖偏移量的精度會下降"
+    ],
+    "metrics": {
+     "mask_area_frac": 0.0842,
+     "sky_mask_frac": 0.0842,
+     "horizon_y": null,
+     "n_blades": 3,
+     "view": "front",
+     "tip_radii_px": [
+      440.9,
+      402.4,
+      479.4
+     ],
+     "tip_radius_spread": 0.175,
+     "second_rotor_radius_px": 336.2,
+     "second_rotor_arms": 2,
+     "second_rotor_ratio": 0.763
+    }
+   },
+   "n_blades": 3,
+   "tower_found": true,
+   "hub": [
+    291.0,
+    505.0
+   ],
+   "tip_radii_px": [
+    440.9,
+    402.4,
+    479.4
+   ],
+   "tip_angles_deg": [
+    112.3,
+    291.3,
+    309.7
+   ],
+   "radius_spread": 0.175,
+   "view": "front",
+   "seconds": 0.27
+  },
+  {
+   "id": "c18167022",
+   "title": "File:WKAIngersheimKraene 2012-01-25.jpg",
+   "page_url": "https://commons.wikimedia.org/?curid=18167022",
+   "model": "Enercon E-82",
+   "license": "CC BY-SA 3.0",
+   "artist": "Mussklprozz",
+   "camera_model": "NIKON D90",
+   "hub_height_source": "typical",
+   "orig_width": 3680,
+   "orig_height": 2868,
+   "date": "2012:01:25 15:09:28",
+   "source_kind": "model-subcat",
+   "origin": "Category:WKA Ingersheim",
+   "model_basis": null,
+   "size": [
+    1024,
+    798
+   ],
+   "focal_35mm": 24.0,
+   "hub_height_m": 98.0,
+   "rotor_radius_m": 41.0,
+   "failed": false,
+   "verdict": {
+    "ok": false,
+    "reasons": [
+     "只定位到 1 片葉片（應為 3）：可能有葉片正好貼在塔架上（六點鐘方位）或沒入雲層，請等轉子轉到三片都離開塔架再拍"
+    ],
+    "warnings": [
+     "畫面裡還有另一個轉子，半徑約為主風機的 68%：請確認量到的是要量的那一台；風場的風機外觀相同，量錯對象不會有任何徵兆",
+     "沒有找到塔架：塔架傾斜與六點鐘方位判讀不可用（幾何互比仍可進行）",
+     "結構定位提示：葉片軸線共線（側視），輪轂投影到主葉片軸線"
+    ],
+    "metrics": {
+     "mask_area_frac": 0.0526,
+     "sky_mask_frac": 0.0526,
+     "horizon_y": null,
+     "n_blades": 1,
+     "view": "front",
+     "tip_radii_px": [
+      426.2
+     ],
+     "second_rotor_radius_px": 291.3,
+     "second_rotor_arms": 2,
+     "second_rotor_ratio": 0.683
+    }
+   },
+   "n_blades": 1,
+   "tower_found": false,
+   "hub": [
+    673.3,
+    459.6
+   ],
+   "tip_radii_px": [
+    426.2
+   ],
+   "tip_angles_deg": [
+    63.0
+   ],
+   "radius_spread": 0.0,
+   "view": "front",
+   "seconds": 0.29
+  },
+  {
+   "id": "c18712576",
+   "title": "File:WKAIngersheimMontageFluegel.jpg",
+   "page_url": "https://commons.wikimedia.org/?curid=18712576",
+   "model": "Enercon E-82",
+   "license": "CC BY-SA 3.0",
+   "artist": "Mussklprozz",
+   "camera_model": "NIKON D90",
+   "hub_height_source": "typical",
+   "orig_width": 2650,
+   "orig_height": 4310,
+   "date": "2012:03:15 14:22:01",
+   "source_kind": "model-subcat",
+   "origin": "Category:WKA Ingersheim",
+   "model_basis": null,
+   "size": [
+    630,
+    1024
+   ],
+   "focal_35mm": 75.0,
+   "hub_height_m": 98.0,
+   "rotor_radius_m": 41.0,
+   "failed": false,
+   "verdict": {
+    "ok": false,
+    "reasons": [
+     "只定位到 2 片葉片（應為 3）：可能有葉片正好貼在塔架上（六點鐘方位）或沒入雲層，請等轉子轉到三片都離開塔架再拍",
+     "三片葉尖半徑差 20%（上限 15%）：同一台風機三片等長，差這麼多代表有一片其實是地物、電線或別台風機，請重拍並確保只有一台風機在框內"
+    ],
+    "warnings": [
+     "結構定位提示：葉片軸線共線（側視），輪轂投影到主葉片軸線"
+    ],
+    "metrics": {
+     "mask_area_frac": 0.092,
+     "sky_mask_frac": 0.092,
+     "horizon_y": null,
+     "n_blades": 2,
+     "view": "front",
+     "tip_radii_px": [
+      423.4,
+      515.4
+     ],
+     "tip_radius_spread": 0.196,
+     "second_rotor_radius_px": 110.5,
+     "second_rotor_arms": 2,
+     "second_rotor_ratio": 0.235
+    }
+   },
+   "n_blades": 2,
+   "tower_found": true,
+   "hub": [
+    342.2,
+    449.0
+   ],
+   "tip_radii_px": [
+    423.4,
+    515.4
+   ],
+   "tip_angles_deg": [
+    110.3,
+    280.4
+   ],
+   "radius_spread": 0.196,
+   "view": "front",
+   "seconds": 0.31
+  },
+  {
+   "id": "c18703446",
+   "title": "File:WKAIngersheimMontageGeneratorgondel.jpg",
+   "page_url": "https://commons.wikimedia.org/?curid=18703446",
+   "model": "Enercon E-82",
+   "license": "CC BY-SA 3.0",
+   "artist": "Mussklprozz",
+   "camera_model": "NIKON D90",
+   "hub_height_source": "typical",
+   "orig_width": 2853,
+   "orig_height": 4288,
+   "date": "2012:03:14 16:40:09",
+   "source_kind": "model-subcat",
+   "origin": "Category:WKA Ingersheim",
+   "model_basis": null,
+   "size": [
+    681,
+    1024
+   ],
+   "focal_35mm": 75.0,
+   "hub_height_m": 98.0,
+   "rotor_radius_m": 41.0,
+   "failed": false,
+   "verdict": {
+    "ok": false,
+    "reasons": [
+     "三片葉尖半徑差 82%（上限 15%）：同一台風機三片等長，差這麼多代表有一片其實是地物、電線或別台風機，請重拍並確保只有一台風機在框內"
+    ],
+    "warnings": [
+     "輪轂只有初估、未經葉片軸線精修：葉尖偏移量的精度會下降"
+    ],
+    "metrics": {
+     "mask_area_frac": 0.0932,
+     "sky_mask_frac": 0.0932,
+     "horizon_y": null,
+     "n_blades": 3,
+     "view": "front",
+     "tip_radii_px": [
+      508.6,
+      338.5,
+      229.6
+     ],
+     "tip_radius_spread": 0.824,
+     "second_rotor_radius_px": 0.0,
+     "second_rotor_arms": 0,
+     "second_rotor_ratio": 0.0
+    }
+   },
+   "n_blades": 3,
+   "tower_found": true,
+   "hub": [
+    153.8,
+    575.0
+   ],
+   "tip_radii_px": [
+    508.6,
+    338.5,
+    229.6
+   ],
+   "tip_angles_deg": [
+    84.2,
+    287.4,
+    295.1
+   ],
+   "radius_spread": 0.824,
+   "view": "front",
+   "seconds": 0.28
+  },
+  {
+   "id": "c18539718",
+   "title": "File:WKAIngersheimSchaft 2012-02.jpg",
+   "page_url": "https://commons.wikimedia.org/?curid=18539718",
+   "model": "Enercon E-82",
+   "license": "CC BY-SA 3.0",
+   "artist": "Mussklprozz",
+   "camera_model": "NIKON D90",
+   "hub_height_source": "typical",
+   "orig_width": 2824,
+   "orig_height": 3976,
+   "date": "2012:02:28 16:05:14",
+   "source_kind": "model-subcat",
+   "origin": "Category:WKA Ingersheim",
+   "model_basis": null,
+   "size": [
+    727,
+    1024
+   ],
+   "focal_35mm": 33.0,
+   "hub_height_m": 98.0,
+   "rotor_radius_m": 41.0,
+   "failed": false,
+   "verdict": {
+    "ok": false,
+    "reasons": [
+     "只定位到 2 片葉片（應為 3）：可能有葉片正好貼在塔架上（六點鐘方位）或沒入雲層，請等轉子轉到三片都離開塔架再拍",
+     "三片葉尖半徑差 18%（上限 15%）：同一台風機三片等長，差這麼多代表有一片其實是地物、電線或別台風機，請重拍並確保只有一台風機在框內"
+    ],
+    "warnings": [
+     "結構定位提示：葉片軸線共線（側視），輪轂投影到主葉片軸線"
+    ],
+    "metrics": {
+     "mask_area_frac": 0.0763,
+     "sky_mask_frac": 0.0763,
+     "horizon_y": null,
+     "n_blades": 2,
+     "view": "front",
+     "tip_radii_px": [
+      417.4,
+      349.5
+     ],
+     "tip_radius_spread": 0.177,
+     "second_rotor_radius_px": 0.0,
+     "second_rotor_arms": 0,
+     "second_rotor_ratio": 0.0
+    }
+   },
+   "n_blades": 2,
+   "tower_found": true,
+   "hub": [
+    579.3,
+    536.9
+   ],
+   "tip_radii_px": [
+    417.4,
+    349.5
+   ],
+   "tip_angles_deg": [
+    87.2,
+    243.6
+   ],
+   "radius_spread": 0.177,
+   "view": "front",
+   "seconds": 0.31
+  },
+  {
+   "id": "c18633412",
+   "title": "File:WKAIngersheimSchaft 2012-03-08.jpg",
+   "page_url": "https://commons.wikimedia.org/?curid=18633412",
+   "model": "Enercon E-82",
+   "license": "CC BY-SA 3.0",
+   "artist": "Mussklprozz",
+   "camera_model": "NIKON D90",
+   "hub_height_source": "typical",
+   "orig_width": 2534,
+   "orig_height": 4100,
+   "date": "2012:03:08 09:05:11",
+   "source_kind": "model-subcat",
+   "origin": "Category:WKA Ingersheim",
+   "model_basis": null,
+   "size": [
+    633,
+    1024
+   ],
+   "focal_35mm": 36.0,
+   "hub_height_m": 98.0,
+   "rotor_radius_m": 41.0,
+   "failed": false,
+   "verdict": {
+    "ok": false,
+    "reasons": [
+     "只定位到 1 片葉片（應為 3）：可能有葉片正好貼在塔架上（六點鐘方位）或沒入雲層，請等轉子轉到三片都離開塔架再拍"
+    ],
+    "warnings": [
+     "沒有找到塔架：塔架傾斜與六點鐘方位判讀不可用（幾何互比仍可進行）",
+     "結構定位提示：葉片軸線共線（側視），輪轂投影到主葉片軸線"
+    ],
+    "metrics": {
+     "mask_area_frac": 0.0804,
+     "sky_mask_frac": 0.0804,
+     "horizon_y": null,
+     "n_blades": 1,
+     "view": "front",
+     "tip_radii_px": [
+      462.1
+     ],
+     "second_rotor_radius_px": 182.1,
+     "second_rotor_arms": 1,
+     "second_rotor_ratio": 0.394
+    }
+   },
+   "n_blades": 1,
+   "tower_found": false,
+   "hub": [
+    217.9,
+    559.7
+   ],
+   "tip_radii_px": [
+    462.1
+   ],
+   "tip_angles_deg": [
+    94.5
+   ],
+   "radius_spread": 0.0,
+   "view": "front",
+   "seconds": 0.2
+  },
+  {
+   "id": "c16966823",
+   "title": "File:WKAIngersheimSockel 2010-10-09.jpg",
+   "page_url": "https://commons.wikimedia.org/?curid=16966823",
+   "model": "Enercon E-82",
+   "license": "CC BY-SA 3.0",
+   "artist": "Mussklprozz",
+   "camera_model": "NIKON D90",
+   "hub_height_source": "typical",
+   "orig_width": 4288,
+   "orig_height": 2650,
+   "date": "2011:10:09 15:09:10",
+   "source_kind": "model-subcat",
+   "origin": "Category:WKA Ingersheim",
+   "model_basis": null,
+   "size": [
+    1024,
+    633
+   ],
+   "focal_35mm": 33.0,
+   "hub_height_m": 98.0,
+   "rotor_radius_m": 41.0,
+   "failed": false,
+   "verdict": {
+    "ok": false,
+    "reasons": [
+     "一片葉片都沒有定位到：多半是轉子沒有完整入鏡（請退後到整個轉子連同塔架都進得了畫面），或風機根本沒被分割出來（雲層、逆光或前景物撐壞天空模型，請換雲量少的時段、讓葉片背景是乾淨天空）"
+    ],
+    "warnings": [
+     "沒有找到塔架：塔架傾斜與六點鐘方位判讀不可用（幾何互比仍可進行）",
+     "輪轂只有初估、未經葉片軸線精修：葉尖偏移量的精度會下降"
+    ],
+    "metrics": {
+     "mask_area_frac": 0.0104,
+     "sky_mask_frac": 0.0104,
+     "horizon_y": null,
+     "n_blades": 0,
+     "view": "front",
+     "tip_radii_px": []
+    }
+   },
+   "n_blades": 0,
+   "tower_found": false,
+   "hub": [
+    346.0,
+    50.0
+   ],
+   "tip_radii_px": [],
+   "tip_angles_deg": [],
+   "view": "front",
+   "seconds": 0.25
+  },
+  {
+   "id": "c17175040",
+   "title": "File:WKAIngersheimSockel 2011-10-30.jpg",
+   "page_url": "https://commons.wikimedia.org/?curid=17175040",
+   "model": "Enercon E-82",
+   "license": "CC BY-SA 3.0",
+   "artist": "Mussklprozz",
+   "camera_model": "NIKON D90",
+   "hub_height_source": "typical",
+   "orig_width": 4288,
+   "orig_height": 2650,
+   "date": "2011:10:29 10:19:38",
+   "source_kind": "model-subcat",
+   "origin": "Category:WKA Ingersheim",
+   "model_basis": null,
+   "size": [
+    1024,
+    633
+   ],
+   "focal_35mm": 22.0,
+   "hub_height_m": 98.0,
+   "rotor_radius_m": 41.0,
+   "failed": false,
+   "verdict": {
+    "ok": false,
+    "reasons": [
+     "只定位到 2 片葉片（應為 3）：可能有葉片正好貼在塔架上（六點鐘方位）或沒入雲層，請等轉子轉到三片都離開塔架再拍",
+     "三片葉尖半徑差 78%（上限 15%）：同一台風機三片等長，差這麼多代表有一片其實是地物、電線或別台風機，請重拍並確保只有一台風機在框內"
+    ],
+    "warnings": [
+     "沒有找到塔架：塔架傾斜與六點鐘方位判讀不可用（幾何互比仍可進行）",
+     "結構定位提示：葉片軸線共線（側視），輪轂投影到主葉片軸線"
+    ],
+    "metrics": {
+     "mask_area_frac": 0.017,
+     "sky_mask_frac": 0.017,
+     "horizon_y": null,
+     "n_blades": 2,
+     "view": "front",
+     "tip_radii_px": [
+      221.0,
+      96.6
+     ],
+     "tip_radius_spread": 0.783,
+     "second_rotor_radius_px": 0.0,
+     "second_rotor_arms": 0,
+     "second_rotor_ratio": 0.0
+    }
+   },
+   "n_blades": 2,
+   "tower_found": false,
+   "hub": [
+    464.2,
+    463.6
+   ],
+   "tip_radii_px": [
+    221.0,
+    96.6
+   ],
+   "tip_angles_deg": [
+    2.5,
+    174.9
+   ],
+   "radius_spread": 0.783,
+   "view": "front",
+   "seconds": 0.23
+  },
+  {
+   "id": "c10370483",
+   "title": "File:Windkraftanlage Ammerfeld 2.jpg",
+   "page_url": "https://commons.wikimedia.org/?curid=10370483",
+   "model": "Enercon E-82",
+   "license": "CC BY-SA 3.0",
+   "artist": "Chaddy",
+   "camera_model": "DMC-FX12",
+   "hub_height_source": "typical",
+   "orig_width": 2500,
+   "orig_height": 1807,
+   "date": "2010:03:07 17:14:29",
+   "source_kind": "model-subcat",
+   "origin": "Category:Windkraftanlage Ammerfeld",
+   "model_basis": null,
+   "size": [
+    1024,
+    740
+   ],
+   "focal_35mm": 105.0,
+   "hub_height_m": 98.0,
+   "rotor_radius_m": 41.0,
+   "failed": false,
+   "verdict": {
+    "ok": false,
+    "reasons": [
+     "只定位到 1 片葉片（應為 3）：可能有葉片正好貼在塔架上（六點鐘方位）或沒入雲層，請等轉子轉到三片都離開塔架再拍"
+    ],
+    "warnings": [
+     "沒有找到塔架：塔架傾斜與六點鐘方位判讀不可用（幾何互比仍可進行）",
+     "輪轂只有初估、未經葉片軸線精修：葉尖偏移量的精度會下降",
+     "結構定位提示：葉片軸線共線（側視），輪轂投影到主葉片軸線"
+    ],
+    "metrics": {
+     "mask_area_frac": 0.01,
+     "sky_mask_frac": 0.01,
+     "horizon_y": null,
+     "n_blades": 1,
+     "view": "front",
+     "tip_radii_px": [
+      144.2
+     ],
+     "second_rotor_radius_px": 63.6,
+     "second_rotor_arms": 2,
+     "second_rotor_ratio": 0.441
+    }
+   },
+   "n_blades": 1,
+   "tower_found": false,
+   "hub": [
+    567.0,
+    485.0
+   ],
+   "tip_radii_px": [
+    144.2
+   ],
+   "tip_angles_deg": [
+    3.2
+   ],
+   "radius_spread": 0.0,
+   "view": "front",
+   "seconds": 0.3
+  },
+  {
+   "id": "c10370423",
+   "title": "File:Windkraftanlage Ammerfeld.jpg",
+   "page_url": "https://commons.wikimedia.org/?curid=10370423",
+   "model": "Enercon E-82",
+   "license": "CC BY-SA 3.0",
+   "artist": "Chaddy",
+   "camera_model": "DMC-FX12",
+   "hub_height_source": "typical",
+   "orig_width": 3072,
+   "orig_height": 2304,
+   "date": "2010:03:07 17:14:48",
+   "source_kind": "model-subcat",
+   "origin": "Category:Windkraftanlage Ammerfeld",
+   "model_basis": null,
+   "size": [
+    1024,
+    768
+   ],
+   "focal_35mm": 55.0,
+   "hub_height_m": 98.0,
+   "rotor_radius_m": 41.0,
+   "failed": false,
+   "verdict": {
+    "ok": false,
+    "reasons": [
+     "只定位到 1 片葉片（應為 3）：可能有葉片正好貼在塔架上（六點鐘方位）或沒入雲層，請等轉子轉到三片都離開塔架再拍"
+    ],
+    "warnings": [
+     "沒有找到塔架：塔架傾斜與六點鐘方位判讀不可用（幾何互比仍可進行）",
+     "結構定位提示：葉片軸線共線（側視），輪轂投影到主葉片軸線"
+    ],
+    "metrics": {
+     "mask_area_frac": 0.0207,
+     "sky_mask_frac": 0.0207,
+     "horizon_y": null,
+     "n_blades": 1,
+     "view": "front",
+     "tip_radii_px": [
+      117.2
+     ],
+     "second_rotor_radius_px": 0.0,
+     "second_rotor_arms": 0,
+     "second_rotor_ratio": 0.0
+    }
+   },
+   "n_blades": 1,
+   "tower_found": false,
+   "hub": [
+    530.0,
+    466.0
+   ],
+   "tip_radii_px": [
+    117.2
+   ],
+   "tip_angles_deg": [
+    86.6
+   ],
+   "radius_spread": 0.0,
+   "view": "front",
+   "seconds": 0.27
+  },
+  {
+   "id": "c22433382",
+   "title": "File:Windpark-Külz02.jpg",
+   "page_url": "https://commons.wikimedia.org/?curid=22433382",
+   "model": "Enercon E-82",
+   "license": "CC0",
+   "artist": "Prankster",
+   "camera_model": "NIKON D40",
+   "hub_height_source": "typical",
+   "orig_width": 3008,
+   "orig_height": 2000,
+   "date": "2012:10:28 13:12:50",
+   "source_kind": "model-subcat",
+   "origin": "Category:Windpark Külz",
+   "model_basis": null,
+   "size": [
+    1024,
+    681
+   ],
+   "focal_35mm": 57.0,
+   "hub_height_m": 98.0,
+   "rotor_radius_m": 41.0,
+   "failed": false,
+   "verdict": {
+    "ok": false,
+    "reasons": [
+     "一片葉片都沒有定位到：多半是轉子沒有完整入鏡（請退後到整個轉子連同塔架都進得了畫面），或風機根本沒被分割出來（雲層、逆光或前景物撐壞天空模型，請換雲量少的時段、讓葉片背景是乾淨天空）"
+    ],
+    "warnings": [
+     "沒有找到塔架：塔架傾斜與六點鐘方位判讀不可用（幾何互比仍可進行）",
+     "輪轂只有初估、未經葉片軸線精修：葉尖偏移量的精度會下降"
+    ],
+    "metrics": {
+     "mask_area_frac": 0.0026,
+     "sky_mask_frac": 0.0026,
+     "horizon_y": null,
+     "n_blades": 0,
+     "view": "front",
+     "tip_radii_px": []
+    }
+   },
+   "n_blades": 0,
+   "tower_found": false,
+   "hub": [
+    595.0,
+    416.0
+   ],
+   "tip_radii_px": [],
+   "tip_angles_deg": [],
+   "view": "front",
+   "seconds": 0.15
+  },
+  {
+   "id": "c22433410",
+   "title": "File:Windpark-Külz03.jpg",
+   "page_url": "https://commons.wikimedia.org/?curid=22433410",
+   "model": "Enercon E-82",
+   "license": "CC0",
+   "artist": "Prankster",
+   "camera_model": "NIKON D40",
+   "hub_height_source": "typical",
+   "orig_width": 3008,
+   "orig_height": 2000,
+   "date": "2012:10:28 13:07:32",
+   "source_kind": "model-subcat",
+   "origin": "Category:Windpark Külz",
+   "model_basis": null,
+   "size": [
+    1024,
+    681
+   ],
+   "focal_35mm": 46.0,
+   "hub_height_m": 98.0,
+   "rotor_radius_m": 41.0,
+   "failed": false,
+   "verdict": {
+    "ok": false,
+    "reasons": [
+     "只定位到 1 片葉片（應為 3）：可能有葉片正好貼在塔架上（六點鐘方位）或沒入雲層，請等轉子轉到三片都離開塔架再拍"
+    ],
+    "warnings": [
+     "沒有找到塔架：塔架傾斜與六點鐘方位判讀不可用（幾何互比仍可進行）",
+     "輪轂只有初估、未經葉片軸線精修：葉尖偏移量的精度會下降",
+     "結構定位提示：葉片軸線共線（側視），輪轂投影到主葉片軸線"
+    ],
+    "metrics": {
+     "mask_area_frac": 0.0069,
+     "sky_mask_frac": 0.0069,
+     "horizon_y": null,
+     "n_blades": 1,
+     "view": "front",
+     "tip_radii_px": [
+      136.3
+     ],
+     "second_rotor_radius_px": 0.0,
+     "second_rotor_arms": 0,
+     "second_rotor_ratio": 0.0
+    }
+   },
+   "n_blades": 1,
+   "tower_found": false,
+   "hub": [
+    628.0,
+    304.0
+   ],
+   "tip_radii_px": [
+    136.3
+   ],
+   "tip_angles_deg": [
+    190.6
+   ],
+   "radius_spread": 0.0,
+   "view": "front",
+   "seconds": 0.17
+  },
+  {
+   "id": "c19932839",
+   "title": "File:Windpark-Neuerkirch00.jpg",
+   "page_url": "https://commons.wikimedia.org/?curid=19932839",
+   "model": "Enercon E-82",
+   "license": "CC0",
+   "artist": "Prankster",
+   "camera_model": "NIKON D40",
+   "hub_height_source": "typical",
+   "orig_width": 3008,
+   "orig_height": 2000,
+   "date": "2012:06:17 16:34:35",
+   "source_kind": "model-subcat",
+   "origin": "Category:Windpark Neuerkirch",
+   "model_basis": null,
+   "size": [
+    1024,
+    681
+   ],
+   "focal_35mm": 27.0,
+   "hub_height_m": 98.0,
+   "rotor_radius_m": 41.0,
+   "failed": false,
+   "verdict": {
+    "ok": false,
+    "reasons": [
+     "一片葉片都沒有定位到：多半是轉子沒有完整入鏡（請退後到整個轉子連同塔架都進得了畫面），或風機根本沒被分割出來（雲層、逆光或前景物撐壞天空模型，請換雲量少的時段、讓葉片背景是乾淨天空）"
+    ],
+    "warnings": [
+     "沒有找到塔架：塔架傾斜與六點鐘方位判讀不可用（幾何互比仍可進行）",
+     "輪轂只有初估、未經葉片軸線精修：葉尖偏移量的精度會下降"
+    ],
+    "metrics": {
+     "mask_area_frac": 0.0396,
+     "sky_mask_frac": 0.0396,
+     "horizon_y": null,
+     "n_blades": 0,
+     "view": "front",
+     "tip_radii_px": []
+    }
+   },
+   "n_blades": 0,
+   "tower_found": false,
+   "hub": [
+    0.0,
+    0.0
+   ],
+   "tip_radii_px": [],
+   "tip_angles_deg": [],
+   "view": "front",
+   "seconds": 0.2
+  },
+  {
+   "id": "c20562709",
+   "title": "File:Windpark-06-04-2012-3.jpg",
+   "page_url": "https://commons.wikimedia.org/?curid=20562709",
+   "model": "Nordex N117",
+   "license": "CC BY-SA 3.0",
+   "artist": "Wblecker",
+   "camera_model": "DMC-FZ45",
+   "hub_height_source": "typical",
+   "orig_width": 2880,
+   "orig_height": 4320,
+   "date": "2012:06:04 17:09:47",
+   "source_kind": "model-subcat",
+   "origin": "Category:Windpark Hohenahr",
+   "model_basis": null,
+   "size": [
+    683,
+    1024
+   ],
+   "focal_35mm": 93.0,
+   "hub_height_m": 120.0,
+   "rotor_radius_m": 58.4,
+   "failed": false,
+   "verdict": {
+    "ok": true,
+    "reasons": [],
+    "warnings": [
+     "側視：三片投影共線，三片互比不適用。本張只量垂掛葉片的 flapwise 彎曲，而且單幀值含預彎，要與同一台的基線或正視互比結果對照才有意義",
+     "結構定位提示：葉片軸線共線（側視），輪轂投影到主葉片軸線"
+    ],
+    "metrics": {
+     "mask_area_frac": 0.014,
+     "sky_mask_frac": 0.014,
+     "horizon_y": null,
+     "n_blades": 2,
+     "view": "side",
+     "hanging_blade_index": 1,
+     "tip_radii_px": [
+      276.1,
+      200.1
+     ],
+     "tip_radius_spread": 0.319,
+     "second_rotor_radius_px": 0.0,
+     "second_rotor_arms": 0,
+     "second_rotor_ratio": 0.0
+    }
+   },
+   "n_blades": 2,
+   "tower_found": true,
+   "hub": [
+    364.9,
+    380.0
+   ],
+   "tip_radii_px": [
+    276.1,
+    200.1
+   ],
+   "tip_angles_deg": [
+    91.9,
+    268.6
+   ],
+   "radius_spread": 0.319,
+   "view": "side",
+   "side_view": {
+    "label": "B",
+    "tip_deflection_px": -19.194866073280984,
+    "tip_deflection_cm": -751.6802461447309,
+    "radius_px": 149.12992385112813
+   },
+   "seconds": 0.25
+  },
+  {
+   "id": "c18133307",
+   "title": "File:Enercon E66.jpg",
+   "page_url": "https://commons.wikimedia.org/?curid=18133307",
+   "model": "Nordex N90",
+   "license": "CC BY-SA 3.0",
+   "artist": "Joseph-Evan-Capelli",
+   "camera_model": "NIKON D90",
+   "hub_height_source": "typical",
+   "orig_width": 2848,
+   "orig_height": 4288,
+   "date": "2011:06:04 14:48:18",
+   "source_kind": "model",
+   "origin": "Category:Nordex N90",
+   "model_basis": null,
+   "size": [
+    680,
+    1024
+   ],
+   "focal_35mm": 42.0,
+   "hub_height_m": 100.0,
+   "rotor_radius_m": 45.0,
+   "failed": false,
+   "verdict": {
+    "ok": false,
+    "reasons": [
+     "只定位到 1 片葉片（應為 3）：可能有葉片正好貼在塔架上（六點鐘方位）或沒入雲層，請等轉子轉到三片都離開塔架再拍"
+    ],
+    "warnings": [],
+    "metrics": {
+     "mask_area_frac": 0.0225,
+     "sky_mask_frac": 0.0225,
+     "horizon_y": null,
+     "n_blades": 1,
+     "view": "front",
+     "tip_radii_px": [
+      447.6
+     ],
+     "second_rotor_radius_px": 0.0,
+     "second_rotor_arms": 0,
+     "second_rotor_ratio": 0.0
+    }
+   },
+   "n_blades": 1,
+   "tower_found": true,
+   "hub": [
+    313.7,
+    773.5
+   ],
+   "tip_radii_px": [
+    447.6
+   ],
+   "tip_angles_deg": [
+    76.7
+   ],
+   "radius_spread": 0.0,
+   "view": "front",
+   "seconds": 0.28
+  },
+  {
+   "id": "c17176533",
+   "title": "File:Nordex N-90 Windkraftanlage.jpg",
+   "page_url": "https://commons.wikimedia.org/?curid=17176533",
+   "model": "Nordex N90",
+   "license": "CC BY-SA 3.0",
+   "artist": "Joseph-Evan-Capelli",
+   "camera_model": "NIKON D90",
+   "hub_height_source": "typical",
+   "orig_width": 4288,
+   "orig_height": 2848,
+   "date": "2011:06:04 14:16:00",
+   "source_kind": "model",
+   "origin": "Category:Nordex N90",
+   "model_basis": null,
+   "size": [
+    1024,
+    680
+   ],
+   "focal_35mm": 36.0,
+   "hub_height_m": 100.0,
+   "rotor_radius_m": 45.0,
+   "failed": false,
+   "verdict": {
+    "ok": false,
+    "reasons": [
+     "一片葉片都沒有定位到：多半是轉子沒有完整入鏡（請退後到整個轉子連同塔架都進得了畫面），或風機根本沒被分割出來（雲層、逆光或前景物撐壞天空模型，請換雲量少的時段、讓葉片背景是乾淨天空）"
+    ],
+    "warnings": [
+     "沒有找到塔架：塔架傾斜與六點鐘方位判讀不可用（幾何互比仍可進行）",
+     "輪轂只有初估、未經葉片軸線精修：葉尖偏移量的精度會下降"
+    ],
+    "metrics": {
+     "mask_area_frac": 0.0459,
+     "sky_mask_frac": 0.0459,
+     "horizon_y": null,
+     "n_blades": 0,
+     "view": "front",
+     "tip_radii_px": []
+    }
+   },
+   "n_blades": 0,
+   "tower_found": false,
+   "hub": [
+    0.0,
+    0.0
+   ],
+   "tip_radii_px": [],
+   "tip_angles_deg": [],
+   "view": "front",
+   "seconds": 0.14
+  },
+  {
+   "id": "c19637139",
+   "title": "File:Nordex N90.JPG",
+   "page_url": "https://commons.wikimedia.org/?curid=19637139",
+   "model": "Nordex N90",
+   "license": "CC BY-SA 3.0",
+   "artist": "Joseph-Evan-Capelli",
+   "camera_model": "NIKON D90",
+   "hub_height_source": "typical",
+   "orig_width": 2848,
+   "orig_height": 4288,
+   "date": "2012:05:28 20:45:13",
+   "source_kind": "model",
+   "origin": "Category:Nordex N90",
+   "model_basis": null,
+   "size": [
+    680,
+    1024
+   ],
+   "focal_35mm": 60.0,
+   "hub_height_m": 100.0,
+   "rotor_radius_m": 45.0,
+   "failed": false,
+   "verdict": {
+    "ok": true,
+    "reasons": [],
+    "warnings": [
+     "側視：三片投影共線，三片互比不適用。本張只量垂掛葉片的 flapwise 彎曲，而且單幀值含預彎，要與同一台的基線或正視互比結果對照才有意義",
+     "結構定位提示：葉片軸線共線（側視），輪轂投影到主葉片軸線"
+    ],
+    "metrics": {
+     "mask_area_frac": 0.04,
+     "sky_mask_frac": 0.04,
+     "horizon_y": null,
+     "n_blades": 2,
+     "view": "side",
+     "hanging_blade_index": 1,
+     "tip_radii_px": [
+      308.2,
+      276.7
+     ],
+     "tip_radius_spread": 0.108,
+     "second_rotor_radius_px": 37.0,
+     "second_rotor_arms": 1,
+     "second_rotor_ratio": 0.127
+    }
+   },
+   "n_blades": 2,
+   "tower_found": true,
+   "hub": [
+    365.8,
+    345.1
+   ],
+   "tip_radii_px": [
+    308.2,
+    276.7
+   ],
+   "tip_angles_deg": [
+    91.8,
+    279.4
+   ],
+   "radius_spread": 0.108,
+   "view": "side",
+   "side_view": {
+    "label": "B",
+    "tip_deflection_px": -6.8016147305480965,
+    "tip_deflection_cm": -111.41355602647911,
+    "radius_px": 274.7176140773404
+   },
+   "seconds": 0.26
+  },
+  {
+   "id": "c19637258",
+   "title": "File:Sonnenuntergang am Pfingstmontag.JPG",
+   "page_url": "https://commons.wikimedia.org/?curid=19637258",
+   "model": "Nordex N90",
+   "license": "CC BY-SA 3.0",
+   "artist": "Joseph-Evan-Capelli",
+   "camera_model": "NIKON D90",
+   "hub_height_source": "typical",
+   "orig_width": 4288,
+   "orig_height": 2848,
+   "date": "2012:05:28 21:11:43",
+   "source_kind": "model",
+   "origin": "Category:Nordex N90",
+   "model_basis": null,
+   "size": [
+    1024,
+    680
+   ],
+   "focal_35mm": 117.0,
+   "hub_height_m": 100.0,
+   "rotor_radius_m": 45.0,
+   "failed": false,
+   "verdict": {
+    "ok": false,
+    "reasons": [
+     "一片葉片都沒有定位到：多半是轉子沒有完整入鏡（請退後到整個轉子連同塔架都進得了畫面），或風機根本沒被分割出來（雲層、逆光或前景物撐壞天空模型，請換雲量少的時段、讓葉片背景是乾淨天空）"
+    ],
+    "warnings": [
+     "沒有找到塔架：塔架傾斜與六點鐘方位判讀不可用（幾何互比仍可進行）",
+     "輪轂只有初估、未經葉片軸線精修：葉尖偏移量的精度會下降"
+    ],
+    "metrics": {
+     "mask_area_frac": 0.018,
+     "sky_mask_frac": 0.018,
+     "horizon_y": null,
+     "n_blades": 0,
+     "view": "front",
+     "tip_radii_px": []
+    }
+   },
+   "n_blades": 0,
+   "tower_found": false,
+   "hub": [
+    0.0,
+    0.0
+   ],
+   "tip_radii_px": [],
+   "tip_angles_deg": [],
+   "view": "front",
+   "seconds": 0.18
+  },
+  {
+   "id": "c16282953",
+   "title": "File:The Sprogø Vindmølle Park.jpg",
+   "page_url": "https://commons.wikimedia.org/?curid=16282953",
+   "model": "Vestas V90",
+   "license": "CC BY-SA 3.0",
+   "artist": "Fxp42",
+   "camera_model": "DMC-FZ7",
+   "hub_height_source": "typical",
+   "orig_width": 2744,
+   "orig_height": 1791,
+   "date": "2010:07:18 21:17:52",
+   "source_kind": "model-subcat",
+   "origin": "Category:Sprogø Havmøllepark",
+   "model_basis": null,
+   "size": [
+    1024,
+    768
+   ],
+   "focal_35mm": 212.0,
+   "hub_height_m": 105.0,
+   "rotor_radius_m": 45.0,
+   "failed": false,
+   "verdict": {
+    "ok": false,
+    "reasons": [
+     "畫面上幾乎分不出風機（前景僅 0.04%）：白色葉片對上亮雲天空對比不足，請換角度讓葉片背景是純天空",
+     "一片葉片都沒有定位到：多半是轉子沒有完整入鏡（請退後到整個轉子連同塔架都進得了畫面），或風機根本沒被分割出來（雲層、逆光或前景物撐壞天空模型，請換雲量少的時段、讓葉片背景是乾淨天空）"
+    ],
+    "warnings": [
+     "沒有找到塔架：塔架傾斜與六點鐘方位判讀不可用（幾何互比仍可進行）",
+     "輪轂只有初估、未經葉片軸線精修：葉尖偏移量的精度會下降"
+    ],
+    "metrics": {
+     "mask_area_frac": 0.0004,
+     "sky_mask_frac": 0.0004,
+     "horizon_y": null,
+     "n_blades": 0,
+     "view": "front",
+     "tip_radii_px": []
+    }
+   },
+   "n_blades": 0,
+   "tower_found": false,
+   "hub": [
+    997.0,
+    407.0
+   ],
+   "tip_radii_px": [],
+   "tip_angles_deg": [],
+   "view": "front",
+   "seconds": 0.16
+  },
+  {
+   "id": "c18597486",
+   "title": "File:Średnica Jakubowięta - turbina wiatrowa.JPG",
+   "page_url": "https://commons.wikimedia.org/?curid=18597486",
+   "model": "Vestas V90",
+   "license": "CC BY-SA 3.0",
+   "artist": "Adam-dalekie-pole",
+   "camera_model": "KODAK Z885 ZOOM DIGITAL CAMERA",
+   "hub_height_source": "typical",
+   "orig_width": 2448,
+   "orig_height": 3264,
+   "date": "2012:03:04 10:34:49",
+   "source_kind": "model",
+   "origin": "Category:Vestas V90",
+   "model_basis": null,
+   "size": [
+    768,
+    1024
+   ],
+   "focal_35mm": 105.0,
+   "hub_height_m": 105.0,
+   "rotor_radius_m": 45.0,
+   "failed": false,
+   "verdict": {
+    "ok": false,
+    "reasons": [
+     "三片葉尖半徑差 64%（上限 15%）：同一台風機三片等長，差這麼多代表有一片其實是地物、電線或別台風機，請重拍並確保只有一台風機在框內"
+    ],
+    "warnings": [],
+    "metrics": {
+     "mask_area_frac": 0.0535,
+     "sky_mask_frac": 0.0535,
+     "horizon_y": null,
+     "n_blades": 3,
+     "view": "front",
+     "tip_radii_px": [
+      205.7,
+      151.1,
+      283.4
+     ],
+     "tip_radius_spread": 0.643,
+     "second_rotor_radius_px": 0.0,
+     "second_rotor_arms": 0,
+     "second_rotor_ratio": 0.0
+    }
+   },
+   "n_blades": 3,
+   "tower_found": true,
+   "hub": [
+    318.1,
+    302.0
+   ],
+   "tip_radii_px": [
+    205.7,
+    151.1,
+    283.4
+   ],
+   "tip_angles_deg": [
+    49.7,
+    126.2,
+    256.9
+   ],
+   "radius_spread": 0.643,
+   "view": "front",
+   "seconds": 0.37
+  }
+ ]
+}
