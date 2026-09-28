@@ -191,8 +191,9 @@ def test_mirror_report_names_its_own_source() -> None:
 def test_two_batches_are_separate_records() -> None:
     """兩批是**各自獨立**的紀錄，不可互相覆蓋。
 
-    第一批 86 張是 1280 px 縮圖抓的，其中 70 張的來源已經拿不到了（鏡像凍結在 2013-03），
-    重跑不回來；第二批 66 張是鏡像原圖。把任一邊覆寫掉就是永久損失，所以這裡釘住兩件事：
+    第一批 86 張是走 Commons 縮圖端點抓的，其中 70 張鏡像上拿不到（媒體凍結在 2013-03），
+    要重抓得換一個沒被 upload.wikimedia.org 擋住的網路；第二批 66 張是鏡像原圖。
+    影像只活在容器的 scratchpad 裡，回收就沒了，覆寫掉結果檔等於連數字都沒了，所以這裡釘住兩件事：
     兩個檔案都在、而且第一批的張數沒有被第二批改動。
     """
     first = json.loads(RESULTS.read_text(encoding="utf-8"))
@@ -205,20 +206,45 @@ def test_two_batches_are_separate_records() -> None:
     assert len(ids_first & ids_second) == 16
 
 
+# 重疊的 16 張裡，兩批**真的拿到不同解析度**的只有這 7 張（2026-09-28 逐張量磁碟上的影像）：
+# 第一批 1920 px 長邊、第二批 3648–4256 px 原圖。另外 9 張兩批是**同一個檔案**（逐位元相同）——
+# Commons 縮圖端點在要求寬度 ≥ 原圖寬度時直接回原圖，所以那 9 張的「輸出一樣」是恆等式不是證據。
+RESOLUTION_DIFFERED = [
+    "c19326536", "c19669637", "c19674205", "c19674208", "c19674213", "c6326631", "c6326636",
+]
+
+
 @pytest.mark.skipif(not (RESULTS.exists() and RESULTS_MIRROR.exists()), reason="兩批都要在")
 def test_source_resolution_does_not_change_the_gate() -> None:
-    """重疊那 16 張：**1280 px 縮圖與全解析度原圖，閘門結論逐張相同**（2026-09-28 實測 16/16）。
+    """重疊那 16 張：閘門的**收／不收**逐張相同——但證據只有 7 張，而且**全是拒收**。
 
-    這條是方法學上的保險：剩下的 247 張只能在別的網路上用**縮圖**抓
-    （鏡像凍結在 2013-03，拿不到它們的原圖）。如果縮圖會改變閘門結論，那批數字就不能
-    跟這批併著看。兩條路徑都先縮到 max_side 1024 才進管線，所以理論上應該一樣——這裡量到它真的一樣。
-    這個測試紅了，代表解析度開始影響判定，混用兩批之前要先查清楚。
+    這條是方法學上的保險：剩下的 177 張只能在別的網路上用**縮圖**抓（鏡像凍結在 2013-03），
+    如果解析度會改變閘門結論，那批數字就不能跟這兩批併著看。兩條路徑都先縮到 max_side 1024
+    才進管線，所以理論上該一樣。但 2026-09-28 逐張比對磁碟上的影像後發現，
+    **16 張裡只有 7 張真的是「縮圖 vs 原圖」**（見 RESOLUTION_DIFFERED），
+    而那 7 張的內部量全都有變動——其中 c6326631 的葉片數 3 → 1、拒收理由整個換掉——
+    **收／不收仍然相同，但這 7 張兩邊都是拒收**。放行那一側還沒有任何一張真的比較過不同解析度。
+
+    所以這裡釘的是實際成立的那件事，不是更強的說法：①16 張的 `verdict.ok` 相同；
+    ②輸出有差的**恰好**是那 7 張真的不同解析度的（有第 8 張有差，代表同檔案跑出不同結果，是真的壞了）；
+    ③那 7 張兩邊都是拒收，也就是等價性在放行側仍未驗證——要補，得把已放行的照片降解析度重跑一次。
     """
     first = {r["id"]: r for r in json.loads(RESULTS.read_text(encoding="utf-8"))["images"]}
     second = {r["id"]: r for r in json.loads(RESULTS_MIRROR.read_text(encoding="utf-8"))["images"]}
     overlap = sorted(set(first) & set(second))
-    differing = [
+
+    differing_decision = [
         k for k in overlap
         if (first[k].get("verdict") or {}).get("ok") != (second[k].get("verdict") or {}).get("ok")
     ]
-    assert differing == [], f"縮圖與原圖的閘門結論不一致：{differing}"
+    assert differing_decision == [], f"不同來源的閘門收／不收不一致：{differing_decision}"
+
+    differing_output = sorted(k for k in overlap if first[k].get("verdict") != second[k].get("verdict"))
+    assert differing_output == sorted(RESOLUTION_DIFFERED), (
+        "輸出有差的那組不再等於真的不同解析度的那組："
+        f"有差 {differing_output}、不同解析度 {sorted(RESOLUTION_DIFFERED)}"
+    )
+
+    # 等價性目前只在拒收側被驗到——這一條紅了是好事（代表放行側終於有證據），但要同步改文件
+    accepted = [k for k in RESOLUTION_DIFFERED if (first[k]["verdict"]["ok"] or second[k]["verdict"]["ok"])]
+    assert accepted == [], f"放行側現在有不同解析度的樣本了，SPEC §13-15 的界線要改寫：{accepted}"
