@@ -166,7 +166,7 @@ App 端同樣）；③`synth-still` 給的尺度塞不下轉子時會靜靜產�
 
 ### 2026-09-14 追加：側視閘門（§13-12）已修，且 CI 改成本機跑
 
-- **GitHub Actions 因用量預算暫停**（劉老師決定本月不充值）。PR 上的 CI 一律秒紅（runner 未指派），不是程式問題。本容器可以裝 Flutter（指令在 `CLAUDE.md` 已知問題「本機 Flutter 取代 CI」），`flutter test` 506 條約 40 秒；合併前驗證改成本機三軌。
+- **GitHub Actions 停用期已結束（2026-09-28 實測）**：PR #84 上四個檢查全綠、runner 有被指派（Flutter 1m54s／Blade prototype 2m23s／Backend 26s／GitGuardian）。在此之前（2026-09-14 起）因用量預算暫停，PR 上的 CI 一律秒紅（`runner_id: 0`），那是環境不是程式問題——看到舊 PR 的紅不用查。本容器仍可裝 Flutter（指令在 `CLAUDE.md` 已知問題「本機 Flutter 取代 CI」），`flutter test` 506 條約 40 秒；本機三軌先跑仍然划算，但**合併前要看 PR 上的 CI**。
 - **§13-12 側視閘門**：`quality.detect_side_view`／`BladeStructureGate.detectSideView`（恰好兩片、一上一下、垂直 ±12°、有塔架）→ 側視不套三片規則，改警告「互比不適用、只量垂掛葉片彎曲」；幾何層 `side_view_summary`／`sideViewSummary`；報告與 App 備註同步。75 張真實照片閘門結果逐張 0 改變。Python 144／Flutter 506 本機全綠。新夾具 `scripts/make_side_fixture.py`。
 - **§8 第 3 項也修了**：拒收訊息依葉片數分開（`n = 0`／`1-2`／`>3`）。原本想加的「遮罩貼到邊界 → 轉子沒入鏡」規則**量過之後否決**——正確放行的真實照片葉尖到邊界只有 0.02–0.03 R、設計內的 12 MP 合成照 0.007 R，不可分；所以只改訊息、放行與拒收完全不變（逐張 0 差異）。75 張裡 18 張是 `n = 0`，在此之前全被告知去「等轉子轉開」。
 - 未動：§13-11（透視假訊號）要外業資料才能校準雜訊底。
