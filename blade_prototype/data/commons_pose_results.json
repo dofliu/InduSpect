@@ -6,17 +6,17 @@
  "summary": {
   "n": 86,
   "failed": 2,
-  "accepted": 5,
+  "accepted": 3,
   "accepted_front": 3,
-  "accepted_side": 2,
-  "rejected": 79,
+  "accepted_side": 0,
+  "rejected": 81,
   "reject_reasons": {
-   "只定位到 N 片葉片（…）": 34,
-   "三片葉尖半徑差 N%（…）": 32,
+   "只定位到 N 片葉片（…）": 36,
+   "三片葉尖半徑差 N%（…）": 34,
    "一片葉片都沒有定位到": 31,
    "結構定位失敗（…）": 2
   },
-  "second_rotor_warnings": 3,
+  "second_rotor_warnings": 2,
   "pose_usable": 3,
   "pose_unusable_notes": {},
   "elevation_deg": {
@@ -93,7 +93,7 @@
    },
    "Enercon E-115": {
     "n": 9,
-    "accepted": 1,
+    "accepted": 0,
     "front": 0,
     "pose_usable": 0,
     "raw_defl_flagged": 0,
@@ -125,7 +125,7 @@
    },
    "Enercon E-70": {
     "n": 5,
-    "accepted": 1,
+    "accepted": 0,
     "front": 0,
     "pose_usable": 0,
     "raw_defl_flagged": 0,
@@ -135,7 +135,7 @@
   "per_source": {
    "model": {
     "n": 53,
-    "accepted": 5,
+    "accepted": 3,
     "front": 3,
     "pose_usable": 3,
     "raw_defl_flagged": 1,
@@ -158,7 +158,7 @@
     "comp_defl_flagged": 0
    }
   },
-  "seconds_median": 0.33
+  "seconds_median": 0.26
  },
  "images": [
   {
@@ -193,7 +193,7 @@
     "warnings": [],
     "metrics": {}
    },
-   "seconds": 0.42
+   "seconds": 0.33
   },
   {
    "id": "c38239735",
@@ -261,7 +261,7 @@
    ],
    "radius_spread": 0.215,
    "view": "front",
-   "seconds": 0.45
+   "seconds": 0.35
   },
   {
    "id": "c19326536",
@@ -324,7 +324,7 @@
    ],
    "radius_spread": 0.117,
    "view": "front",
-   "seconds": 0.4
+   "seconds": 0.35
   },
   {
    "id": "c20885155",
@@ -390,7 +390,7 @@
    ],
    "radius_spread": 0.367,
    "view": "front",
-   "seconds": 0.44
+   "seconds": 0.32
   },
   {
    "id": "c21367677",
@@ -459,7 +459,7 @@
    ],
    "radius_spread": 2.181,
    "view": "front",
-   "seconds": 0.44
+   "seconds": 0.36
   },
   {
    "id": "c49383831",
@@ -526,7 +526,7 @@
    ],
    "radius_spread": 0.346,
    "view": "front",
-   "seconds": 0.43
+   "seconds": 0.35
   },
   {
    "id": "c49383834",
@@ -593,7 +593,7 @@
    ],
    "radius_spread": 0.391,
    "view": "front",
-   "seconds": 1.15
+   "seconds": 0.92
   },
   {
    "id": "c49383836",
@@ -645,7 +645,7 @@
    "tip_radii_px": [],
    "tip_angles_deg": [],
    "view": "front",
-   "seconds": 0.27
+   "seconds": 0.19
   },
   {
    "id": "c49384455",
@@ -671,10 +671,12 @@
    "rotor_radius_m": 57.85,
    "failed": false,
    "verdict": {
-    "ok": true,
-    "reasons": [],
+    "ok": false,
+    "reasons": [
+     "只定位到 2 片葉片（應為 3）：可能有葉片正好貼在塔架上（六點鐘方位）或沒入雲層，請等轉子轉到三片都離開塔架再拍",
+     "三片葉尖半徑差 111%（上限 15%）：同一台風機三片等長，差這麼多代表有一片其實是地物、電線或別台風機，請重拍並確保只有一台風機在框內"
+    ],
     "warnings": [
-     "側視：三片投影共線，三片互比不適用。本張只量垂掛葉片的 flapwise 彎曲，而且單幀值含預彎，要與同一台的基線或正視互比結果對照才有意義",
      "畫面裡還有另一個轉子，半徑約為主風機的 138%：請確認量到的是要量的那一台；風場的風機外觀相同，量錯對象不會有任何徵兆",
      "結構定位提示：葉片軸線共線（側視），輪轂投影到主葉片軸線"
     ],
@@ -683,8 +685,7 @@
      "sky_mask_frac": 0.0309,
      "horizon_y": null,
      "n_blades": 2,
-     "view": "side",
-     "hanging_blade_index": 1,
+     "view": "front",
      "tip_radii_px": [
       54.3,
       189.7
@@ -710,14 +711,8 @@
     270.5
    ],
    "radius_spread": 1.11,
-   "view": "side",
-   "side_view": {
-    "label": "B",
-    "tip_deflection_px": -3.70779774928245,
-    "tip_deflection_cm": -113.67540003339593,
-    "radius_px": 188.69174837561545
-   },
-   "seconds": 0.49
+   "view": "front",
+   "seconds": 0.32
   },
   {
    "id": "c49384464",
@@ -785,7 +780,7 @@
    ],
    "radius_spread": 3.617,
    "view": "front",
-   "seconds": 0.27
+   "seconds": 0.19
   },
   {
    "id": "c49395978",
@@ -851,7 +846,7 @@
    ],
    "radius_spread": 0.748,
    "view": "front",
-   "seconds": 0.75
+   "seconds": 0.57
   },
   {
    "id": "c87603470",
@@ -920,7 +915,7 @@
    ],
    "radius_spread": 0.285,
    "view": "front",
-   "seconds": 0.49
+   "seconds": 0.4
   },
   {
    "id": "c189094434",
@@ -988,7 +983,7 @@
    ],
    "radius_spread": 0.283,
    "view": "front",
-   "seconds": 0.4
+   "seconds": 0.33
   },
   {
    "id": "c189094433",
@@ -1054,7 +1049,7 @@
    ],
    "radius_spread": 0.507,
    "view": "front",
-   "seconds": 0.5
+   "seconds": 0.4
   },
   {
    "id": "c36405367",
@@ -1117,7 +1112,7 @@
    ],
    "radius_spread": 0.015,
    "view": "front",
-   "seconds": 0.37
+   "seconds": 0.27
   },
   {
    "id": "c26562677",
@@ -1169,7 +1164,7 @@
    "tip_radii_px": [],
    "tip_angles_deg": [],
    "view": "front",
-   "seconds": 0.23
+   "seconds": 0.2
   },
   {
    "id": "c26562683",
@@ -1221,7 +1216,7 @@
    "tip_radii_px": [],
    "tip_angles_deg": [],
    "view": "front",
-   "seconds": 0.22
+   "seconds": 0.18
   },
   {
    "id": "c26562709",
@@ -1288,7 +1283,7 @@
    ],
    "radius_spread": 1.182,
    "view": "front",
-   "seconds": 0.28
+   "seconds": 0.21
   },
   {
    "id": "c26565245",
@@ -1340,7 +1335,7 @@
    "tip_radii_px": [],
    "tip_angles_deg": [],
    "view": "front",
-   "seconds": 0.22
+   "seconds": 0.18
   },
   {
    "id": "c26565336",
@@ -1392,7 +1387,7 @@
    "tip_radii_px": [],
    "tip_angles_deg": [],
    "view": "front",
-   "seconds": 0.24
+   "seconds": 0.21
   },
   {
    "id": "c26565345",
@@ -1511,7 +1506,7 @@
    ],
    "radius_spread": 0.604,
    "view": "front",
-   "seconds": 0.38
+   "seconds": 0.31
   },
   {
    "id": "c26565658",
@@ -1562,7 +1557,7 @@
    "tip_radii_px": [],
    "tip_angles_deg": [],
    "view": "front",
-   "seconds": 0.27
+   "seconds": 0.24
   },
   {
    "id": "c26565683",
@@ -1613,7 +1608,7 @@
    "tip_radii_px": [],
    "tip_angles_deg": [],
    "view": "front",
-   "seconds": 0.24
+   "seconds": 0.21
   },
   {
    "id": "c26565687",
@@ -1665,7 +1660,7 @@
    "tip_radii_px": [],
    "tip_angles_deg": [],
    "view": "front",
-   "seconds": 0.23
+   "seconds": 0.19
   },
   {
    "id": "c26565694",
@@ -1717,7 +1712,7 @@
    "tip_radii_px": [],
    "tip_angles_deg": [],
    "view": "front",
-   "seconds": 0.26
+   "seconds": 0.2
   },
   {
    "id": "c26565702",
@@ -1769,7 +1764,7 @@
    "tip_radii_px": [],
    "tip_angles_deg": [],
    "view": "front",
-   "seconds": 0.21
+   "seconds": 0.16
   },
   {
    "id": "c26567504",
@@ -1821,7 +1816,7 @@
    "tip_radii_px": [],
    "tip_angles_deg": [],
    "view": "front",
-   "seconds": 0.21
+   "seconds": 0.16
   },
   {
    "id": "c26567508",
@@ -1873,7 +1868,7 @@
    "tip_radii_px": [],
    "tip_angles_deg": [],
    "view": "front",
-   "seconds": 0.2
+   "seconds": 0.16
   },
   {
    "id": "c26978844",
@@ -1925,7 +1920,7 @@
    "tip_radii_px": [],
    "tip_angles_deg": [],
    "view": "front",
-   "seconds": 0.24
+   "seconds": 0.19
   },
   {
    "id": "c26978900",
@@ -1976,7 +1971,7 @@
    "tip_radii_px": [],
    "tip_angles_deg": [],
    "view": "front",
-   "seconds": 0.25
+   "seconds": 0.19
   },
   {
    "id": "c26894897",
@@ -2028,7 +2023,7 @@
    "tip_radii_px": [],
    "tip_angles_deg": [],
    "view": "front",
-   "seconds": 0.24
+   "seconds": 0.19
   },
   {
    "id": "c26894840",
@@ -2079,7 +2074,7 @@
    "tip_radii_px": [],
    "tip_angles_deg": [],
    "view": "front",
-   "seconds": 0.23
+   "seconds": 0.3
   },
   {
    "id": "c26727051",
@@ -2140,7 +2135,7 @@
    ],
    "radius_spread": 0.0,
    "view": "front",
-   "seconds": 0.39
+   "seconds": 0.33
   },
   {
    "id": "c6914141",
@@ -2203,7 +2198,7 @@
    ],
    "radius_spread": 0.0,
    "view": "front",
-   "seconds": 0.42
+   "seconds": 0.34
   },
   {
    "id": "c113015211",
@@ -2269,7 +2264,7 @@
    ],
    "radius_spread": 0.421,
    "view": "front",
-   "seconds": 0.34
+   "seconds": 0.25
   },
   {
    "id": "c6326631",
@@ -2338,7 +2333,7 @@
    ],
    "radius_spread": 0.673,
    "view": "front",
-   "seconds": 0.36
+   "seconds": 0.3
   },
   {
    "id": "c6326636",
@@ -2390,7 +2385,7 @@
    "tip_radii_px": [],
    "tip_angles_deg": [],
    "view": "front",
-   "seconds": 0.27
+   "seconds": 0.26
   },
   {
    "id": "c26895300",
@@ -2441,7 +2436,7 @@
    "tip_radii_px": [],
    "tip_angles_deg": [],
    "view": "front",
-   "seconds": 0.26
+   "seconds": 0.21
   },
   {
    "id": "c26835458",
@@ -2502,7 +2497,7 @@
    ],
    "radius_spread": 0.0,
    "view": "front",
-   "seconds": 0.33
+   "seconds": 0.28
   },
   {
    "id": "c26835574",
@@ -2554,7 +2549,7 @@
    "tip_radii_px": [],
    "tip_angles_deg": [],
    "view": "front",
-   "seconds": 0.25
+   "seconds": 0.2
   },
   {
    "id": "c26876567",
@@ -2622,7 +2617,7 @@
    ],
    "radius_spread": 2.202,
    "view": "front",
-   "seconds": 0.35
+   "seconds": 0.29
   },
   {
    "id": "c26835656",
@@ -2674,7 +2669,7 @@
    "tip_radii_px": [],
    "tip_angles_deg": [],
    "view": "front",
-   "seconds": 0.25
+   "seconds": 0.28
   },
   {
    "id": "c26835707",
@@ -2726,7 +2721,7 @@
    "tip_radii_px": [],
    "tip_angles_deg": [],
    "view": "front",
-   "seconds": 0.21
+   "seconds": 0.17
   },
   {
    "id": "c26979080",
@@ -2794,7 +2789,7 @@
    ],
    "radius_spread": 0.339,
    "view": "front",
-   "seconds": 0.45
+   "seconds": 0.39
   },
   {
    "id": "c184853055",
@@ -2860,7 +2855,7 @@
    ],
    "radius_spread": 0.402,
    "view": "front",
-   "seconds": 0.28
+   "seconds": 0.23
   },
   {
    "id": "c184853067",
@@ -3070,7 +3065,7 @@
      "same_flags": true
     }
    },
-   "seconds": 0.33
+   "seconds": 0.25
   },
   {
    "id": "c184853092",
@@ -3131,7 +3126,7 @@
    ],
    "radius_spread": 0.0,
    "view": "front",
-   "seconds": 0.42
+   "seconds": 0.31
   },
   {
    "id": "c26835764",
@@ -3197,7 +3192,7 @@
    ],
    "radius_spread": 0.793,
    "view": "front",
-   "seconds": 0.34
+   "seconds": 0.26
   },
   {
    "id": "c26747464",
@@ -3260,7 +3255,7 @@
    ],
    "radius_spread": 0.0,
    "view": "front",
-   "seconds": 0.33
+   "seconds": 0.29
   },
   {
    "id": "c26747500",
@@ -3323,7 +3318,7 @@
    ],
    "radius_spread": 0.0,
    "view": "front",
-   "seconds": 0.44
+   "seconds": 0.39
   },
   {
    "id": "c26679267",
@@ -3391,7 +3386,7 @@
    ],
    "radius_spread": 0.759,
    "view": "front",
-   "seconds": 0.23
+   "seconds": 0.18
   },
   {
    "id": "c26679282",
@@ -3458,7 +3453,7 @@
    ],
    "radius_spread": 0.599,
    "view": "front",
-   "seconds": 0.29
+   "seconds": 0.23
   },
   {
    "id": "c26679295",
@@ -3525,7 +3520,7 @@
    ],
    "radius_spread": 0.509,
    "view": "front",
-   "seconds": 0.28
+   "seconds": 0.25
   },
   {
    "id": "c26679298",
@@ -3592,7 +3587,7 @@
    ],
    "radius_spread": 0.161,
    "view": "front",
-   "seconds": 0.26
+   "seconds": 0.19
   },
   {
    "id": "c36383488",
@@ -3815,7 +3810,7 @@
      "same_flags": true
     }
    },
-   "seconds": 0.43
+   "seconds": 0.34
   },
   {
    "id": "c19669637",
@@ -3878,7 +3873,7 @@
    ],
    "radius_spread": 0.0,
    "view": "front",
-   "seconds": 0.39
+   "seconds": 0.35
   },
   {
    "id": "c19674205",
@@ -3947,7 +3942,7 @@
    ],
    "radius_spread": 2.751,
    "view": "front",
-   "seconds": 0.29
+   "seconds": 0.26
   },
   {
    "id": "c19674208",
@@ -3999,7 +3994,7 @@
    "tip_radii_px": [],
    "tip_angles_deg": [],
    "view": "front",
-   "seconds": 0.27
+   "seconds": 0.24
   },
   {
    "id": "c19674213",
@@ -4067,7 +4062,7 @@
    ],
    "radius_spread": 1.2,
    "view": "front",
-   "seconds": 0.84
+   "seconds": 0.74
   },
   {
    "id": "c41928516",
@@ -4101,7 +4096,7 @@
     "warnings": [],
     "metrics": {}
    },
-   "seconds": 0.17
+   "seconds": 0.14
   },
   {
    "id": "c42148836",
@@ -4153,7 +4148,7 @@
    "tip_radii_px": [],
    "tip_angles_deg": [],
    "view": "front",
-   "seconds": 0.23
+   "seconds": 0.18
   },
   {
    "id": "c42148858",
@@ -4222,7 +4217,7 @@
    ],
    "radius_spread": 2.294,
    "view": "front",
-   "seconds": 0.42
+   "seconds": 0.36
   },
   {
    "id": "c42148833",
@@ -4284,7 +4279,7 @@
    ],
    "radius_spread": 0.0,
    "view": "front",
-   "seconds": 0.4
+   "seconds": 0.34
   },
   {
    "id": "c42148865",
@@ -4346,7 +4341,7 @@
    ],
    "radius_spread": 0.0,
    "view": "front",
-   "seconds": 0.38
+   "seconds": 0.32
   },
   {
    "id": "c57659697",
@@ -4398,7 +4393,7 @@
    "tip_radii_px": [],
    "tip_angles_deg": [],
    "view": "front",
-   "seconds": 0.26
+   "seconds": 0.23
   },
   {
    "id": "c49863098",
@@ -4466,7 +4461,7 @@
    ],
    "radius_spread": 0.167,
    "view": "front",
-   "seconds": 0.5
+   "seconds": 0.45
   },
   {
    "id": "c49863100",
@@ -4518,7 +4513,7 @@
    "tip_radii_px": [],
    "tip_angles_deg": [],
    "view": "front",
-   "seconds": 0.29
+   "seconds": 0.22
   },
   {
    "id": "c89696937",
@@ -4570,7 +4565,7 @@
    "tip_radii_px": [],
    "tip_angles_deg": [],
    "view": "front",
-   "seconds": 0.22
+   "seconds": 0.23
   },
   {
    "id": "c8836086",
@@ -4622,7 +4617,7 @@
    "tip_radii_px": [],
    "tip_angles_deg": [],
    "view": "front",
-   "seconds": 0.21
+   "seconds": 0.18
   },
   {
    "id": "c181564589",
@@ -4689,7 +4684,7 @@
    ],
    "radius_spread": 0.933,
    "view": "front",
-   "seconds": 0.43
+   "seconds": 0.37
   },
   {
    "id": "c19156793",
@@ -4758,7 +4753,7 @@
    ],
    "radius_spread": 0.512,
    "view": "front",
-   "seconds": 0.46
+   "seconds": 0.38
   },
   {
    "id": "c41901328",
@@ -4809,7 +4804,7 @@
    "tip_radii_px": [],
    "tip_angles_deg": [],
    "view": "front",
-   "seconds": 0.2
+   "seconds": 0.14
   },
   {
    "id": "c36383498",
@@ -4879,7 +4874,7 @@
    ],
    "radius_spread": 1.322,
    "view": "front",
-   "seconds": 0.4
+   "seconds": 0.23
   },
   {
    "id": "c36405368",
@@ -4940,7 +4935,7 @@
    ],
    "radius_spread": 0.0,
    "view": "front",
-   "seconds": 0.42
+   "seconds": 0.3
   },
   {
    "id": "c42148853",
@@ -5007,7 +5002,7 @@
    ],
    "radius_spread": 0.385,
    "view": "front",
-   "seconds": 0.24
+   "seconds": 0.23
   },
   {
    "id": "c42148854",
@@ -5286,7 +5281,7 @@
      "same_flags": true
     }
    },
-   "seconds": 0.36
+   "seconds": 0.28
   },
   {
    "id": "c185379090",
@@ -5345,7 +5340,7 @@
    ],
    "radius_spread": 0.0,
    "view": "front",
-   "seconds": 0.63
+   "seconds": 0.44
   },
   {
    "id": "c19002876",
@@ -5410,7 +5405,7 @@
    ],
    "radius_spread": 0.113,
    "view": "front",
-   "seconds": 0.38
+   "seconds": 0.32
   },
   {
    "id": "c16043004",
@@ -5462,7 +5457,7 @@
    "tip_radii_px": [],
    "tip_angles_deg": [],
    "view": "front",
-   "seconds": 0.18
+   "seconds": 0.24
   },
   {
    "id": "c50571490",
@@ -5531,7 +5526,7 @@
    ],
    "radius_spread": 0.758,
    "view": "front",
-   "seconds": 0.67
+   "seconds": 0.57
   },
   {
    "id": "c50571491",
@@ -5557,10 +5552,12 @@
    "rotor_radius_m": 35.5,
    "failed": false,
    "verdict": {
-    "ok": true,
-    "reasons": [],
+    "ok": false,
+    "reasons": [
+     "只定位到 2 片葉片（應為 3）：可能有葉片正好貼在塔架上（六點鐘方位）或沒入雲層，請等轉子轉到三片都離開塔架再拍",
+     "三片葉尖半徑差 80%（上限 15%）：同一台風機三片等長，差這麼多代表有一片其實是地物、電線或別台風機，請重拍並確保只有一台風機在框內"
+    ],
     "warnings": [
-     "側視：三片投影共線，三片互比不適用。本張只量垂掛葉片的 flapwise 彎曲，而且單幀值含預彎，要與同一台的基線或正視互比結果對照才有意義",
      "結構定位提示：葉片軸線共線（側視），輪轂投影到主葉片軸線"
     ],
     "metrics": {
@@ -5568,8 +5565,7 @@
      "sky_mask_frac": 0.0437,
      "horizon_y": null,
      "n_blades": 2,
-     "view": "side",
-     "hanging_blade_index": 1,
+     "view": "front",
      "tip_radii_px": [
       119.7,
       278.4
@@ -5595,14 +5591,8 @@
     271.2
    ],
    "radius_spread": 0.797,
-   "view": "side",
-   "side_view": {
-    "label": "B",
-    "tip_deflection_px": -17.021936273991386,
-    "tip_deflection_cm": -218.68704897318864,
-    "radius_px": 276.32122732644297
-   },
-   "seconds": 0.63
+   "view": "front",
+   "seconds": 0.55
   },
   {
    "id": "c38239738",
@@ -5664,7 +5654,7 @@
    ],
    "radius_spread": 0.0,
    "view": "front",
-   "seconds": 0.39
+   "seconds": 0.33
   },
   {
    "id": "c116792602",
@@ -5726,7 +5716,7 @@
    ],
    "radius_spread": 0.0,
    "view": "front",
-   "seconds": 0.27
+   "seconds": 0.22
   },
   {
    "id": "c12869944",
@@ -5778,7 +5768,7 @@
    "tip_radii_px": [],
    "tip_angles_deg": [],
    "view": "front",
-   "seconds": 0.2
+   "seconds": 0.17
   }
  ]
 }

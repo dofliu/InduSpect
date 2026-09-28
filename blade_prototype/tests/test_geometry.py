@@ -82,7 +82,8 @@ def _side_scene(defl_cm=(0, 0, 0), seed=1):
     img, truth = render_side(spec)
     seg = segment_turbine(img)
     st = find_structure(seg.mask, horizon_y=seg.horizon_y)
-    return img, truth, st, assess_capture(seg, st)
+    # 側視是宣告制（2026-09-28，SPEC §13-16）：真側視也要宣告才走側視規則
+    return img, truth, st, assess_capture(seg, st, expected_view="side")
 
 
 def test_side_view_summary_reports_hanging_blade_without_comparisons():
@@ -110,7 +111,7 @@ def test_analyze_still_payload_uses_side_summary_for_side_view(tmp_path):
     img, _, _, _ = _side_scene()
     path = str(tmp_path / "side.png")
     cv2.imwrite(path, img)
-    out = _analyze_still_payload(path, rotor_radius_m=60.0)
+    out = _analyze_still_payload(path, rotor_radius_m=60.0, expected_view="side")
     q = out["capture_quality"]
     assert q["ok"] and q["metrics"]["view"] == "side"
     assert out["comparison"]["view"] == "side" and out["comparison"]["comparisons"] == []

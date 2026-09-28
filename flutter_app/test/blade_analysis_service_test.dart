@@ -74,7 +74,7 @@ void main() {
     List<String> reasons = const [],
     List<MetricComparison> comparisons = const [],
   }) =>
-      (Uint8List b, {double? rotorRadiusM, double? hubHeightM}) async => BladeGeometryOutcome(
+      (Uint8List b, {double? rotorRadiusM, double? hubHeightM, String? expectedView}) async => BladeGeometryOutcome(
             ok: ok,
             reasons: reasons,
             metrics: const {'n_blades': 3},
@@ -377,7 +377,7 @@ void main() {
           levels: const [0.0, 0.1, 0.2],
         ),
         frameExtractor: (_, __) async => bytes,
-        geometry: (_, {double? rotorRadiusM, double? hubHeightM}) async {
+        geometry: (_, {double? rotorRadiusM, double? hubHeightM, String? expectedView}) async {
           final r = radii[call % radii.length];
           call++;
           return BladeGeometryOutcome(ok: true, profiles: [
@@ -403,7 +403,7 @@ void main() {
       var called = 0;
       await run(
         [WtMedia(path: 'front.jpg', view: WtMediaView.front)],
-        geometry: (b, {double? rotorRadiusM, double? hubHeightM}) async {
+        geometry: (b, {double? rotorRadiusM, double? hubHeightM, String? expectedView}) async {
           called++;
           return const BladeGeometryOutcome(ok: true);
         },
@@ -600,7 +600,7 @@ void main() {
       final out = await run(
         [WtMedia(path: 'front.jpg', view: WtMediaView.front, qualityJson: const {'ok': true})],
         rotorRadiusM: 60.0,
-        geometry: (b, {double? rotorRadiusM, double? hubHeightM}) async {
+        geometry: (b, {double? rotorRadiusM, double? hubHeightM, String? expectedView}) async {
           seen = rotorRadiusM;
           return BladeGeometryOutcome(
             ok: true,
@@ -631,7 +631,7 @@ void main() {
         [WtMedia(path: 'front.jpg', view: WtMediaView.front, qualityJson: const {'ok': true})],
         rotorRadiusM: 60.0,
         hubHeightM: 100.0,
-        geometry: (b, {double? rotorRadiusM, double? hubHeightM}) async {
+        geometry: (b, {double? rotorRadiusM, double? hubHeightM, String? expectedView}) async {
           seenHub = hubHeightM;
           return BladeGeometryOutcome(
             ok: true,
@@ -663,7 +663,7 @@ void main() {
     test('★ 沒補償的正視發現：明說含透視分量、不是缺陷量，摘要說為什麼沒補', () async {
       final out = await run(
         [WtMedia(path: 'front.jpg', view: WtMediaView.front, qualityJson: const {'ok': true})],
-        geometry: (b, {double? rotorRadiusM, double? hubHeightM}) async =>
+        geometry: (b, {double? rotorRadiusM, double? hubHeightM, String? expectedView}) async =>
             BladeGeometryOutcome(
           ok: true,
           metrics: const {
@@ -686,7 +686,7 @@ void main() {
     test('側視照的發現不掛透視那句（側視另一條路）', () async {
       final out = await run(
         [WtMedia(path: 'side.jpg', view: WtMediaView.side, qualityJson: const {'ok': true})],
-        geometry: (b, {double? rotorRadiusM, double? hubHeightM}) async =>
+        geometry: (b, {double? rotorRadiusM, double? hubHeightM, String? expectedView}) async =>
             BladeGeometryOutcome(
           ok: true,
           metrics: const {'n_blades': 2, 'view': 'side', 'hanging_tip_deflection_px': 12.9},
@@ -701,7 +701,7 @@ void main() {
       Object? seen = 'unset';
       final out = await run(
         [WtMedia(path: 'front.jpg', view: WtMediaView.front, qualityJson: const {'ok': true})],
-        geometry: (b, {double? rotorRadiusM, double? hubHeightM}) async {
+        geometry: (b, {double? rotorRadiusM, double? hubHeightM, String? expectedView}) async {
           seen = rotorRadiusM;
           return BladeGeometryOutcome(
             ok: true,

@@ -26,7 +26,7 @@ Wikimedia API Usage Guidelines 明文禁止。這個腳本刻意**不提供**換
     git clone https://github.com/dofliu/InduSpect.git && cd InduSpect/blade_prototype
     python3 scripts/commons_portable_fetch.py \
         --manifest data/commons_turbines_manifest.json \
-        --dir ~/commons_turbines --thumb-width 1280 --pace 15
+        --dir ~/commons_turbines --thumb-width 1920 --pace 15
 
     # 先看要抓什麼（不發任何請求）：
     python3 scripts/commons_portable_fetch.py --dry-run --limit 5
@@ -146,11 +146,16 @@ STANDARD_THUMB_WIDTHS = (320, 640, 800, 1024, 1280, 1600, 1920, 2560)
 
 # 下限必須 ≥ 1280：驗證管線的 `_resize_to(img, MAX_SIDE=1024)` **只縮不放**，而 Wikimedia 的
 # `<N>px-` 指定的是**寬度**——橫幅照長邊 = 寬 = N，直幅照長邊 = 高 > N。1280 在兩種方向都保證
-# 長邊 ≥ 1024（與 App 同尺度）。1920 也可以（既有 86 張多半是這個），只是流量多一倍——
-# 而且 selected 裡有 4 張原圖比 1920 還窄，那幾張會被 `clamp_thumb_width` 自動夾到 1600
+# 長邊 ≥ 1024（與 App 同尺度）。
+#
+# 但 1280 只是「管線跑得動」的下限，**不是建議值**：`RESOLUTION_SENSITIVITY.md`（2026-09-28）
+# 把 9 張已放行的照片縮到寬 1280 重跑，**4 張側視有 3 張在某個 JPEG 品質下被改判成正視並拒收**
+# （機制是側視規則要求恰好 2 個伸長元件，降解析度後結構定位找到 1 片或 3 片）。所以預設改為 1920：
+# 既有那 86 張多半就是這個寬度，流量多一倍但換到側視不被系統性弄丟。
+# selected 裡有 4 張原圖比 1920 還窄，那幾張會被 `clamp_thumb_width` 自動夾到 1600
 # （要求的寬度 ≥ 原圖寬度時，縮圖處理器不放大而是把請求導回原圖）。
 MIN_THUMB_WIDTH = 1280
-DEFAULT_THUMB_WIDTH = 1280
+DEFAULT_THUMB_WIDTH = 1920
 
 # API 回的 thumb_url 在這個 manifest 裡用的是 thumb.wikimedia.org（166/227），
 # 原圖網址則是 upload.wikimedia.org。自行推導縮圖時沿用前者。
@@ -1083,7 +1088,7 @@ def cmd_dry_run(a: argparse.Namespace, doc: dict, plan: list[dict]) -> int:
     print(f"候選 {len(doc.get('candidates', []))} 筆／入選 {len(sel)}／manifest 記為已抓 {len(done)}"
           f"／manifest 待抓 {len(pend)}")
     print(f"磁碟 {a.dir}：已有 {len(on_disk)} 張 → 實際待抓 {len(sel) - len(on_disk)} 張"
-          f"（manifest 的 file 欄位只是原機器的紀錄，那 86 個檔案已經不在了；**磁碟才是權威**）")
+          f"（manifest 的 file 欄位只是原機器的紀錄，這台機器上有沒有要看磁碟；**磁碟才是權威**）")
     print(f"這一趟要抓 {len(plan)} 張 → {a.dir}（寬度 {a.thumb_width} px、間隔 {a.pace} s、並發 1）")
     prev = read_log(a.dir)
 

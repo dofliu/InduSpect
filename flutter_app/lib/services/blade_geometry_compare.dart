@@ -764,7 +764,12 @@ class BladeGeometryOutcome {
 /// [rotorRadiusM]：型錄轉子半徑（公尺），有的話結果會多一組 cm 值；影片抽幀那條路
 /// 不傳（多幀互比只看 px 的一致性）。
 typedef BladeGeometryAnalyzer = Future<BladeGeometryOutcome> Function(
-    Uint8List bytes, {double? rotorRadiusM, double? hubHeightM});
+    Uint8List bytes,
+    {double? rotorRadiusM,
+    double? hubHeightM,
+    /// 這張**要拍的是什麼**（'front'／'side'／null＝沒宣告）。側視是宣告制，
+    /// 不從剪影推論——理由見 `BladeStructureGate.sideViewMaxTiltDeg`。
+    String? expectedView});
 
 /// 一張整機照 → 分割 → 結構定位 → **拍攝閘門** → 三片互比。
 ///
@@ -787,6 +792,7 @@ BladeGeometryOutcome runGeometryPipeline(
   double? focal35mm,
   double? horizontalDistanceM,
   double cameraHeightM = BladePoseService.defaultCameraHeightM,
+  String? expectedView,
 }) {
   final decoded = BladeImageOps.safeDecode(bytes);
   if (decoded == null) {
@@ -796,7 +802,8 @@ BladeGeometryOutcome runGeometryPipeline(
   final seg = BladeGeometryService.segmentTurbine(decoded, params: params);
   final st = BladeStructureService.findStructure(seg.mask, seg.w, seg.h,
       horizonY: seg.horizonY);
-  final verdict = BladeStructureGate.judge(seg: seg, structure: st);
+  final verdict = BladeStructureGate.judge(
+      seg: seg, structure: st, expectedView: expectedView);
   if (!verdict.ok) {
     return BladeGeometryOutcome(
       ok: false,
