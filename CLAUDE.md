@@ -86,6 +86,7 @@
 | `blade_prototype/CLOSEUP_BASELINE_REPORT.md` | ★ Mode B 語料現況實測（B0）：授權盤點、開放網路可用率、cm/px 可得率、可商用語料的類別分布與標註者一致度、Mode A 閘門跨模式回歸 |
 | `blade_prototype/scripts/closeup_cross_corpus.py` + `CROSS_CORPUS_VALIDATION.md` | ★ Mode B **跨語料驗證（B3）**：wtb 上訓好的取像探針與缺陷探針**不重訓**丟到 WTBs2025（CC0，7,544 張）與 HF sees-innovation（1,855 張，授權未標、只算數字）。**取像探針不能當閘門**（廂型車 59/62 判成近身葉片照；唯一跨語料成立的是 W 101/104）、Mode A 正視硬規則誤觸 3/7,544（每張人工看過，`HARD_REJECT_REVIEW` 有測試守）、側視漏洞 94/7,544 與 37/1,444、**缺陷探針 lift 0.74–1.21 ≈ 亂猜**（只有雷擊 7.7）、域分類器 0.956／0.989。逐張結果欄式打包 `data/closeup_cross_corpus.json`（約 450 KB）；外部語料的影像與特徵留在 scratchpad。WTBs2025 對照表在 `closeup_taxonomy.json` 的 `dataset_class_map.wtbs2025`（渲染器已支援多份語料） |
 | `blade_prototype/scripts/fetch_commons_turbines.py` + `scripts/real_pose_validation.py` + `REAL_POSE_VALIDATION.md` | ★ Mode A **Commons 真實照片上的姿態估計與補償**（SPEC §13-11 第一次真實驗證）：Commons API 掃 32 個機型分類頁，只收 CC／PD + EXIF 35 mm 焦距 + 寬 ≥ 1600 的照片（431 頁 → 158 張可用，manifest 進版控、照片不進）；下載**只能用常用縮圖寬度**（`standard_thumb_url`，非常用寬度與原圖都會被 429）。每張走與 App 同一條路徑到 `compensate_comparison`，加輪轂高度 ±20% 靈敏度。86 張裡閘門放行 5（正視 3、側視 2），姿態可用 3/3；原始三片互比標記葉尖偏移 1 張 → 補償後 1（消掉 0、留下 1、新增 0），半徑 1 → 1；預彎擬合落在 0–8 m 的 1/3，仰角中位 4.81°；輪轂高度 ±20% 翻掉補償結論 0/3 張（model 53、model-subcat 32、view 1）——**正視放行仍只有個位數，補償在真實照片上的成績還撐不起結論**。 偏軸夾具上要重現 `blade_offaxis_reference.json`（測試守） |
+| `blade_prototype/scripts/resolution_sensitivity.py` + `RESOLUTION_SENSITIVITY.md` | ★ **來源解析度／JPEG 再壓縮的靈敏度**（2026-09-28，SPEC §13-16）：9 張已放行的 Commons 照片縮到寬 1280 重跑，**收／不收翻 3 張、全是側視**（側視規則要求恰好 2 個伸長元件，站在判定邊界上；**相同像素尺寸、只差 JPEG 品質就會翻**）。正視閘門沒翻但**預彎擬合的合理／不合理會翻**，等於補不補償被來源決定。所以跨批次只能併正視的收／不收，語料續抓的縮圖寬度預設提到 1920。**App 端未改，待決策** |
 | `blade_prototype/` | ★ 葉片模組 Phase 0 演算法原型（Python/OpenCV；分割、三片互比、前緣粗糙度、影片六點鐘取幀、逐片聲音異常、圖文報告產生器、拍攝品質閘門、**運動分割輪轂定位 `motion_hub.py`**、**太陽方位 `sunpos.py`**；`SENSITIVITY.md` 合成影像靈敏度、**`OFFAXIS_SENSITIVITY.md` 偏軸透視靈敏度**（`synth.render_perspective` 針孔投影，真實照片的 226 cm 假葉尖偏移在合成上重現）、`REAL_IMAGE_VALIDATION.md` 真實影像實測、**`INNOVATION_REVIEW.md` 改進方向的文獻對照與離線驗證**、**`CLOSEUP_BASELINE_REPORT.md` Mode B 語料實測**、`scripts/` 語料抓取/驗證/圖文報告/運動分割實測/近身語料抓取/分類表渲染/**人工複核工具**/**切分群組**八類腳本） |
 
 ## 開發慣例
@@ -101,9 +102,9 @@
 python3 scripts/audit_dead_ends.py   # 死角查核（service 零引用／DB 欄位只讀不寫）；--report 看全部
 flutter test          # 全部 599 tests（widget_test 已修復，不再排除）
 cd backend && GEMINI_API_KEY=ci-fake-key pytest tests/ --asyncio-mode=auto   # 197 pytest
-cd blade_prototype && pip install -r requirements.txt && pytest              # 282 tests（葉片原型，合成影像/音軌夾具 + Mode B 分類表與標記檔守門 + 測試報告聚合器 + 側視閘門 + 複核工具 + 切分群組 + 評估協定 + 普查覆蓋 + 第一遍標記守門 + 離線基線 + IEA 兩軌 + 線性探針 + §1.2 取像閘門 + 偏軸透視夾具 + 姿態估計補償 + 跨語料驗證 + Commons 真實照片姿態驗證 + Commons 抓取器）
+cd blade_prototype && pip install -r requirements.txt && pytest              # 413 tests（葉片原型，合成影像/音軌夾具 + Mode B 分類表與標記檔守門 + 測試報告聚合器 + 側視閘門 + 複核工具 + 切分群組 + 評估協定 + 普查覆蓋 + 第一遍標記守門 + 離線基線 + IEA 兩軌 + 線性探針 + §1.2 取像閘門 + 偏軸透視夾具 + 姿態估計補償 + 跨語料驗證 + Commons 真實照片姿態驗證 + Commons 抓取器 + 解析度靈敏度）
 ```
-Flutter 599 tests / 後端 197 pytest / 葉片原型 282 pytest 全綠（2026-09-19 本機實測；**GitHub Actions 停用期已於 2026-09-28 結束、CI 又會跑了**（見下方「本機 Flutter」條目末），本機三軌仍可先跑）。DB 測試使用 `sqflite_common_ffi` in-memory。標準資料為單一來源：改 `backend/app/data/inspection_standards.py` 後必須跑 `python backend/scripts/export_standards.py` 重新匯出 JSON（有同步守門測試）。
+Flutter 599 tests / 後端 197 pytest / 葉片原型 413 pytest 全綠（2026-09-28 本機實測；**GitHub Actions 停用期已於 2026-09-28 結束、CI 又會跑了**（見下方「本機 Flutter」條目末），本機三軌仍可先跑）。DB 測試使用 `sqflite_common_ffi` in-memory。標準資料為單一來源：改 `backend/app/data/inspection_standards.py` 後必須跑 `python backend/scripts/export_standards.py` 重新匯出 JSON（有同步守門測試）。
 
 ## 已知問題追蹤
 - GitHub Issues #14-#19 已全數修復並關閉（2026-04-16）

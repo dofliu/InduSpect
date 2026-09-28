@@ -16,7 +16,7 @@
      只驗開頭的 magic 還不夠——截斷的 JPEG 前 3 個 byte 一模一樣，所以結尾標記也要驗。
   ⑤ **`--dry-run` 一個請求都不准發**（注入一個會 raise 的假抓取器來證明它沒被呼叫）。
   ⑥ **檔名是驗證端唯一的對應鍵**（`c<pageid>.jpg`），而**待抓清單以磁碟實際狀態為準**：
-     manifest 的 `file` 欄位只說「原機器上曾經抓到過」，那 86 個檔案已經不在了；
+     manifest 的 `file` 欄位只說「原機器上曾經抓到過」，這台機器上有沒有要看磁碟；
      磁碟濾一定要排在 `--limit`／`--per-model` **之前**，否則續傳原地空轉。
   ⑦ **全域 429 預算**：每張各自重試成功不算沒事——收到 429 步調要**加倍**（不是象徵性地加幾秒），
      累計超過門檻要中止整趟（不是跑完回報成功），而且每一次 429 的**時刻、網址、Retry-After、
@@ -393,6 +393,9 @@ def test_every_standard_width_is_a_common_thumbnail_size() -> None:
     """常用寬度表就是 mediawiki.org/wiki/Common_thumbnail_sizes 那一張；非常用寬度每張都要現算。"""
     assert F.DEFAULT_THUMB_WIDTH in F.STANDARD_THUMB_WIDTHS
     assert F.DEFAULT_THUMB_WIDTH >= F.MIN_THUMB_WIDTH >= 1024   # 只縮不放，長邊要 ≥ App 的 1024
+    # 1280 只是管線跑得動的下限，不是可以拿來抓語料的寬度：RESOLUTION_SENSITIVITY.md 實測
+    # 9 張已放行的照片縮到寬 1280，4 張側視有 3 張被改判成正視並拒收。預設不准掉回 1280。
+    assert F.DEFAULT_THUMB_WIDTH >= 1920
     for w in (2400, 1000, 1281, 0, -1):
         assert w not in F.STANDARD_THUMB_WIDTHS
         with pytest.raises(ValueError):
@@ -561,7 +564,7 @@ def test_dry_run_makes_no_request(monkeypatch: pytest.MonkeyPatch,
     out_text = capsys.readouterr().out
     assert rc == 0
     assert not out.exists()                    # 連輸出目錄都不建
-    assert "待抓 227" in out_text and "1280px-" in out_text
+    assert "待抓 227" in out_text and f"{F.DEFAULT_THUMB_WIDTH}px-" in out_text
     assert "一個請求都不會發出" in out_text
 
 
@@ -704,7 +707,8 @@ def test_every_image_throttled_slows_down_and_aborts(tmp_path: Path,
     # 寄給 bot-traffic@wikimedia.org 時對方無從查起（他們要比對的是 CDN 上那條規則命中了什麼）。
     # 這裡走的是「撐過去的 429」那條路徑（`res["events"]`），與被擋中止那條是兩段不同的程式碼。
     assert all(e["url"] in net.urls for e in log["events_429"])
-    assert all("/thumb/" in e["url"] and "1280px-" in e["url"] for e in log["events_429"])
+    assert all("/thumb/" in e["url"] and f"{F.DEFAULT_THUMB_WIDTH}px-" in e["url"]
+               for e in log["events_429"])
 
 
 def test_the_slowdown_is_a_real_doubling_not_a_token_nudge(

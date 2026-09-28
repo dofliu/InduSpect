@@ -1,0 +1,798 @@
+{
+ "version": "commons-pose-2026-09-19",
+ "max_side": 1024,
+ "note": "縮圖是本機用 PIL LANCZOS 模擬的（Wikimedia 的縮圖端點對本機 IP 封鎖中），不是 Wikimedia 產的縮圖；結論講的是「換一次重採樣 + 再壓縮會不會翻」，不是「Wikimedia 的縮圖器會不會翻」。",
+ "variants": [
+  "orig",
+  "w1280q85",
+  "w1280q80"
+ ],
+ "sizes": {
+  "c49384455": {
+   "orig": [
+    1920,
+    1440
+   ],
+   "w1280q85": [
+    1280,
+    960
+   ],
+   "w1280q80": [
+    1280,
+    960
+   ]
+  },
+  "c184853067": {
+   "orig": [
+    1920,
+    1281
+   ],
+   "w1280q85": [
+    1280,
+    854
+   ],
+   "w1280q80": [
+    1280,
+    854
+   ]
+  },
+  "c19465951": {
+   "orig": [
+    4672,
+    3104
+   ],
+   "w1280q85": [
+    1280,
+    850
+   ],
+   "w1280q80": [
+    1280,
+    850
+   ]
+  },
+  "c36383488": {
+   "orig": [
+    2848,
+    4288
+   ],
+   "w1280q85": [
+    1280,
+    1927
+   ],
+   "w1280q80": [
+    1280,
+    1927
+   ]
+  },
+  "c19156797": {
+   "orig": [
+    2475,
+    1650
+   ],
+   "w1280q85": [
+    1280,
+    853
+   ],
+   "w1280q80": [
+    1280,
+    853
+   ]
+  },
+  "c5682409": {
+   "orig": [
+    3072,
+    2304
+   ],
+   "w1280q85": [
+    1280,
+    960
+   ],
+   "w1280q80": [
+    1280,
+    960
+   ]
+  },
+  "c50571491": {
+   "orig": [
+    1920,
+    2560
+   ],
+   "w1280q85": [
+    1280,
+    1707
+   ],
+   "w1280q80": [
+    1280,
+    1707
+   ]
+  },
+  "c20562709": {
+   "orig": [
+    2880,
+    4320
+   ],
+   "w1280q85": [
+    1280,
+    1920
+   ],
+   "w1280q80": [
+    1280,
+    1920
+   ]
+  },
+  "c19637139": {
+   "orig": [
+    2848,
+    4288
+   ],
+   "w1280q85": [
+    1280,
+    1927
+   ],
+   "w1280q80": [
+    1280,
+    1927
+   ]
+  }
+ },
+ "summary": {
+  "w1280q80": {
+   "compared": 9,
+   "gate_flipped": 3,
+   "view_flipped": 3,
+   "flag_set_changed": 1,
+   "prebend_ok_flipped": 1
+  },
+  "w1280q85": {
+   "compared": 9,
+   "gate_flipped": 3,
+   "view_flipped": 3,
+   "flag_set_changed": 2,
+   "prebend_ok_flipped": 1
+  }
+ },
+ "images": {
+  "c49384455": {
+   "model": "Enercon E-115",
+   "title": "File:20160604 xl P1040400-Feldheim-Treuenbrietzen-WMC.jpg",
+   "page_url": "https://commons.wikimedia.org/?curid=49384455",
+   "variants": {
+    "orig": {
+     "ok": true,
+     "view": "side",
+     "n_blades": 2,
+     "radius_spread": 1.11,
+     "tower_found": true,
+     "reject_reasons": [],
+     "elevation_deg": null,
+     "yaw_deg": null,
+     "distance_m": null,
+     "raw_flagged": null,
+     "comp_flagged": null,
+     "prebend_fit_m": null,
+     "prebend_fit_ok": null,
+     "deflection_compensated": null,
+     "tip_deflection_raw_px": null,
+     "cm_per_px": null
+    },
+    "w1280q85": {
+     "ok": false,
+     "view": "front",
+     "n_blades": 2,
+     "radius_spread": 0.4,
+     "tower_found": true,
+     "reject_reasons": [
+      "只定位到 2 片葉片（應為 3）：可能有葉片正好貼在塔架上（六點鐘方位）或沒入雲層，請等轉子轉到三片都離開塔架再拍",
+      "三片葉尖半徑差 40%（上限 15%）：同一台風機三片等長，差這麼多代表有一片其實是地物、電線或別台風機，請重拍並確保只有一台風機在框內"
+     ],
+     "elevation_deg": null,
+     "yaw_deg": null,
+     "distance_m": null,
+     "raw_flagged": null,
+     "comp_flagged": null,
+     "prebend_fit_m": null,
+     "prebend_fit_ok": null,
+     "deflection_compensated": null,
+     "tip_deflection_raw_px": null,
+     "cm_per_px": null
+    },
+    "w1280q80": {
+     "ok": true,
+     "view": "side",
+     "n_blades": 2,
+     "radius_spread": 1.067,
+     "tower_found": true,
+     "reject_reasons": [],
+     "elevation_deg": null,
+     "yaw_deg": null,
+     "distance_m": null,
+     "raw_flagged": null,
+     "comp_flagged": null,
+     "prebend_fit_m": null,
+     "prebend_fit_ok": null,
+     "deflection_compensated": null,
+     "tip_deflection_raw_px": null,
+     "cm_per_px": null
+    }
+   }
+  },
+  "c184853067": {
+   "model": "Enercon E-126",
+   "title": "File:Hörlitz Aussichtsturm lub 2025-09-07 img05 Aussicht.jpg",
+   "page_url": "https://commons.wikimedia.org/?curid=184853067",
+   "variants": {
+    "orig": {
+     "ok": true,
+     "view": "front",
+     "n_blades": 3,
+     "radius_spread": 0.03,
+     "tower_found": true,
+     "reject_reasons": [],
+     "elevation_deg": 3.948228936936703,
+     "yaw_deg": 5.579817890294986,
+     "distance_m": 1806.6933675111588,
+     "raw_flagged": [],
+     "comp_flagged": [],
+     "prebend_fit_m": 5.22,
+     "prebend_fit_ok": true,
+     "deflection_compensated": true,
+     "tip_deflection_raw_px": [
+      1.67,
+      0.53,
+      0.51
+     ],
+     "cm_per_px": 60.742
+    },
+    "w1280q85": {
+     "ok": true,
+     "view": "front",
+     "n_blades": 3,
+     "radius_spread": 0.02,
+     "tower_found": true,
+     "reject_reasons": [],
+     "elevation_deg": 3.960895633606631,
+     "yaw_deg": -3.572411139959162,
+     "distance_m": 1800.9248378346613,
+     "raw_flagged": [],
+     "comp_flagged": [],
+     "prebend_fit_m": 3.64,
+     "prebend_fit_ok": true,
+     "deflection_compensated": true,
+     "tip_deflection_raw_px": [
+      1.44,
+      -0.95,
+      0.78
+     ],
+     "cm_per_px": 60.541
+    },
+    "w1280q80": {
+     "ok": true,
+     "view": "front",
+     "n_blades": 3,
+     "radius_spread": 0.025,
+     "tower_found": true,
+     "reject_reasons": [],
+     "elevation_deg": 3.9636619464023988,
+     "yaw_deg": -3.2431108896364034,
+     "distance_m": 1799.6699427656222,
+     "raw_flagged": [],
+     "comp_flagged": [],
+     "prebend_fit_m": -11.13,
+     "prebend_fit_ok": false,
+     "deflection_compensated": false,
+     "tip_deflection_raw_px": [
+      2.81,
+      -0.12,
+      0.13
+     ],
+     "cm_per_px": 60.486
+    }
+   }
+  },
+  "c19465951": {
+   "model": "Enercon E-126",
+   "title": "File:Windraeder suedlich von Hamburg 09.05.2012 17-46-026.jpg",
+   "page_url": "https://commons.wikimedia.org/?curid=19465951",
+   "variants": {
+    "orig": {
+     "ok": true,
+     "view": "front",
+     "n_blades": 3,
+     "radius_spread": 0.104,
+     "tower_found": true,
+     "reject_reasons": [],
+     "elevation_deg": 13.633146672315554,
+     "yaw_deg": 63.57045666341526,
+     "distance_m": 565.9631992234486,
+     "raw_flagged": [
+      "tip_deflection_px"
+     ],
+     "comp_flagged": [
+      "tip_deflection_px"
+     ],
+     "prebend_fit_m": 9.02,
+     "prebend_fit_ok": false,
+     "deflection_compensated": false,
+     "tip_deflection_raw_px": [
+      25.24,
+      49.31,
+      18.31
+     ],
+     "cm_per_px": 24.434
+    },
+    "w1280q85": {
+     "ok": true,
+     "view": "front",
+     "n_blades": 3,
+     "radius_spread": 0.123,
+     "tower_found": true,
+     "reject_reasons": [],
+     "elevation_deg": 13.629153457590888,
+     "yaw_deg": 61.52460457672207,
+     "distance_m": 566.1258803058421,
+     "raw_flagged": [
+      "radius_px",
+      "tip_deflection_px"
+     ],
+     "comp_flagged": [
+      "radius_px",
+      "tip_deflection_px"
+     ],
+     "prebend_fit_m": 7.19,
+     "prebend_fit_ok": true,
+     "deflection_compensated": true,
+     "tip_deflection_raw_px": [
+      20.32,
+      51.85,
+      10.99
+     ],
+     "cm_per_px": 24.431
+    },
+    "w1280q80": {
+     "ok": true,
+     "view": "front",
+     "n_blades": 3,
+     "radius_spread": 0.127,
+     "tower_found": true,
+     "reject_reasons": [],
+     "elevation_deg": 13.631989945025587,
+     "yaw_deg": 63.939615732320206,
+     "distance_m": 566.0103136706708,
+     "raw_flagged": [
+      "radius_px"
+     ],
+     "comp_flagged": [
+      "radius_px"
+     ],
+     "prebend_fit_m": 9.2,
+     "prebend_fit_ok": false,
+     "deflection_compensated": false,
+     "tip_deflection_raw_px": [
+      28.59,
+      51.17,
+      5.79
+     ],
+     "cm_per_px": 24.426
+    }
+   }
+  },
+  "c36383488": {
+   "model": "Enercon E-40",
+   "title": "File:20110425 xl wiki m podszun-D90-0760.jpg",
+   "page_url": "https://commons.wikimedia.org/?curid=36383488",
+   "variants": {
+    "orig": {
+     "ok": true,
+     "view": "front",
+     "n_blades": 3,
+     "radius_spread": 0.143,
+     "tower_found": true,
+     "reject_reasons": [],
+     "elevation_deg": 10.154811715304014,
+     "yaw_deg": -15.577401784952592,
+     "distance_m": 359.5970265309569,
+     "raw_flagged": [
+      "radius_px",
+      "tip_deflection_px"
+     ],
+     "comp_flagged": [
+      "radius_px",
+      "tip_deflection_px"
+     ],
+     "prebend_fit_m": -5.43,
+     "prebend_fit_ok": false,
+     "deflection_compensated": false,
+     "tip_deflection_raw_px": [
+      -7.75,
+      12.85,
+      -21.02
+     ],
+     "cm_per_px": 10.019
+    },
+    "w1280q85": {
+     "ok": true,
+     "view": "front",
+     "n_blades": 3,
+     "radius_spread": 0.141,
+     "tower_found": true,
+     "reject_reasons": [],
+     "elevation_deg": 10.162554985160115,
+     "yaw_deg": -15.864812286601046,
+     "distance_m": 359.32591075696956,
+     "raw_flagged": [
+      "radius_px"
+     ],
+     "comp_flagged": [
+      "radius_px"
+     ],
+     "prebend_fit_m": -5.82,
+     "prebend_fit_ok": false,
+     "deflection_compensated": false,
+     "tip_deflection_raw_px": [
+      -4.38,
+      14.25,
+      -22.45
+     ],
+     "cm_per_px": 10.011
+    },
+    "w1280q80": {
+     "ok": true,
+     "view": "front",
+     "n_blades": 3,
+     "radius_spread": 0.119,
+     "tower_found": true,
+     "reject_reasons": [],
+     "elevation_deg": 10.19822358929382,
+     "yaw_deg": -18.482237327074497,
+     "distance_m": 358.0823876651104,
+     "raw_flagged": [
+      "radius_px",
+      "tip_deflection_px"
+     ],
+     "comp_flagged": [
+      "radius_px",
+      "tip_deflection_px"
+     ],
+     "prebend_fit_m": -5.23,
+     "prebend_fit_ok": false,
+     "deflection_compensated": false,
+     "tip_deflection_raw_px": [
+      -10.6,
+      13.49,
+      -21.65
+     ],
+     "cm_per_px": 9.971
+    }
+   }
+  },
+  "c19156797": {
+   "model": "Enercon E-40",
+   "title": "File:Friedrichsgabekoog schafe vor windrädern 01.04.2012 15-11-59.jpg",
+   "page_url": "https://commons.wikimedia.org/?curid=19156797",
+   "variants": {
+    "orig": {
+     "ok": true,
+     "view": "front",
+     "n_blades": 3,
+     "radius_spread": 0.052,
+     "tower_found": false,
+     "reject_reasons": [],
+     "elevation_deg": 6.91560594047146,
+     "yaw_deg": null,
+     "distance_m": 526.5464247643966,
+     "raw_flagged": [],
+     "comp_flagged": null,
+     "prebend_fit_m": null,
+     "prebend_fit_ok": null,
+     "deflection_compensated": null,
+     "tip_deflection_raw_px": null,
+     "cm_per_px": null
+    },
+    "w1280q85": {
+     "ok": true,
+     "view": "front",
+     "n_blades": 3,
+     "radius_spread": 0.034,
+     "tower_found": false,
+     "reject_reasons": [],
+     "elevation_deg": 6.833060888041894,
+     "yaw_deg": null,
+     "distance_m": 532.8765013406004,
+     "raw_flagged": [],
+     "comp_flagged": null,
+     "prebend_fit_m": null,
+     "prebend_fit_ok": null,
+     "deflection_compensated": null,
+     "tip_deflection_raw_px": null,
+     "cm_per_px": null
+    },
+    "w1280q80": {
+     "ok": true,
+     "view": "front",
+     "n_blades": 3,
+     "radius_spread": 0.032,
+     "tower_found": false,
+     "reject_reasons": [],
+     "elevation_deg": 6.834605542752115,
+     "yaw_deg": null,
+     "distance_m": 532.756640182472,
+     "raw_flagged": [],
+     "comp_flagged": null,
+     "prebend_fit_m": null,
+     "prebend_fit_ok": null,
+     "deflection_compensated": null,
+     "tip_deflection_raw_px": null,
+     "cm_per_px": null
+    }
+   }
+  },
+  "c5682409": {
+   "model": "Enercon E-66",
+   "title": "File:Hoheward-DSCI0492.jpg",
+   "page_url": "https://commons.wikimedia.org/?curid=5682409",
+   "variants": {
+    "orig": {
+     "ok": true,
+     "view": "front",
+     "n_blades": 3,
+     "radius_spread": 0.089,
+     "tower_found": true,
+     "reject_reasons": [],
+     "elevation_deg": 4.813221336149938,
+     "yaw_deg": 5.895655839809115,
+     "distance_m": 1148.880249287692,
+     "raw_flagged": [],
+     "comp_flagged": [],
+     "prebend_fit_m": 17.55,
+     "prebend_fit_ok": false,
+     "deflection_compensated": false,
+     "tip_deflection_raw_px": [
+      -4.08,
+      -4.52,
+      -6.02
+     ],
+     "cm_per_px": 45.461
+    },
+    "w1280q85": {
+     "ok": true,
+     "view": "front",
+     "n_blades": 3,
+     "radius_spread": 0.096,
+     "tower_found": true,
+     "reject_reasons": [],
+     "elevation_deg": 4.873165465891415,
+     "yaw_deg": 5.931113423794211,
+     "distance_m": 1134.7815009538947,
+     "raw_flagged": [],
+     "comp_flagged": [],
+     "prebend_fit_m": 16.26,
+     "prebend_fit_ok": false,
+     "deflection_compensated": false,
+     "tip_deflection_raw_px": [
+      -5.75,
+      -4.15,
+      -5.9
+     ],
+     "cm_per_px": 45.254
+    },
+    "w1280q80": {
+     "ok": true,
+     "view": "front",
+     "n_blades": 3,
+     "radius_spread": 0.097,
+     "tower_found": true,
+     "reject_reasons": [],
+     "elevation_deg": 4.868374248834436,
+     "yaw_deg": 6.076487340293287,
+     "distance_m": 1135.895604761621,
+     "raw_flagged": [],
+     "comp_flagged": [],
+     "prebend_fit_m": 15.96,
+     "prebend_fit_ok": false,
+     "deflection_compensated": false,
+     "tip_deflection_raw_px": [
+      -4.59,
+      -4.15,
+      -5.27
+     ],
+     "cm_per_px": 45.297
+    }
+   }
+  },
+  "c50571491": {
+   "model": "Enercon E-70",
+   "title": "File:20160604 xl P1040455-Feldheim-Treuenbrietzen.jpg",
+   "page_url": "https://commons.wikimedia.org/?curid=50571491",
+   "variants": {
+    "orig": {
+     "ok": true,
+     "view": "side",
+     "n_blades": 2,
+     "radius_spread": 0.797,
+     "tower_found": true,
+     "reject_reasons": [],
+     "elevation_deg": null,
+     "yaw_deg": null,
+     "distance_m": null,
+     "raw_flagged": null,
+     "comp_flagged": null,
+     "prebend_fit_m": null,
+     "prebend_fit_ok": null,
+     "deflection_compensated": null,
+     "tip_deflection_raw_px": null,
+     "cm_per_px": null
+    },
+    "w1280q85": {
+     "ok": false,
+     "view": "front",
+     "n_blades": 2,
+     "radius_spread": 0.717,
+     "tower_found": true,
+     "reject_reasons": [
+      "只定位到 2 片葉片（應為 3）：可能有葉片正好貼在塔架上（六點鐘方位）或沒入雲層，請等轉子轉到三片都離開塔架再拍",
+      "三片葉尖半徑差 72%（上限 15%）：同一台風機三片等長，差這麼多代表有一片其實是地物、電線或別台風機，請重拍並確保只有一台風機在框內"
+     ],
+     "elevation_deg": null,
+     "yaw_deg": null,
+     "distance_m": null,
+     "raw_flagged": null,
+     "comp_flagged": null,
+     "prebend_fit_m": null,
+     "prebend_fit_ok": null,
+     "deflection_compensated": null,
+     "tip_deflection_raw_px": null,
+     "cm_per_px": null
+    },
+    "w1280q80": {
+     "ok": false,
+     "view": "front",
+     "n_blades": 2,
+     "radius_spread": 0.724,
+     "tower_found": true,
+     "reject_reasons": [
+      "只定位到 2 片葉片（應為 3）：可能有葉片正好貼在塔架上（六點鐘方位）或沒入雲層，請等轉子轉到三片都離開塔架再拍",
+      "三片葉尖半徑差 72%（上限 15%）：同一台風機三片等長，差這麼多代表有一片其實是地物、電線或別台風機，請重拍並確保只有一台風機在框內"
+     ],
+     "elevation_deg": null,
+     "yaw_deg": null,
+     "distance_m": null,
+     "raw_flagged": null,
+     "comp_flagged": null,
+     "prebend_fit_m": null,
+     "prebend_fit_ok": null,
+     "deflection_compensated": null,
+     "tip_deflection_raw_px": null,
+     "cm_per_px": null
+    }
+   }
+  },
+  "c20562709": {
+   "model": "Nordex N117",
+   "title": "File:Windpark-06-04-2012-3.jpg",
+   "page_url": "https://commons.wikimedia.org/?curid=20562709",
+   "variants": {
+    "orig": {
+     "ok": true,
+     "view": "side",
+     "n_blades": 2,
+     "radius_spread": 0.319,
+     "tower_found": true,
+     "reject_reasons": [],
+     "elevation_deg": null,
+     "yaw_deg": null,
+     "distance_m": null,
+     "raw_flagged": null,
+     "comp_flagged": null,
+     "prebend_fit_m": null,
+     "prebend_fit_ok": null,
+     "deflection_compensated": null,
+     "tip_deflection_raw_px": null,
+     "cm_per_px": null
+    },
+    "w1280q85": {
+     "ok": false,
+     "view": "front",
+     "n_blades": 1,
+     "radius_spread": 0.0,
+     "tower_found": true,
+     "reject_reasons": [
+      "只定位到 1 片葉片（應為 3）：可能有葉片正好貼在塔架上（六點鐘方位）或沒入雲層，請等轉子轉到三片都離開塔架再拍"
+     ],
+     "elevation_deg": null,
+     "yaw_deg": null,
+     "distance_m": null,
+     "raw_flagged": null,
+     "comp_flagged": null,
+     "prebend_fit_m": null,
+     "prebend_fit_ok": null,
+     "deflection_compensated": null,
+     "tip_deflection_raw_px": null,
+     "cm_per_px": null
+    },
+    "w1280q80": {
+     "ok": false,
+     "view": "front",
+     "n_blades": 1,
+     "radius_spread": 0.0,
+     "tower_found": true,
+     "reject_reasons": [
+      "只定位到 1 片葉片（應為 3）：可能有葉片正好貼在塔架上（六點鐘方位）或沒入雲層，請等轉子轉到三片都離開塔架再拍"
+     ],
+     "elevation_deg": null,
+     "yaw_deg": null,
+     "distance_m": null,
+     "raw_flagged": null,
+     "comp_flagged": null,
+     "prebend_fit_m": null,
+     "prebend_fit_ok": null,
+     "deflection_compensated": null,
+     "tip_deflection_raw_px": null,
+     "cm_per_px": null
+    }
+   }
+  },
+  "c19637139": {
+   "model": "Nordex N90",
+   "title": "File:Nordex N90.JPG",
+   "page_url": "https://commons.wikimedia.org/?curid=19637139",
+   "variants": {
+    "orig": {
+     "ok": true,
+     "view": "side",
+     "n_blades": 2,
+     "radius_spread": 0.108,
+     "tower_found": true,
+     "reject_reasons": [],
+     "elevation_deg": null,
+     "yaw_deg": null,
+     "distance_m": null,
+     "raw_flagged": null,
+     "comp_flagged": null,
+     "prebend_fit_m": null,
+     "prebend_fit_ok": null,
+     "deflection_compensated": null,
+     "tip_deflection_raw_px": null,
+     "cm_per_px": null
+    },
+    "w1280q85": {
+     "ok": true,
+     "view": "side",
+     "n_blades": 2,
+     "radius_spread": 0.108,
+     "tower_found": true,
+     "reject_reasons": [],
+     "elevation_deg": null,
+     "yaw_deg": null,
+     "distance_m": null,
+     "raw_flagged": null,
+     "comp_flagged": null,
+     "prebend_fit_m": null,
+     "prebend_fit_ok": null,
+     "deflection_compensated": null,
+     "tip_deflection_raw_px": null,
+     "cm_per_px": null
+    },
+    "w1280q80": {
+     "ok": false,
+     "view": "front",
+     "n_blades": 3,
+     "radius_spread": 0.449,
+     "tower_found": true,
+     "reject_reasons": [
+      "三片葉尖半徑差 45%（上限 15%）：同一台風機三片等長，差這麼多代表有一片其實是地物、電線或別台風機，請重拍並確保只有一台風機在框內"
+     ],
+     "elevation_deg": null,
+     "yaw_deg": null,
+     "distance_m": null,
+     "raw_flagged": null,
+     "comp_flagged": null,
+     "prebend_fit_m": null,
+     "prebend_fit_ok": null,
+     "deflection_compensated": null,
+     "tip_deflection_raw_px": null,
+     "cm_per_px": null
+    }
+   }
+  }
+ }
+}
