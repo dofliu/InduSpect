@@ -21,6 +21,7 @@ import real_pose_validation as R  # noqa: E402
 FIXTURE_PNG = ROOT.parent / "flutter_app" / "test" / "assets" / "blade_offaxis_scene.png"
 FIXTURE_REF = ROOT.parent / "flutter_app" / "test" / "assets" / "blade_offaxis_reference.json"
 RESULTS = ROOT / "data" / "commons_pose_results.json"
+RESULTS_MIRROR = ROOT / "data" / "commons_pose_results_mirror.json"
 
 
 @pytest.fixture(scope="module")
@@ -166,3 +167,58 @@ def test_report_in_sync_with_results() -> None:
     doc["summary"] = R.summarise(doc["images"])
     md = (ROOT / "REAL_POSE_VALIDATION.md").read_text(encoding="utf-8")
     assert md == R.render_markdown(doc), "REAL_POSE_VALIDATION.md 與結果檔不同步：重跑 real_pose_validation.py report"
+
+
+@pytest.mark.skipif(not RESULTS_MIRROR.exists(), reason="還沒跑過鏡像那批")
+def test_mirror_report_in_sync_with_results() -> None:
+    """第二批（鏡像原圖 66 張）的報告同樣不得手抄——與第一批同一條規則。"""
+    doc = json.loads(RESULTS_MIRROR.read_text(encoding="utf-8"))
+    doc["summary"] = R.summarise(doc["images"])
+    md = (ROOT / "REAL_POSE_VALIDATION_MIRROR.md").read_text(encoding="utf-8")
+    expected = R.render_markdown(doc, "data/commons_pose_results_mirror.json")
+    assert md == expected, "REAL_POSE_VALIDATION_MIRROR.md 與結果檔不同步：重跑 real_pose_validation.py report"
+
+
+@pytest.mark.skipif(not RESULTS_MIRROR.exists(), reason="還沒跑過鏡像那批")
+def test_mirror_report_names_its_own_source() -> None:
+    """報告標頭要指向自己的來源檔。舊版 render_markdown 把路徑寫死，第二批會宣稱自己來自第一批的檔案。"""
+    md = (ROOT / "REAL_POSE_VALIDATION_MIRROR.md").read_text(encoding="utf-8")
+    assert "data/commons_pose_results_mirror.json" in md
+    assert "從 `data/commons_pose_results.json`" not in md
+
+
+@pytest.mark.skipif(not (RESULTS.exists() and RESULTS_MIRROR.exists()), reason="兩批都要在")
+def test_two_batches_are_separate_records() -> None:
+    """兩批是**各自獨立**的紀錄，不可互相覆蓋。
+
+    第一批 86 張是 1280 px 縮圖抓的，其中 70 張的來源已經拿不到了（鏡像凍結在 2013-03），
+    重跑不回來；第二批 66 張是鏡像原圖。把任一邊覆寫掉就是永久損失，所以這裡釘住兩件事：
+    兩個檔案都在、而且第一批的張數沒有被第二批改動。
+    """
+    first = json.loads(RESULTS.read_text(encoding="utf-8"))
+    second = json.loads(RESULTS_MIRROR.read_text(encoding="utf-8"))
+    assert len(first["images"]) == 86, "第一批 86 張的紀錄被動到了"
+    assert len(second["images"]) == 66
+    ids_first = {r["id"] for r in first["images"]}
+    ids_second = {r["id"] for r in second["images"]}
+    # 16 張重疊（同一張照片，縮圖 vs 原圖各跑一次），其餘各自獨立
+    assert len(ids_first & ids_second) == 16
+
+
+@pytest.mark.skipif(not (RESULTS.exists() and RESULTS_MIRROR.exists()), reason="兩批都要在")
+def test_source_resolution_does_not_change_the_gate() -> None:
+    """重疊那 16 張：**1280 px 縮圖與全解析度原圖，閘門結論逐張相同**（2026-09-28 實測 16/16）。
+
+    這條是方法學上的保險：剩下的 247 張只能在別的網路上用**縮圖**抓
+    （鏡像凍結在 2013-03，拿不到它們的原圖）。如果縮圖會改變閘門結論，那批數字就不能
+    跟這批併著看。兩條路徑都先縮到 max_side 1024 才進管線，所以理論上應該一樣——這裡量到它真的一樣。
+    這個測試紅了，代表解析度開始影響判定，混用兩批之前要先查清楚。
+    """
+    first = {r["id"]: r for r in json.loads(RESULTS.read_text(encoding="utf-8"))["images"]}
+    second = {r["id"]: r for r in json.loads(RESULTS_MIRROR.read_text(encoding="utf-8"))["images"]}
+    overlap = sorted(set(first) & set(second))
+    differing = [
+        k for k in overlap
+        if (first[k].get("verdict") or {}).get("ok") != (second[k].get("verdict") or {}).get("ok")
+    ]
+    assert differing == [], f"縮圖與原圖的閘門結論不一致：{differing}"
