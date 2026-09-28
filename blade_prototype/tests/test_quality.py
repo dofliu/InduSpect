@@ -251,16 +251,51 @@ def test_second_rotor_check_can_be_skipped_for_cost():
 
 
 def test_side_view_two_vertical_blades_skips_three_blade_rules():
+    """**宣告**為側視時才走側視規則（2026-09-28 起，見 quality.SIDE_VIEW_MAX_TILT_DEG）。"""
     v = assess_capture(_seg(_mask_with_ground(ground_frac=0.1)),
-                       _Structure([300.0, 150.0], angles=[270.0, 90.0]))
+                       _Structure([300.0, 150.0], angles=[270.0, 90.0]),
+                       expected_view="side")
     assert v.ok, v.reasons
     assert v.metrics["view"] == "side" and v.metrics["hanging_blade_index"] == 0
     assert v.metrics["tip_radius_spread"] > 0.15, "離散度照記錄，只是不拿來判"
     assert any("側視" in w and "互比不適用" in w for w in v.warnings), v.warnings
 
 
+def test_side_view_is_declared_not_inferred():
+    """**沒有宣告就不准判成側視**——這是 2026-09-28 的決定，理由在 quality.py 的常數說明。
+
+    同一個結構：宣告側視 → 走側視規則放行；沒宣告 → 套正視的「三片」規則而拒收。
+    Commons 上靠推論放行的 4 張（塔門特寫、施工吊車、風場遠景、兩台風機同框）
+    就是這樣進來的，而剪影本身分不出它們與真側視。
+    """
+    st = _Structure([300.0, 150.0], angles=[270.0, 90.0])
+    declared = assess_capture(_seg(_mask_with_ground(ground_frac=0.1)), st, expected_view="side")
+    inferred = assess_capture(_seg(_mask_with_ground(ground_frac=0.1)), st)
+    assert declared.ok and declared.metrics["view"] == "side"
+    assert not inferred.ok, "沒有宣告卻被判成側視放行了"
+    assert inferred.metrics["view"] == "front"
+    assert any("只定位到 2 片" in r for r in inferred.reasons), inferred.reasons
+
+
+def test_declaring_front_never_takes_the_side_path():
+    """宣告正視就是正視，不會因為畫面像側視就繞過三片規則。"""
+    v = assess_capture(_seg(_mask_with_ground(ground_frac=0.1)),
+                       _Structure([300.0, 150.0], angles=[270.0, 90.0]), expected_view="front")
+    assert not v.ok and v.metrics["view"] == "front"
+
+
+def test_declared_side_that_is_not_side_says_why():
+    """宣告了側視但幾何不符：照正視規則判，而且要講出為什麼改判，不能默默換規則。"""
+    v = assess_capture(_seg(_mask_with_ground()),
+                       _Structure([300.0, 150.0, 280.0], angles=[90.0, 210.0, 330.0]),
+                       expected_view="side")
+    assert v.metrics["view"] == "front"
+    assert any("宣告為側視" in w for w in v.warnings), v.warnings
+
+
 def test_side_view_needs_one_up_and_one_down():
-    v = assess_capture(_seg(_mask_with_ground()), _Structure([300.0, 150.0], angles=[90.0, 92.0]))
+    v = assess_capture(_seg(_mask_with_ground()), _Structure([300.0, 150.0], angles=[90.0, 92.0]),
+                       expected_view="side")
     assert not v.ok and any("只定位到 2 片" in r for r in v.reasons)
     assert v.metrics["view"] == "front"
 
@@ -268,19 +303,22 @@ def test_side_view_needs_one_up_and_one_down():
 def test_oblique_view_is_not_side_view():
     """1573f056（真實照片，標註「轉子近側視」）兩片是 6.6° 與 19.2°——斜視不是側視，
     垂掛葉片的彎曲含透視分量，放行只會多一個假訊號來源。"""
-    v = assess_capture(_seg(_mask_with_ground()), _Structure([277.0, 215.8], angles=[289.2, 83.4]))
+    v = assess_capture(_seg(_mask_with_ground()), _Structure([277.0, 215.8], angles=[289.2, 83.4]),
+                       expected_view="side")
     assert not v.ok and v.metrics["view"] == "front"
 
 
 def test_side_view_requires_tower():
     v = assess_capture(_seg(_mask_with_ground()),
-                       _Structure([300.0, 150.0], angles=[270.0, 90.0], tower=False))
+                       _Structure([300.0, 150.0], angles=[270.0, 90.0], tower=False),
+                       expected_view="side")
     assert not v.ok and v.metrics["view"] == "front"
 
 
 def test_single_hanging_blade_is_not_side_view():
     """單獨一根垂直的東西也可能是桿子、桅杆或被雲切掉的別台風機。"""
-    v = assess_capture(_seg(_mask_with_ground()), _Structure([300.0], angles=[270.0]))
+    v = assess_capture(_seg(_mask_with_ground()), _Structure([300.0], angles=[270.0]),
+                       expected_view="side")
     assert not v.ok and v.metrics["view"] == "front"
     assert detect_side_view(_Structure([300.0], angles=[270.0])) is None
 
@@ -292,12 +330,30 @@ def test_side_view_tilt_threshold_is_pinned():
 
 
 def test_synthetic_side_view_passes_the_gate_end_to_end():
-    """合成側視照（葉片 A 垂掛在六點鐘）整條路：分割 → 結構 → 閘門放行、標成側視。"""
+    """合成側視照（葉片 A 垂掛在六點鐘）整條路：分割 → 結構 → **宣告側視** → 閘門放行。
+
+    2026-09-28 起側視是宣告制：同一張照片沒宣告就會被正視規則擋掉（下一條測試釘住）。
+    """
     img, _ = render_side(SceneSpec.for_scale(6.0, "side", (1500, 2000), seed=1))
     seg = segment_turbine(img)
     st = find_structure(seg.mask, horizon_y=seg.horizon_y)
-    v = assess_capture(seg, st)
+    v = assess_capture(seg, st, expected_view="side")
     assert v.ok, v.reasons
     assert v.metrics["view"] == "side"
     hang = st.blades[v.metrics["hanging_blade_index"]]
     assert abs(((hang.tip_angle_deg - 270.0) + 180) % 360 - 180) < SIDE_VIEW_MAX_TILT_DEG
+
+
+
+def test_synthetic_side_view_without_declaration_is_rejected():
+    """同一張真側視照，沒宣告就走正視規則被擋掉——這是宣告制的代價，寫下來免得被當成退化。
+
+    代價是可接受的：App 的引導拍攝一定知道自己要哪一格，會宣告；
+    而換來的是塔門特寫、施工吊車、風場遠景、兩台風機同框不再從側視這條路溜進來。
+    """
+    img, _ = render_side(SceneSpec.for_scale(6.0, "side", (1500, 2000), seed=1))
+    seg = segment_turbine(img)
+    st = find_structure(seg.mask, horizon_y=seg.horizon_y)
+    v = assess_capture(seg, st)
+    assert not v.ok
+    assert v.metrics["view"] == "front"

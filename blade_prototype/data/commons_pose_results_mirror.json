@@ -6,13 +6,13 @@
  "summary": {
   "n": 66,
   "failed": 0,
-  "accepted": 5,
+  "accepted": 3,
   "accepted_front": 3,
-  "accepted_side": 2,
-  "rejected": 61,
+  "accepted_side": 0,
+  "rejected": 63,
   "reject_reasons": {
-   "只定位到 N 片葉片（…）": 32,
-   "三片葉尖半徑差 N%（…）": 25,
+   "只定位到 N 片葉片（…）": 34,
+   "三片葉尖半徑差 N%（…）": 26,
    "一片葉片都沒有定位到": 17,
    "畫面上幾乎分不出風機（…）": 2
   },
@@ -134,7 +134,7 @@
    },
    "Nordex N117": {
     "n": 1,
-    "accepted": 1,
+    "accepted": 0,
     "front": 0,
     "pose_usable": 0,
     "raw_defl_flagged": 0,
@@ -142,7 +142,7 @@
    },
    "Nordex N90": {
     "n": 4,
-    "accepted": 1,
+    "accepted": 0,
     "front": 0,
     "pose_usable": 0,
     "raw_defl_flagged": 0,
@@ -160,7 +160,7 @@
   "per_source": {
    "model": {
     "n": 45,
-    "accepted": 3,
+    "accepted": 2,
     "front": 2,
     "pose_usable": 1,
     "raw_defl_flagged": 0,
@@ -168,14 +168,14 @@
    },
    "model-subcat": {
     "n": 21,
-    "accepted": 2,
+    "accepted": 1,
     "front": 1,
     "pose_usable": 1,
     "raw_defl_flagged": 1,
     "comp_defl_flagged": 1
    }
   },
-  "seconds_median": 0.28
+  "seconds_median": 0.29
  },
  "images": [
   {
@@ -239,7 +239,7 @@
    ],
    "radius_spread": 0.117,
    "view": "front",
-   "seconds": 0.58
+   "seconds": 0.47
   },
   {
    "id": "c20885155",
@@ -305,7 +305,7 @@
    ],
    "radius_spread": 0.367,
    "view": "front",
-   "seconds": 0.39
+   "seconds": 0.36
   },
   {
    "id": "c21367677",
@@ -374,7 +374,7 @@
    ],
    "radius_spread": 2.181,
    "view": "front",
-   "seconds": 0.39
+   "seconds": 0.36
   },
   {
    "id": "c6914141",
@@ -437,7 +437,7 @@
    ],
    "radius_spread": 0.0,
    "view": "front",
-   "seconds": 0.39
+   "seconds": 0.38
   },
   {
    "id": "c6326631",
@@ -498,7 +498,7 @@
    ],
    "radius_spread": 0.0,
    "view": "front",
-   "seconds": 0.32
+   "seconds": 0.31
   },
   {
    "id": "c6326636",
@@ -550,7 +550,7 @@
    "tip_radii_px": [],
    "tip_angles_deg": [],
    "view": "front",
-   "seconds": 0.24
+   "seconds": 0.23
   },
   {
    "id": "c16365752",
@@ -612,7 +612,7 @@
    ],
    "radius_spread": 0.0,
    "view": "front",
-   "seconds": 0.26
+   "seconds": 0.31
   },
   {
    "id": "c6566413",
@@ -664,7 +664,7 @@
    "tip_radii_px": [],
    "tip_angles_deg": [],
    "view": "front",
-   "seconds": 0.2
+   "seconds": 0.18
   },
   {
    "id": "c6566190",
@@ -716,7 +716,7 @@
    "tip_radii_px": [],
    "tip_angles_deg": [],
    "view": "front",
-   "seconds": 0.14
+   "seconds": 0.15
   },
   {
    "id": "c6566536",
@@ -768,7 +768,7 @@
    "tip_radii_px": [],
    "tip_angles_deg": [],
    "view": "front",
-   "seconds": 0.22
+   "seconds": 0.21
   },
   {
    "id": "c19465951",
@@ -985,7 +985,7 @@
      "same_flags": true
     }
    },
-   "seconds": 0.29
+   "seconds": 0.3
   },
   {
    "id": "c19669637",
@@ -1047,7 +1047,7 @@
    ],
    "radius_spread": 0.0,
    "view": "front",
-   "seconds": 0.26
+   "seconds": 0.36
   },
   {
    "id": "c19674205",
@@ -1116,7 +1116,7 @@
    ],
    "radius_spread": 2.755,
    "view": "front",
-   "seconds": 0.28
+   "seconds": 0.23
   },
   {
    "id": "c19674208",
@@ -1168,7 +1168,7 @@
    "tip_radii_px": [],
    "tip_angles_deg": [],
    "view": "front",
-   "seconds": 0.31
+   "seconds": 0.29
   },
   {
    "id": "c19674213",
@@ -1236,7 +1236,7 @@
    ],
    "radius_spread": 1.203,
    "view": "front",
-   "seconds": 0.75
+   "seconds": 0.72
   },
   {
    "id": "c8836086",
@@ -1288,7 +1288,7 @@
    "tip_radii_px": [],
    "tip_angles_deg": [],
    "view": "front",
-   "seconds": 0.14
+   "seconds": 0.22
   },
   {
    "id": "c19156793",
@@ -1357,7 +1357,7 @@
    ],
    "radius_spread": 0.512,
    "view": "front",
-   "seconds": 0.37
+   "seconds": 0.36
   },
   {
    "id": "c19156797",
@@ -1496,7 +1496,7 @@
     "usable": false
    },
    "comp": null,
-   "seconds": 0.4
+   "seconds": 0.38
   },
   {
    "id": "c12853508",
@@ -1563,7 +1563,7 @@
    ],
    "radius_spread": 0.572,
    "view": "front",
-   "seconds": 0.26
+   "seconds": 0.3
   },
   {
    "id": "c3962001",
@@ -1626,7 +1626,7 @@
    ],
    "radius_spread": 0.0,
    "view": "front",
-   "seconds": 0.32
+   "seconds": 0.3
   },
   {
    "id": "c3962018",
@@ -1679,7 +1679,7 @@
    "tip_radii_px": [],
    "tip_angles_deg": [],
    "view": "front",
-   "seconds": 0.19
+   "seconds": 0.18
   },
   {
    "id": "c3962063",
@@ -1740,7 +1740,7 @@
    ],
    "radius_spread": 0.0,
    "view": "front",
-   "seconds": 0.29
+   "seconds": 0.27
   },
   {
    "id": "c21695568",
@@ -1808,7 +1808,7 @@
    ],
    "radius_spread": 0.926,
    "view": "front",
-   "seconds": 0.29
+   "seconds": 0.3
   },
   {
    "id": "c21695570",
@@ -1869,7 +1869,7 @@
    ],
    "radius_spread": 0.0,
    "view": "front",
-   "seconds": 0.24
+   "seconds": 0.25
   },
   {
    "id": "c21695566",
@@ -1935,7 +1935,7 @@
    ],
    "radius_spread": 0.446,
    "view": "front",
-   "seconds": 0.26
+   "seconds": 0.25
   },
   {
    "id": "c12316615",
@@ -2051,7 +2051,7 @@
    "tip_radii_px": [],
    "tip_angles_deg": [],
    "view": "front",
-   "seconds": 0.16
+   "seconds": 0.19
   },
   {
    "id": "c5682409",
@@ -2329,7 +2329,7 @@
    ],
    "radius_spread": 0.113,
    "view": "front",
-   "seconds": 0.31
+   "seconds": 0.26
   },
   {
    "id": "c16043004",
@@ -2381,7 +2381,7 @@
    "tip_radii_px": [],
    "tip_angles_deg": [],
    "view": "front",
-   "seconds": 0.17
+   "seconds": 0.14
   },
   {
    "id": "c12869944",
@@ -2484,7 +2484,7 @@
    "tip_radii_px": [],
    "tip_angles_deg": [],
    "view": "front",
-   "seconds": 0.23
+   "seconds": 0.26
   },
   {
    "id": "c18211537",
@@ -2551,7 +2551,7 @@
    ],
    "radius_spread": 1.124,
    "view": "front",
-   "seconds": 0.25
+   "seconds": 0.26
   },
   {
    "id": "c18210923",
@@ -2621,7 +2621,7 @@
    ],
    "radius_spread": 1.227,
    "view": "front",
-   "seconds": 0.39
+   "seconds": 0.4
   },
   {
    "id": "c19673740",
@@ -2690,7 +2690,7 @@
    ],
    "radius_spread": 0.661,
    "view": "front",
-   "seconds": 0.44
+   "seconds": 0.41
   },
   {
    "id": "c19673765",
@@ -2825,7 +2825,7 @@
    ],
    "radius_spread": 0.515,
    "view": "front",
-   "seconds": 0.28
+   "seconds": 0.35
   },
   {
    "id": "c19673781",
@@ -2892,7 +2892,7 @@
    ],
    "radius_spread": 0.025,
    "view": "front",
-   "seconds": 0.29
+   "seconds": 0.36
   },
   {
    "id": "c19673819",
@@ -2955,7 +2955,7 @@
    ],
    "radius_spread": 0.0,
    "view": "front",
-   "seconds": 0.31
+   "seconds": 0.33
   },
   {
    "id": "c19673825",
@@ -3023,7 +3023,7 @@
    ],
    "radius_spread": 0.334,
    "view": "front",
-   "seconds": 0.4
+   "seconds": 0.48
   },
   {
    "id": "c19673832",
@@ -3090,7 +3090,7 @@
    ],
    "radius_spread": 0.282,
    "view": "front",
-   "seconds": 0.33
+   "seconds": 0.31
   },
   {
    "id": "c19673837",
@@ -3157,7 +3157,7 @@
    ],
    "radius_spread": 0.139,
    "view": "front",
-   "seconds": 0.51
+   "seconds": 0.48
   },
   {
    "id": "c19673844",
@@ -3225,7 +3225,7 @@
    ],
    "radius_spread": 0.349,
    "view": "front",
-   "seconds": 0.54
+   "seconds": 0.53
   },
   {
    "id": "c8384905",
@@ -3287,7 +3287,7 @@
    ],
    "radius_spread": 0.0,
    "view": "front",
-   "seconds": 0.42
+   "seconds": 0.37
   },
   {
    "id": "c21685144",
@@ -3353,7 +3353,7 @@
    ],
    "radius_spread": 0.195,
    "view": "front",
-   "seconds": 0.34
+   "seconds": 0.39
   },
   {
    "id": "c16853637",
@@ -3421,7 +3421,7 @@
    ],
    "radius_spread": 1.061,
    "view": "front",
-   "seconds": 0.32
+   "seconds": 0.33
   },
   {
    "id": "c18175573",
@@ -3490,7 +3490,7 @@
    ],
    "radius_spread": 0.175,
    "view": "front",
-   "seconds": 0.27
+   "seconds": 0.23
   },
   {
    "id": "c18167022",
@@ -3553,7 +3553,7 @@
    ],
    "radius_spread": 0.0,
    "view": "front",
-   "seconds": 0.29
+   "seconds": 0.34
   },
   {
    "id": "c18712576",
@@ -3619,7 +3619,7 @@
    ],
    "radius_spread": 0.196,
    "view": "front",
-   "seconds": 0.31
+   "seconds": 0.27
   },
   {
    "id": "c18703446",
@@ -3753,7 +3753,7 @@
    ],
    "radius_spread": 0.177,
    "view": "front",
-   "seconds": 0.31
+   "seconds": 0.33
   },
   {
    "id": "c18633412",
@@ -3815,7 +3815,7 @@
    ],
    "radius_spread": 0.0,
    "view": "front",
-   "seconds": 0.2
+   "seconds": 0.25
   },
   {
    "id": "c16966823",
@@ -3867,7 +3867,7 @@
    "tip_radii_px": [],
    "tip_angles_deg": [],
    "view": "front",
-   "seconds": 0.25
+   "seconds": 0.18
   },
   {
    "id": "c17175040",
@@ -3934,7 +3934,7 @@
    ],
    "radius_spread": 0.783,
    "view": "front",
-   "seconds": 0.23
+   "seconds": 0.24
   },
   {
    "id": "c10370483",
@@ -3997,7 +3997,7 @@
    ],
    "radius_spread": 0.0,
    "view": "front",
-   "seconds": 0.3
+   "seconds": 0.24
   },
   {
    "id": "c10370423",
@@ -4059,7 +4059,7 @@
    ],
    "radius_spread": 0.0,
    "view": "front",
-   "seconds": 0.27
+   "seconds": 0.3
   },
   {
    "id": "c22433382",
@@ -4111,7 +4111,7 @@
    "tip_radii_px": [],
    "tip_angles_deg": [],
    "view": "front",
-   "seconds": 0.15
+   "seconds": 0.14
   },
   {
    "id": "c22433410",
@@ -4174,7 +4174,7 @@
    ],
    "radius_spread": 0.0,
    "view": "front",
-   "seconds": 0.17
+   "seconds": 0.18
   },
   {
    "id": "c19932839",
@@ -4252,10 +4252,12 @@
    "rotor_radius_m": 58.4,
    "failed": false,
    "verdict": {
-    "ok": true,
-    "reasons": [],
+    "ok": false,
+    "reasons": [
+     "只定位到 2 片葉片（應為 3）：可能有葉片正好貼在塔架上（六點鐘方位）或沒入雲層，請等轉子轉到三片都離開塔架再拍",
+     "三片葉尖半徑差 32%（上限 15%）：同一台風機三片等長，差這麼多代表有一片其實是地物、電線或別台風機，請重拍並確保只有一台風機在框內"
+    ],
     "warnings": [
-     "側視：三片投影共線，三片互比不適用。本張只量垂掛葉片的 flapwise 彎曲，而且單幀值含預彎，要與同一台的基線或正視互比結果對照才有意義",
      "結構定位提示：葉片軸線共線（側視），輪轂投影到主葉片軸線"
     ],
     "metrics": {
@@ -4263,8 +4265,7 @@
      "sky_mask_frac": 0.014,
      "horizon_y": null,
      "n_blades": 2,
-     "view": "side",
-     "hanging_blade_index": 1,
+     "view": "front",
      "tip_radii_px": [
       276.1,
       200.1
@@ -4290,14 +4291,8 @@
     268.6
    ],
    "radius_spread": 0.319,
-   "view": "side",
-   "side_view": {
-    "label": "B",
-    "tip_deflection_px": -19.194866073280984,
-    "tip_deflection_cm": -751.6802461447309,
-    "radius_px": 149.12992385112813
-   },
-   "seconds": 0.25
+   "view": "front",
+   "seconds": 0.26
   },
   {
    "id": "c18133307",
@@ -4356,7 +4351,7 @@
    ],
    "radius_spread": 0.0,
    "view": "front",
-   "seconds": 0.28
+   "seconds": 0.3
   },
   {
    "id": "c17176533",
@@ -4408,7 +4403,7 @@
    "tip_radii_px": [],
    "tip_angles_deg": [],
    "view": "front",
-   "seconds": 0.14
+   "seconds": 0.27
   },
   {
    "id": "c19637139",
@@ -4434,10 +4429,11 @@
    "rotor_radius_m": 45.0,
    "failed": false,
    "verdict": {
-    "ok": true,
-    "reasons": [],
+    "ok": false,
+    "reasons": [
+     "只定位到 2 片葉片（應為 3）：可能有葉片正好貼在塔架上（六點鐘方位）或沒入雲層，請等轉子轉到三片都離開塔架再拍"
+    ],
     "warnings": [
-     "側視：三片投影共線，三片互比不適用。本張只量垂掛葉片的 flapwise 彎曲，而且單幀值含預彎，要與同一台的基線或正視互比結果對照才有意義",
      "結構定位提示：葉片軸線共線（側視），輪轂投影到主葉片軸線"
     ],
     "metrics": {
@@ -4445,8 +4441,7 @@
      "sky_mask_frac": 0.04,
      "horizon_y": null,
      "n_blades": 2,
-     "view": "side",
-     "hanging_blade_index": 1,
+     "view": "front",
      "tip_radii_px": [
       308.2,
       276.7
@@ -4472,14 +4467,8 @@
     279.4
    ],
    "radius_spread": 0.108,
-   "view": "side",
-   "side_view": {
-    "label": "B",
-    "tip_deflection_px": -6.8016147305480965,
-    "tip_deflection_cm": -111.41355602647911,
-    "radius_px": 274.7176140773404
-   },
-   "seconds": 0.26
+   "view": "front",
+   "seconds": 0.21
   },
   {
    "id": "c19637258",
@@ -4531,7 +4520,7 @@
    "tip_radii_px": [],
    "tip_angles_deg": [],
    "view": "front",
-   "seconds": 0.18
+   "seconds": 0.15
   },
   {
    "id": "c16282953",

@@ -338,7 +338,8 @@ void main() {
           blades: [_tipAt(300, 270), _tipAt(150, 90)],
           towerFound: true,
           hubRefined: true);
-      final v = BladeStructureGate.judge(structure: st, checkSecondRotor: false);
+      final v = BladeStructureGate.judge(
+          structure: st, checkSecondRotor: false, expectedView: 'side');
       expect(v.ok, isTrue, reason: v.reasons.join('；'));
       expect(v.metrics['view'], 'side');
       expect(v.metrics['hanging_blade_index'], 0);
@@ -354,7 +355,8 @@ void main() {
               blades: [_tipAt(300, 90), _tipAt(150, 92)],
               towerFound: true,
               hubRefined: true),
-          checkSecondRotor: false);
+          checkSecondRotor: false,
+          expectedView: 'side');
       expect(v.ok, isFalse);
       expect(v.metrics['view'], 'front');
       expect(v.reasons.join(), contains('六點鐘'));
@@ -366,7 +368,8 @@ void main() {
               blades: [_tipAt(277, 289.2), _tipAt(215.8, 83.4)],
               towerFound: true,
               hubRefined: true),
-          checkSecondRotor: false);
+          checkSecondRotor: false,
+          expectedView: 'side');
       expect(v.ok, isFalse, reason: '斜視的垂掛葉片彎曲含透視分量，放行只會多一個假訊號來源');
       expect(v.metrics['view'], 'front');
     });
@@ -377,14 +380,59 @@ void main() {
               blades: [_tipAt(300, 270), _tipAt(150, 90)],
               towerFound: false,
               hubRefined: true),
-          checkSecondRotor: false);
+          checkSecondRotor: false,
+          expectedView: 'side');
       expect(noTower.ok, isFalse);
       final lone = BladeStructureGate.judge(
           structure: BladeStructure(
               blades: [_tipAt(300, 270)], towerFound: true, hubRefined: true),
-          checkSecondRotor: false);
+          checkSecondRotor: false,
+          expectedView: 'side');
       expect(lone.ok, isFalse);
       expect(lone.metrics['view'], 'front');
+    });
+
+    // 宣告制（2026-09-28）：對照 Python tests/test_quality.py 的同名情境。
+    // 靠剪影推論側視，在 Commons 上放行的 4 張沒有一張是側視照——塔基門特寫、
+    // 施工中的吊車與光塔、風場遠景、夕陽下的兩台風機，剪影與真側視分不開。
+    test('側視是宣告制：同一個結構，沒宣告就照正視規則拒收', () {
+      BladeStructure st() => BladeStructure(
+          blades: [_tipAt(300, 270), _tipAt(150, 90)],
+          towerFound: true,
+          hubRefined: true);
+      final declared = BladeStructureGate.judge(
+          structure: st(), checkSecondRotor: false, expectedView: 'side');
+      final inferred =
+          BladeStructureGate.judge(structure: st(), checkSecondRotor: false);
+      expect(declared.ok, isTrue, reason: declared.reasons.join('；'));
+      expect(declared.metrics['view'], 'side');
+      expect(inferred.ok, isFalse, reason: '沒有宣告卻被判成側視放行了');
+      expect(inferred.metrics['view'], 'front');
+      expect(inferred.reasons.join(), contains('只定位到 2 片'));
+    });
+
+    test('宣告正視就是正視：畫面像側視也不繞過三片規則', () {
+      final v = BladeStructureGate.judge(
+          structure: BladeStructure(
+              blades: [_tipAt(300, 270), _tipAt(150, 90)],
+              towerFound: true,
+              hubRefined: true),
+          checkSecondRotor: false,
+          expectedView: 'front');
+      expect(v.ok, isFalse);
+      expect(v.metrics['view'], 'front');
+    });
+
+    test('宣告側視但幾何不符：照正視規則判，而且要講出為什麼改判', () {
+      final v = BladeStructureGate.judge(
+          structure: BladeStructure(
+              blades: [_tipAt(300, 90), _tipAt(150, 210), _tipAt(280, 330)],
+              towerFound: true,
+              hubRefined: true),
+          checkSecondRotor: false,
+          expectedView: 'side');
+      expect(v.metrics['view'], 'front');
+      expect(v.warnings.join(), contains('宣告為側視'));
     });
 
     test('側視門檻 12° 含邊界，與 Python 相同', () {
@@ -409,7 +457,9 @@ void main() {
 
     test('合成側視照：閘門判成側視放行、不互比、垂掛葉片與 Python 同一片同一個數', () {
       final bytes = File('test/assets/blade_side_scene.png').readAsBytesSync();
-      final out = runGeometryPipeline(Uint8List.fromList(bytes));
+      // 側視是宣告制：夾具照樣是真側視，但要宣告才走側視規則
+      final out = runGeometryPipeline(Uint8List.fromList(bytes),
+          expectedView: 'side');
       final want = sideRef['capture_verdict'] as Map<String, dynamic>;
       expect(out.ok, want['ok'] as bool, reason: out.reasons.join('；'));
       expect(out.metrics['view'], want['view']);
@@ -427,11 +477,18 @@ void main() {
       expect(out.metrics.containsKey('hanging_tip_deflection_cm'), isFalse);
     });
 
+    test('同一張真側視夾具，沒宣告就被正視規則擋掉（宣告制的代價）', () {
+      final bytes = File('test/assets/blade_side_scene.png').readAsBytesSync();
+      final out = runGeometryPipeline(Uint8List.fromList(bytes));
+      expect(out.ok, isFalse, reason: '沒宣告卻走了側視規則');
+      expect(out.metrics['view'], 'front');
+    });
+
     test('★ 側視 + 型錄半徑：尺度由垂掛那片反推，與 Python 同一個數（A4）', () {
       final bytes = File('test/assets/blade_side_scene.png').readAsBytesSync();
       final rotorRadiusM = (sideRef['rotor_radius_m'] as num).toDouble();
       final out = runGeometryPipeline(Uint8List.fromList(bytes),
-          rotorRadiusM: rotorRadiusM);
+          rotorRadiusM: rotorRadiusM, expectedView: 'side');
       expect(out.ok, isTrue, reason: out.reasons.join('；'));
       final wantCm = (sideRef['cm_per_px_estimated'] as num).toDouble();
       expect(out.cmPerPx!, closeTo(wantCm, 0.01 * wantCm),

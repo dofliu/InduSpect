@@ -137,13 +137,21 @@ class BladeAnalysisService {
   /// 帶著型錄轉子半徑一起過去：isolate 只能收一個參數，所以包成 record。
   static BladeGeometryOutcome _geometryIsolate(_GeometryJob job) =>
       runGeometryPipeline(job.bytes,
-          rotorRadiusM: job.rotorRadiusM, hubHeightM: job.hubHeightM);
+          rotorRadiusM: job.rotorRadiusM,
+          hubHeightM: job.hubHeightM,
+          expectedView: job.expectedView);
 
   /// 預設的幾何層分析器（進 isolate）；測試注入的 [BladeGeometryAnalyzer] 取代它。
   static Future<BladeGeometryOutcome> _defaultGeometry(Uint8List bytes,
-          {double? rotorRadiusM, double? hubHeightM}) =>
-      compute(_geometryIsolate,
-          (bytes: bytes, rotorRadiusM: rotorRadiusM, hubHeightM: hubHeightM));
+          {double? rotorRadiusM, double? hubHeightM, String? expectedView}) =>
+      compute(
+          _geometryIsolate,
+          (
+            bytes: bytes,
+            rotorRadiusM: rotorRadiusM,
+            hubHeightM: hubHeightM,
+            expectedView: expectedView
+          ));
 
   /// isolate 入口。一段 30 秒 48 kHz 的音軌約 6 千萬次浮點運算（STFT 為主），
   /// 在手機上是幾百毫秒——不到幾何層那麼貴，但足以讓畫面掉幀。
@@ -432,8 +440,13 @@ class BladeAnalysisService {
       notes.add('${_shortPath(m.path)}：讀不到檔案，未納入幾何分析。');
       return null;
     }
+    // 側視是宣告制：這張媒體被登記成哪一格，就照哪一格的規則判。
+    // 從剪影推論側視會把塔門特寫、施工吊車、風場遠景、兩台風機同框都放行
+    // （`blade_prototype/RESOLUTION_SENSITIVITY.md` §2），所以只信呼叫端的宣告。
     final result = await (geometry ?? _defaultGeometry)(bytes,
-        rotorRadiusM: rotorRadiusM, hubHeightM: hubHeightM);
+        rotorRadiusM: rotorRadiusM,
+        hubHeightM: hubHeightM,
+        expectedView: m.view == WtMediaView.side ? 'side' : 'front');
 
     if (!result.ok) {
       notes.add('${_shortPath(m.path)}（整機照）：${result.reasons.join('；')}');
@@ -838,4 +851,9 @@ class BladeAnalysisService {
 }
 
 /// 幾何層 isolate 的參數：一張照片 + 型錄轉子半徑（可無）。
-typedef _GeometryJob = ({Uint8List bytes, double? rotorRadiusM, double? hubHeightM});
+typedef _GeometryJob = ({
+  Uint8List bytes,
+  double? rotorRadiusM,
+  double? hubHeightM,
+  String? expectedView
+});

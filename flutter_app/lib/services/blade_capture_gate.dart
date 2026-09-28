@@ -154,6 +154,14 @@ class BladeStructureGate {
   /// 塔架找到**。12° 是拿 75 張真實照片定的：≤12° 沒有任何一張命中，唯一標成
   /// 「轉子近側視」的那張兩片是 6.6° 與 19.2°——那是斜視不是側視，斜視的垂掛葉片
   /// 彎曲含透視分量，放行只會多一個假訊號來源。與 `quality.py::SIDE_VIEW_MAX_TILT_DEG` 相同。
+  ///
+  /// **但這些條件只在呼叫端宣告 `expectedView: 'side'` 時才用**（2026-09-28 起）。
+  /// 把 Commons 上靠這條規則放行的 4 張逐張看過，沒有一張是側視全機照：塔基的門特寫、
+  /// 施工中的吊車與光塔、風場遠景、夕陽下的兩台風機。真側視的剪影就是「一根細長直桿 +
+  /// 下面一根塔」，而那四種的剪影長得一模一樣（臂長、輪轂到軸線垂距、細長比、塔軸偏移
+  /// 都落在同一區，見 `blade_prototype/RESOLUTION_SENSITIVITY.md` §2）——**二值剪影裡
+  /// 沒有「這是一個轉子」的證據**，調參調不出來。而引導拍攝本來就知道自己要哪一格
+  /// （`BladeShot.view`），用那個資訊就夠了：有宣告才走側視規則，沒宣告一律走正視規則。
   static const double sideViewMaxTiltDeg = 12.0;
 
   static BladeStructureVerdict judge({
@@ -162,6 +170,9 @@ class BladeStructureGate {
     String? error,
     int nBladesExpected = 3,
     bool checkSecondRotor = true,
+    /// 呼叫端宣告這張**要拍的是什麼**（'front'／'side'／null＝沒宣告）。
+    /// 只有宣告 'side' 才會去判側視——理由見 [sideViewMaxTiltDeg]。
+    String? expectedView,
   }) {
     final reasons = <String>[];
     final warnings = <String>[];
@@ -212,8 +223,21 @@ class BladeStructureGate {
     metrics['n_blades'] = n;
     // 側視走另一組規則（見 sideViewMaxTiltDeg）：不要求三片、不看半徑離散，
     // 但要明說這張只能量垂掛葉片的彎曲、不能做三片互比。
-    final hanging = nBladesExpected == 3 ? detectSideView(structure) : null;
+    // **宣告制**：沒有人說這張是側視，就不要從剪影去猜（猜出來的 4 張全是誤放行）。
+    final sideDeclared = (expectedView ?? '').toLowerCase() == 'side';
+    if (expectedView != null) {
+      // 沒宣告就不記——沒宣告是預設，記一個 null 只會讓每筆結果都多一欄
+      metrics['expected_view'] = expectedView;
+    }
+    final hanging =
+        (sideDeclared && nBladesExpected == 3) ? detectSideView(structure) : null;
     metrics['view'] = hanging != null ? 'side' : 'front';
+    if (sideDeclared && hanging == null) {
+      // 宣告了側視卻不符合側視的幾何 → 照正視規則走（下面），但要說清楚為什麼
+      warnings.add('宣告為側視，但畫面不符合側視的幾何（恰好兩片、一上一下、'
+          '都在垂直 ±${sideViewMaxTiltDeg.toStringAsFixed(0)}° 內、有塔架）：'
+          '改以正視規則判定；若這張確實是側視，多半是轉子沒有完整入鏡或塔架沒被分割出來');
+    }
     if (hanging != null) {
       metrics['hanging_blade_index'] = hanging;
       warnings.add('側視：三片投影共線，三片互比不適用。本張只量垂掛葉片的 flapwise 彎曲，'

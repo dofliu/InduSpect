@@ -54,7 +54,7 @@ void main() {
 
   BladeGeometryAnalyzer analyzerOf(List<BladeGeometryOutcome> seq) {
     var i = 0;
-    return (bytes, {double? rotorRadiusM, double? hubHeightM}) async =>
+    return (bytes, {double? rotorRadiusM, double? hubHeightM, String? expectedView}) async =>
         i < seq.length ? seq[i++] : const BladeGeometryOutcome(ok: false);
   }
 

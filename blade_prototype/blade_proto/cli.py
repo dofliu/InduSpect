@@ -87,7 +87,7 @@ def cmd_analyze_still(a) -> None:
     t0 = time.time()
     seg = segment_turbine(img, dist_thresh=a.dist_thresh)
     st = find_structure(seg.mask, hub_hint=_parse_xy(a.hub), horizon_y=seg.horizon_y)
-    verdict = assess_capture(seg, st)
+    verdict = assess_capture(seg, st, expected_view=getattr(a, "expected_view", None))
     profs = profiles_from_structure(st)
     cmp_ = _still_comparison(verdict, profs, noise_floor_px=a.noise_floor_px, cm_per_px=a.cm_per_px,
                              rotor_radius_m=a.rotor_radius_m)
@@ -261,13 +261,17 @@ def cmd_synth_audio(a) -> None:
 
 
 def _analyze_still_payload(image: str, *, cm_per_px=None, rotor_radius_m=None, hub=None,
-                           dist_thresh=None, noise_floor_px=1.5, overlay_path=None) -> dict:
-    """跑一張全機照，回傳與 analyze-still 相同結構的 dict；有給 overlay_path 就順便寫疊圖。"""
+                           dist_thresh=None, noise_floor_px=1.5, overlay_path=None,
+                           expected_view=None) -> dict:
+    """跑一張全機照，回傳與 analyze-still 相同結構的 dict；有給 overlay_path 就順便寫疊圖。
+
+    expected_view：這張**要拍的是什麼**（側視是宣告制，見 `quality.assess_capture`）。
+    """
     img = _read(image)
     t0 = time.time()
     seg = segment_turbine(img, dist_thresh=dist_thresh)
     st = find_structure(seg.mask, hub_hint=hub, horizon_y=seg.horizon_y)
-    verdict = assess_capture(seg, st)
+    verdict = assess_capture(seg, st, expected_view=expected_view)
     profs = profiles_from_structure(st)
     cmp_ = _still_comparison(verdict, profs, noise_floor_px=noise_floor_px, cm_per_px=cm_per_px,
                              rotor_radius_m=rotor_radius_m)
@@ -574,6 +578,8 @@ def build_parser() -> argparse.ArgumentParser:
     s.add_argument("--rotor-radius-m", type=float, help="未知 cm/px 時以葉片長度推算尺度")
     s.add_argument("--hub", help="手動指定輪轂 x,y（分割失敗時）")
     s.add_argument("--dist-thresh", type=float, help="天空距離門檻（robust σ），預設 5.5")
+    s.add_argument("--expected-view", dest="expected_view", choices=["front", "side"],
+                   help="宣告這張要拍的是什麼；側視是宣告制，不宣告就套正視規則")
     s.add_argument("--noise-floor-px", type=float, default=1.5)
     s.add_argument("--out")
     s.add_argument("--overlay")

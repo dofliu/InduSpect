@@ -245,7 +245,7 @@ def _side_payload(tmp_path):
     cv2.imwrite(path, img)
     seg = segment_turbine(img)
     st = find_structure(seg.mask, horizon_y=seg.horizon_y)
-    v = assess_capture(seg, st)
+    v = assess_capture(seg, st, expected_view="side")  # 側視是宣告制（SPEC §13-16）
     assert v.metrics["view"] == "side", v.to_dict()
     profs = profiles_from_structure(st)
     return {

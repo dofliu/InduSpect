@@ -52,7 +52,7 @@
 | `flutter_app/lib/screens/blade_capture_guide_screen.dart` | 葉片引導拍攝（格位清單 + 上次同格位照片對照 + GPS 導回拍攝點；用系統相機保住 5x 長焦與全解析度） |
 | `flutter_app/lib/services/blade_surface_service.dart` | ★ 表面層前緣粗糙度（`surface.py` 的 Dart 對照實作，跑在 isolate） |
 | `flutter_app/lib/services/blade_analysis_service.dart` | ★ 葉片分析編排 + **門檻表單一來源**（前後緣 rms 比 5.0/2.0/1.5） |
-| `flutter_app/lib/services/blade_capture_gate.dart` | 葉片照拍攝品質判定：影像層（模糊/曝光）+ **結構層**（`quality.py` 移植，三片半徑離散是唯一有鑑別力的拒收條件；**側視另走一組規則** `detectSideView`：恰好兩片、一上一下、垂直 ±12°、有塔架 → 不套三片規則、只量垂掛葉片彎曲） |
+| `flutter_app/lib/services/blade_capture_gate.dart` | 葉片照拍攝品質判定：影像層（模糊/曝光）+ **結構層**（`quality.py` 移植，三片半徑離散是唯一有鑑別力的拒收條件；**側視另走一組規則且是宣告制** `judge(expectedView: 'side')` → 恰好兩片、一上一下、垂直 ±12°、有塔架 → 不套三片規則、只量垂掛葉片彎曲。**沒宣告一律走正視規則**：剪影裡沒有「這是一個轉子」的證據，靠推論放行的 4 張 Commons 照片逐張看過全是塔門特寫／施工吊車／風場遠景／兩台同框，見 SPEC §13-16） |
 | `flutter_app/lib/services/blade_image_ops.dart` | ★ OpenCV 對照的影像運算（8-bit Lab、**網格大核中值**、REFLECT_101 高斯、5×5 橢圓閉、連通元件、chamfer 距離變換） |
 | `flutter_app/lib/services/blade_geometry_service.dart` | ★ 幾何層分割（`segmentation.py` 的局部天空模型 + 遮罩清理 + 地平線） |
 | `flutter_app/lib/services/blade_structure_service.dart` | ★ 結構定位（輪轂/塔架/三片葉片、第二個轉子） |
@@ -102,9 +102,9 @@
 python3 scripts/audit_dead_ends.py   # 死角查核（service 零引用／DB 欄位只讀不寫）；--report 看全部
 flutter test          # 全部 599 tests（widget_test 已修復，不再排除）
 cd backend && GEMINI_API_KEY=ci-fake-key pytest tests/ --asyncio-mode=auto   # 197 pytest
-cd blade_prototype && pip install -r requirements.txt && pytest              # 413 tests（葉片原型，合成影像/音軌夾具 + Mode B 分類表與標記檔守門 + 測試報告聚合器 + 側視閘門 + 複核工具 + 切分群組 + 評估協定 + 普查覆蓋 + 第一遍標記守門 + 離線基線 + IEA 兩軌 + 線性探針 + §1.2 取像閘門 + 偏軸透視夾具 + 姿態估計補償 + 跨語料驗證 + Commons 真實照片姿態驗證 + Commons 抓取器 + 解析度靈敏度）
+cd blade_prototype && pip install -r requirements.txt && pytest              # 417 tests（葉片原型，合成影像/音軌夾具 + Mode B 分類表與標記檔守門 + 測試報告聚合器 + 側視閘門 + 複核工具 + 切分群組 + 評估協定 + 普查覆蓋 + 第一遍標記守門 + 離線基線 + IEA 兩軌 + 線性探針 + §1.2 取像閘門 + 偏軸透視夾具 + 姿態估計補償 + 跨語料驗證 + Commons 真實照片姿態驗證 + Commons 抓取器 + 解析度靈敏度 + 側視宣告制）
 ```
-Flutter 599 tests / 後端 197 pytest / 葉片原型 413 pytest 全綠（2026-09-28 本機實測；**GitHub Actions 停用期已於 2026-09-28 結束、CI 又會跑了**（見下方「本機 Flutter」條目末），本機三軌仍可先跑）。DB 測試使用 `sqflite_common_ffi` in-memory。標準資料為單一來源：改 `backend/app/data/inspection_standards.py` 後必須跑 `python backend/scripts/export_standards.py` 重新匯出 JSON（有同步守門測試）。
+Flutter 603 tests / 後端 197 pytest / 葉片原型 417 pytest 全綠（2026-09-28 本機實測；**GitHub Actions 停用期已於 2026-09-28 結束、CI 又會跑了**（見下方「本機 Flutter」條目末），本機三軌仍可先跑）。DB 測試使用 `sqflite_common_ffi` in-memory。標準資料為單一來源：改 `backend/app/data/inspection_standards.py` 後必須跑 `python backend/scripts/export_standards.py` 重新匯出 JSON（有同步守門測試）。
 
 ## 已知問題追蹤
 - GitHub Issues #14-#19 已全數修復並關閉（2026-04-16）

@@ -48,11 +48,19 @@ def test_whole_turbine_scene_is_rejected_by_geometry() -> None:
 
 
 def test_side_view_pass_is_left_to_the_probe_not_hard_rejected() -> None:
-    """側視規則在近身照上會誤放行（全語料 8/839 張 P，SPEC §13 第 13 項），所以硬規則只認正視。
-    合成側視整機照：Mode A 放行、view=side、**不**硬拒收——它由探針處理（W recall 0.95）。"""
+    """側視整機照不會被硬拒收——**2026-09-28 起連「被判成側視」都不會發生**。
+
+    舊版：Mode A 會從剪影推論出 view=side 而放行，硬規則刻意只認正視，
+    因為側視規則在近身照上會誤放行（全語料 8/839 張 P，SPEC §13 第 13 項）。
+    新版：側視改成宣告制（SPEC §13-16），而這裡沒有人宣告，所以同一張合成側視照
+    走正視規則被 Mode A 拒收（只定位到 2 片）。**§13-13 那個漏洞因此是結構性關掉的**：
+    這條路上不可能再出現 view=side。硬拒收的結論不變（只有 Mode A 正視放行才算整機照），
+    所以近身照照樣留給探針判。
+    """
     img, _ = render_side(SceneSpec())
     g = intake_geometry(img)
-    assert g.mode_a_ok and g.mode_a_view == "side"
+    assert not g.mode_a_ok, "沒有宣告卻被判成側視放行了"
+    assert g.mode_a_view == "front"
     assert not g.reject_as_whole_turbine
     assert G.decide({"probe": "W"}, g.to_dict())[0] == "W"
 

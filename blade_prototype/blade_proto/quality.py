@@ -37,6 +37,15 @@ MIN_MASK_FRAC = 0.0015
 # 「葉片數 ≠ 3」與「三片半徑離散」兩條規則在這裡本來就不成立（另兩片疊成一段、投影長度
 # 只有 R·sin），照套會把規格 §5.1 的側視模式整個擋掉（BLADE_TEST_REPORT.md §4.2）。
 # 判定側視的條件刻意嚴格：**恰好 2 個伸長元件、全部在垂直 ±12° 內、一上一下、塔架找到**。
+#
+# **但這些條件只在「呼叫端說了這張要拍側視」時才拿來用**（`assess_capture(expected_view="side")`）。
+# 2026-09-28 把 Commons 上靠這條規則放行的 4 張逐張看過，**沒有一張是側視全機照**：
+# 塔基的門特寫、施工中的吊車與光塔（描述寫 im Bau，沒有轉子）、風場遠景、夕陽下的兩台風機。
+# 原因不是門檻沒調好——真側視的剪影就是「一根細長直桿 + 下面一根塔」，而上面那四種的剪影
+# 長得一模一樣（臂長、輪轂到軸線垂距、細長比、塔軸偏移都落在同一區，見 RESOLUTION_SENSITIVITY.md §2）。
+# **二值剪影裡沒有「這是一個轉子」的證據**，所以從剪影推論側視是不可能做對的。
+# 而 App 的引導拍攝本來就知道自己要的是哪一格（`BladeShot.view`），那個資訊拿來用就夠了：
+# 有宣告才走側視規則，沒宣告一律走正視規則（該拒收就拒收）。
 # 12° 是拿 75 張真實照片定的：≤12° 沒有任何一張命中（語料裡沒有真正的側視照），
 # 唯一標成「轉子近側視」的 1573f056 兩片是 6.6° 與 19.2°——那是斜視不是側視，
 # 斜視的垂掛葉片彎曲含透視分量，放行只會多一個假訊號來源（同報告 §3.3）。
@@ -110,12 +119,18 @@ def assess_capture(
     max_radius_spread: float = MAX_RADIUS_SPREAD,
     second_rotor_ratio: float = SECOND_ROTOR_WARN_RATIO,
     check_second_rotor: bool = True,
+    expected_view: str | None = None,
 ) -> CaptureVerdict:
     """判斷一張全機照能不能拿來做幾何互比。
 
     seg：`segment_turbine` 的結果；structure：`find_structure` 的結果（丟例外時傳 None
     並把例外放在 error）。任何一項不過就直接拒收——這裡寧可錯殺，因為放行一張
     定位錯誤的照片，代價是一份看起來合格的錯誤報告。
+
+    expected_view：呼叫端宣告這張**要拍的是什麼**（"front"／"side"／None＝沒宣告）。
+    只有宣告 "side" 才會去判側視（見 SIDE_VIEW_MAX_TILT_DEG 的說明：剪影本身分不出
+    側視與「吊車＋塔架」「兩台風機同框」「塔門特寫」，所以不能用推論的）。
+    沒宣告就一律套正視規則——語料批次跑、使用者從相簿挑的照片都屬於這一類。
     """
     reasons: list[str] = []
     warnings: list[str] = []
@@ -153,8 +168,17 @@ def assess_capture(
     metrics["n_blades"] = n
     # 側視走另一組規則（見 SIDE_VIEW_MAX_TILT_DEG）：不要求三片、不看半徑離散，
     # 但要明說這張只能量垂掛葉片的彎曲、不能做三片互比。
-    hanging = detect_side_view(structure) if n_blades_expected == 3 else None
+    # 宣告制：沒有人說這張是側視，就不要從剪影去猜（猜出來的 4 張全是誤放行）。
+    side_declared = (expected_view or "").lower() == "side"
+    if expected_view:  # 沒宣告就不記——沒宣告是預設，記一個 None 只會讓每筆結果都多一欄
+        metrics["expected_view"] = expected_view
+    hanging = detect_side_view(structure) if (side_declared and n_blades_expected == 3) else None
     metrics["view"] = "side" if hanging is not None else "front"
+    if side_declared and hanging is None:
+        # 宣告了側視卻不符合側視的幾何 → 照正視規則走（下面），但要說清楚為什麼
+        warnings.append("宣告為側視，但畫面不符合側視的幾何（恰好兩片、一上一下、"
+                        f"都在垂直 ±{SIDE_VIEW_MAX_TILT_DEG:.0f}° 內、有塔架）："
+                        "改以正視規則判定；若這張確實是側視，多半是轉子沒有完整入鏡或塔架沒被分割出來")
     if hanging is not None:
         metrics["hanging_blade_index"] = hanging
         warnings.append("側視：三片投影共線，三片互比不適用。本張只量垂掛葉片的 flapwise 彎曲，"
