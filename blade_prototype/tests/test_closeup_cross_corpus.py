@@ -59,7 +59,7 @@ def test_short_id_strips_roboflow_hash() -> None:
     assert X._short_id("Blade/0000.jpg") == "Blade/0000"
 
 
-def test_geom_code_only_front_pass_is_hard_reject() -> None:
+def test_geom_code_maps_mode_a_verdict() -> None:
     assert X.geom_code(None) == "missing"
     assert X.geom_code({"error": "ValueError"}) == "error"
     assert X.geom_code({"mode_a_ok": True, "mode_a_view": "front"}) == "front"
@@ -69,11 +69,14 @@ def test_geom_code_only_front_pass_is_hard_reject() -> None:
 
 def _rows() -> list[dict]:
     return [
-        {"id": "Blade/1", "class": "Blade", "probe": "P", "p": [0.9, 0.05, 0.05], "geom": "reject"},
-        {"id": "Blade/2", "class": "Blade", "probe": "W", "p": [0.2, 0.7, 0.1], "geom": "side"},
-        {"id": "Van/1", "class": "Van", "probe": "P", "p": [0.6, 0.2, 0.2], "geom": "reject"},
-        {"id": "Van/2", "class": "Van", "probe": "T", "p": [0.1, 0.1, 0.8], "geom": "error"},
-        {"id": "Hub/1", "class": "Hub", "probe": "W", "p": [0.1, 0.8, 0.1], "geom": "front"},
+        {"id": "Blade/1", "class": "Blade", "probe": "P", "p": [0.9, 0.05, 0.05], "geom": "reject", "hard": False},
+        {"id": "Blade/2", "class": "Blade", "probe": "W", "p": [0.2, 0.7, 0.1], "geom": "side", "hard": False},
+        {"id": "Van/1", "class": "Van", "probe": "P", "p": [0.6, 0.2, 0.2], "geom": "reject", "hard": False},
+        {"id": "Van/2", "class": "Van", "probe": "T", "p": [0.1, 0.1, 0.8], "geom": "error", "hard": False},
+        {"id": "Hub/1", "class": "Hub", "probe": "W", "p": [0.1, 0.8, 0.1], "geom": "front", "hard": True, "veg": 0.01},
+        # 正視放行但轉子上方是植被 → 不硬拒收。兩個數字必須分得開，否則報告會把
+        # 「Mode A 認得出整機」與「所以 Mode B 拒收」混成一個數（2026-09-29）。
+        {"id": "Hub/2", "class": "Hub", "probe": "W", "p": [0.1, 0.8, 0.1], "geom": "front", "hard": False, "veg": 0.6},
     ]
 
 
@@ -81,9 +84,12 @@ def test_summarise_intake_false_accept_and_hard_reject() -> None:
     s = X.summarise_intake(_rows(), X.CORPORA["hf_sees"]["expected_intake"])
     assert s["per_class"]["Van"]["probe"] == {"P": 1, "W": 0, "T": 1}
     assert s["per_class"]["Van"]["expected"] == "T" and s["per_class"]["Van"]["agree_rate"] == 0.5
-    assert s["false_accept_p_on_non_blade"] == {"n": 3, "as_P": 1, "rate": round(1 / 3, 4)}
+    assert s["false_accept_p_on_non_blade"] == {"n": 4, "as_P": 1, "rate": 0.25}
     assert s["blade_as_P"] == {"n": 2, "as_P": 1, "rate": 0.5}
-    assert s["hard_reject_total"] == 1 and s["side_pass_total"] == 1
+    assert s["side_pass_total"] == 1
+    # 正視放行 2 張，但只有一張過得了天空條件
+    assert s["front_pass_total"] == 2 and s["hard_reject_total"] == 1
+    assert s["per_class"]["Hub"]["geom"]["front"] == 2
     assert s["per_class"]["Hub"]["hard_reject_whole_turbine"] == 1
 
 
@@ -165,13 +171,16 @@ def test_intake_probe_refuses_tiny_training_set() -> None:
 def test_pack_unpack_roundtrip() -> None:
     classes = ["a", "b", "c"]
     rows = [
-        {"id": "x/1", "class": "x", "probe": "P", "p": [0.9, 0.05, 0.05], "geom": "reject",
+        {"id": "x/1", "class": "x", "probe": "P", "p": [0.9, 0.05, 0.05], "geom": "reject", "hard": False,
          "defect_top": "b", "defect_top_p": 0.7, "defect_set": ["a", "c"]},
-        {"id": "y/2", "class": "y", "probe": "T", "p": [0.1, 0.2, 0.7], "geom": "side",
+        {"id": "y/2", "class": "y", "probe": "T", "p": [0.1, 0.2, 0.7], "geom": "side", "hard": False,
          "defect_top": "c", "defect_top_p": 0.51, "defect_set": []},
+        {"id": "z/3", "class": "z", "probe": "W", "p": [0.1, 0.8, 0.1], "geom": "front", "hard": True,
+         "veg": 0.02, "defect_top": "a", "defect_top_p": 0.6, "defect_set": ["a"]},
     ]
     packed = X.pack_rows(rows, classes)
-    assert packed["probe"] == "PT" and packed["geom"] == "rs" and packed["defect_set"] == [0b101, 0]
+    assert packed["probe"] == "PTW" and packed["geom"] == "rsf" and packed["defect_set"] == [0b101, 0, 0b001]
+    assert packed["hard"] == "001" and packed["veg"] == {"z/3": 0.02}
     assert X.unpack_rows(packed, classes) == rows
     plain = [{k: v for k, v in r.items() if not k.startswith("defect")} for r in rows]
     assert X.unpack_rows(X.pack_rows(plain, classes), classes) == plain
@@ -187,20 +196,38 @@ def test_results_self_consistent_and_image_free() -> None:
         rows = X.rows_of(doc, key)
         assert c["n"] == len(rows) == c["rows_packed"]["n"]
         for r in rows[:50] + rows[-50:]:
-            assert set(r) <= {"id", "class", "probe", "p", "geom", "defect_top", "defect_top_p", "defect_set"}
+            assert set(r) <= {"id", "class", "probe", "p", "geom", "hard", "veg",
+                              "defect_top", "defect_top_p", "defect_set"}
             assert r["probe"] in X.PROBE_CLASSES and len(r["p"]) == 3
             assert ".rf." not in r["id"] and "/" in r["id"]  # 不留 Roboflow 雜湊，也不留任何路徑
     assert doc["class_map"] == {c["their"]: c["wtb_equivalent"] for c in TAX["dataset_class_map"]["wtbs2025"]["classes"]}
 
 
 @pytest.mark.skipif(not X.OUT.exists(), reason="還沒跑過跨語料")
-def test_every_hard_reject_in_results_was_reviewed() -> None:
-    """硬拒收在外部語料上只有個位數，每一張都要有人看過寫下為什麼——結果檔多出一張沒備註的就紅。"""
+def test_every_front_pass_in_results_was_reviewed() -> None:
+    """Mode A 正視放行在外部語料上只有個位數，每一張都要有人看過寫下為什麼——多出一張沒備註的就紅。
+
+    守的是**正視放行**不是硬拒收：天空條件把誤觸放掉之後，「不硬拒收」那幾張更需要備註說明
+    為什麼原本會誤觸（放掉了就沒人看，正是最容易悄悄退化的地方）。
+    """
     doc = json.loads(X.OUT.read_text(encoding="utf-8"))
     for key in doc["corpora"]:
         for r in X.rows_of(doc, key):
             if r["geom"] == "front":
                 assert r["id"] in X.HARD_REJECT_REVIEW, r["id"]
+                assert r.get("veg") is not None, f"{r['id']} 沒量到轉子上方植被，硬拒收判不了"
+
+
+@pytest.mark.skipif(not X.OUT.exists(), reason="還沒跑過跨語料")
+def test_side_pass_is_zero_under_declared_side_view() -> None:
+    """側視改宣告制（SPEC §13-16）之後，不宣告取景的語料批次跑不該有任何側視放行。
+
+    2026-09-19 這兩份語料上是 WTBs2025 94 張、HF Blade 37 張誤放行（SPEC §13-13 的漏洞）；
+    宣告制之後全部回到正視規則並被「葉片數 ≠ 3」拒收。這條紅了代表側視又變成從剪影推論的了。
+    """
+    doc = json.loads(X.OUT.read_text(encoding="utf-8"))
+    for key, s in doc["summary"].items():
+        assert s["intake"]["side_pass_total"] == 0, key
 
 
 @pytest.mark.skipif(not X.OUT.exists(), reason="還沒跑過跨語料")

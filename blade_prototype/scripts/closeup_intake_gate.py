@@ -33,7 +33,7 @@ from closeup_probe import load_features  # noqa: E402
 ROOT = Path(__file__).resolve().parents[1]
 FEATURES = ROOT / "data" / "closeup_features_resnet18_wtb.npz"
 GATE = ROOT / "data" / "closeup_intake_gate_wtb.json"
-VERSION = "a3-2026-09-16"
+VERSION = "a3-2026-09-29"
 
 # 探針的類別：N（非葉片）只有 2 張，任何學習器都學不到；併進 T 當「不是近身照的其他原因」。
 PROBE_CLASSES = ("P", "W", "T")

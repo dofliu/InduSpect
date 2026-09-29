@@ -48,7 +48,7 @@ ROOT = Path(__file__).resolve().parents[1]
 FEATURES_WTB = ROOT / "data" / "closeup_features_resnet18_wtb.npz"
 TAXONOMY = ROOT / "data" / "closeup_taxonomy.json"
 OUT = ROOT / "data" / "closeup_cross_corpus.json"
-VERSION = "b3-2026-09-19"
+VERSION = "b3-2026-09-29"
 DEFECT_THRESHOLD = 0.5   # 與 closeup_probe.out_of_domain 相同
 DOMAIN_FOLDS = 5
 
@@ -80,19 +80,21 @@ class CrossCorpusError(Exception):
 # Mode A 正視放行（= 硬拒收）在外部語料上只出現個位數，每一張都人工看過（疊圖在 scratchpad）。
 # 這裡記的是「為什麼會放行」，報告只印結果檔裡真的出現的那些 id；id 換了就不印，不會留下過期的話。
 # 每一張都逐張看過**全解析度**影像（不是印樣）。2026-09-29 重看時修正了一則寫錯的備註，
-# 見 `Blade/0407`；重看後的判定與新規則下的結果在 `data/closeup_hard_reject_review.json`。
+# 見 `Blade/0407`；重看後的判定與新規則下的結果在本檔的 `front_passes`（植被占比與硬拒收結論逐張都在裡面）。
+# 每一張正視放行的人工備註。植被占比與硬拒收結論由結果檔渲染（見 render_markdown），
+# 這裡只寫「看到了什麼」——量與判定不手抄進備註，免得兩邊漂開。
 HARD_REJECT_REVIEW = {
-    "erosion/4465": "近身照被誤判：葉片沿展向填滿畫面，葉片本體 + 它在地面上的影子被拆成三條臂、輪轂落在葉片中段——硬拒收錯了。"
-                    "轉子上方的背景是農田（植被 0.65），2026-09-29 起不再硬拒收",
-    "erosion/5213": "近身照被誤判：一條葉片斜跨整片農田，結構定位在葉片中段找到「輪轂」、兩端當兩片、田埕當第三片——硬拒收錯了。"
-                    "轉子上方是農田（植被 0.61），2026-09-29 起不再硬拒收",
-    "pinholes/2019": "葉尖填滿前景、**背景還有一台完整的風機**：Mode A 定位到的是背景那台。依 §1.2 這張是近身照，硬拒收錯了；"
-                     "「畫面裡有整機」≠「這是整機照」。轉子上方是山坡植被（0.34），2026-09-29 起不再硬拒收",
+    "erosion/4465": "近身照被誤判：葉片沿展向填滿畫面，葉片本體 + 它在地面上的影子被拆成三條臂、輪轂落在葉片中段——"
+                    "硬拒收錯了。轉子上方是農田，不是天空",
+    "erosion/5213": "近身照被誤判：一條葉片斜跨整片農田，結構定位在葉片中段找到「輪轂」、兩端當兩片、田埕當第三片——"
+                    "硬拒收錯了。轉子上方是農田",
+    "pinholes/2019": "葉尖填滿前景、**背景還有一台完整的風機**：Mode A 定位到的是背景那台。依 §1.2 這張是近身照，"
+                     "硬拒收錯了；「畫面裡有整機」≠「這是整機照」。轉子上方是山坡植被",
     "FullTurbine/1502": "無人機在輪轂高度拍的風場，最近那台三片對天空、其餘在遠處——確實是整機照，硬拒收對。"
-                        "轉子上方是天空（植被 0.00），新規則下仍硬拒收",
+                        "轉子上方是乾淨天空",
     "Blade/0407": "**2026-09-29 修正**：上一輪記成「葉根 + 輪轂 + 機艙對天空的仰拍，硬拒收對」，"
                   "但全解析度看是**無人機俯拍、葉片填滿畫面、背景是草地，沒有輪轂也沒有機艙**——依 §1.2 是 P，"
-                  "硬拒收**錯了**。轉子上方是草地（植被 0.27），2026-09-29 起不再硬拒收",
+                  "硬拒收**錯了**。轉子上方是草地",
 }
 
 
@@ -233,6 +235,13 @@ def build_rows(corpus: str, feat: dict[str, np.ndarray], geom: dict[str, dict], 
             "p": [round(float(v), 3) for v in p],
             "geom": geom_code(geom.get(k)),
         }
+        # 硬拒收不等於「正視放行」：2026-09-29 起還要過「轉子上方的背景是天空」這一條
+        # （`intake.reject_as_whole_turbine`）。兩個量分開存，報告才說得出天空條件放掉了幾張。
+        g = geom.get(k) or {}
+        row["hard"] = bool(g.get("reject_as_whole_turbine"))
+        if row["geom"] == "front":
+            veg = g.get("vegetation_above_hub")
+            row["veg"] = None if veg is None else round(float(veg), 3)
         if defect is not None:
             classes, probs = defect
             q = probs[n]
@@ -257,6 +266,9 @@ def pack_rows(rows: list[dict], defect_classes: list[str]) -> dict:
         "probe": "".join(r["probe"] for r in rows),
         "geom": "".join(GEOM_CODES[r["geom"]] for r in rows),
         "p": [round(float(v), 3) for r in rows for v in r["p"]],
+        "hard": "".join("1" if r.get("hard") else "0" for r in rows),
+        # 植被占比只有正視放行那幾列有（個位數），所以用稀疏 dict 而不是再多一整欄
+        "veg": {r["id"]: r["veg"] for r in rows if r["geom"] == "front"},
     }
     if rows and "defect_top" in rows[0]:
         idx = {c: i for i, c in enumerate(defect_classes)}
@@ -272,7 +284,10 @@ def unpack_rows(packed: dict, defect_classes: list[str]) -> list[dict]:
     for k in range(n):
         rid = packed["ids"][k]
         row = {"id": rid, "class": rid.split("/")[0], "probe": packed["probe"][k],
-               "p": packed["p"][3 * k: 3 * k + 3], "geom": _GEOM_BACK[packed["geom"][k]]}
+               "p": packed["p"][3 * k: 3 * k + 3], "geom": _GEOM_BACK[packed["geom"][k]],
+               "hard": packed.get("hard", "")[k: k + 1] == "1"}
+        if row["geom"] == "front":
+            row["veg"] = (packed.get("veg") or {}).get(rid)
         if "defect_top" in packed:
             mask = packed["defect_set"][k]
             row["defect_top"] = defect_classes[packed["defect_top"][k]]
@@ -307,7 +322,8 @@ def summarise_intake(rows: list[dict], expected: dict[str, str] | None) -> dict:
             "probe": {c: probe.get(c, 0) for c in PROBE_CLASSES},
             "p_rate": _rate(probe.get("P", 0), len(rs)),
             "geom": {c: geom.get(c, 0) for c in ("front", "side", "reject", "error", "missing")},
-            "hard_reject_whole_turbine": geom.get("front", 0),   # Mode A 正視放行 = 整機照 = 硬拒收
+            # 「Mode A 正視放行」是上界，硬拒收還要過天空條件——兩個數字都留，差額就是天空條件放掉的
+            "hard_reject_whole_turbine": sum(1 for r in rs if r.get("hard")),
         }
         if expected and cls in expected:
             d["expected"] = expected[cls]
@@ -316,7 +332,8 @@ def summarise_intake(rows: list[dict], expected: dict[str, str] | None) -> dict:
     total = len(rows)
     out = {"n": total, "per_class": per,
            "probe_total": {c: sum(1 for r in rows if r["probe"] == c) for c in PROBE_CLASSES},
-           "hard_reject_total": sum(1 for r in rows if r["geom"] == "front"),
+           "hard_reject_total": sum(1 for r in rows if r.get("hard")),
+           "front_pass_total": sum(1 for r in rows if r["geom"] == "front"),
            "side_pass_total": sum(1 for r in rows if r["geom"] == "side")}
     if expected:
         neg = [r for r in rows if expected.get(r["class"]) in ("W", "T")]
@@ -370,7 +387,10 @@ def summarise(doc: dict) -> dict:
             s["defect"] = summarise_defect(rows, tax_map, doc["defect_classes"])
         s["domain_gap"] = c.get("domain_gap")
         s["geom_reasons"] = c.get("geom_reasons", {})
-        s["hard_rejects"] = sorted(r["id"] for r in rows if r["geom"] == "front")
+        s["hard_rejects"] = sorted(r["id"] for r in rows if r.get("hard"))
+        # 正視放行是硬拒收的上界；每一張都要有人工備註（放掉的那幾張更要說為什麼）
+        s["front_passes"] = sorted(({"id": r["id"], "veg": r.get("veg"), "hard": bool(r.get("hard"))}
+                                    for r in rows if r["geom"] == "front"), key=lambda d: d["id"])
         out[key] = s
     return out
 
@@ -397,7 +417,8 @@ def render_markdown(doc: dict) -> str:
     w, h = S["wtbs2025"], S.get("hf_sees")
     L.append("## 0. 一句話\n")
     line = (f"取像探針在 WTBs2025 的 {w['intake']['n']} 張缺陷照上判 P **{_pct(w['intake']['probe_total']['P'] / w['intake']['n'])}**、"
-            f"Mode A 正視硬規則誤觸 **{w['intake']['hard_reject_total']}** 張（側視放行 {w['intake']['side_pass_total']}）。")
+            f"Mode A 正視放行 **{w['intake']['front_pass_total']}** 張（其中硬拒收 {w['intake']['hard_reject_total']}、"
+            f"側視放行 {w['intake']['side_pass_total']}）。")
     if h:
         fa, bp = h["intake"]["false_accept_p_on_non_blade"], h["intake"]["blade_as_P"]
         line += (f" 乾淨負樣本（Hub／Mast／Nacelle／Van/FullTurbine，{fa['n']} 張）被判成近身葉片照 **{fa['as_P']}** 張（{_pct(fa['rate'])}）；"
@@ -419,11 +440,12 @@ def render_markdown(doc: dict) -> str:
     for key in S:
         c = S[key]
         L.append(f"## 2. 取像探針：{CORPORA[key]['name']}\n")
-        hdr = ["類別", "張數", "P", "W", "T", "P 率", "期望", "Mode A 正視放行（硬拒收）", "側視放行", "例外"]
+        hdr = ["類別", "張數", "P", "W", "T", "P 率", "期望", "Mode A 正視放行", "其中硬拒收", "側視放行", "例外"]
         body = []
         for cls, d in c["intake"]["per_class"].items():
             body.append([cls, d["n"], d["probe"]["P"], d["probe"]["W"], d["probe"]["T"], _pct(d["p_rate"]),
-                         d.get("expected", "?"), d["geom"]["front"], d["geom"]["side"], d["geom"]["error"]])
+                         d.get("expected", "?"), d["geom"]["front"], d["hard_reject_whole_turbine"],
+                         d["geom"]["side"], d["geom"]["error"]])
         L.append(_table(hdr, body))
         L.append("")
         if "false_accept_p_on_non_blade" in c["intake"]:
@@ -434,10 +456,12 @@ def render_markdown(doc: dict) -> str:
             g = c["domain_gap"]
             L.append(f"域差（wtb 取像合格 {g['n_a']} 張 vs 本語料 {g['n_b']} 張）：{g['folds']} 折域分類器平衡準確率 **{g['balanced_accuracy']:.3f}**；"
                      f"本語料到 wtb 最近鄰餘弦中位 {g['nn_cosine_b_to_a_median']:.3f}，wtb 內部留一 {g['nn_cosine_a_within_median']:.3f}。\n")
-        if c.get("hard_rejects"):
-            L.append("Mode A 正視放行（硬拒收）逐張，人工看過疊圖：\n")
-            for rid in c["hard_rejects"]:
-                L.append(f"- `{rid}`：{HARD_REJECT_REVIEW.get(rid, '（未人工複核）')}")
+        if c.get("front_passes"):
+            L.append("Mode A 正視放行逐張，人工看過疊圖（`硬拒收` 欄是加上「轉子上方要是天空」之後的結果）：\n")
+            for d in c["front_passes"]:
+                veg = "—" if d.get("veg") is None else f"{d['veg']:.2f}"
+                mark = "硬拒收" if d["hard"] else "不硬拒收"
+                L.append(f"- `{d['id']}`（植被 {veg} → **{mark}**）：{HARD_REJECT_REVIEW.get(d['id'], '（未人工複核）')}")
             L.append("")
         gr = c.get("geom_reasons") or {}
         show = [cls for cls in gr if CORPORA[key]["expected_intake"] and CORPORA[key]["expected_intake"].get(cls) == "W"]
@@ -473,8 +497,8 @@ def render_markdown(doc: dict) -> str:
     L.append("## 5. 讀法\n")
     L.append("- 取像探針學的是 wtb 語料的**取景碼**，不是弦向占比（A3 就寫明它是建議性的）。它在別人的照片上判 P 的比例，"
              "只說明「這份語料的取景像不像 wtb 的 P」，不等於這些照片符合 §1.2。")
-    L.append("- Mode A 正視硬規則在近身照上誤觸 0 才是對的；側視放行是 SPEC §13-13 記錄過的漏洞（葉片被裂縫或反光切成上下兩段 + 假塔架），"
-             "這裡量的是它在外部語料上的出現率。")
+    L.append("- Mode A 正視放行在近身照上誤觸 0 才是對的：這裡的每一張都人工看過，硬拒收欄是「轉子上方要是天空」之後的結果。"
+             "側視放行在宣告制之後結構性為 0（SPEC §13-16）——它留在表上是當回歸指標，不是還在量的漏洞。")
     L.append("- 缺陷探針的 lift 是唯一能跨語料看的數：它高於 1 只說明探針帶著一點跨語料的訊號，離「可用」還遠；"
              "要正式評估得先把 WTBs2025 的類別逐張重標成本表的子類、按原始檔名分群、補健康照。")
     L.append("")
@@ -500,12 +524,17 @@ def conclusions(S: dict) -> list[str]:
         if ft and ft.get("agree_rate") is not None:
             out.append(f"- 探針唯一跨語料成立的是 **W（整機入鏡）**：FullTurbine {ft['probe']['W']}/{ft['n']} 判 W（{_pct(ft['agree_rate'])}）；"
                        f"Blade 判 P {_pct(bp['rate'])}。")
-    out.append(f"- **Mode A 正視硬規則**在 {w['n']} 張近身缺陷照上誤觸 {w['hard_reject_total']} 張"
-               f"（{w['hard_reject_total'] / max(w['n'], 1) * 100:.2f}%），每張都人工看過（§2）。誤觸的兩種樣式：背景有一台完整風機、"
-               "一條葉片 + 影子被拆成三臂。側視規則放行 "
-               f"{w['side_pass_total']} 張（{_pct(w['side_pass_total'] / max(w['n'], 1))}）"
+    out.append(f"- **Mode A 正視放行**在 {w['n']} 張近身缺陷照上 {w['front_pass_total']} 張"
+               f"（{w['front_pass_total'] / max(w['n'], 1) * 100:.2f}%），每張都人工看過（§2）。兩種樣式：背景有一台完整風機、"
+               "一條葉片 + 影子被拆成三臂——「畫面裡有整機」≠「這是整機照」。"
+               f"加上「轉子上方的背景要是天空」之後真正硬拒收 **{w['hard_reject_total']}** 張"
+               + (f"（HF {h['hard_reject_total']}/{h['front_pass_total']}）" if h else "")
+               + "，也就是這條規則把誤觸清掉了（SPEC §13 第 13 項、CLOSEUP_SPEC §13 第 2 項）。")
+    out.append(f"- **側視規則放行 {w['side_pass_total']} 張**"
                + (f"、HF Blade {h['per_class']['Blade']['geom']['side']}/{h['per_class']['Blade']['n']}" if h else "")
-               + "——SPEC §13-13 的漏洞在外部語料上的出現率。")
+               + "：2026-09-28 把側視改成**呼叫端宣告制**（SPEC §13 第 16 項）之後，語料批次跑不宣告任何取景，"
+               "側視規則就不再介入——原本 WTBs2025 94 張、HF Blade 37 張的誤放行全部回到正視規則並被拒收（葉片數 ≠ 3）。"
+               "這一欄是那條決策的回歸指標：非 0 就代表側視又變成推論的了。")
     if "defect" in S["wtbs2025"]:
         d = S["wtbs2025"]["defect"]
         lifts = {c: x["lift"] for c, x in d["per_class"].items() if x.get("lift") is not None}

@@ -118,19 +118,26 @@ def test_gate_file_features_match_the_shipped_npz(gate: dict) -> None:
     assert gate["features"] == meta
 
 
-def test_front_view_mode_a_pass_is_hard_rejected_and_side_view_leaks_are_recorded(gate: dict) -> None:
+def test_front_view_mode_a_pass_is_hard_rejected_and_no_side_view_leaks_remain(gate: dict) -> None:
+    """Mode A 放行的處理，以及 §13-13 那個漏洞在語料上已經歸零。
+
+    2026-09-16 這份語料上 Mode A 放行 10 張：正視 2（真值 W）+ **側視 8（真值全是 P）**，
+    後者是側視規則在近身照上的誤放行。2026-09-28 側視改成呼叫端宣告制（SPEC §13-16）、
+    2026-09-29 以現行程式重跑：**放行 10 → 2、側視 8 → 0、漏進 P 的 8 → 0**，
+    而最終判定的每一個數字都沒變（那 8 張本來就沒被硬拒收，從來沒進過決策）。
+    這條紅了有兩種可能：側視又變成從剪影推論的，或正視規則開始漏進近身照——兩種都要有人看到。
+    """
     s = gate["summary"]
     rows = gate["images"]
     for i in s["hard_rejects"]:
         assert rows[i]["decision"] == "W" and rows[i]["geometry"]["mode_a_view"] == "front"
-    assert s["hard_rejects"] == [i for i in s["mode_a_ok"] if rows[i]["geometry"]["mode_a_view"] == "front"]
-    # Mode A 放行但真值是 P：Mode A 閘門在近身照上的誤放行，逐張記錄當回歸案例。實測全部走側視規則——
-    # 這條釘住「正視規則沒有漏進近身照」；側視那些數量若變也要有人看到（SPEC §13 第 13 項）。
-    leaks = s["mode_a_leaks_into_P"]
-    assert leaks == [i for i in s["mode_a_ok"] if rows[i]["truth_merged"] == "P"]
-    assert s["mode_a_leaks_into_P_by_view"]["front"] == 0
-    assert "996" in leaks and s["mode_a_leaks_into_P_by_view"]["side"] == len(leaks) >= 8
-    # 硬規則不得把任何真值 P 拒收：它只認正視三片 + 塔架
+        # 硬拒收還要過「轉子上方要是天空」（2026-09-29）：正視放行是上界不是結論
+        assert rows[i]["geometry"]["vegetation_above_hub"] is not None
+        assert rows[i]["geometry"]["vegetation_above_hub"] <= G_intake.MAX_VEGETATION_ABOVE_HUB
+    assert set(s["hard_rejects"]) <= {i for i in s["mode_a_ok"] if rows[i]["geometry"]["mode_a_view"] == "front"}
+    assert s["mode_a_ok_by_view"]["side"] == 0, "沒有人宣告側視，卻有照片走側視規則放行"
+    assert s["mode_a_leaks_into_P"] == [] and s["mode_a_leaks_into_P_by_view"] == {"front": 0, "side": 0}
+    # 硬規則不得把任何真值 P 拒收：它只認正視三片 + 塔架 + 轉子上方是天空
     assert all(rows[i]["truth_merged"] != "P" for i in s["hard_rejects"])
 
 
@@ -179,7 +186,15 @@ def test_build_refuses_when_features_miss_part_of_the_corpus(tmp_path: Path) -> 
 
 # ---------------------------------------------------------------- 轉子背後要是天空（2026-09-29）
 
-HARD_REJECT_REVIEW_FILE = ROOT / "data" / "closeup_hard_reject_review.json"
+# 五張正視放行的植被值與硬拒收結論的**單一來源**：跨語料結果檔的 `front_passes`。
+# 2026-09-29 的第一版另存過一份 `closeup_hard_reject_review.json`，那是「只重跑原本命中的那幾張」的
+# 權宜之計；同日全語料重跑後那五個值逐位相同（單調性論證成立），副本就收掉了，免得兩份漂開。
+CROSS_CORPUS_FILE = ROOT / "data" / "closeup_cross_corpus.json"
+
+
+def _front_passes() -> list[dict]:
+    doc = json.loads(CROSS_CORPUS_FILE.read_text(encoding="utf-8"))
+    return [d for s in doc["summary"].values() for d in s["front_passes"]]
 
 
 def _structure(hub, blades, tower=True):
@@ -233,27 +248,30 @@ def test_hard_reject_needs_sky_behind_the_rotor() -> None:
 
 
 def test_threshold_sits_between_the_reviewed_cases() -> None:
-    """門檻不是憑感覺挑的：**逐張複核過的五張**裡，誤觸最低 0.27、正確的 0.00，門檻要落在中間。
+    """門檻不是憑感覺挑的：**逐張複核過的正視放行**裡，誤觸最低 0.27、正確的 0.00，門檻要落在中間。
 
-    這一條紅了代表複核結果變了（有人重看、或加了新的案例），門檻要跟著重新取。
+    這一條紅了代表複核結果變了（有人重看、語料換版、或加了新的案例），門檻要跟著重新取。
     """
-    doc = json.loads(HARD_REJECT_REVIEW_FILE.read_text(encoding="utf-8"))
-    imgs = doc["images"]
-    assert doc["threshold_vegetation_above_hub"] == G_intake.MAX_VEGETATION_ABOVE_HUB
-    misfire = [v["vegetation_above_hub"] for v in imgs.values() if not v["hard_reject_now"]]
-    correct = [v["vegetation_above_hub"] for v in imgs.values() if v["hard_reject_now"]]
+    rows = _front_passes()
+    misfire = [r["veg"] for r in rows if not r["hard"]]
+    correct = [r["veg"] for r in rows if r["hard"]]
     assert misfire and correct
     assert max(correct) < G_intake.MAX_VEGETATION_ABOVE_HUB < min(misfire), (
         f"門檻 {G_intake.MAX_VEGETATION_ABOVE_HUB} 沒有落在 正確 {correct} 與 誤觸 {misfire} 之間")
 
 
 def test_every_reviewed_hard_reject_has_a_note() -> None:
-    """結果檔裡的每一張都要有人工備註——這條在 2026-09-29 抓到一則寫錯的（`Blade/0407`）。"""
+    """每一張正視放行都要有人工備註——這條在 2026-09-29 抓到一則寫錯的（`Blade/0407`）。
+
+    備註在 `closeup_cross_corpus.HARD_REJECT_REVIEW`，量在結果檔，兩邊的 id 集合要對得上：
+    多一張沒備註的、或留著一則指向已經不存在的照片的備註，都要紅。
+    """
     import importlib.util
     spec = importlib.util.spec_from_file_location(
         "closeup_cross_corpus", ROOT / "scripts" / "closeup_cross_corpus.py")
     mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)
-    doc = json.loads(HARD_REJECT_REVIEW_FILE.read_text(encoding="utf-8"))
-    for rid in doc["images"]:
-        assert rid in mod.HARD_REJECT_REVIEW and mod.HARD_REJECT_REVIEW[rid].strip(), rid
+    ids = {r["id"] for r in _front_passes()}
+    assert ids == set(mod.HARD_REJECT_REVIEW), ids ^ set(mod.HARD_REJECT_REVIEW)
+    for rid in ids:
+        assert mod.HARD_REJECT_REVIEW[rid].strip(), rid
