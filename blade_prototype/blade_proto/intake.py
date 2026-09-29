@@ -10,6 +10,15 @@ P（合格）的前景占比中位數比 W（整機）還低，單一門檻的�
 這是硬規則，不是分數。它抓不到「整機但 Mode A 也拒收」的照片（W 裡大多數是這種），那部分由
 `scripts/closeup_intake_gate.py` 的外觀探針補。
 
+**轉子背後必須是天空。** 2026-09-29 逐張看過跨語料的 5 張硬拒收（`CROSS_CORPUS_VALIDATION.md`）：
+**4 張是誤觸**——兩張無人機俯拍農田（葉片 + 影子被拆成三臂）、一張前景葉尖後面有真的整機、
+一張葉片填滿畫面的近身照（`Blade/0407`，上一輪的複核備註寫成「輪轂 + 機艙的仰拍」，**全解析度看是錯的**）。
+唯一正確的是 `FullTurbine/1502`。先試過規格 §13 第 2 項提的「轉子占畫面多少」——**分不開**：
+誤觸 0.44／0.63／0.45 夾在真整機照的 0.20–1.08 之間。有鑑別力的是**輪轂上方的背景是不是植被**
+（Mode A 的設計範圍是地面仰拍、轉子對乾淨天空）：誤觸 0.65／0.61／0.34／0.27、正確的 0.00、
+真整機照 ≤ 0.08，所以門檻取 **0.15**（上下各約 2 倍餘裕）。
+這條只會**移除**硬拒收、不會新增，所以重跑只需要跑原本就硬拒收的那幾張。
+
 **側視放行不算。** 全語料實測 Mode A 放行 10 張，其中 8 張是真值 P 的近身照，全部走的是側視規則
 （`quality.detect_side_view`：恰好兩個垂直的伸長元件、一上一下、有塔架）——填滿畫面的葉片被一道
 裂縫或接縫切成上下兩段，塔架找到的是葉片自己。那條規則是為 Mode A 的側視整機照設計的，
@@ -33,6 +42,10 @@ from .segmentation import find_structure, segment_turbine
 # Mode A 走的工作尺度（`scripts/closeup_corpus_report.py` 的分流重跑用同一個數）。
 WORK_MAX_SIDE = 1024
 
+# 輪轂上方的轉子背景裡，植被占比超過這個數就不是「地面仰拍的整機照」（見模組說明）。
+# 0.15：誤觸最低 0.27、真整機照最高 0.08，取中間偏低的一個整數位。
+MAX_VEGETATION_ABOVE_HUB = 0.15
+
 
 @dataclass
 class IntakeGeometry:
@@ -45,12 +58,23 @@ class IntakeGeometry:
     n_blades: int
     tower_found: bool
     hub_radius_frac: float
+    # 輪轂上方、轉子圓盤內的**背景**像素裡植被占多少。地面仰拍的整機照這裡是天空（≈ 0），
+    # 無人機俯拍農田或葉片填滿畫面的近身照會很高。量不到（圓盤內背景太少）時是 None。
+    vegetation_above_hub: float | None = None
     error: str | None = None
 
     @property
     def reject_as_whole_turbine(self) -> bool:
-        """Mode A **正視**放行就是整機照。側視放行在近身照上會誤觸（見模組說明），交給探針。"""
-        return self.mode_a_ok and self.mode_a_view == "front"
+        """Mode A **正視**放行、**而且轉子背後是天空**，才算整機照。
+
+        側視放行在近身照上會誤觸（見模組說明），交給探針；轉子上方是植被代表這不是
+        地面仰拍的整機照（無人機俯拍農田、或葉片填滿畫面的近身照），也不硬拒收。
+        量不到植被占比時**不擋**——沒有證據不是拒收的理由，維持舊行為。
+        """
+        if not (self.mode_a_ok and self.mode_a_view == "front"):
+            return False
+        veg = self.vegetation_above_hub
+        return veg is None or veg <= MAX_VEGETATION_ABOVE_HUB
 
     def to_dict(self) -> dict:
         d = asdict(self)
@@ -66,6 +90,32 @@ def _to_work_scale(img_bgr: np.ndarray, max_side: int) -> np.ndarray:
     return cv2.resize(img_bgr, (int(round(w * s)), int(round(h * s))), interpolation=cv2.INTER_AREA)
 
 
+def _vegetation_above_hub(img_bgr: np.ndarray, mask: np.ndarray, st) -> float | None:
+    """輪轂上方、轉子圓盤內的**背景**像素裡，植被（綠／黃綠，飽和度夠）占多少。
+
+    只看輪轂上方：地面仰拍時那裡一定是天空，而畫面下緣本來就可能有地面。
+    只看背景（遮罩外）：葉片自己的顏色不算。圓盤內背景像素太少就回 None（量不到）。
+    色範圍 H 25–95（OpenCV 的 0–180）、S > 50 是農田／草地／樹林，天空（藍或灰白）落不進去。
+    """
+    blades = getattr(st, "blades", [])
+    if not blades:
+        return None
+    h, w = mask.shape[:2]
+    hub_x, hub_y = float(st.hub[0]), float(st.hub[1])
+    r = max(float(b.tip_radius_px) for b in blades)
+    if r <= 1.0:
+        return None
+    ys, xs = np.ogrid[:h, :w]
+    disc = ((xs - hub_x) ** 2 + (ys - hub_y) ** 2 <= r * r) & (mask == 0) & (ys < hub_y)
+    n = int(disc.sum())
+    if n < 50:  # 量不到：圓盤幾乎被遮罩填滿，或輪轂貼著畫面上緣
+        return None
+    hsv = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2HSV)
+    hue, sat = hsv[..., 0].astype(np.float32), hsv[..., 1].astype(np.float32)
+    veg = (hue > 25) & (hue < 95) & (sat > 50)
+    return float(veg[disc].mean())
+
+
 def intake_geometry(img_bgr: np.ndarray, max_side: int = WORK_MAX_SIDE) -> IntakeGeometry:
     """跑 Mode A 的三步（分割 → 結構定位 → 拍攝閘門），任何一步丟例外都收成 `error`，
     不往外丟：閘門的呼叫端要的是「這張能不能用」，不是 traceback。"""
@@ -77,6 +127,7 @@ def intake_geometry(img_bgr: np.ndarray, max_side: int = WORK_MAX_SIDE) -> Intak
         st = find_structure(seg.mask, horizon_y=seg.horizon_y)
         verdict = assess_capture(seg, st)
         return IntakeGeometry(
+            vegetation_above_hub=_vegetation_above_hub(img, seg.mask, st),
             mode_a_ok=bool(verdict.ok),
             mode_a_view=verdict.metrics.get("view"),
             mode_a_reasons=list(verdict.reasons),
