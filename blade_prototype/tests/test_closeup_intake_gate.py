@@ -15,6 +15,7 @@ from pathlib import Path
 import numpy as np
 import pytest
 
+from blade_proto import intake as G_intake
 from blade_proto.intake import IntakeGeometry, intake_geometry
 from blade_proto.synth import SceneSpec, render_blade_segment, render_front, render_side
 
@@ -174,3 +175,85 @@ def test_build_refuses_when_features_miss_part_of_the_corpus(tmp_path: Path) -> 
     np.savez(tmp_path / "f.npz", ids=z["ids"][:keep], X=z["X"][:keep], meta=json.dumps(meta))
     with pytest.raises(G.IntakeGateError):
         G.build(None, tmp_path / "f.npz")
+
+
+# ---------------------------------------------------------------- 轉子背後要是天空（2026-09-29）
+
+HARD_REJECT_REVIEW_FILE = ROOT / "data" / "closeup_hard_reject_review.json"
+
+
+def _structure(hub, blades, tower=True):
+    """給 _vegetation_above_hub 用的最小結構替身。"""
+    class _B:
+        def __init__(self, r): self.tip_radius_px = r
+    class _S:
+        pass
+    s = _S()
+    s.hub = hub
+    s.blades = [_B(r) for r in blades]
+    s.tower_found = tower
+    return s
+
+
+def test_vegetation_above_hub_separates_sky_from_field() -> None:
+    """量測本身：輪轂上方是天空 → 0；是農田 → 接近 1。
+
+    這條把「量測寫壞了」與「門檻取錯了」分開。
+    """
+    h = w = 200
+    sky = np.zeros((h, w, 3), np.uint8)
+    sky[:, :] = (235, 206, 135)          # BGR 天藍
+    field = np.zeros((h, w, 3), np.uint8)
+    field[:, :] = (40, 140, 60)          # BGR 草綠
+    mask = np.zeros((h, w), np.uint8)    # 全背景：圓盤內都是背景
+    st = _structure((100.0, 150.0), [80.0])
+    assert G_intake._vegetation_above_hub(sky, mask, st) == pytest.approx(0.0, abs=1e-6)
+    assert G_intake._vegetation_above_hub(field, mask, st) > 0.9
+
+
+def test_vegetation_above_hub_is_none_when_not_measurable() -> None:
+    """圓盤內背景太少（遮罩填滿）或沒有葉片 → None，而 None **不擋**（沒有證據不是拒收的理由）。"""
+    img = np.full((200, 200, 3), 200, np.uint8)
+    full = np.full((200, 200), 255, np.uint8)
+    assert G_intake._vegetation_above_hub(img, full, _structure((100.0, 150.0), [80.0])) is None
+    assert G_intake._vegetation_above_hub(img, np.zeros((200, 200), np.uint8),
+                                          _structure((100.0, 150.0), [])) is None
+
+
+def test_hard_reject_needs_sky_behind_the_rotor() -> None:
+    """硬拒收 = Mode A 正視放行 **且** 轉子上方是天空。量不到時維持舊行為（擋）。"""
+    def geom(veg):
+        return G_intake.IntakeGeometry(mode_a_ok=True, mode_a_view="front", mode_a_reasons=[],
+                                       mask_frac=0.05, n_blades=3, tower_found=True,
+                                       hub_radius_frac=0.01, vegetation_above_hub=veg)
+    assert geom(0.0).reject_as_whole_turbine
+    assert geom(G_intake.MAX_VEGETATION_ABOVE_HUB).reject_as_whole_turbine
+    assert not geom(G_intake.MAX_VEGETATION_ABOVE_HUB + 0.01).reject_as_whole_turbine
+    assert geom(None).reject_as_whole_turbine, "量不到就不擋會讓硬規則靜悄悄失效"
+
+
+def test_threshold_sits_between_the_reviewed_cases() -> None:
+    """門檻不是憑感覺挑的：**逐張複核過的五張**裡，誤觸最低 0.27、正確的 0.00，門檻要落在中間。
+
+    這一條紅了代表複核結果變了（有人重看、或加了新的案例），門檻要跟著重新取。
+    """
+    doc = json.loads(HARD_REJECT_REVIEW_FILE.read_text(encoding="utf-8"))
+    imgs = doc["images"]
+    assert doc["threshold_vegetation_above_hub"] == G_intake.MAX_VEGETATION_ABOVE_HUB
+    misfire = [v["vegetation_above_hub"] for v in imgs.values() if not v["hard_reject_now"]]
+    correct = [v["vegetation_above_hub"] for v in imgs.values() if v["hard_reject_now"]]
+    assert misfire and correct
+    assert max(correct) < G_intake.MAX_VEGETATION_ABOVE_HUB < min(misfire), (
+        f"門檻 {G_intake.MAX_VEGETATION_ABOVE_HUB} 沒有落在 正確 {correct} 與 誤觸 {misfire} 之間")
+
+
+def test_every_reviewed_hard_reject_has_a_note() -> None:
+    """結果檔裡的每一張都要有人工備註——這條在 2026-09-29 抓到一則寫錯的（`Blade/0407`）。"""
+    import importlib.util
+    spec = importlib.util.spec_from_file_location(
+        "closeup_cross_corpus", ROOT / "scripts" / "closeup_cross_corpus.py")
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    doc = json.loads(HARD_REJECT_REVIEW_FILE.read_text(encoding="utf-8"))
+    for rid in doc["images"]:
+        assert rid in mod.HARD_REJECT_REVIEW and mod.HARD_REJECT_REVIEW[rid].strip(), rid

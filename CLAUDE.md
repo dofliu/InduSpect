@@ -78,7 +78,7 @@
 | `blade_prototype/BLADE_TEST_REPORT.md` | ★ **葉片模組現況測試報告**（2026-09-14）：自動化測試、75 張真實影像逐張回歸、四層合成端到端、圖文報告產生、運動分割重跑、Mode B 現況、沒測到的。真實影像那一節的數字由 `scripts/blade_test_report.py` 產生（`--baseline` 逐張比對） |
 | `blade_prototype/CLOSEUP_HEALTHY_SET.md` | ★ Mode B 健康照與正常結構第一版：全語料取像判定、正常結構普查、健康候選挖掘（`scripts/closeup_healthy_candidates.py`）、概略框、**人工複核工具（§6）**。三份標記檔在 `data/closeup_*_wtb.json`，**單一標註者未複核**，測試守「不得偷偷簽核」；§7 是 1,842 格健康候選的**第一遍逐格標記**（788 格純表面／42.8%，仍全部 unreviewed） |
 | `blade_prototype/scripts/closeup_candidate_firstpass.py` | ★ Mode B 第一遍逐格標記（**不是簽核**）：1,842 格健康候選逐格看過，`annotator` 一律 `claude-first-pass`、狀態一律 `unreviewed`——這個名字正好被複核工具的模型名規則擋住，所以它只能改**複核順序與先驗**。實測純表面 788 格（42.8%），比 64 格抽樣推估的 64% 低 21 個百分點（邊界格被算成表面） |
-| `blade_prototype/blade_proto/intake.py` + `scripts/closeup_intake_gate.py` | ★ Mode B **§1.2 取像閘門程式化**（A3）：兩層——整張丟進 Mode A，**放行 = 整機照 = 硬拒收**；凍結 ResNet18 + 邏輯迴歸判 P／W／T 給拒收理由（建議性，量不到 1/3；**B3 跨語料實測不能當閘門**，見 `CROSS_CORPUS_VALIDATION.md`）。「簡單的前景占比」實測判不出來（局部天空模型把填滿畫面的葉片當背景）。逐張結果 `data/closeup_intake_gate_wtb.json`，報告 `CLOSEUP_INTAKE_GATE.md` |
+| `blade_prototype/blade_proto/intake.py` + `scripts/closeup_intake_gate.py` | ★ Mode B **§1.2 取像閘門程式化**（A3）：兩層——整張丟進 Mode A，**放行 = 整機照 = 硬拒收**；凍結 ResNet18 + 邏輯迴歸判 P／W／T 給拒收理由（建議性，量不到 1/3；**B3 跨語料實測不能當閘門**，見 `CROSS_CORPUS_VALIDATION.md`）。「簡單的前景占比」實測判不出來（局部天空模型把填滿畫面的葉片當背景）。**硬拒收 2026-09-29 加上「轉子上方的背景要是天空」**（植被占比 ≤ 0.15）：跨語料五張命中裡**四張是誤觸**（含一則上一輪寫錯的備註 `Blade/0407`），而「轉子占畫面多少」分不開（誤觸 0.44–0.63 夾在真整機照 0.20–1.08 之間）；新規則下四張誤觸全放、11 張真整機照全擋。逐張結果 `data/closeup_intake_gate_wtb.json`，報告 `CLOSEUP_INTAKE_GATE.md` |
 | `blade_prototype/scripts/closeup_intake_physical.py` + `CLOSEUP_INTAKE_PHYSICAL.md` | ★ **§1.2「弦向 ≥ 1/3」當物理量來量的四次嘗試**（2026-09-28）：邊框背景厚度／Hough 前後緣間距／天空地面占比／形態學細結構。單一特徵最佳（**in-sample、樂觀**）0.625、全部合起來群感知 5 折 **0.526**（亂猜 0.5、探針 0.910）——**沒有可泛化訊號**。原因是語意不是門檻：**過曝白葉面與陰天天空在像素上一樣**。結論：探針維持建議性，要閘門就得換資訊來源（宣告＋感測器）或換監督訊號（分割標註） |
 | `blade_prototype/scripts/closeup_baseline.py` | Mode B 離線基線（B2）：手工特徵 + 純 numpy 邏輯迴歸，平均逐類 recall 0.308 與 1-NN 打平。**規格 §8 三條基線未跑**（§8.1/8.2 要 Gemini 金鑰、§8.3 要 PyTorch，本容器都沒有） |
 | `blade_prototype/scripts/closeup_review_tool.py` | ★ Mode B 人工複核的那道門：離線工作區（切圖 + 單檔 HTML）+ `ingest` 四條簽核規則。決策寫進 `data/closeup_review_decisions.json`（目前 0 筆） |
@@ -103,9 +103,9 @@
 python3 scripts/audit_dead_ends.py   # 死角查核（service 零引用／DB 欄位只讀不寫）；--report 看全部
 flutter test          # 全部 599 tests（widget_test 已修復，不再排除）
 cd backend && GEMINI_API_KEY=ci-fake-key pytest tests/ --asyncio-mode=auto   # 197 pytest
-cd blade_prototype && pip install -r requirements.txt && pytest              # 425 tests（葉片原型，合成影像/音軌夾具 + Mode B 分類表與標記檔守門 + 測試報告聚合器 + 側視閘門 + 複核工具 + 切分群組 + 評估協定 + 普查覆蓋 + 第一遍標記守門 + 離線基線 + IEA 兩軌 + 線性探針 + §1.2 取像閘門 + 偏軸透視夾具 + 姿態估計補償 + 跨語料驗證 + Commons 真實照片姿態驗證 + Commons 抓取器 + 解析度靈敏度 + 側視宣告制 + §1.2 物理量測）
+cd blade_prototype && pip install -r requirements.txt && pytest              # 430 tests（葉片原型，合成影像/音軌夾具 + Mode B 分類表與標記檔守門 + 測試報告聚合器 + 側視閘門 + 複核工具 + 切分群組 + 評估協定 + 普查覆蓋 + 第一遍標記守門 + 離線基線 + IEA 兩軌 + 線性探針 + §1.2 取像閘門 + 偏軸透視夾具 + 姿態估計補償 + 跨語料驗證 + Commons 真實照片姿態驗證 + Commons 抓取器 + 解析度靈敏度 + 側視宣告制 + §1.2 物理量測 + 硬拒收天空條件）
 ```
-Flutter 603 tests / 後端 197 pytest / 葉片原型 425 pytest 全綠（2026-09-28 本機實測；**GitHub Actions 停用期已於 2026-09-28 結束、CI 又會跑了**（見下方「本機 Flutter」條目末），本機三軌仍可先跑）。DB 測試使用 `sqflite_common_ffi` in-memory。標準資料為單一來源：改 `backend/app/data/inspection_standards.py` 後必須跑 `python backend/scripts/export_standards.py` 重新匯出 JSON（有同步守門測試）。
+Flutter 603 tests / 後端 197 pytest / 葉片原型 430 pytest 全綠（2026-09-28 本機實測；**GitHub Actions 停用期已於 2026-09-28 結束、CI 又會跑了**（見下方「本機 Flutter」條目末），本機三軌仍可先跑）。DB 測試使用 `sqflite_common_ffi` in-memory。標準資料為單一來源：改 `backend/app/data/inspection_standards.py` 後必須跑 `python backend/scripts/export_standards.py` 重新匯出 JSON（有同步守門測試）。
 
 ## 已知問題追蹤
 - GitHub Issues #14-#19 已全數修復並關閉（2026-04-16）
